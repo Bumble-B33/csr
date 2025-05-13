@@ -133,9 +133,9 @@ public final class ClayPoiFunctions {
     }
 
     private enum EffectOperation implements StringRepresentable {
-        ADD("add", (soldier, effect) -> soldier.addEffect(effect, null)),
+        ADD("add", (soldier, effect) -> soldier.addMobEffect(effect, null)),
         INCREASE("increase", (soldier, effect) -> soldier.increaseEffect(effect, null)),
-        REMOVE("remove", (soldier, effect) -> soldier.removeEffect(effect.getEffect()));
+        REMOVE("remove", (soldier, effect) -> soldier.removeMobEffect(effect.getEffect()));
 
         public static final Codec<EffectOperation> CODEC = StringRepresentable.fromEnum(EffectOperation::values);
         public static final StreamCodec<FriendlyByteBuf, EffectOperation> STREAM_CODEC = CodecUtils.createEnumStreamCodec(EffectOperation.class);
@@ -394,7 +394,7 @@ public final class ClayPoiFunctions {
 
         @Override
         public void accept(ClaySoldierInventorySetter soldier, ClayPoiSource source) {
-            Util.getRandom(chanceList, soldier.getRandom()).accept(soldier, source);
+            Util.getRandom(chanceList, soldier.getClaySoldierRandom()).accept(soldier, source);
         }
 
         @Override

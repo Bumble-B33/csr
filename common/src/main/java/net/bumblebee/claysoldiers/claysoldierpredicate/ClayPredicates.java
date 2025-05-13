@@ -354,7 +354,7 @@ public class ClayPredicates {
 
         @Override
         public boolean test(ClaySoldierInventoryQuery soldier) {
-            var mobEffect = soldier.getEffect(effect);
+            var mobEffect = soldier.getMobEffect(effect);
             return mobEffect != null && mobEffect.getAmplifier() >= minAmplifier && mobEffect.getDuration() >= minDuration;
 
         }

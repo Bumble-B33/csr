@@ -36,22 +36,18 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.data.PackOutput;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.packs.PackType;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.tags.ItemTags;
-import net.minecraft.tags.TagKey;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.ArmorItem;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.armortrim.TrimMaterials;
 import net.minecraft.world.item.armortrim.TrimPatterns;
 import net.minecraft.world.item.component.DyedItemColor;
 import net.minecraft.world.level.block.Blocks;
-import net.neoforged.neoforge.common.Tags;
 import net.neoforged.neoforge.common.data.ExistingFileHelper;
 
 import java.util.List;
@@ -90,35 +86,11 @@ public class ModDataMapAndTagProvider extends ClaySoldiersItemProvider {
 
     public ModDataMapAndTagProvider(PackOutput packOutput, CompletableFuture<HolderLookup.Provider> lookupProvider, ExistingFileHelper helper) {
         super(packOutput, lookupProvider, ClaySoldiersCommon.MOD_ID, helper);
-        helper.trackGenerated(ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_soldier_holdable"), PackType.SERVER_DATA, ".json", "tags/item");
     }
 
     @Override
     protected void gather() {
-        this.tag(ModTags.Items.SOLDIER_HOLDABLE)
-                .addOptionalTag(ModTags.Items.SOLDIER_WEAPON)
-                .addOptionalTag(ModTags.Items.SOLDIER_ARMOR);
-        this.tag(ModTags.Items.CLAY_HORSE_ARMOR).add(Items.FEATHER, Items.DIAMOND, Items.GOLD_INGOT, Items.IRON_INGOT, Items.LEATHER);
-        this.tag(ModTags.Items.CLAY_FOOD).add(ModItems.CLAY_COOKIE.get());
-        this.tag(ModTags.Items.CLAY_WAX).add(Items.HONEYCOMB);
-        this.tag(ModTags.Items.SOLDIER_RGB_GLASSES).addTag(ModTags.Items.GLASS_PANES).remove(ModTags.Items.GLASS_PANES_COLORLESS);
-        this.tag(ModTags.Items.GAME_MASTER_ITEM).add(
-                Items.COMMAND_BLOCK,
-                Items.CHAIN_COMMAND_BLOCK,
-                Items.REPEATING_COMMAND_BLOCK,
-                Items.COMMAND_BLOCK_MINECART,
-                Items.STRUCTURE_BLOCK,
-                Items.STRUCTURE_VOID,
-                Items.JIGSAW,
-                Items.BARRIER,
-                Items.LIGHT,
-                Items.DEBUG_STICK
-        );
-        this.tag(ModTags.Items.ACCESSORIES_FACE).add(ModItems.CLAY_GOGGLES.get());
-        this.tag(ModTags.Items.CURIOS_HEAD).add(ModItems.CLAY_GOGGLES.get());
-        this.tag(ModTags.Items.SOLDIER_BOSS_EQUIPABLE).addTag(ModTags.Items.SOLDIER_HOLDABLE).remove(Items.COMMAND_BLOCK, Items.DEBUG_STICK);
-        this.addItemToTags(ModItems.CLAY_STAFF.get(),
-                ItemTags.CROSSBOW_ENCHANTABLE, ItemTags.VANISHING_ENCHANTABLE, Tags.Items.RANGED_WEAPON_TOOLS, ModTags.Items.SOLDIER_SLINGSHOT_ENCHANTABLE);
+        this.tag(ModTags.Items.CLAY_HORSE_ARMOR).add(Items.DIAMOND, Items.GOLD_INGOT, Items.IRON_INGOT, Items.LEATHER);
 
         addHoldable(Items.STICK, SoldierHoldableEffect.of(SoldierPropertyMap.builder().setDamage(2f)).setSlot(SoldierEquipmentSlot.MAINHAND).build(), TagType.WEAPON, DefaultSoldierItemTypes.BASIC);
         addHoldable(ModItems.SHARPENED_STICK.get(), SoldierHoldableEffect.of(SoldierPropertyMap.builder().setDamage(3f)).setSlot(SoldierEquipmentSlot.MAINHAND).build(), TagType.WEAPON, DefaultSoldierItemTypes.BASIC);
@@ -350,12 +322,5 @@ public class ModDataMapAndTagProvider extends ClaySoldiersItemProvider {
                 )), ClayPredicates.ConstantPredicate.getAlwaysTruePredicate(),
                 1f
         ));
-    }
-
-    @SafeVarargs
-    private void addItemToTags(Item item, TagKey<Item>... tags) {
-        for (TagKey<Item> tag : tags) {
-            this.tag(tag).add(item);
-        }
     }
 }

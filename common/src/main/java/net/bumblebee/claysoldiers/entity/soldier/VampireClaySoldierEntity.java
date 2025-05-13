@@ -10,6 +10,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
 
 public class VampireClaySoldierEntity extends UndeadClaySoldier implements VampiricClayMob {
     private static final EntityDataAccessor<Boolean> ALPHA = SynchedEntityData.defineId(VampireClaySoldierEntity.class, EntityDataSerializers.BOOLEAN);
@@ -92,5 +93,10 @@ public class VampireClaySoldierEntity extends UndeadClaySoldier implements Vampi
     @Override
     public float getSpeed() {
         return super.getSpeed() * getPowerMultiplier();
+    }
+
+    @Override
+    public LevelAccessor getLevel() {
+        return level();
     }
 }

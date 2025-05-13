@@ -63,6 +63,12 @@ public class ClaySoldiersCommon {
     public static final GameRules.Key<GameRules.IntegerValue> CLAY_SOLDIER_DROP_RULE = PLATFORM.createIntRule("soldierDropThemSelf", GameRules.Category.DROPS, 50);
     public static final GameRules.Key<GameRules.BooleanValue> CLAY_SOLDIER_INVENTORY_DROP_RULE = PLATFORM.createBoolRule("soldierDropInventory", GameRules.Category.DROPS, true);
 
+    public static final String CSR_DEFAULT_PACK_LOCATION = "data/datapacks";
+    public static final String CSR_DEFAULT_DATA_PACK_PATH = "csr_default_datapack";
+
+    public static final String CSR_DEFAULT_DATA_PACK_LANG = "resourcePack.%s.csr_default.name".formatted(ClaySoldiersCommon.MOD_ID);
+    public static final String CSR_DEFAULT_PACK_DESCRIPTION = "datapack.%s.%s.description".formatted(MOD_ID, CSR_DEFAULT_DATA_PACK_PATH);
+
     public static final String BLUEPRINT_PACK_PATH = "blueprint_pack";
     public static final String BLUEPRINT_DATA_PACK_LANG = "resourcePack.%s.blueprint.name".formatted(ClaySoldiersCommon.MOD_ID);
     public static final String BLUEPRINT_PACK_DESCRIPTION = "datapack.%s.%s.description".formatted(MOD_ID, BLUEPRINT_PACK_PATH);

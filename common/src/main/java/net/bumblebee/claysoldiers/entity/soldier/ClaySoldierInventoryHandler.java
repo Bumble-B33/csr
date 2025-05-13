@@ -102,7 +102,7 @@ public interface ClaySoldierInventoryHandler extends ClaySoldierInventoryQuery, 
     @Nullable
     @Override
     default ItemEntity dropItemStackWithChance(ItemStackWithEffect stackWithEffect) {
-        if (getRandom().nextFloat() < stackWithEffect.dropRate()) {
+        if (getClaySoldierRandom().nextFloat() < stackWithEffect.dropRate()) {
             return dropItemStack(stackWithEffect);
         }
         return null;
@@ -110,11 +110,11 @@ public interface ClaySoldierInventoryHandler extends ClaySoldierInventoryQuery, 
 
     @Override
     default boolean increaseEffect(MobEffectInstance effectInstance, @Nullable Entity entity) {
-        var current = getEffect(effectInstance.getEffect());
+        var current = getMobEffect(effectInstance.getEffect());
         if (current == null) {
-            return addEffect(effectInstance, entity);
+            return addMobEffect(effectInstance, entity);
         }
-        return addEffect(new MobEffectInstance(effectInstance.getEffect(), effectInstance.getDuration() + current.getDuration(), effectInstance.getAmplifier() + effectInstance.getAmplifier()), entity);
+        return addMobEffect(new MobEffectInstance(effectInstance.getEffect(), effectInstance.getDuration() + current.getDuration(), effectInstance.getAmplifier() + effectInstance.getAmplifier()), entity);
     }
 
     /**

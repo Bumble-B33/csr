@@ -70,6 +70,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.util.Mth;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.SimpleMenuProvider;
@@ -918,7 +919,7 @@ public class AbstractClaySoldierEntity extends ClayMobTeamOwnerEntity implements
     @Override
     public double getDefaultAttackReach() {
         float blindnessMultiplier = 1f;
-        var blindnessEffect = getEffect(MobEffects.BLINDNESS);
+        var blindnessEffect = getMobEffect(MobEffects.BLINDNESS);
         if (blindnessEffect != null) {
             blindnessMultiplier = (calcBlindnessReach(blindnessEffect.getAmplifier()));
         }
@@ -1749,6 +1750,21 @@ public class AbstractClaySoldierEntity extends ClayMobTeamOwnerEntity implements
     }
 
     @Override
+    public boolean addMobEffect(MobEffectInstance pEffectInstance, @Nullable Entity pEntity) {
+        return addEffect(pEffectInstance, pEntity);
+    }
+
+    @Override
+    public @Nullable MobEffectInstance getMobEffect(Holder<MobEffect> pEffect) {
+        return getEffect(pEffect);
+    }
+
+    @Override
+    public boolean removeMobEffect(Holder<MobEffect> pEffect) {
+        return removeEffect(pEffect);
+    }
+
+    @Override
     public boolean removeEffect(Holder<MobEffect> pEffect) {
         if (allProperties().immunity().isPersistent(pEffect)) {
             return false;
@@ -2002,5 +2018,10 @@ public class AbstractClaySoldierEntity extends ClayMobTeamOwnerEntity implements
 
     public void onBounce() {
         testForRemoval(RemovalConditionContext::bounce, true);
+    }
+
+    @Override
+    public @NotNull RandomSource getClaySoldierRandom() {
+        return getRandom();
     }
 }

@@ -2,6 +2,7 @@ package net.bumblebee.claysoldiers.init;
 
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.blueprint.BlueprintManger;
+import net.bumblebee.claysoldiers.item.blueprint.BlueprintDependendBlockItem;
 import net.bumblebee.claysoldiers.team.ClayMobTeamManger;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.network.chat.Component;
@@ -14,7 +15,6 @@ import java.util.function.Supplier;
 public final class ModCreativeTab {
     public static final String CLAY_SOLDIERS_TAB_TITLE = "itemGroup." + ClaySoldiersCommon.MOD_ID + ".clay_soldiers_tab";
     public static final String CLAY_SOLDIER_ITEMS_TAB_TITLE = "itemGroup." + ClaySoldiersCommon.MOD_ID + ".clay_soldier_items_tab";
-
 
     public static final Supplier<CreativeModeTab> CLAY_SOLDIERS_TAB = ClaySoldiersCommon.PLATFORM.registerCreativeModeTab("clay_soldiers", builder -> builder
             .title(Component.translatable(CLAY_SOLDIERS_TAB_TITLE))
@@ -32,6 +32,9 @@ public final class ModCreativeTab {
                 if (item == ModItems.BLUEPRINT.get()) {
                     modifyBlueprint(output, itemDisplayParameters.holders());
                 } else {
+                    output.accept(item);
+                }
+                if (item instanceof BlueprintDependendBlockItem && ClaySoldiersCommon.COMMON_HOOKS.isBlueprintEnabled(itemDisplayParameters.enabledFeatures())) {
                     output.accept(item);
                 }
             }

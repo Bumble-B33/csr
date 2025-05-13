@@ -51,7 +51,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
-import java.util.*;
+import java.util.List;
+import java.util.Objects;
+import java.util.OptionalInt;
+import java.util.UUID;
 import java.util.function.Consumer;
 
 public class BossClaySoldierEntity extends AbstractClaySoldierEntity {

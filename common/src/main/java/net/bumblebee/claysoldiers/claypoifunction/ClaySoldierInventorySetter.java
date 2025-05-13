@@ -27,8 +27,8 @@ public interface ClaySoldierInventorySetter {
     @Nullable
     ItemEntity dropItemStackWithChance(ItemStackWithEffect stackWithEffect);
 
-    boolean addEffect(MobEffectInstance pEffectInstance, @Nullable Entity pEntity);
-    boolean removeEffect(Holder<MobEffect> pEffect);
+    boolean addMobEffect(MobEffectInstance pEffectInstance, @Nullable Entity pEntity);
+    boolean removeMobEffect(Holder<MobEffect> pEffect);
 
     /**
      * Increase the given effect if it is already present otherwise adds it
@@ -42,5 +42,5 @@ public interface ClaySoldierInventorySetter {
     void addOffsetColor(ColorHelper color);
 
     @NotNull
-    RandomSource getRandom();
+    RandomSource getClaySoldierRandom();
 }

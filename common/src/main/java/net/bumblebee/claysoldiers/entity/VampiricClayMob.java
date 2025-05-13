@@ -27,8 +27,8 @@ public interface VampiricClayMob {
     }
 
     default boolean isNightForVampire() {
-        return isNightForVampire(level().dayTime());
+        return isNightForVampire(getLevel().dayTime());
     }
 
-    LevelAccessor level();
+    LevelAccessor getLevel();
 }

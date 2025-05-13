@@ -213,6 +213,15 @@ public class ClaySoldiersNeoForge {
                 false,
                 Pack.Position.BOTTOM
         );
+
+        event.addPackFinders(
+                ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "%s/%s".formatted(ClaySoldiersCommon.CSR_DEFAULT_PACK_LOCATION, ClaySoldiersCommon.CSR_DEFAULT_DATA_PACK_PATH)),
+                PackType.SERVER_DATA,
+                Component.translatable(ClaySoldiersCommon.CSR_DEFAULT_DATA_PACK_LANG),
+                PackSource.BUILT_IN,
+                false,
+                Pack.Position.BOTTOM
+        );
     }
 
     private void addDataPackRegistry(final DataPackRegistryEvent.NewRegistry event) {

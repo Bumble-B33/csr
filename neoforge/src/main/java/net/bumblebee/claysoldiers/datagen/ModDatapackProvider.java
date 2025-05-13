@@ -23,21 +23,37 @@ import java.util.concurrent.CompletableFuture;
 
 public class ModDatapackProvider extends DatapackBuiltinEntriesProvider {
     public static final RegistrySetBuilder BUILDER = new RegistrySetBuilder();
+    public static final RegistrySetBuilder BUILDER_BUILTIN = new RegistrySetBuilder();
+
     public static final String LANGUAGE_PREFIX = "clay_soldier_blueprint.data_name.";
     public static final String SMALL_HOUSE_LANG = LANGUAGE_PREFIX + "small_house";
     public static final String SMALL_FARM_LANG = LANGUAGE_PREFIX + "small_farm";
     public static final String LARGE_HOUSE_LANG = LANGUAGE_PREFIX + "large_house";
+    private final String name;
 
 
-    public ModDatapackProvider(PackOutput output, CompletableFuture<HolderLookup.Provider> registries) {
-        super(output, registries, BUILDER, Collections.singleton(ClaySoldiersCommon.MOD_ID));
+    public ModDatapackProvider(PackOutput output, RegistrySetBuilder builder, CompletableFuture<HolderLookup.Provider> registries, String name) {
+        super(output, registries, builder, Collections.singleton(ClaySoldiersCommon.MOD_ID));
+        this.name = name;
+    }
+
+    @Override
+    public String getName() {
+        return super.getName() + name;
+    }
+
+    public static ModDatapackProvider builtin(PackOutput output, CompletableFuture<HolderLookup.Provider> registries) {
+        return new ModDatapackProvider(output, BUILDER_BUILTIN, registries, "builtin");
+    }
+
+    public static ModDatapackProvider datapack(PackOutput output, CompletableFuture<HolderLookup.Provider> registries) {
+        return new ModDatapackProvider(output, BUILDER, registries, "datapack");
     }
 
     static {
-        BUILDER.add(Registries.DAMAGE_TYPE, ModDamageTypes::boostrap);
-        BUILDER.add(Registries.ENCHANTMENT, ModEnchantments::boostrap);
-        BUILDER.add(ModRegistries.SOLDIER_ITEM_TYPES, DefaultSoldierItemTypes::registerAll);
-        BUILDER.add(ModRegistries.BLUEPRINTS, (context) -> new BootstrapHelper.Blueprint(context, ClaySoldiersCommon.MOD_ID) {
+        BUILDER_BUILTIN.add(Registries.DAMAGE_TYPE, ModDamageTypes::boostrap);
+        BUILDER_BUILTIN.add(Registries.ENCHANTMENT, ModEnchantments::boostrap);
+        BUILDER_BUILTIN.add(ModRegistries.BLUEPRINTS, (context) -> new BootstrapHelper.Blueprint(context, ClaySoldiersCommon.MOD_ID) {
             @Override
             protected void gather() {
                 register("small_house", ResourceLocation.withDefaultNamespace("village/plains/houses/plains_small_house_1"), SMALL_HOUSE_LANG, 0);
@@ -45,6 +61,7 @@ public class ModDatapackProvider extends DatapackBuiltinEntriesProvider {
                 register("large_house", ResourceLocation.withDefaultNamespace("village/plains/houses/plains_medium_house_1"), LARGE_HOUSE_LANG, 0.2f);
             }
         });
+        BUILDER.add(ModRegistries.SOLDIER_ITEM_TYPES, DefaultSoldierItemTypes::registerAll);
         BUILDER.add(ModRegistries.CLAY_MOB_TEAMS, context -> new BootstrapHelper.ClayTeam(context, ClaySoldiersCommon.MOD_ID) {
             @Override
             protected void gather() {

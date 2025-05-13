@@ -54,6 +54,9 @@ public final class ClaySoldierCommands {
     public static final String COMMAND_TEAM_LOYALTY_REMOVE = "commands." + ClaySoldiersCommon.MOD_ID + ".team_loyalty.remove.success";
     public static final String COMMAND_TEAM_LOYALTY_SET = "commands." + ClaySoldiersCommon.MOD_ID + ".team_loyalty.set.success";
 
+    public static final String ENABLING_DATAPACK = "commands." + ClaySoldiersCommon.MOD_ID + ".datapack.enabling";
+    public static final String DISABLING_DATAPACK = "commands." + ClaySoldiersCommon.MOD_ID + ".datapack.disabing";
+
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext context) {
         LiteralArgumentBuilder<CommandSourceStack> csrCommand = Commands.literal(ClaySoldiersCommon.MOD_ID);

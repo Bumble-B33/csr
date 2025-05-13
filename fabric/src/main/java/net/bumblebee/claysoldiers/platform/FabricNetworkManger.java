@@ -1,8 +1,8 @@
 package net.bumblebee.claysoldiers.platform;
 
+import net.bumblebee.claysoldiers.platform.services.INetworkManger;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.bumblebee.claysoldiers.platform.services.INetworkManger;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;

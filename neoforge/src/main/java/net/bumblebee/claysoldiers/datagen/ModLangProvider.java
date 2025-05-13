@@ -59,6 +59,10 @@ public class ModLangProvider extends LanguageProvider {
         add(ClaySoldiersCommon.BLUEPRINT_PACK_DESCRIPTION, "Enabled Blueprint features for Clay Soldiers");
         add(ClaySoldiersCommon.BLUEPRINT_PACK_SOURCE, "feature, experimental");
 
+        add(ClaySoldiersCommon.CSR_DEFAULT_DATA_PACK_LANG, "Default Clay Soldiers Items");
+        add(ClaySoldiersCommon.CSR_DEFAULT_PACK_DESCRIPTION, "Default Clay Soldier Items");
+
+
         addConfig("csrClientConfig", "Client Config");
         addConfig("claySoldierMenuModify", "Modify in Menu");
         addConfig("hamsterWheelCapacity", "Hamster Wheel Energy Capacity");
@@ -207,6 +211,9 @@ public class ModLangProvider extends LanguageProvider {
 
         add(ClaySoldierCommands.COMMAND_TEAM_LOYALTY_REMOVE_FAILURE, "%s is not loyal to any one");
         add(ClaySoldierCommands.COMMAND_TEAM_LOYALTY_FAILURE, "Could not set loyalty of %s to %s");
+
+        add(ClaySoldierCommands.ENABLING_DATAPACK, "Enabling this datapack requires a world restart to fully work.");
+        add(ClaySoldierCommands.DISABLING_DATAPACK, "Disabling this datapack requires a world restart to fully work.");
 
 
         this.addJade(JadeRegistry.CLAY_MOB, "Clay Mob");

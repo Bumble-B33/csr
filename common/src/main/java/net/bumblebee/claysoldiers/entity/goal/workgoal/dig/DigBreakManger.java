@@ -2,10 +2,12 @@ package net.bumblebee.claysoldiers.entity.goal.workgoal.dig;
 
 import net.bumblebee.claysoldiers.util.ErrorHandler;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -14,7 +16,7 @@ import java.util.Set;
 
 public class DigBreakManger {
     private static final DigBreakManger INSTANCE = new DigBreakManger();
-    private final Map<BlockPos, BreakData> breakPosStateMap;
+    private final Map<ResourceKey<Level>, Map<BlockPos, BreakData>> breakPosStateMap;
 
     private DigBreakManger() {
         this.breakPosStateMap = new HashMap<>();
@@ -31,12 +33,31 @@ public class DigBreakManger {
      * @param entity the Clay Soldier breaking the block
      */
     public void registerPos(BlockPos pos, Entity entity) {
-        var breakData = breakPosStateMap.get(pos);
+        var breakData = getBreakData(entity.level(), pos);
         if (breakData == null) {
-            breakPosStateMap.put(pos, new BreakData(entity));
+            putBreakData(entity, pos, new BreakData(entity));
         } else {
             breakData.addEntity(entity);
         }
+    }
+
+    @Nullable
+    private BreakData getBreakData(Level level, BlockPos pos) {
+        var map = breakPosStateMap.get(level.dimension());
+        if (map != null) {
+            return map.get(pos);
+        }
+        return null;
+    }
+
+    private void putBreakData(Entity entity, BlockPos pos, BreakData data) {
+        var map = breakPosStateMap.computeIfAbsent(entity.level().dimension(), k -> new HashMap<>());
+        map.put(pos, data);
+    }
+
+    private void removeBreakData(Level level, BlockPos pos) {
+        var map = breakPosStateMap.computeIfAbsent(level.dimension(), k -> new HashMap<>());
+        map.remove(pos);
     }
 
     /**
@@ -46,11 +67,11 @@ public class DigBreakManger {
      * @param entity the Clay Soldier breaking the block
      */
     public void unregisterPos(BlockPos pos, Entity entity) {
-        var breakData = breakPosStateMap.get(pos);
+        var breakData = getBreakData(entity.level(), pos);
         if (breakData != null) {
             breakData.removeEntity(entity);
             if (breakData.isEmpty()) {
-                breakPosStateMap.remove(pos);
+                removeBreakData(entity.level(), pos);
                 entity.level().destroyBlockProgress(entity.getId(), pos, -1);
             }
         } else {
@@ -67,7 +88,7 @@ public class DigBreakManger {
      * <p>{@code 1+} - Needed more Soldiers to break this block</p>
      */
     public int increaseBreakProgress(BlockPos pos, Level level) {
-        BreakData breakData = breakPosStateMap.get(pos);
+        BreakData breakData = getBreakData(level, pos);
         if (breakData == null) {
             ErrorHandler.INSTANCE.error("Trying to break a block with non existing break data");
             return -2;
@@ -81,7 +102,7 @@ public class DigBreakManger {
         }
 
         if (breakData.progress >= destroySpeed * 10 * 2 * soldierNeeded) {
-            breakPosStateMap.remove(pos);
+            removeBreakData(level, pos);
             level.destroyBlockProgress(breakData.getAny(), pos, -1);
             return -1;
         } else {

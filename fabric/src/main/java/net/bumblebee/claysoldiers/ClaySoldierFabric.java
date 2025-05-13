@@ -1,21 +1,6 @@
 package net.bumblebee.claysoldiers;
 
 import com.mojang.serialization.Codec;
-import net.fabricmc.api.ModInitializer;
-import net.fabricmc.fabric.api.command.v2.ArgumentTypeRegistry;
-import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
-import net.fabricmc.fabric.api.event.lifecycle.v1.CommonLifecycleEvents;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
-import net.fabricmc.fabric.api.event.registry.DynamicRegistries;
-import net.fabricmc.fabric.api.event.registry.DynamicRegistrySetupCallback;
-import net.fabricmc.fabric.api.lookup.v1.block.BlockApiLookup;
-import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry;
-import net.fabricmc.fabric.api.resource.IdentifiableResourceReloadListener;
-import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
-import net.fabricmc.fabric.api.resource.ResourcePackActivationType;
-import net.fabricmc.loader.api.FabricLoader;
 import net.bumblebee.claysoldiers.block.blueprint.EaselBlockEntity;
 import net.bumblebee.claysoldiers.block.hamsterwheel.BatteryProperty;
 import net.bumblebee.claysoldiers.block.hamsterwheel.HamsterWheelBlockEntity;
@@ -36,6 +21,22 @@ import net.bumblebee.claysoldiers.platform.FabricCapabilityManger;
 import net.bumblebee.claysoldiers.platform.FabricCommonHooks;
 import net.bumblebee.claysoldiers.platform.FabricDataMapGetter;
 import net.bumblebee.claysoldiers.platform.FabricNetworkManger;
+import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.command.v2.ArgumentTypeRegistry;
+import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
+import net.fabricmc.fabric.api.event.lifecycle.v1.CommonLifecycleEvents;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
+import net.fabricmc.fabric.api.event.registry.DynamicRegistries;
+import net.fabricmc.fabric.api.event.registry.DynamicRegistrySetupCallback;
+import net.fabricmc.fabric.api.lookup.v1.block.BlockApiLookup;
+import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry;
+import net.fabricmc.fabric.api.resource.IdentifiableResourceReloadListener;
+import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
+import net.fabricmc.fabric.api.resource.ResourcePackActivationType;
+import net.fabricmc.fabric.impl.resource.loader.ResourceManagerHelperImpl;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.commands.synchronization.SingletonArgumentInfo;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Registry;
@@ -59,6 +60,8 @@ import java.util.function.BiConsumer;
 public class ClaySoldierFabric implements ModInitializer {
     private static final ResourceLocation BLUEPRINT_ID = ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "csr_blueprint");
     public static final ResourceLocation BLUEPRINT_PACK_ID = ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, ClaySoldiersCommon.BLUEPRINT_PACK_PATH);
+    public static final ResourceLocation CSR_DEFAULT_PACK_ID = ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, ClaySoldiersCommon.CSR_DEFAULT_DATA_PACK_PATH);
+
 
     public static final BlockApiLookup<BlueprintRequestHandler, Void> BLUEPRINT_REQUEST_HANDLER_LOOKUP =
             BlockApiLookup.get(ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "blueprint_request_handler"), BlueprintRequestHandler.class, Void.class);
@@ -92,14 +95,25 @@ public class ClaySoldierFabric implements ModInitializer {
                 ))
         );
 
-        boolean blueprintPack = ResourceManagerHelper.registerBuiltinResourcePack(
+        boolean blueprintPack = ResourceManagerHelperImpl.registerBuiltinResourcePack(
                 BLUEPRINT_PACK_ID,
+                ClaySoldiersCommon.CSR_DEFAULT_PACK_LOCATION + "/" + ClaySoldiersCommon.BLUEPRINT_PACK_PATH,
                 FabricLoader.getInstance().getModContainer(ClaySoldiersCommon.MOD_ID).orElseThrow(),
                 Component.translatable(ClaySoldiersCommon.BLUEPRINT_DATA_PACK_LANG),
                 ResourcePackActivationType.NORMAL
         );
         if (!blueprintPack) {
             ClaySoldiersCommon.LOGGER.error("Blueprint Pack count not be loaded");
+        }
+
+        if (!ResourceManagerHelperImpl.registerBuiltinResourcePack(
+                CSR_DEFAULT_PACK_ID,
+                ClaySoldiersCommon.CSR_DEFAULT_PACK_LOCATION + "/" + ClaySoldiersCommon.CSR_DEFAULT_DATA_PACK_PATH,
+                FabricLoader.getInstance().getModContainer(ClaySoldiersCommon.MOD_ID).orElseThrow(),
+                Component.translatable(ClaySoldiersCommon.CSR_DEFAULT_DATA_PACK_LANG),
+                ResourcePackActivationType.DEFAULT_ENABLED
+        )) {
+            ClaySoldiersCommon.LOGGER.error("CSR Default Pack count not be loaded");
         }
 
         ClaySoldiersCommon.entityAttributes(FabricDefaultAttributeRegistry::register);
@@ -211,8 +225,7 @@ public class ClaySoldierFabric implements ModInitializer {
         hamsterWheelSpeed = config.getPositiveLong("hamsterWheelSpeed", 3, Long.MAX_VALUE);
     }
 
-    record IdentifiableResourceListenerWrapper(ResourceLocation location,
-                                               SimpleJsonResourceReloadListener resourceReloadListener) implements IdentifiableResourceReloadListener {
+    record IdentifiableResourceListenerWrapper(ResourceLocation location, SimpleJsonResourceReloadListener resourceReloadListener) implements IdentifiableResourceReloadListener {
         @Override
         public ResourceLocation getFabricId() {
             return location;
@@ -239,6 +252,5 @@ public class ClaySoldierFabric implements ModInitializer {
             manger = null;
             resourceManager = null;
         }
-
     }
 }

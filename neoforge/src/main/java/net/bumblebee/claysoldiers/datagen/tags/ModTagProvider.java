@@ -38,9 +38,11 @@ public final class ModTagProvider {
         @Override
         protected void addTags(HolderLookup.Provider pProvider) {
             this.tag(ModTags.DamageTypes.CLAY_SOLDIER_DAMAGE)
-                    .addOptional(ModDamageTypes.CLAY_HURT.location())
-                    .addOptional(ModDamageTypes.CLAY_ON_FIRE.location())
-                    .add(DamageTypes.THROWN, DamageTypes.THORNS).addTag(DamageTypeTags.IS_EXPLOSION).addOptional(NeoForgeMod.POISON_DAMAGE.location());
+                    .add(ModDamageTypes.CLAY_HURT)
+                    .add(ModDamageTypes.CLAY_ON_FIRE)
+                    .add(DamageTypes.THROWN, DamageTypes.THORNS)
+                    .addTag(DamageTypeTags.IS_EXPLOSION)
+                    .addOptional(NeoForgeMod.POISON_DAMAGE.location());
         }
     }
 

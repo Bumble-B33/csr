@@ -18,7 +18,7 @@ public interface ClaySoldierInventoryQuery {
     Iterable<ItemStack> getAllSlots();
     SoldierPropertyMapReader allProperties();
     @Nullable
-    MobEffectInstance getEffect(Holder<MobEffect> pEffect);
+    MobEffectInstance getMobEffect(Holder<MobEffect> pEffect);
     /**
      * Returns the offset color of this {@code Clay Soldier}.
      * @return the offset color of this {@code Clay Soldier}

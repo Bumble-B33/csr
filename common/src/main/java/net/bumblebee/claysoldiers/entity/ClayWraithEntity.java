@@ -31,6 +31,7 @@ import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
@@ -341,6 +342,11 @@ public class ClayWraithEntity extends ClayMobTeamOwnerEntity implements ClaySold
             onSpawn.accept(wraith);
         }
         return wraith;
+    }
+
+    @Override
+    public LevelAccessor getLevel() {
+        return level();
     }
 
     class WraithMovementControl extends MoveControl {
