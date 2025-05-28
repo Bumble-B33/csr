@@ -28,6 +28,10 @@ public enum ClaySoldierBossEquipment {
             new SoldierProperty<>(SoldierPropertyTypes.SIZE.get(), 4f),
             new SoldierProperty<>(SoldierPropertyTypes.ATTACK_RANGE.get(), 1f)
     )),
+    ZOMBIE(ModBossBehaviours.ZOMBIE, Map.of(), () -> SoldierPropertyMap.of(
+            new SoldierProperty<>(SoldierPropertyTypes.SIZE.get(), 4f),
+            new SoldierProperty<>(SoldierPropertyTypes.ATTACK_RANGE.get(), 1f)
+    )),
     RANDOM((boss, weight, team, waxed) -> setUpRandom(boss, weight));
 
     private final SetupFunction generator;

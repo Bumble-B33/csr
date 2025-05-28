@@ -20,16 +20,18 @@ import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
-import net.minecraft.core.BlockPos;
+import net.minecraft.core.NonNullList;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.Containers;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
@@ -134,6 +136,18 @@ public final class ClaySoldierCommands {
                                 .executes(c -> summonBossClaySoldier(c, ClaySoldierBossEquipment.VAMPIRE, 0, null, true))
                         )
                 )
+                .then(Commands.literal("zombie")
+                        .executes(c -> summonBossClaySoldier(c, ClaySoldierBossEquipment.ZOMBIE, 0, null, false))
+                        .then(Commands.argument("team", DefaultedResourceLocationArgument.all(context))
+                                .executes(c -> summonBossClaySoldier(c, ClaySoldierBossEquipment.ZOMBIE, 0, DefaultedResourceLocationArgument.key("team", c), false))
+                                .then(Commands.literal("waxed")
+                                        .executes(c -> summonBossClaySoldier(c, ClaySoldierBossEquipment.ZOMBIE, 0, DefaultedResourceLocationArgument.key("team", c), true))
+                                )
+                        )
+                        .then(Commands.literal("waxed")
+                                .executes(c -> summonBossClaySoldier(c, ClaySoldierBossEquipment.ZOMBIE, 0, null, true))
+                        )
+                )
                 .then(Commands.literal("random")
                         .then(Commands.argument("weight", IntegerArgumentType.integer(0, 25))
                                 .executes(c -> summonBossClaySoldier(c, ClaySoldierBossEquipment.RANDOM, IntegerArgumentType.getInteger(c, "weight"), null, false))
@@ -158,15 +172,34 @@ public final class ClaySoldierCommands {
 
         Vec3 pos = source.getPosition();
         RandomSource randomSource = random ? source.getLevel().getRandom() : RandomSource.create(42);
-        var list = type.getItems(randomSource, count);
+        NonNullList<ItemStack> list = type.getItems(randomSource, count);
         if (list.isEmpty()) {
             source.sendFailure(Component.translatable(COMMAND_ITEM_SET_FAILURE));
             return -1;
         }
-
-        Containers.dropContents(source.getLevel(), new BlockPos((int) pos.x, (int) pos.y, (int) pos.z), list);
+        list.forEach(itemStack -> dropDelayedItemStack(source.getLevel(), pos.x, pos.y, pos.z, itemStack));
         source.sendSuccess(type::getDisplayName, true);
         return 1;
+    }
+
+    private static void dropDelayedItemStack(Level level, double x, double y, double z, ItemStack stack) {
+        double width = EntityType.ITEM.getWidth();
+        double d1 = 1.0 - width;
+        double d2 = width / 2.0;
+        double d3 = Math.floor(x) + level.random.nextDouble() * d1 + d2;
+        double d4 = Math.floor(y) + level.random.nextDouble() * d1;
+        double d5 = Math.floor(z) + level.random.nextDouble() * d1 + d2;
+
+        while (!stack.isEmpty()) {
+            ItemEntity itementity = new ItemEntity(level, d3, d4, d5, stack.split(level.random.nextInt(21) + 10));
+            itementity.setDeltaMovement(
+                    level.random.triangle(0.0, 0.11485000171139836),
+                    level.random.triangle(0.2, 0.11485000171139836),
+                    level.random.triangle(0.0, 0.11485000171139836)
+            );
+            itementity.setPickUpDelay(60);
+            level.addFreshEntity(itementity);
+        }
     }
 
     private static int setTeamCommand(CommandContext<CommandSourceStack> command) throws CommandSyntaxException {

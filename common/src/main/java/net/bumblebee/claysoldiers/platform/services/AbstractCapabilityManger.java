@@ -62,7 +62,7 @@ public abstract class AbstractCapabilityManger extends SimpleJsonResourceReloadL
 
     public abstract IHamsterWheelEnergyStorage createEnergyStorage(HamsterWheelBlockEntity hamsterWheelBlockEntity);
 
-    private  <T> @Nullable T ifEnabledOrNull(Types type, ItemStack stack, T cap) {
+    private <T> @Nullable T ifEnabledOrNull(Types type, ItemStack stack, T cap) {
         return Objects.requireNonNullElse(ENABLED_MAP.get(type).get(stack.getItem()), new EnabledHolder()).isEnabled() ? cap : null;
     }
 

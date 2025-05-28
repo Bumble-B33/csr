@@ -4,13 +4,20 @@ import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.entity.boss.BossBatEntity;
 import net.bumblebee.claysoldiers.entity.boss.BossClaySoldierBehaviour;
 import net.bumblebee.claysoldiers.entity.boss.BossClaySoldierEntity;
+import net.bumblebee.claysoldiers.soldierproperties.SoldierPropertyMap;
+import net.bumblebee.claysoldiers.soldierproperties.SoldierPropertyTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.tags.DamageTypeTags;
+import net.minecraft.util.Mth;
+import net.minecraft.world.BossEvent;
+import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.storage.loot.LootTable;
 import net.minecraft.world.phys.Vec3;
@@ -22,7 +29,7 @@ import java.util.function.Supplier;
 public final class ModBossBehaviours {
     public static final ResourceKey<LootTable> DEFAULT_LOOT_TABLE = createBossLootTable("default");
     public static final ResourceKey<LootTable> VAMPIRE_LOOT_TABLE = createBossLootTable("vampire");
-
+    public static final ResourceKey<LootTable> ZOMBIE_LOOT_TABLE = createBossLootTable("zombie");
 
     public static final Supplier<BossClaySoldierBehaviour> DEFAULT = ClaySoldiersCommon.PLATFORM.registerClayBossBehaviour("default",
             () -> BossClaySoldierBehaviour.of(BossClaySoldierEntity.BossTypes.NORMAL, DEFAULT_LOOT_TABLE)
@@ -36,6 +43,7 @@ public final class ModBossBehaviours {
                         }
                         return true;
                     })
+                    .setBossEvent((boss, bar) -> bar.setColor(BossEvent.BossBarColor.BLUE))
                     .build());
 
     public static final Supplier<BossClaySoldierBehaviour> VAMPIRE = ClaySoldiersCommon.PLATFORM.registerClayBossBehaviour("vampire",
@@ -71,7 +79,44 @@ public final class ModBossBehaviours {
                         }
 
                     })
+                    .setBossEvent((boss, bar) -> bar.setColor(BossEvent.BossBarColor.RED))
                     .build());
+
+    public static final Supplier<BossClaySoldierBehaviour> ZOMBIE = ClaySoldiersCommon.PLATFORM.registerClayBossBehaviour("zombie",
+            () -> BossClaySoldierBehaviour.of(BossClaySoldierEntity.BossTypes.ZOMBIE, ZOMBIE_LOOT_TABLE)
+                    .setBossEvent((b, e) -> e.setColor(BossEvent.BossBarColor.GREEN))
+                    .setOnHurt((boss, damage) -> {
+                        if (damage.is(DamageTypes.GENERIC_KILL) || damage.is(DamageTypeTags.BYPASSES_INVULNERABILITY)) {
+                            return true;
+                        }
+
+                        if (boss.getMinionCount() > 0) {
+                            return false;
+                        }
+                        if (boss.getPhaseCompleted() <= 0 && boss.getHealth() < boss.getMaxHealth() * 0.5f && boss.level() instanceof ServerLevel serverLevel) {
+                            spawnZombieMinions(boss, serverLevel);
+                            boss.completePhase();
+                        }
+                        return true;
+                    })
+                    .setModifyBossEventProgress((boss, event) -> {
+                        if (boss.getMinionCount() > 0) {
+                            event.setOverlay(BossEvent.BossBarOverlay.NOTCHED_6);
+                            event.setProgress(boss.getMinionCount() / 6f);
+                        } else {
+                            event.setOverlay(BossEvent.BossBarOverlay.PROGRESS);
+                            event.setProgress(boss.getHealth() / boss.getMaxHealth());
+                        }
+                    })
+                    .setOnDeath((boss, damageSource) -> boss.getBossDeathLoot(damageSource).forEach(boss::spawnAtLocation))
+                    .build());
+
+    public static final Supplier<BossClaySoldierBehaviour> ZOMBIE_MINION = ClaySoldiersCommon.PLATFORM.registerClayBossBehaviour("zombie_minion",
+            () -> BossClaySoldierBehaviour.of(BossClaySoldierEntity.BossTypes.ZOMBIE, null)
+                    .setOnDeath((boss, damageSource) -> boss.notifyMinionOwnerOfDeath())
+                    .setBossEvent((boss, bar) -> bar.setVisible(false))
+                    .build());
+
 
     private ModBossBehaviours() {
     }
@@ -84,6 +129,39 @@ public final class ModBossBehaviours {
         if (bat != null) {
             bat.setLoot(loot);
         }
+    }
+
+    private static void spawnZombieMinions(BossClaySoldierEntity boss, ServerLevel level) {
+        int size = 6;
+        List<BossClaySoldierEntity> minions = new ArrayList<>(size);
+        for (int i = 0; i < size; i++) {
+            BossClaySoldierEntity minion = ModEntityTypes.BOSS_CLAY_SOLDIER_ENTITY.get().create(level);
+            if (minion == null) {
+                return;
+            }
+            minion.setBossAI(ZOMBIE_MINION.get());
+            minion.setBaseProperties(SoldierPropertyMap.of(
+                    SoldierPropertyTypes.PROTECTION.get().createProperty(-3f))
+            );
+            minion.getAttributes().getInstance(Attributes.MAX_HEALTH).setBaseValue(10f);
+            minion.getAttributes().getInstance(Attributes.ARMOR).setBaseValue(0);
+            minion.setMinionOwner(boss);
+
+
+            minion.moveTo(
+                    boss.position().x + (level.random.nextFloat()),
+                    boss.position().y,
+                    boss.position().z + (level.random.nextFloat()),
+                    Mth.wrapDegrees(level.random.nextFloat() * 360.0F),
+                    0);
+            minion.yHeadRot = minion.getYRot();
+            minion.yBodyRot = minion.getYRot();
+            minion.setClayTeamType(boss.getClayTeamType());
+            minions.add(minion);
+
+            level.addFreshEntity(minion);
+        }
+        boss.addAllMinions(minions);
     }
 
     private static ResourceKey<LootTable> createBossLootTable(String name) {

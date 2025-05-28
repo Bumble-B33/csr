@@ -60,6 +60,7 @@ public class ModDataMapAndTagProvider extends ClaySoldiersItemProvider {
     private static final CompoundTag CLAY_WRAITH_TAG = new CompoundTag();
     private static final CompoundTag DEFAULT_BOSS_TAG = new CompoundTag();
     private static final CompoundTag VAMPIRE_BOSS_TAG = new CompoundTag();
+    private static final CompoundTag ZOMBIE_BOSS_TAG = new CompoundTag();
 
     static {
         VAMPIRE_TAG.putBoolean(VampireClaySoldierEntity.ALPHA_TAG, true);
@@ -82,6 +83,12 @@ public class ModDataMapAndTagProvider extends ClaySoldiersItemProvider {
                 SoldierPropertyTypes.SIZE.get().createProperty(4f),
                 SoldierPropertyTypes.ATTACK_RANGE.get().createProperty(1f)
         ), DEFAULT_BOSS_TAG);
+
+        BossClaySoldierEntity.writeBossAIToTag(ModBossBehaviours.ZOMBIE.get(), ZOMBIE_BOSS_TAG);
+        BossClaySoldierEntity.writeBasePropertiesToTag(SoldierPropertyMap.of(
+                SoldierPropertyTypes.SIZE.get().createProperty(3.5f),
+                SoldierPropertyTypes.ATTACK_RANGE.get().createProperty(1f)
+        ), ZOMBIE_BOSS_TAG);
     }
 
     public ModDataMapAndTagProvider(PackOutput packOutput, CompletableFuture<HolderLookup.Provider> lookupProvider, ExistingFileHelper helper) {
@@ -318,7 +325,9 @@ public class ModDataMapAndTagProvider extends ClaySoldiersItemProvider {
                 ClayPoiFunctions.SelectRandom.allEqual(
                         new ClayPoiFunctions.ConvertTo(ModEntityTypes.BOSS_CLAY_SOLDIER_ENTITY.get(), DEFAULT_BOSS_TAG),
                         new ClayPoiFunctions.ConvertTo(ModEntityTypes.BOSS_CLAY_SOLDIER_ENTITY.get(), VAMPIRE_BOSS_TAG),
-                        ClayPoiFunctions.EffectFunction.addEffect(MobEffects.WITHER, 340, 9)
+                        new ClayPoiFunctions.ConvertTo(ModEntityTypes.BOSS_CLAY_SOLDIER_ENTITY.get(), ZOMBIE_BOSS_TAG),
+                        ClayPoiFunctions.EffectFunction.addEffect(MobEffects.WITHER, 340, 9),
+                        ClayPoiFunctions.EffectFunction.addEffect(MobEffects.POISON, 340, 2)
                 )), ClayPredicates.ConstantPredicate.getAlwaysTruePredicate(),
                 1f
         ));

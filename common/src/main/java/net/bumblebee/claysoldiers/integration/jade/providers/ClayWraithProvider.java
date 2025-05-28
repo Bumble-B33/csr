@@ -23,6 +23,9 @@ public enum ClayWraithProvider implements CommonEntityProvider<ClayWraithEntity>
     @Override
     public void appendTooltip(ClayWraithEntity entity, CommonTooltipHelper tooltip, boolean detail, CompoundTag serverData) {
         tooltip.add(Component.translatable(LIMITED_LIFE).append(": ").withStyle(ChatFormatting.DARK_GRAY));
+        if (serverData.isEmpty()) {
+            return;
+        }
         if (serverData.getBoolean(SERVER_DATA_LIMITED_LIFE_TAG)) {
             tooltip.append(Component.translatable(LIMITED_LIFE_TIME, serverData.getInt(SERVER_DATA_LIMITED_LIFE_TIME_TAG)).withStyle(ChatFormatting.RED));
         } else {

@@ -111,6 +111,32 @@ public class ModLoottableProvider extends LootTableProvider {
                             )
 
             );
+            biConsumer.accept(
+                    ModBossBehaviours.ZOMBIE_LOOT_TABLE,
+                    LootTable.lootTable()
+                            .withPool(LootPool.lootPool()
+                                    .setRolls(ConstantValue.exactly(1f))
+                                    .add(LootItem.lootTableItem(ModItems.CLAY_STAFF))
+                                    .add(LootItem.lootTableItem(Items.BOOK)
+                                            .apply(new SetEnchantmentsFunction.Builder()
+                                                    .withEnchantment(FakeHolder.createForSlingShot(lookup), ConstantValue.exactly(1f))
+                                            )
+                                    )
+                                    .when(LootItemKilledByPlayerCondition.killedByPlayer())
+                            )
+                            .withPool(LootPool.lootPool()
+                                    .setRolls(UniformGenerator.between(3f, 5f))
+                                    .add(LootItem.lootTableItem(Items.CLAY_BALL)
+                                            .setWeight(10)
+                                            .apply(SetItemCountFunction.setCount(UniformGenerator.between(1f, 2f)))
+                                    )
+                                    .add(LootItem.lootTableItem(Items.CLAY)
+                                            .setWeight(2)
+                                            .apply(SetItemCountFunction.setCount(ConstantValue.exactly(1f)))
+                                    )
+                            )
+
+            );
         }
     }
 

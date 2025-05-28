@@ -35,6 +35,10 @@ public enum ZombieClaySoldierProvider implements CommonEntityProvider<ZombieClay
         tooltip.append(Component.translatable(PREVIOUS_CLAY_MOB_TEAM, previousTeam.getDisplayNameWithColor(c -> c.getColor(entity, 0))).withStyle(ChatFormatting.DARK_GRAY));
         tooltip.add(CommonComponents.SPACE);
         tooltip.append(Component.translatable(CURABLE).append(": ").withStyle(ChatFormatting.DARK_GRAY));
+        if (serverData.isEmpty()) {
+            return;
+        }
+
         if (serverData.getBoolean(SERVER_DATA_CURABLE_TAG)) {
             tooltip.append(Component.translatable(CURABLE_TRUE).withStyle(ChatFormatting.GREEN));
         } else {
