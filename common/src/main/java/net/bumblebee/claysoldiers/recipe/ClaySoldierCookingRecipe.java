@@ -10,46 +10,144 @@ import net.minecraft.world.level.Level;
 
 import java.util.function.Supplier;
 
-public class ClaySoldierCookingRecipe extends AbstractCookingRecipe {
-    private final Supplier<RecipeSerializer<ClaySoldierCookingRecipe>> serializer;
-
-    private ClaySoldierCookingRecipe(Supplier<RecipeSerializer<ClaySoldierCookingRecipe>> serializer, RecipeType<?> pType, int cookingTime) {
-        super(pType, "clay_mob_cooking", CookingBookCategory.MISC, Ingredient.of(ModItems.CLAY_SOLDIER.get()), ModItems.BRICKED_CLAY_SOLDIER.get().getDefaultInstance(), 1, cookingTime);
-        this.serializer = serializer;
+public class ClaySoldierCookingRecipe {
+    public static ClaySoldierSmeltingRecipe smelting() {
+        return new ClaySoldierSmeltingRecipe(ModRecipes.CLAY_SOLDIER_SMELTING, 100);
+    }
+    public static ClaySoldierBlastingRecipe blasting() {
+        return new ClaySoldierBlastingRecipe(ModRecipes.CLAY_SOLDIER_BLASTING, 50);
+    }
+    public static ClaySoldierCampfireRecipe campfire() {
+        return new ClaySoldierCampfireRecipe(ModRecipes.CLAY_SOLDIER_CAMPFIRE, 200);
+    }
+    public static ClaySoldierSmokingRecipe smoking() {
+        return new ClaySoldierSmokingRecipe(ModRecipes.CLAY_SOLDIER_SMOKING, 300);
     }
 
-    public static ClaySoldierCookingRecipe smelting() {
-        return new ClaySoldierCookingRecipe(ModRecipes.CLAY_SOLDIER_SMELTING, RecipeType.SMELTING, 100);
-    }
-    public static ClaySoldierCookingRecipe blasting() {
-        return new ClaySoldierCookingRecipe(ModRecipes.CLAY_SOLDIER_BLASTING, RecipeType.BLASTING, 50);
-    }
-    public static ClaySoldierCookingRecipe campfire() {
-        return new ClaySoldierCookingRecipe(ModRecipes.CLAY_SOLDIER_CAMPFIRE, RecipeType.CAMPFIRE_COOKING, 200);
-    }
-    public static ClaySoldierCookingRecipe smoking() {
-        return new ClaySoldierCookingRecipe(ModRecipes.CLAY_SOLDIER_SMOKING, RecipeType.CAMPFIRE_COOKING, 300);
-    }
-
-    @Override
-    public boolean matches(SingleRecipeInput recipeInput, Level p_345375_) {
+    private static boolean recipeMatches(SingleRecipeInput recipeInput) {
         return recipeInput.item().getItem() instanceof BrickedItemHolder;
     }
 
-    @Override
-    public ItemStack assemble(SingleRecipeInput singleRecipeInput, HolderLookup.Provider p_346030_) {
+    private static ItemStack assembleRecipe(SingleRecipeInput singleRecipeInput) {
         var stack = singleRecipeInput.item();
         var bricked = (BrickedItemHolder) stack.getItem();
         return bricked.getBrickedItem(stack);
     }
 
-    @Override
-    public boolean canCraftInDimensions(int pWidth, int pHeight) {
-        return true;
+    public static class ClaySoldierSmeltingRecipe extends SmeltingRecipe  {
+        private final Supplier<RecipeSerializer<ClaySoldierSmeltingRecipe>> serializer;
+
+        public ClaySoldierSmeltingRecipe(Supplier<RecipeSerializer<ClaySoldierSmeltingRecipe>> serializer, int cookingTime) {
+            super("clay_mob_cooking", CookingBookCategory.MISC, Ingredient.of(ModItems.CLAY_SOLDIER.get()), ModItems.BRICKED_CLAY_SOLDIER.get().getDefaultInstance(), 1, cookingTime);
+            this.serializer = serializer;
+        }
+
+        @Override
+        public RecipeSerializer<?> getSerializer() {
+            return serializer.get();
+        }
+
+        @Override
+        public boolean matches(SingleRecipeInput input, Level level) {
+            return recipeMatches(input);
+        }
+
+        @Override
+        public ItemStack assemble(SingleRecipeInput input, HolderLookup.Provider registries) {
+            return assembleRecipe(input);
+        }
+
+        @Override
+        public boolean canCraftInDimensions(int width, int height) {
+            return true;
+        }
     }
 
-    @Override
-    public RecipeSerializer<ClaySoldierCookingRecipe> getSerializer() {
-        return serializer.get();
+    public static class ClaySoldierBlastingRecipe extends BlastingRecipe  {
+        private final Supplier<RecipeSerializer<ClaySoldierBlastingRecipe>> serializer;
+
+        public ClaySoldierBlastingRecipe(Supplier<RecipeSerializer<ClaySoldierBlastingRecipe>> serializer, int cookingTime) {
+            super("clay_mob_cooking", CookingBookCategory.MISC, Ingredient.of(ModItems.CLAY_SOLDIER.get()), ModItems.BRICKED_CLAY_SOLDIER.get().getDefaultInstance(), 1, cookingTime);
+            this.serializer = serializer;
+        }
+
+        @Override
+        public RecipeSerializer<?> getSerializer() {
+            return serializer.get();
+        }
+
+        @Override
+        public boolean matches(SingleRecipeInput input, Level level) {
+            return recipeMatches(input);
+        }
+
+        @Override
+        public ItemStack assemble(SingleRecipeInput input, HolderLookup.Provider registries) {
+            return assembleRecipe(input);
+        }
+
+        @Override
+        public boolean canCraftInDimensions(int width, int height) {
+            return true;
+        }
     }
+
+    public static class ClaySoldierCampfireRecipe extends CampfireCookingRecipe  {
+        private final Supplier<RecipeSerializer<ClaySoldierCampfireRecipe>> serializer;
+
+        public ClaySoldierCampfireRecipe(Supplier<RecipeSerializer<ClaySoldierCampfireRecipe>> serializer, int cookingTime) {
+            super("clay_mob_cooking", CookingBookCategory.MISC, Ingredient.of(ModItems.CLAY_SOLDIER.get()), ModItems.BRICKED_CLAY_SOLDIER.get().getDefaultInstance(), 1, cookingTime);
+            this.serializer = serializer;
+        }
+
+        @Override
+        public RecipeSerializer<?> getSerializer() {
+            return serializer.get();
+        }
+
+        @Override
+        public boolean matches(SingleRecipeInput input, Level level) {
+            return recipeMatches(input);
+        }
+
+        @Override
+        public ItemStack assemble(SingleRecipeInput input, HolderLookup.Provider registries) {
+            return assembleRecipe(input);
+        }
+
+        @Override
+        public boolean canCraftInDimensions(int width, int height) {
+            return true;
+        }
+    }
+
+    public static class ClaySoldierSmokingRecipe extends SmokingRecipe  {
+        private final Supplier<RecipeSerializer<ClaySoldierSmokingRecipe>> serializer;
+
+        public ClaySoldierSmokingRecipe(Supplier<RecipeSerializer<ClaySoldierSmokingRecipe>> serializer, int cookingTime) {
+            super("clay_mob_cooking", CookingBookCategory.MISC, Ingredient.of(ModItems.CLAY_SOLDIER.get()), ModItems.BRICKED_CLAY_SOLDIER.get().getDefaultInstance(), 1, cookingTime);
+            this.serializer = serializer;
+        }
+
+        @Override
+        public RecipeSerializer<?> getSerializer() {
+            return serializer.get();
+        }
+
+        @Override
+        public boolean matches(SingleRecipeInput input, Level level) {
+            return recipeMatches(input);
+        }
+
+        @Override
+        public ItemStack assemble(SingleRecipeInput input, HolderLookup.Provider registries) {
+            return assembleRecipe(input);
+        }
+
+        @Override
+        public boolean canCraftInDimensions(int width, int height) {
+            return true;
+        }
+    }
+
 }

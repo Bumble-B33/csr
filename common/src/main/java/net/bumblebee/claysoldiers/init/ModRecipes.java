@@ -22,17 +22,17 @@ public final class ModRecipes {
             () -> new SimpleCraftingRecipeSerializer<>(ShearBladeRecipe::new)
     );
 
-    public static final Supplier<RecipeSerializer<ClaySoldierCookingRecipe>> CLAY_SOLDIER_SMELTING = ClaySoldiersCommon.PLATFORM.registerRecipe("clay_soldier_smelting",
+    public static final Supplier<RecipeSerializer<ClaySoldierCookingRecipe.ClaySoldierSmeltingRecipe>> CLAY_SOLDIER_SMELTING = ClaySoldiersCommon.PLATFORM.registerRecipe("clay_soldier_smelting",
             () -> new SimpleCookingSerializer<>((pGroup, pCategory, pIngredient, pResult, pExperience, pCookingTime) -> ClaySoldierCookingRecipe.smelting(), 100)
     );
-    public static final Supplier<RecipeSerializer<ClaySoldierCookingRecipe>> CLAY_SOLDIER_BLASTING = ClaySoldiersCommon.PLATFORM.registerRecipe("clay_soldier_blasting",
-            () -> new SimpleCookingSerializer<>((pGroup, pCategory, pIngredient, pResult, pExperience, pCookingTime) -> ClaySoldierCookingRecipe.smelting(), 50)
+    public static final Supplier<RecipeSerializer<ClaySoldierCookingRecipe.ClaySoldierBlastingRecipe>> CLAY_SOLDIER_BLASTING = ClaySoldiersCommon.PLATFORM.registerRecipe("clay_soldier_blasting",
+            () -> new SimpleCookingSerializer<>((pGroup, pCategory, pIngredient, pResult, pExperience, pCookingTime) -> ClaySoldierCookingRecipe.blasting(), 50)
     );
-    public static final Supplier<RecipeSerializer<ClaySoldierCookingRecipe>> CLAY_SOLDIER_CAMPFIRE = ClaySoldiersCommon.PLATFORM.registerRecipe("clay_soldier_campfire",
-            () -> new SimpleCookingSerializer<>((pGroup, pCategory, pIngredient, pResult, pExperience, pCookingTime) -> ClaySoldierCookingRecipe.smelting(), 200)
+    public static final Supplier<RecipeSerializer<ClaySoldierCookingRecipe.ClaySoldierCampfireRecipe>> CLAY_SOLDIER_CAMPFIRE = ClaySoldiersCommon.PLATFORM.registerRecipe("clay_soldier_campfire",
+            () -> new SimpleCookingSerializer<>((pGroup, pCategory, pIngredient, pResult, pExperience, pCookingTime) -> ClaySoldierCookingRecipe.campfire(), 200)
     );
-    public static final Supplier<RecipeSerializer<ClaySoldierCookingRecipe>> CLAY_SOLDIER_SMOKING = ClaySoldiersCommon.PLATFORM.registerRecipe("clay_soldier_smoking",
-            () -> new SimpleCookingSerializer<>((pGroup, pCategory, pIngredient, pResult, pExperience, pCookingTime) -> ClaySoldierCookingRecipe.smelting(), 300)
+    public static final Supplier<RecipeSerializer<ClaySoldierCookingRecipe.ClaySoldierSmokingRecipe>> CLAY_SOLDIER_SMOKING = ClaySoldiersCommon.PLATFORM.registerRecipe("clay_soldier_smoking",
+            () -> new SimpleCookingSerializer<>((pGroup, pCategory, pIngredient, pResult, pExperience, pCookingTime) -> ClaySoldierCookingRecipe.smoking(), 300)
     );
 
     public static void init() {
