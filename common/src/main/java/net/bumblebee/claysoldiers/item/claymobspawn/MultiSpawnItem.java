@@ -2,11 +2,13 @@ package net.bumblebee.claysoldiers.item.claymobspawn;
 
 import net.bumblebee.claysoldiers.entity.ClayMobEntity;
 import net.bumblebee.claysoldiers.entity.variant.NameableVariant;
+import net.bumblebee.claysoldiers.init.ModCriterions;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.player.Player;
@@ -51,7 +53,7 @@ public abstract class MultiSpawnItem<T extends Entity> extends Item {
             }
 
             @Override
-            public Consumer<T> modifyBeforeSpawn(ItemStack stack) {
+            public Consumer<T> modifyBeforeSpawn(ItemStack stack, @Nullable Player player) {
                 return clayMob -> {
                     clayMob.setSpawnedFrom(stack, true);
                     clayMob.setVariant(variant);
@@ -83,15 +85,15 @@ public abstract class MultiSpawnItem<T extends Entity> extends Item {
     /**
      * Spawns multiple {@link T Entities}.
      * @param doll the {@code ItemStack} from which the entities should be spawned.
-     * @param count the amount to spawn
-     * @return the amount spawned
+     * @param count the amountRequired to spawn
+     * @return the amountRequired spawned
      */
     public int spawnWithCount(ItemStack doll, UseOnContext pContext, int count) {
         if (!isValid(doll, pContext.getLevel(), pContext.getPlayer()) || count <= 0) {
             return -1;
         }
         Level level = pContext.getLevel();
-        if (!(level instanceof ServerLevel)) {
+        if (!(level instanceof ServerLevel serverLevel)) {
             return 0;
         } else {
             BlockPos blockpos = pContext.getClickedPos();
@@ -116,21 +118,27 @@ public abstract class MultiSpawnItem<T extends Entity> extends Item {
 
                 for (int i = 0; i < count;i++) {
                     if (entitytype.spawn(
-                            (ServerLevel) level,
-                            modifyBeforeSpawn(doll.copyWithCount(1)),
+                            serverLevel,
+                            modifyBeforeSpawn(doll.copyWithCount(1), pContext.getPlayer()),
                             updatedBlockPos,
-                            MobSpawnType.SPAWN_EGG,
+                            EntitySpawnReason.SPAWN_ITEM_USE,
                             true,
                             !Objects.equals(blockpos, updatedBlockPos) && direction == Direction.UP) != null) {
                         level.gameEvent(pContext.getPlayer(), GameEvent.ENTITY_PLACE, blockpos);
                     }
                 }
-
+                if (pContext.getPlayer() instanceof ServerPlayer serverPlayer) {
+                    ModCriterions.MULTI_SPAWN_ITEM_USE_TRIGGER.get().trigger(serverPlayer, getType(), count);
+                }
             }
             return count;
         }
     }
 
+    /**
+     * Called before the {@link T Entity} is spawned.
+     * @return whether the {@link T Entity} can be spawned
+     */
     protected boolean isValid(ItemStack stack, Level level, @Nullable Player player) {
         return true;
     }
@@ -145,7 +153,7 @@ public abstract class MultiSpawnItem<T extends Entity> extends Item {
      * @param stack the stack that is spawning the entity
      * @return the consumer to modify the entity with
      */
-    public abstract Consumer<T> modifyBeforeSpawn(ItemStack stack);
+    public abstract Consumer<T> modifyBeforeSpawn(ItemStack stack, Player player);
 
     /**
      * Retrieves the DataComponents needed for spawning this {@link T Entity}

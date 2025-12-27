@@ -3,8 +3,11 @@ package net.bumblebee.claysoldiers.entity.soldier;
 import net.bumblebee.claysoldiers.entity.ClayMobEntity;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.player.Player;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Consumer;
 
@@ -24,7 +27,7 @@ public interface ClaySoldierLike {
         if (asClayMob().isRemoved()) {
             return null;
         } else {
-            T convertTo = pEntityType.create(asClayMob().level());
+            T convertTo = pEntityType.create(asClayMob().level(), EntitySpawnReason.CONVERSION);
             if (convertTo == null) {
                 return null;
             } else {
@@ -93,7 +96,8 @@ public interface ClaySoldierLike {
      *
      * @param oldSoldier the Soldier to be converted
      * @param tag        additional conversion data
+     * @param cause The player how should get credit for this conversion
      */
-    default void onConversion(ClayMobEntity oldSoldier, CompoundTag tag) {
+    default void onConversion(ClayMobEntity oldSoldier, CompoundTag tag, @Nullable Player cause) {
     }
 }

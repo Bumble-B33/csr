@@ -32,7 +32,7 @@ public class FabricCapabilityManger extends AbstractCapabilityManger implements 
     }
 
     @Override
-    public IBlockCache<AssignablePoiCapability> createPoiCache(ServerLevel level, BlockPos pos) {
+    public IBlockCache<AssignableWorksiteCapability> createPoiCache(ServerLevel level, BlockPos pos) {
         return new FabricPoiCache(BlockApiCache.create(ClaySoldierFabric.ASSIGNABLE_POI_LOOKUP, level, pos));
     }
 
@@ -57,14 +57,14 @@ public class FabricCapabilityManger extends AbstractCapabilityManger implements 
             return cache.find(null);
         }
     }
-    private record FabricPoiCache(BlockApiCache<AssignablePoiCapability, Void> cache) implements IBlockCache<AssignablePoiCapability> {
+    private record FabricPoiCache(BlockApiCache<AssignableWorksiteCapability, Void> cache) implements IBlockCache<AssignableWorksiteCapability> {
         @Override
         public BlockPos pos() {
             return cache.getPos();
         }
 
         @Override
-        public @Nullable AssignablePoiCapability getCapability() {
+        public @Nullable AssignableWorksiteCapability getCapability() {
             return cache.find(null);
         }
     }

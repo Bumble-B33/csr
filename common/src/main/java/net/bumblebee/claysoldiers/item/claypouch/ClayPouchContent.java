@@ -1,6 +1,7 @@
 package net.bumblebee.claysoldiers.item.claypouch;
 
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.bumblebee.claysoldiers.blueprint.templates.BlueprintUtil;
 import net.bumblebee.claysoldiers.init.ModDataComponents;
@@ -24,35 +25,49 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.UnaryOperator;
 
 public class ClayPouchContent implements TooltipComponent {
-    public static final int MAX_CAPACITY = 256;
+    public static final int ABSOLUTE_MAX_CAPACITY = 1024;
+    private static final Codec<MultiSpawnItem<?>> MULTI_SPAWN_ITEM_CODEC = BuiltInRegistries.ITEM.byNameCodec()
+            .comapFlatMap(item -> {
+                if (item instanceof MultiSpawnItem<?> multiSpawnItem) {
+                    return DataResult.success(multiSpawnItem);
+                } else {
+                    return DataResult.error(() -> item + " is not a " + MultiSpawnItem.class.getSimpleName());
+                }
+            }, Function.identity());
+
     public static final Codec<ClayPouchContent> CODEC = RecordCodecBuilder.create(in -> in.group(
-            BuiltInRegistries.ITEM.byNameCodec().fieldOf("doll").forGetter(s -> s.item),
-            Codec.intRange(0, MAX_CAPACITY).fieldOf("count").forGetter(s -> s.count),
+            MULTI_SPAWN_ITEM_CODEC.fieldOf("doll").forGetter(s -> s.item),
+            Codec.intRange(0, ABSOLUTE_MAX_CAPACITY).fieldOf("count").forGetter(s -> s.count),
+            Codec.intRange(0, ABSOLUTE_MAX_CAPACITY).fieldOf("max_capacity").forGetter(s -> s.maxCapacity),
             DataComponentMap.CODEC.optionalFieldOf("data", DataComponentMap.EMPTY).forGetter(s -> s.data)
-    ).apply(in, ClayPouchContent::createUnsafe));
+    ).apply(in, ClayPouchContent::new));
     public static final StreamCodec<RegistryFriendlyByteBuf, ClayPouchContent> STREAM_CODEC = StreamCodec.composite(
             ByteBufCodecs.registry(Registries.ITEM), s -> s.item,
             ByteBufCodecs.VAR_INT, s -> s.count,
+            ByteBufCodecs.VAR_INT, s -> s.maxCapacity,
             ByteBufCodecs.optional(ByteBufCodecs.fromCodec(DataComponentMap.CODEC)), ClayPouchContent::dataComponents,
-            (item, count, opt) -> ClayPouchContent.createUnsafe(item, count, opt.orElse(DataComponentMap.EMPTY))
+            (item, count, maxCap, opt) -> ClayPouchContent.createUnsafe(item, count, maxCap, opt.orElse(DataComponentMap.EMPTY))
     );
 
     private final MultiSpawnItem<?> item;
     private final int count;
     private final DataComponentMap data;
+    private final int maxCapacity;
 
-    public ClayPouchContent(MultiSpawnItem<?> item, int count, DataComponentMap map) {
+    public ClayPouchContent(MultiSpawnItem<?> item, int count, int maxCapacity, DataComponentMap map) {
         this.item = item;
         this.count = count;
         this.data = map;
+        this.maxCapacity = Math.min(ABSOLUTE_MAX_CAPACITY, maxCapacity);
     }
 
-    private static ClayPouchContent createUnsafe(Item item, int count, DataComponentMap map) {
+    private static ClayPouchContent createUnsafe(Item item, int count, int maxCapacity, DataComponentMap map) {
         try {
-            return new ClayPouchContent((MultiSpawnItem<?>) item, count, map);
+            return new ClayPouchContent((MultiSpawnItem<?>) item, count, maxCapacity, map);
         } catch (ClassCastException e) {
             throw new IllegalArgumentException("%s does not extend %s".formatted(item, MultiSpawnItem.class.getSimpleName()));
         }
@@ -62,30 +77,34 @@ public class ClayPouchContent implements TooltipComponent {
         return item.getPouchColor(data, player);
     }
 
-    public int maxRemaining() {
-        return MAX_CAPACITY - count;
+    public int maxRemaining(int newMaxCapacity) {
+        return newMaxCapacity - count;
+    }
+
+    public int getMaxCapacity() {
+        return maxCapacity;
     }
 
     /**
      * Returns a value between [1 - 13]
      */
-    public int getFillPercent() {
-        return (int) Math.clamp(((count * 13f) / MAX_CAPACITY), 1, 13);
+    public int getFillPercent(int maxCapacity) {
+        return (int) Math.clamp(((count * 13f) / maxCapacity), 1, 13);
     }
 
     public int getCount() {
         return count;
     }
 
-    public ClayPouchContent increment(int grow) {
-        return new ClayPouchContent(item, this.count + grow, data);
+    public ClayPouchContent increment(int grow, int maxCapacity) {
+        return new ClayPouchContent(item, this.count + grow, maxCapacity, data);
     }
 
-    public @Nullable ClayPouchContent shrink(int amount) {
+    public @Nullable ClayPouchContent shrink(int amount, int maxCapacity) {
         if (amount >= count) {
             return null;
         }
-        return increment(-amount);
+        return increment(-amount, maxCapacity);
     }
 
     public boolean isFor(ItemStack stack) {
@@ -99,14 +118,14 @@ public class ClayPouchContent implements TooltipComponent {
         return item;
     }
 
-    public @Nullable ClayPouchContent takeStack(Consumer<ItemStack> taken, HolderLookup.Provider registries) {
+    public @Nullable ClayPouchContent takeStack(Consumer<ItemStack> taken, int maxCapacity, HolderLookup.Provider registries) {
         int used = Math.min(count, item.getDefaultMaxStackSize());
         ItemStack stack = createStack(registries);
         stack.setCount(used);
         dataComponents().ifPresent(stack::applyComponents);
         taken.accept(stack);
 
-        return shrink(used);
+        return shrink(used, maxCapacity);
     }
 
     public ItemStack createStack(HolderLookup.Provider registries) {
@@ -116,12 +135,12 @@ public class ClayPouchContent implements TooltipComponent {
     /**
      * Inserts the give {@code ItemStack} into this Pouch
      * @param stack the {@code ItemStack} to insert.
-     * @param onSuccess called when the {@code ItemStack} got successfully inserted with the new {@code ClayPouchContent} and the inserted amount
+     * @param onSuccess called when the {@code ItemStack} got successfully inserted with the new {@code ClayPouchContent} and the inserted amountRequired
      */
-    public void insert(ItemStack stack, BiConsumer<ClayPouchContent, Integer> onSuccess) {
+    public void insert(ItemStack stack, int maxCapacity, BiConsumer<ClayPouchContent, Integer> onSuccess) {
         if (isFor(stack)) {
-            int inserted = Math.min(stack.getCount(), maxRemaining());
-            onSuccess.accept(increment(inserted), inserted);
+            int inserted = Math.min(stack.getCount(), maxRemaining(maxCapacity));
+            onSuccess.accept(increment(inserted, maxCapacity), inserted);
         }
     }
 
@@ -142,6 +161,10 @@ public class ClayPouchContent implements TooltipComponent {
             return true;
         }
         return false;
+    }
+
+    public static int verifyMaxCapacity(int maxCapacity) {
+        return Math.min(maxCapacity, ABSOLUTE_MAX_CAPACITY);
     }
 
     @Override

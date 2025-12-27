@@ -68,7 +68,7 @@ neoForge {
             client()
         }
         data {
-            data()
+            clientData()
             programArguments.addAll '--mod', project.mod_id, '--all', '--output', file('../common/src/generated/resources').getAbsolutePath(), '--existing', file('../common/src/main/resources/').getAbsolutePath()
         }
         server {
@@ -92,18 +92,18 @@ dependencies {
 
     implementation "net.tslat.smartbrainlib:SmartBrainLib-neoforge-${minecraft_version}:${sbl_version}"
 
-
-    compileOnly("com.simibubi.create:create-${minecraft_version}:${create_version}:slim") { transitive = false }
-    compileOnly("net.createmod.ponder:Ponder-NeoForge-${minecraft_version}:${ponder_version}")
+    // Todo
+    // compileOnly("com.simibubi.create:create-${minecraft_version}:${create_version}:slim") { transitive = false }
+    // compileOnly("net.createmod.ponder:Ponder-NeoForge-${minecraft_version}:${ponder_version}")
     //compileOnly("dev.engine-room.flywheel:flywheel-neoforge-api-${minecraft_version}:${flywheel_version}")
     //runtimeOnly("dev.engine-room.flywheel:flywheel-neoforge-${minecraft_version}:${flywheel_version}")
-    compileOnly("com.tterrag.registrate:Registrate:${registrate_version}")
+    // compileOnly("com.tterrag.registrate:Registrate:${registrate_version}")
 
     // Needed for DataGen or Create Crashes
     runtimeOnly("top.theillusivec4.curios:curios-neoforge:${curios_version}")
     compileOnly("top.theillusivec4.curios:curios-neoforge:${curios_version}:api")
 
-    implementation "curse.maven:just-enough-resources-jer-240630:${jer_id_neo}"
+    //implementation "curse.maven:just-enough-resources-jer-240630:${jer_id_neo}"
 }
 
 sourceSets.main.resources { srcDir 'src/generated/resources' }

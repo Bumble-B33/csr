@@ -4,6 +4,7 @@ import net.bumblebee.claysoldiers.entity.ClayMobEntity;
 import net.bumblebee.claysoldiers.init.ModEntityTypes;
 import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
@@ -32,20 +33,20 @@ public class ClaySoldierThrownPotion extends ThrownPotion {
 
     @Override
     protected void onHit(HitResult pResult) {
-        if (!this.level().isClientSide) {
+        if (level() instanceof ServerLevel serverLevel) {
             ItemStack itemstack = this.getItem();
             var potionContents = itemstack.get(DataComponents.POTION_CONTENTS);
             if (potionContents == null) {
                 return;
             }
             if (potionContents.hasEffects()) {
-                this.applySplash(potionContents.getAllEffects(), pResult.getType() == HitResult.Type.ENTITY ? ((EntityHitResult) pResult).getEntity() : null);
+                this.applySplash(serverLevel, potionContents.getAllEffects(), pResult.getType() == HitResult.Type.ENTITY ? ((EntityHitResult) pResult).getEntity() : null);
             }
             this.discard();
         }
     }
 
-    private void applySplash(Iterable<MobEffectInstance> pEffectInstances, @Nullable Entity pTarget) {
+    private void applySplash(ServerLevel level, Iterable<MobEffectInstance> pEffectInstances, @Nullable Entity pTarget) {
         AABB aabb = this.getBoundingBox().inflate(4.0, 2.0, 4.0);
         List<ClayMobEntity> list = this.level().getEntitiesOfClass(ClayMobEntity.class, aabb).stream().filter((s) -> s.sameTeamAs(this.getOwner())).toList();
         if (!list.isEmpty()) {
@@ -65,7 +66,7 @@ public class ClaySoldierThrownPotion extends ThrownPotion {
                         for (MobEffectInstance mobeffectinstance : pEffectInstances) {
                             Holder<MobEffect> mobeffect = mobeffectinstance.getEffect();
                             if (mobeffect.value().isInstantenous()) {
-                                mobeffect.value().applyInstantenousEffect(this, this.getOwner(), clayMobEntity, mobeffectinstance.getAmplifier(), selfHitDistance);
+                                mobeffect.value().applyInstantenousEffect(level, this, this.getOwner(), clayMobEntity, mobeffectinstance.getAmplifier(), selfHitDistance);
                             } else {
                                 int durationNew = mobeffectinstance.mapDuration(duration -> (int) (selfHitDistance * (double) duration + 0.5));
                                 MobEffectInstance newMobEffectInstance = new MobEffectInstance(

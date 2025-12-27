@@ -5,9 +5,9 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.serialization.Codec;
 import io.netty.buffer.ByteBuf;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
+import net.bumblebee.claysoldiers.datamap.armor.accessories.AccessoryRenderState;
 import net.bumblebee.claysoldiers.datamap.armor.accessories.IAccessoryRenderLayer;
 import net.bumblebee.claysoldiers.datamap.armor.accessories.RenderableAccessory;
-import net.bumblebee.claysoldiers.entity.soldier.AbstractClaySoldierEntity;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.OverlayTexture;
@@ -27,7 +27,7 @@ public class SnorkelRenderable implements RenderableAccessory {
     }
 
     @Override
-    public void render(IAccessoryRenderLayer renderedFrom, PoseStack pPoseStack, MultiBufferSource pBuffer, int pPackedLight, AbstractClaySoldierEntity claySoldier, float pPartialTick, boolean isFalling) {
+    public void render(IAccessoryRenderLayer renderedFrom, PoseStack pPoseStack, MultiBufferSource pBuffer, int pPackedLight, AccessoryRenderState claySoldier) {
         VertexConsumer bambooStickBuffer = pBuffer.getBuffer(RenderType.entitySolid(textureLocation));
         renderedFrom.getSoldierModel().renderBambooStick(pPoseStack, bambooStickBuffer, pPackedLight, OverlayTexture.NO_OVERLAY);
     }

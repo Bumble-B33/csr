@@ -52,6 +52,11 @@ public class SoldierPoiWithBlock extends SoldierPoiWithSource<SoldierPoiWithBloc
     }
 
     @Override
+    protected Type getType() {
+        return Type.BLOCK;
+    }
+
+    @Override
     protected boolean stillValid(AbstractClaySoldierEntity soldier) {
         return soldier.level().getBlockState(getSource().pos).is(getSource().block);
     }

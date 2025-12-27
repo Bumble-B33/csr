@@ -9,12 +9,13 @@ import net.bumblebee.claysoldiers.claysoldierpredicate.ClayPredicates;
 import net.bumblebee.claysoldiers.commands.ClaySoldierCommands;
 import net.bumblebee.claysoldiers.commands.ColorHelperArgumentType;
 import net.bumblebee.claysoldiers.commands.DefaultedResourceLocationArgument;
+import net.bumblebee.claysoldiers.datagen.advancements.ModAdvancements;
 import net.bumblebee.claysoldiers.datamap.SoldierEquipmentSlot;
 import net.bumblebee.claysoldiers.entity.ClayMobEntity;
+import net.bumblebee.claysoldiers.entity.VampireSubjugate;
 import net.bumblebee.claysoldiers.entity.goal.workgoal.*;
 import net.bumblebee.claysoldiers.entity.goal.workgoal.dig.DigHoleGoal;
 import net.bumblebee.claysoldiers.entity.soldier.AbstractClaySoldierEntity;
-import net.bumblebee.claysoldiers.entity.soldier.VampireSubjugate;
 import net.bumblebee.claysoldiers.entity.soldier.status.SoldierStatusManager;
 import net.bumblebee.claysoldiers.init.*;
 import net.bumblebee.claysoldiers.integration.jade.JadeRegistry;
@@ -84,6 +85,7 @@ public class ModLangProvider extends LanguageProvider {
         addItem(ModItems.CLAY_SOLDIER, "Clay Soldier");
         add(ModItems.CLAY_SOLDIER.get().getDescriptionId() + ClaySoldierSpawnItem.DESCRIPTION_ID_PREFIX, "%s Clay Soldier");
         add(ClaySoldierSpawnItem.PLAYER_LANG, "Created by %s");
+        add(ClaySoldierSpawnItem.DESCRIPTION_LANG, "Throws Rocks to defend you");
 
         addItem(ModItems.BRICKED_CLAY_SOLDIER, "Bricked Clay Soldier");
         addItem(ModItems.SHEAR_BLADE, "Shear Blade");
@@ -96,6 +98,8 @@ public class ModLangProvider extends LanguageProvider {
         addItem(ModItems.CLAY_COOKIE, "Clay Cookie");
         addItem(ModItems.TEST_ITEM, "Debug Item");
         addItem(ModItems.CLAY_GOGGLES, "Clay Goggles");
+        addItem(ModItems.SLIME_BOOTS, "Slime Boots");
+
         addItem(ModItems.CLAY_BRUSH, "Clay Brush");
         add(ClayBrushItem.POI_SET_LANG, "Poi: (%s)");
         add(ClayBrushItem.POI_CLEAR_LANG, "Poi cleared");
@@ -119,7 +123,7 @@ public class ModLangProvider extends LanguageProvider {
         addKeyableProperty(ClayBrushItem.Mode.WORK, "Work");
         addKeyableProperty(ClayBrushItem.Mode.POI, "Poi");
         add(SoldierStatusManager.SITTING_LANG, "Sitting");
-        add(SoldierStatusManager.USING_POI_LANG, "Using Poi");
+        add(SoldierStatusManager.USING_POI_LANG, "Using Work Poi");
         add(IWorkGoal.DEFAULT_STATUS_LANG, "Working");
         add(AbstractWorkGoal.BREAK_LANG, "On a short Break");
         add(AbstractWorkGoal.CARRYING_LANG, "Carrying");
@@ -134,6 +138,7 @@ public class ModLangProvider extends LanguageProvider {
         add(PlaceSeedsGoal.PLACING_SEEDS_LANG, "Replanting");
         add(PickUpItemsGoal.PICK_UP_ITEM_LANG, "Pick up Items");
         add(BuildBlueprintGoal.BUILDING_LANG, "Building");
+
         add(WorkSelectorGoal.WORK_STATUS_PAIR_LANG, "%s: %s");
         add(WorkSelectorGoal.WORK_STATUS_SOMETHING_LANG, "Does Something");
         add(WorkSelectorGoal.WORK_STATUS_RESTING_LANG, "Resting");
@@ -211,6 +216,8 @@ public class ModLangProvider extends LanguageProvider {
 
         add(ClaySoldierCommands.COMMAND_TEAM_LOYALTY_REMOVE_FAILURE, "%s is not loyal to any one");
         add(ClaySoldierCommands.COMMAND_TEAM_LOYALTY_FAILURE, "Could not set loyalty of %s to %s");
+        add(ClaySoldierCommands.COMMAND_TEAM_LOYALTY_DISABLE_FAILURE, "Cannot change loyalty of %s");
+
 
         add(ClaySoldierCommands.ENABLING_DATAPACK, "Enabling this datapack requires a world restart to fully work.");
         add(ClaySoldierCommands.DISABLING_DATAPACK, "Disabling this datapack requires a world restart to fully work.");
@@ -404,10 +411,14 @@ public class ModLangProvider extends LanguageProvider {
         addSoldierPropertyType(SoldierPropertyTypes.TELEPORT_TO_OWNER, "Teleport to Owner");
         addSoldierPropertyType(SoldierPropertyTypes.EVACUATION, "Emergency Evacuation");
         addSoldierPropertyType(SoldierPropertyTypes.BOUNCE, "Bounce");
+        addSoldierPropertyType(SoldierPropertyTypes.BREAKING_POWER, "Breaking Power");
+
 
 
         add(ModTags.Items.GAME_MASTER_ITEM, "Game Master Items");
         add(ModTags.Items.SOLDIER_WEAPON, "Clay Soldier Weapon");
+        add(ModTags.Items.SOLDIER_THROWABLE, "Clay Soldier Throwable");
+
         add(ModTags.Items.SOLDIER_HOLDABLE, "Clay Soldier Item");
         add(ModTags.Items.SOLDIER_ARMOR, "Clay Soldier Armor");
         add(ModTags.Items.CLAY_HORSE_ARMOR, "Clay Horse Armor");
@@ -436,6 +447,96 @@ public class ModLangProvider extends LanguageProvider {
         add(ModTags.DamageTypes.CLAY_SOLDIER_DAMAGE, "Clay Soldier Damage");
         add(ModTags.EntityTypes.CLAY_BOSS, "Clay Soldier Boss");
         add(ModTags.SoldierPropertyTypes.REQUIRES_OWNER, "Requires Owner");
+
+        add(ModAdvancements.ROOT_TITLE, "Getting Started");
+        add(ModAdvancements.ROOT_DESCRIPTION, "Obtain some Clay.");
+
+        add(ModAdvancements.SOLDIER_TITLE, "Clay Soldier");
+        add(ModAdvancements.SOLDIER_DESCRIPTION, "Craft your first Clay Soldier");
+
+        add(ModAdvancements.BRICKED_TITLE, "Ohh burnnnn");
+        add(ModAdvancements.BRICKED_DESCRIPTION, "Smelt down a Clay Soldier");
+
+        add(ModAdvancements.REVIVE_TITLE, "Revived");
+        add(ModAdvancements.REVIVE_DESCRIPTION, "Revive a burnt Clay Soldier with a %s");
+
+        add(ModAdvancements.DISRUPTOR_TITLE, "Mass Extinction");
+        add(ModAdvancements.DISRUPTOR_DESCRIPTION, "Kill a bounch of Clay Soldiers with a Disruptor");
+
+        add(ModAdvancements.WAXED_TITLE, "You can do that?");
+        add(ModAdvancements.WAXED_DESCRIPTION, "Wax a Clay Soldier");
+
+        add(ModAdvancements.BATTLE_TITLE, "Your first Battle");
+        add(ModAdvancements.BATTLE_DESCRIPTION, "Watch two Clay Soldier kill each other");
+
+        add(ModAdvancements.FOOD_TITLE, "Hmm yummy... I guess");
+        add(ModAdvancements.FOOD_DESCRIPTION, "Feed a Clay Soldier a Clay Cookie");
+
+        add(ModAdvancements.EQUIPMENT_TITLE, "I wonder what they can do with that");
+        add(ModAdvancements.EQUIPMENT_DESCRIPTION, "Give a Clay Soldier an Item");
+
+        add(ModAdvancements.ARMOR_TITLE, "Stylish");
+        add(ModAdvancements.ARMOR_DESCRIPTION, "Give a Clay Soldier some Armor");
+
+        add(ModAdvancements.WEAPON_TITLE, "I am not sure they have that");
+        add(ModAdvancements.WEAPON_DESCRIPTION, "Give a Clay Soldier a weapon");
+
+        add(ModAdvancements.ROYALTY_TITLE, "Should I bow?");
+        add(ModAdvancements.ROYALTY_DESCRIPTION, "Make a King or Queen Clay Soldier");
+
+        add(ModAdvancements.LOYALTY_TITLE, "Loyalty");
+        add(ModAdvancements.LOYALTY_DESCRIPTION, "Gain the loyalty of a team");
+
+        add(ModAdvancements.WORKER_TITLE, "The Working Soldier");
+        add(ModAdvancements.WORKER_DESCRIPTION, "Turn a Soldier into a Pacifist");
+
+        add(ModAdvancements.COMMAND_TITLE, "Loyalty");
+        add(ModAdvancements.COMMAND_DESCRIPTION, "Gain the loyalty of a team");
+
+        add(ModAdvancements.POI_TITLE, "This Block looks special!");
+        add(ModAdvancements.POI_DESCRIPTION, "Give a Clay Soldier a point of interest");
+
+        add(ModAdvancements.HAMSTER_TITLE, "Runner of the Night");
+        add(ModAdvancements.HAMSTER_DESCRIPTION, "Let a soldier run in a Hamster Wheel at Night");
+
+        add(ModAdvancements.CHEST_TITLE, "Chesting Up");
+        add(ModAdvancements.CHEST_DESCRIPTION, "Have a Soldier take %s Items from a Chest at once".formatted(SoldierEquipmentSlot.values().length));
+
+        add(ModAdvancements.WORK_TITLE, "They do the work now");
+        add(ModAdvancements.WORK_DESCRIPTION, "Give a Clay Soldier a Job");
+
+        add(ModAdvancements.POI_USE_TITLE, "You do that, now!");
+        add(ModAdvancements.POI_USE_DESCRIPTION, "Have a Soldier use an Item on the Ground");
+
+        add(ModAdvancements.BOSS_TITLE, "Bigger, Stronger, Meaner");
+        add(ModAdvancements.BOSS_DESCRIPTION, "Spawn a Boss Clay Soldier");
+
+        add(ModAdvancements.STAFF_TITLE, "Ohh what does this do?");
+        add(ModAdvancements.STAFF_DESCRIPTION, "Obtained from killing a Boss Clay Soldier");
+
+        add(ModAdvancements.POUCH_TITLE, "Can't have to many");
+        add(ModAdvancements.POUCH_DESCRIPTION, "Spawn more than 64 Clay Soldiers at once");
+
+        add(ModAdvancements.BOOK_TITLE, "Didn't see that coming");
+        add(ModAdvancements.BOOK_DESCRIPTION, "Shoot a Clay Soldier with a Clay Soldier");
+
+        add(ModAdvancements.HORSE_TITLE, "Let them ride");
+        add(ModAdvancements.HORSE_DESCRIPTION, "Craft a Clay Horse");
+
+        add(ModAdvancements.PEGASUS_TITLE, "Let them fly");
+        add(ModAdvancements.PEGASUS_DESCRIPTION, "Craft a Clay Pegasus");
+
+        add(ModAdvancements.BLUEPRINT_PAGE_TITLE, "The Foundations");
+        add(ModAdvancements.BLUEPRINT_PAGE_DESCRIPTION, "Craft an Empty Blueprint");
+
+        add(ModAdvancements.BLUEPRINT_TITLE, "The Plan");
+        add(ModAdvancements.BLUEPRINT_DESCRIPTION, "Obtain a Blueprint from a Escritoire");
+
+        add(ModAdvancements.HOUSE_TITLE, "Home Sweet Home");
+        add(ModAdvancements.HOUSE_DESCRIPTION, "Fully build any Blueprint Plan");
+
+        add(ModAdvancements.SOLDIER_ON_HEAD_TITLE, "Get off there!");
+        add(ModAdvancements.SOLDIER_ON_HEAD_DESCRIPTION, "Have a Clay Soldier sit on your head");
     }
 
     private void addKeyableProperty(KeyableTranslatableProperty property, String name) {

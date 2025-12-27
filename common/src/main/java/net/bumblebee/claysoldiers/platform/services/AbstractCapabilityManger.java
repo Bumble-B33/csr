@@ -1,6 +1,5 @@
 package net.bumblebee.claysoldiers.platform.services;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
@@ -11,12 +10,15 @@ import net.bumblebee.claysoldiers.block.hamsterwheel.HamsterWheelBlockEntity;
 import net.bumblebee.claysoldiers.block.hamsterwheel.IHamsterWheelEnergyStorage;
 import net.bumblebee.claysoldiers.capability.*;
 import net.bumblebee.claysoldiers.datamap.SoldierHoldableEffect;
+import net.bumblebee.claysoldiers.item.itemeffectholder.ItemStackWithEffect;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.FileToIdConverter;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
+import net.minecraft.util.ExtraCodecs;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.item.Item;
@@ -29,8 +31,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 
-public abstract class AbstractCapabilityManger extends SimpleJsonResourceReloadListener {
+public abstract class AbstractCapabilityManger extends SimpleJsonResourceReloadListener<JsonElement> {
     public static final String PATH = "clay_soldiers";
     public static final String FILE_NAME = "capabilities";
     private static final EnumMap<Types, Map<Item, EnabledHolder>> ENABLED_MAP = new EnumMap<>(Types.class);
@@ -47,7 +50,7 @@ public abstract class AbstractCapabilityManger extends SimpleJsonResourceReloadL
     private static final Decoder<Map<Types, Map<Item, Boolean>>> DECODER = Codec.unboundedMap(Types.CODEC, Codec.unboundedMap(BuiltInRegistries.ITEM.byNameCodec(), ENABLED_CODEC));
 
     protected AbstractCapabilityManger() {
-        super(new Gson(), PATH);
+        super(ExtraCodecs.JSON, FileToIdConverter.json(PATH));
     }
 
     @Nullable
@@ -56,7 +59,7 @@ public abstract class AbstractCapabilityManger extends SimpleJsonResourceReloadL
     }
 
     @Nullable
-    public BiFunction<ItemStack, @Nullable SoldierHoldableEffect, ThrowableItemCapability> getThrowableItem(ItemStack stack) {
+    public Function<ItemStackWithEffect, ThrowableItemCapability> getThrowableItem(ItemStack stack) {
         return ifEnabledOrNull(Types.THROW, stack, ThrowableItemCapability.THROWABLE_ITEM_MAP.get(stack.getItem()));
     }
 
@@ -84,7 +87,7 @@ public abstract class AbstractCapabilityManger extends SimpleJsonResourceReloadL
 
     public abstract IBlockCache<BlueprintRequestHandler> createBlueprint(ServerLevel level, BlockPos pos);
 
-    public abstract IBlockCache<AssignablePoiCapability> createPoiCache(ServerLevel level, BlockPos pos);
+    public abstract IBlockCache<AssignableWorksiteCapability> createPoiCache(ServerLevel level, BlockPos pos);
 
 
     @Override

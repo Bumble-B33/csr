@@ -37,7 +37,7 @@ public class SoldierPropertyTypes {
 
     public static final Supplier<SoldierPropertyType<Float>> DAMAGE = createFloat("damage", Codec.FLOAT, ByteBufCodecs.FLOAT.cast(), 0f, FLOAT_AS_INT, FLOAT_COMBINER);
     public static final Supplier<SoldierPropertyType<Float>> PROTECTION = createFloat("protection", Codec.FLOAT, ByteBufCodecs.FLOAT.cast(), 0f, FLOAT_AS_INT, FLOAT_COMBINER);
-    public static final Supplier<SoldierPropertyType<Integer>> SET_ON_FIRE = create("set_on_fire", CodecUtils.TIME_CODEC, ByteBufCodecs.VAR_INT.cast(), 0, INT_AS_INT, INT_COMBINER, defaultedDisplaysNameValue(v -> Component.literal(v + "s")));
+    public static final Supplier<SoldierPropertyType<Integer>> SET_ON_FIRE = create("set_on_fire", CodecUtils.TIME_CODEC, ByteBufCodecs.VAR_INT.cast(), 0, INT_AS_INT, INT_COMBINER, defaultedDisplaysNameValue(v -> Component.literal((v / 20.0D) + "s")));
     public static final Supplier<SoldierPropertyType<RangedAttackType>> THROWABLE = create("throwable", RangedAttackType.CODEC, RangedAttackType.STREAM_CODEC.cast(), RangedAttackType.NONE, RangedAttackType.TO_INT, RangedAttackType.COMBINER, defaultedDisplaysName());
     public static final Supplier<UnitPropertyType> SEE_INVISIBILITY = create("see_invisibility", new UnitPropertyType());
     public static final Supplier<UnitPropertyType> CAN_SWIM = create("can_swim", new UnitPropertyType());
@@ -64,6 +64,7 @@ public class SoldierPropertyTypes {
     public static final Supplier<UnitPropertyType> TELEPORT_TO_OWNER = create("teleport_to_owner", new UnitPropertyType());
     public static final Supplier<SoldierPropertyType<IEvacuationProperty>> EVACUATION = create("evacuation", IEvacuationProperty.CODEC, IEvacuationProperty.STREAM_CODEC.cast(), IEvacuationProperty.NONE, IEvacuationProperty::toInt, IEvacuationProperty.COMBINER, IEvacuationProperty.DISPLAY_NAME_GETTER);
     public static final Supplier<UnitPropertyType> BOUNCE = create("bounce", new UnitPropertyType());
+    public static final Supplier<SoldierPropertyType<Integer>> BREAKING_POWER = create("breaking_power", Codec.INT, ByteBufCodecs.VAR_INT.cast(), 0, INT_AS_INT, INT_COMBINER);
 
 
     public static final Codec<SoldierPropertyType<?>> CODEC = CodecUtils.byNameCodecWithDefaultModId(ModRegistries.SOLDIER_PROPERTY_TYPES_REGISTRY);

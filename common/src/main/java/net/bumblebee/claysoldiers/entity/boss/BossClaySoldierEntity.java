@@ -18,6 +18,7 @@ import net.bumblebee.claysoldiers.soldierproperties.SoldierPropertyMapReader;
 import net.bumblebee.claysoldiers.soldierproperties.SoldierPropertyTypes;
 import net.bumblebee.claysoldiers.soldierproperties.combined.SoldierPropertyCombinedMap;
 import net.bumblebee.claysoldiers.soldierproperties.customproperties.AttackTypeProperty;
+import net.minecraft.advancements.CriteriaTriggers;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.*;
 import net.minecraft.network.chat.Component;
@@ -117,6 +118,7 @@ public class BossClaySoldierEntity extends AbstractClaySoldierEntity {
                 .add(Attributes.MOVEMENT_SPEED, 0.3D)
                 .add(Attributes.FOLLOW_RANGE, 24.0)
                 .add(Attributes.KNOCKBACK_RESISTANCE, 0.6)
+                .add(Attributes.TEMPT_RANGE)
                 .build();
     }
 
@@ -241,7 +243,7 @@ public class BossClaySoldierEntity extends AbstractClaySoldierEntity {
     }
 
     @Override
-    public boolean hurt(DamageSource source, float amount) {
+    public boolean hurtServer(ServerLevel level, DamageSource source, float amount) {
         boolean aiAllowHurt = true;
         if (bossAI != null) {
             aiAllowHurt = bossAI.onHurt(this, source);
@@ -250,7 +252,7 @@ public class BossClaySoldierEntity extends AbstractClaySoldierEntity {
             return false;
         }
 
-        return super.hurt(source, amount);
+        return super.hurtServer(level, source, amount);
     }
 
     @Override
@@ -287,7 +289,7 @@ public class BossClaySoldierEntity extends AbstractClaySoldierEntity {
     }
 
     @Override
-    protected void customServerAiStep() {
+    protected void customServerAiStep(ServerLevel serverLevel) {
         if (bossAI != null) {
             bossAI.getBossEventProgress(this, bossEvent);
         }
@@ -360,8 +362,8 @@ public class BossClaySoldierEntity extends AbstractClaySoldierEntity {
     }
 
     @Override
-    protected boolean specificTargetPredicate(LivingEntity target) {
-        return targetPredicate(target);
+    protected boolean specificTargetPredicate(LivingEntity target, ServerLevel level) {
+        return targetPredicate(target, level);
     }
 
     @Override
@@ -371,7 +373,7 @@ public class BossClaySoldierEntity extends AbstractClaySoldierEntity {
 
 
     @Override
-    public boolean wantsToPickUp(ItemStack pStack) {
+    public boolean wantsToPickUp(ServerLevel level, ItemStack pStack) {
         return false;
     }
 
@@ -386,7 +388,7 @@ public class BossClaySoldierEntity extends AbstractClaySoldierEntity {
     }
 
     @Override
-    public boolean canBeKilledByItem() {
+    public boolean canBeKilledByDisruptor(ServerLevel level, ServerPlayer serverPlayer) {
         return false;
     }
 
@@ -562,9 +564,16 @@ public class BossClaySoldierEntity extends AbstractClaySoldierEntity {
         return pos == null || !this.isUndead() || !this.level().canSeeSky(BlockPos.containing(pos));
     }
 
+    @Override
+    public void onConversion(ClayMobEntity oldSoldier, CompoundTag tag, @Nullable Player player) {
+        if (player instanceof ServerPlayer serverPlayer) {
+            CriteriaTriggers.SUMMONED_ENTITY.trigger(serverPlayer, this);
+
+        }
+    }
 
     @Override
-    public @Nullable SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty, MobSpawnType spawnType, @Nullable SpawnGroupData spawnGroupData) {
+    public @Nullable SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty, EntitySpawnReason spawnType, @Nullable SpawnGroupData spawnGroupData) {
         if (bossAI == null) {
             setBossAI(ModBossBehaviours.DEFAULT.get());
         }

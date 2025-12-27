@@ -11,7 +11,12 @@ public interface ItemLikeSupplier<T extends ItemLike> extends Supplier<T>, ItemL
     ItemLikeSupplier<Item> EMPTY = new ItemLikeSupplier<>() {
         @Override
         public Item get() {
-            return null;
+            throw new IllegalStateException();
+        }
+
+        @Override
+        public @NotNull Item asItem() {
+            throw new IllegalStateException();
         }
 
         @Override

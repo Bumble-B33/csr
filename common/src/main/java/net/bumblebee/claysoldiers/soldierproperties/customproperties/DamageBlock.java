@@ -28,7 +28,7 @@ public class DamageBlock {
     public static final ToIntFunction<DamageBlock> TO_INT = (d) -> d.blockAmount > 0 && d.blockChance > 0 ? 1 : 0;
     public static final Codec<DamageBlock> CODEC = RecordCodecBuilder.create(in -> in.group(
             ExtraCodecs.POSITIVE_FLOAT.fieldOf("chance").forGetter(d -> d.blockChance),
-            ExtraCodecs.POSITIVE_FLOAT.fieldOf("amount").forGetter(d -> d.blockAmount),
+            ExtraCodecs.POSITIVE_FLOAT.fieldOf("amountRequired").forGetter(d -> d.blockAmount),
             Codec.BOOL.optionalFieldOf("pierceable", true).forGetter(d -> d.pierceable)
     ).apply(in, DamageBlock::new));
     public static final StreamCodec<ByteBuf, DamageBlock> STREAM_CODEC = StreamCodec.composite(

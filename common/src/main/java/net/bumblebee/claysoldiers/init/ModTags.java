@@ -18,8 +18,11 @@ public final class ModTags {
         public static final TagKey<Item> SOLDIER_HOLDABLE = create("clay_soldier_holdable");
 
         public static final TagKey<Item> SOLDIER_WEAPON = create("clay_soldier_weapon");
+
         public static final TagKey<Item> SOLDIER_ARMOR = create("clay_soldier_armor");
         public static final TagKey<Item> SOLDIER_BOSS_EQUIPABLE = create("clay_boss_equiable");
+        public static final TagKey<Item> SOLDIER_THROWABLE = create("clay_soldier_head_throwable");
+
 
         public static final TagKey<Item> BASIC = create("clay_soldier_items/basic");
         public static final TagKey<Item> RANGED = create("clay_soldier_items/ranged");
@@ -51,9 +54,11 @@ public final class ModTags {
         public static final TagKey<Item> GAME_MASTER_ITEM = commonTag("game_master_items");
         public static final TagKey<Item> INGOTS_COPPER = commonTag("ingots/copper");
 
+
         public static final TagKey<Item> WRENCH = commonTag("tools/wrench");
 
         public static final TagKey<Item> ACCESSORIES_FACE = create(ExternalMods.ACCESSORIES.getName(), "face");
+        public static final TagKey<Item> ACCESSORIES_HAT = create(ExternalMods.ACCESSORIES.getName(), "hat");
         public static final TagKey<Item> CURIOS_HEAD = create(ExternalMods.CURIOS.getName(), "head");
 
         private static TagKey<Item> create(String location) {
@@ -85,6 +90,8 @@ public final class ModTags {
 
     public static final class EntityTypes {
         public static final TagKey<EntityType<?>> CLAY_BOSS = create("clay_boss");
+        public static final TagKey<EntityType<?>> CLAY_SOLDIER = create("clay_soldier");
+
 
         private static TagKey<EntityType<?>> create(String name) {
             return TagKey.create(Registries.ENTITY_TYPE, ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, name));

@@ -1,6 +1,7 @@
 package net.bumblebee.claysoldiers.integration;
 
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec2;
@@ -43,9 +44,9 @@ public class NeoForgeAirBubbleElement extends Element {
         int yOffset = lineCount * 4 - 4;
         for (int i = iconCount; i > 0; --i) {
             if (bursting && i == iconCount) {
-                helper.blitSprite(guiGraphics, AIR_BUBBLE_BURSTING, (int) (x + xOffset), (int) (y + yOffset), 9, 9);
+                helper.blitSprite(guiGraphics, RenderType.GUI_TEXTURED, AIR_BUBBLE_BURSTING, (int) (x + xOffset), (int) (y + yOffset), 9, 9);
             } else if (i <= Mth.floor(armor)) {
-                helper.blitSprite(guiGraphics, AIR_BUBBLE, (int) (x + xOffset), (int) (y + yOffset), 9, 9);
+                helper.blitSprite(guiGraphics, RenderType.GUI_TEXTURED, AIR_BUBBLE, (int) (x + xOffset), (int) (y + yOffset), 9, 9);
             }
 
             xOffset -= 8;

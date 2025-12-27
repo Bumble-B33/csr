@@ -1,19 +1,16 @@
 package net.bumblebee.claysoldiers.entity.goal.target;
 
 import net.bumblebee.claysoldiers.entity.soldier.AbstractClaySoldierEntity;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.ai.targeting.TargetingConditions;
-
-import java.util.function.Predicate;
 
 public class ClaySoldierNearestTargetGoal extends NearestAttackableTargetGoal<AbstractClaySoldierEntity> {
     protected TargetingConditions specificTargetCondition;
 
 
-    public ClaySoldierNearestTargetGoal(AbstractClaySoldierEntity pMob, boolean pMustSee, Predicate<LivingEntity> pTargetPredicate, Predicate<LivingEntity> special) {
+    public ClaySoldierNearestTargetGoal(AbstractClaySoldierEntity pMob, boolean pMustSee, TargetingConditions.Selector pTargetPredicate, TargetingConditions.Selector special) {
         super(pMob, AbstractClaySoldierEntity.class, pMustSee, pTargetPredicate);
-        this.specificTargetCondition = TargetingConditions.forCombat().range(this.getFollowDistance()).selector(pTargetPredicate.and(special));
+        this.specificTargetCondition = TargetingConditions.forCombat().range(this.getFollowDistance()).selector((e, l) -> pTargetPredicate.test(e, l) && special.test(e, l));
     }
 
     @Override
@@ -30,7 +27,7 @@ public class ClaySoldierNearestTargetGoal extends NearestAttackableTargetGoal<Ab
     }
 
     protected void findTargetSpecial() {
-        this.target = this.mob.level()
+        this.target = getServerLevel(mob)
                 .getNearestEntity(
                         this.mob.level().getEntitiesOfClass(this.targetType, this.getTargetSearchArea(this.getFollowDistance()), soldier -> true),
                         this.specificTargetCondition,

@@ -39,6 +39,7 @@ public enum ClayHorseVariants implements NameableVariant {
         return id;
     }
 
+    @Override
     public String getVariantName() {
         return name;
     }

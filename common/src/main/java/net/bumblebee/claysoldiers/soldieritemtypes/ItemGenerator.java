@@ -25,12 +25,12 @@ public interface ItemGenerator {
          */
         SIZE,
         /**
-         * The result is limited by the amount requested
+         * The result is limited by the amountRequired requested
          */
         COUNT,
         /**
          * The result is always 0.
          */
-        ZERO;
+        ZERO
     }
 }

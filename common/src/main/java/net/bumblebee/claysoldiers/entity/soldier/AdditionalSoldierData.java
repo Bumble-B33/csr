@@ -12,11 +12,13 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.player.Player;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
 public final class AdditionalSoldierData {
-    private static final String ERROR_MESSAGE_CASTING = "Wrong Entity Type for AdditionalSoldierData. %s Does not extend ClayMobEntity and ClaySoldierLike";
+    private static final String ERROR_MESSAGE_CASTING = "Wrong Entity Type for AdditionalSoldierData. %s does not extend ClayMobEntity and ClaySoldierLike";
 
     public static final Codec<AdditionalSoldierData> CODEC = RecordCodecBuilder.create(in -> in.group(
             createEntityTypeCodec().fieldOf("type").forGetter(AdditionalSoldierData::soldierType),
@@ -39,12 +41,13 @@ public final class AdditionalSoldierData {
 
     /**
      * Converts the give SoldierLike to the stored entity type.
+     * @param cause The player how should receive credit for this conversion.
      */
-    public <T extends ClayMobEntity & ClaySoldierLike> void convert(T soldier) {
+    public <T extends ClayMobEntity & ClaySoldierLike> void convert(T soldier, @Nullable Player cause) {
         soldier.convertToSoldier(soldierType(), (newSoldier) -> {
             newSoldier.readItemPersistentData(tag);
             newSoldier.setClayTeamType(soldier.getClayTeamType());
-            newSoldier.onConversion(soldier, tag);
+            newSoldier.onConversion(soldier, tag, cause);
         });
     }
 
@@ -90,9 +93,6 @@ public final class AdditionalSoldierData {
 
     @Override
     public String toString() {
-        return "AdditionalSoldierData[" +
-                "Type: " + soldierType + ", " +
-                "Data: " + tag + ']';
+        return "AdditionalSoldierData[Type: %s, Data: %s]".formatted(soldierType, tag);
     }
-
 }

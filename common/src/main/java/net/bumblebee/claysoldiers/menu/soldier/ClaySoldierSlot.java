@@ -33,8 +33,10 @@ public class ClaySoldierSlot extends AbstractClayMenuSlot {
 
     @Override
     public boolean mayPickup(Player pPlayer) {
-        return !editMode();
+        return editMode();
     }
+
+
 
     @Override
     public int getMaxStackSize(ItemStack pStack) {

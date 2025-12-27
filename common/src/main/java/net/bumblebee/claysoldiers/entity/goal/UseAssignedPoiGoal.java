@@ -1,7 +1,7 @@
 package net.bumblebee.claysoldiers.entity.goal;
 
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
-import net.bumblebee.claysoldiers.capability.AssignablePoiCapability;
+import net.bumblebee.claysoldiers.capability.AssignableWorksiteCapability;
 import net.bumblebee.claysoldiers.capability.IBlockCache;
 import net.bumblebee.claysoldiers.capability.IBlockStorageAccess;
 import net.bumblebee.claysoldiers.datamap.SoldierEquipmentSlot;
@@ -9,6 +9,7 @@ import net.bumblebee.claysoldiers.datamap.SoldierSlotCallback;
 import net.bumblebee.claysoldiers.entity.ClayMobEntity;
 import net.bumblebee.claysoldiers.entity.soldier.AbstractClaySoldierEntity;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.item.ItemStack;
@@ -20,6 +21,7 @@ import java.util.List;
 import java.util.Set;
 
 public class UseAssignedPoiGoal extends Goal {
+    public static final ResourceLocation STORAGE_WORKSITE_ID = ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "storage");
     private static final int MAX_WAIT_BEFORE_NEXT_ATTEMPT = 200;
     private final ClayMobEntity clayMob;
     private final double speedModifier;
@@ -71,7 +73,7 @@ public class UseAssignedPoiGoal extends Goal {
 
         var cap = clayMob.getPoiCapability();
         if (cap != null && cap.canUse(clayMob)) {
-            cap.use(clayMob);
+            cap.useWorksite(clayMob);
             if (cap.isOneTimeUse()) {
                 clayMob.setPoiPos(null);
             }
@@ -104,7 +106,7 @@ public class UseAssignedPoiGoal extends Goal {
         return this.getClass().getSimpleName();
     }
 
-    public static IBlockCache<AssignablePoiCapability> createCache(ClayMobEntity clayMob, ServerLevel level) {
+    public static IBlockCache<AssignableWorksiteCapability> createCache(ClayMobEntity clayMob, ServerLevel level) {
         var cache = ClaySoldiersCommon.CAPABILITY_MANGER.createPoiCache(level, clayMob.getPoiPos());
 
         if (cache.getCapability() != null) {
@@ -158,7 +160,7 @@ public class UseAssignedPoiGoal extends Goal {
         }
     }
 
-    private record StorageWrappedPoiCache(IBlockCache<IBlockStorageAccess> cache) implements IBlockCache<AssignablePoiCapability> {
+    private record StorageWrappedPoiCache(IBlockCache<IBlockStorageAccess> cache) implements IBlockCache<AssignableWorksiteCapability> {
 
         @Override
         public BlockPos pos() {
@@ -166,12 +168,12 @@ public class UseAssignedPoiGoal extends Goal {
         }
 
         @Override
-        public @Nullable AssignablePoiCapability getCapability() {
-            return cache.getCapability() == null ? null : new StorageWrappedPoiCap(cache.getCapability());
+        public @Nullable AssignableWorksiteCapability getCapability() {
+            return cache.getCapability() == null ? null : new StorageWrappedWorksiteCap(cache.getCapability());
         }
     }
 
-    private record StorageWrappedPoiCap(IBlockStorageAccess storage) implements AssignablePoiCapability {
+    private record StorageWrappedWorksiteCap(IBlockStorageAccess storage) implements AssignableWorksiteCapability {
 
         @Override
         public boolean canUse(ClayMobEntity clayMob) {
@@ -179,9 +181,9 @@ public class UseAssignedPoiGoal extends Goal {
         }
 
         @Override
-        public void use(ClayMobEntity clayMob) {
+        public int onUse(ClayMobEntity clayMob) {
             if (!(clayMob instanceof AbstractClaySoldierEntity soldier)) {
-                return;
+                throw new IllegalStateException(clayMob + " cannot use this poi " + descriptionId());
             }
             Set<SoldierEquipmentSlot> emptySlots = EnumSet.noneOf(SoldierEquipmentSlot.class);
 
@@ -191,6 +193,7 @@ public class UseAssignedPoiGoal extends Goal {
                 }
                 emptySlots.add(slot);
             }
+            int previous = emptySlots.size();
 
             List<ItemStack> notNeededStacks = new ArrayList<>();
             storage.forEach(
@@ -199,6 +202,12 @@ public class UseAssignedPoiGoal extends Goal {
                     emptySlots::isEmpty
             );
             notNeededStacks.forEach(storage::tryInserting);
+            return previous - emptySlots.size();
+        }
+
+        @Override
+        public ResourceLocation descriptionId() {
+            return STORAGE_WORKSITE_ID;
         }
     }
 

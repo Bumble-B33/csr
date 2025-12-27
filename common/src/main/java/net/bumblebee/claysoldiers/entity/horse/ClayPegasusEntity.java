@@ -44,7 +44,6 @@ public class ClayPegasusEntity extends AbstractClayHorse {
         FlyingPathNavigation flyingpathnavigation = new FlyingPathNavigation(this, pLevel);
         flyingpathnavigation.setCanOpenDoors(false);
         flyingpathnavigation.setCanFloat(true);
-        flyingpathnavigation.setCanPassDoors(true);
         return flyingpathnavigation;
     }
 

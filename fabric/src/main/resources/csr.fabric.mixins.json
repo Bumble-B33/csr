@@ -6,7 +6,8 @@
   "compatibilityLevel": "JAVA_21",
   "mixins": [
     "BlueprintDataPackMixin",
-    "DataPackCommandMixin"
+    "DataPackCommandMixin",
+    "PlayerHurtMixin"
   ],
   "client": [],
   "server": [],

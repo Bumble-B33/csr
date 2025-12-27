@@ -4,10 +4,10 @@ import com.mojang.serialization.MapCodec;
 import net.bumblebee.claysoldiers.init.ModBlockEntities;
 import net.bumblebee.claysoldiers.init.ModTags;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.world.Containers;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -24,7 +24,6 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
@@ -32,7 +31,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 
 public class HamsterWheelBlock extends BaseEntityBlock {
-    public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
+    public static final EnumProperty<Direction> FACING = BlockStateProperties.HORIZONTAL_FACING;
     public static final EnumProperty<BatteryProperty> BATTERY_PROPERTY = EnumProperty.create("battery", BatteryProperty.class);
 
     private static final VoxelShape SHAPE_WEST = Block.box(5, 0, 2, 15, 14, 14);
@@ -75,26 +74,26 @@ public class HamsterWheelBlock extends BaseEntityBlock {
     }
 
     @Override
-    protected ItemInteractionResult useItemOn(ItemStack pStack, BlockState pState, Level pLevel, BlockPos pPos, Player pPlayer, InteractionHand pHand, BlockHitResult pHitResult) {
+    protected InteractionResult useItemOn(ItemStack pStack, BlockState pState, Level pLevel, BlockPos pPos, Player pPlayer, InteractionHand pHand, BlockHitResult pHitResult) {
         if (pStack.is(Items.REDSTONE)) {
             if (pState.getValue(BATTERY_PROPERTY) == BatteryProperty.NONE) {
                 pLevel.setBlock(pPos, pState.setValue(BATTERY_PROPERTY, BatteryProperty.SINGLE), 3);
                 pStack.consume(1, pPlayer);
-                return ItemInteractionResult.sidedSuccess(pLevel.isClientSide());
+                return InteractionResult.SUCCESS;
             }
 
             if (pState.getValue(BATTERY_PROPERTY) == BatteryProperty.SINGLE) {
                 pLevel.setBlock(pPos, pState.setValue(BATTERY_PROPERTY, BatteryProperty.DUAL), 3);
                 pStack.consume(1, pPlayer);
-                return ItemInteractionResult.sidedSuccess(pLevel.isClientSide());
+                return InteractionResult.SUCCESS;
             }
         }
         if (pStack.is(ModTags.Items.WRENCH)) {
             pLevel.setBlock(pPos, rotate(pState, Rotation.CLOCKWISE_90), 3);
-            return ItemInteractionResult.sidedSuccess(pLevel.isClientSide());
+            return InteractionResult.SUCCESS;
         }
 
-        return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+        return InteractionResult.PASS;
     }
 
 
@@ -104,7 +103,7 @@ public class HamsterWheelBlock extends BaseEntityBlock {
         if (hamsterWheelBlockEntity.hasSoldier()) {
             hamsterWheelBlockEntity.spawnSoldier(7);
             hamsterWheelBlockEntity.setChanged();
-            return InteractionResult.sidedSuccess(pLevel.isClientSide());
+            return InteractionResult.SUCCESS;
         }
 
         return InteractionResult.PASS;

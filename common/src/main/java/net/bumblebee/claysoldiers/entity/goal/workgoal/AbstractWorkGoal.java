@@ -90,6 +90,14 @@ public abstract class AbstractWorkGoal extends Goal implements IWorkGoal {
      */
     protected boolean moveToPoi() {
         BlockPos pos = getPoiPos();
+        return moveToPos(pos);
+    }
+
+    /**
+     * Move this soldier to the given pos, if there is one.
+     * @return whether it has reached the given pos.
+     */
+    protected boolean moveToPos(@Nullable BlockPos pos) {
         if (pos != null) {
             if (pos.closerToCenterThan(soldier.position(), 2f)) {
                 this.soldier.getNavigation().stop();

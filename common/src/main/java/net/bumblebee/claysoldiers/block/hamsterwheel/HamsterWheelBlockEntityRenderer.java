@@ -5,6 +5,7 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.model.geom.EntityModelSet;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
@@ -17,9 +18,7 @@ import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
-import net.minecraft.world.level.Level;
-
-import java.util.function.Consumer;
+import net.minecraft.util.profiling.Profiler;
 
 public class HamsterWheelBlockEntityRenderer implements BlockEntityRenderer<HamsterWheelBlockEntity> {
     private static final ResourceLocation HAMSTER_WHEEL_TEXTURE = ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "textures/block/hamster_wheel.png");
@@ -48,10 +47,18 @@ public class HamsterWheelBlockEntityRenderer implements BlockEntityRenderer<Hams
         this.batteryRight = pContext.bakeLayer(BatteryType.RIGHT.getLayerLocation());
     }
 
+    public HamsterWheelBlockEntityRenderer(EntityModelSet modelSet) {
+        this.stand = modelSet.bakeLayer(STAND_LAYER_LOCATION);
+        this.powerConnection = modelSet.bakeLayer(POWER_LAYER_LOCATION);
+        this.wheelModel = new HamsterWheelModel(modelSet.bakeLayer(HamsterWheelModel.LAYER_LOCATION));
+        this.batteryLeft = modelSet.bakeLayer(BatteryType.LEFT.getLayerLocation());
+        this.batteryRight = modelSet.bakeLayer(BatteryType.RIGHT.getLayerLocation());
+    }
+
     @Override
     public void render(HamsterWheelBlockEntity hamsterWheelBlock, float pPartialTick, PoseStack pPoseStack, MultiBufferSource pBuffer, int pPackedLight, int pPackedOverlay) {
-        var optProfiler = new OptionalProfiler(hamsterWheelBlock.getLevel());
-        optProfiler.push("hamsterWheelRender");
+        var profiler = Profiler.get();
+        profiler.push("hamsterWheelRender");
         float yRot = hamsterWheelBlock.getBlockState().getValue(HamsterWheelBlock.FACING).getOpposite().toYRot();
 
         pPoseStack.translate(0.5F, 0.5F, 0.5F);
@@ -67,7 +74,7 @@ public class HamsterWheelBlockEntityRenderer implements BlockEntityRenderer<Hams
         wheelModel.renderToBuffer(pPoseStack, wheelBuilder, pPackedLight, pPackedOverlay, -1);
 
         if (hamsterWheelBlock.hasEnergyStorage()) {
-            optProfiler.push("batteryRender");
+            profiler.push("batteryRender");
 
             powerConnection.render(pPoseStack, wheelBuilder, pPackedLight, pPackedOverlay, -1);
 
@@ -87,21 +94,34 @@ public class HamsterWheelBlockEntityRenderer implements BlockEntityRenderer<Hams
 
 
 
-            optProfiler.pop();
+            profiler.pop();
         }
         HamsterWheelSoldierData data = hamsterWheelBlock.getSoldierData();
         if (data != null) {
-            optProfiler.push("soldierRender");
+            profiler.push("soldierRender");
 
             pPoseStack.translate(0.5f, 0.1f, 0.5f);
             pPoseStack.mulPose(Axis.YP.rotation(DEG_90));
-            data.getClientSoldier().render(0, pPartialTick, pPoseStack, pBuffer, pPackedLight);
+            data.getClientSoldier().render(pPartialTick, pPoseStack, pBuffer, pPackedLight);
 
-            optProfiler.pop();
+            profiler.pop();
         }
 
-        optProfiler.pop();
+        profiler.pop();
 
+    }
+
+    public void render(PoseStack pPoseStack, MultiBufferSource pBuffer, int pPackedLight, int pPackedOverlay) {
+        float yRot = 0;
+        pPoseStack.translate(0.5F, 0.5F, 0.5F);
+        pPoseStack.mulPose(Axis.YP.rotationDegrees(-yRot));
+        pPoseStack.translate(-0.5F, -0.5F, -0.5F);
+        VertexConsumer wheelBuilder = pBuffer.getBuffer(RENDER_TYPE_BLOCK);
+
+        stand.render(pPoseStack, wheelBuilder, pPackedLight, pPackedOverlay, -1);
+
+
+        wheelModel.renderToBuffer(pPoseStack, wheelBuilder, pPackedLight, pPackedOverlay, -1);
     }
 
     private static void renderBatterContent(HamsterWheelBlockEntity entity, MultiBufferSource buffer, PoseStack pPoseStack, int pPackedLight) {
@@ -246,32 +266,6 @@ public class HamsterWheelBlockEntityRenderer implements BlockEntityRenderer<Hams
 
         public LayerDefinition createLayerDefinition() {
             return createBatteryBase(this);
-        }
-    }
-
-    private static class OptionalProfiler {
-        private static final Consumer<String> PUSH_EMPTY = (s) -> {};
-        private static final Runnable POP_EMPTY = () -> {};
-        private final Runnable pop;
-        private final Consumer<String> push;
-
-        public OptionalProfiler(Level level) {
-            if (level == null) {
-                this.pop = POP_EMPTY;
-                this.push = PUSH_EMPTY;
-            } else {
-                var profiler = level.getProfiler();
-                this.push = profiler::push;
-                this.pop = profiler::pop;
-            }
-        }
-
-        private void push(String name) {
-            push.accept(name);
-        }
-
-        private void pop() {
-            pop.run();
         }
     }
 }

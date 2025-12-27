@@ -16,5 +16,4 @@ public final class ModDamageTypes {
         pContext.register(CLAY_HURT, new DamageType("clayHurt", 0.0F, DamageEffects.POKING));
         pContext.register(CLAY_ON_FIRE, new DamageType("clayOnFire", 0.0F, DamageEffects.BURNING));
     }
-
 }

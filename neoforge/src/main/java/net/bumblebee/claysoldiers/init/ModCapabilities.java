@@ -3,7 +3,7 @@ package net.bumblebee.claysoldiers.init;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.block.hamsterwheel.HamsterWheelBlockEntity;
 import net.bumblebee.claysoldiers.cap.ClaySoldierItemHandler;
-import net.bumblebee.claysoldiers.capability.AssignablePoiCapability;
+import net.bumblebee.claysoldiers.capability.AssignableWorksiteCapability;
 import net.bumblebee.claysoldiers.capability.BlueprintRequestHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -25,10 +25,10 @@ public class ModCapabilities {
                     BlueprintRequestHandler.class
             );
 
-    public static final BlockCapability<AssignablePoiCapability, Void> ASSIGNABLE_POI_CAP =
+    public static final BlockCapability<AssignableWorksiteCapability, Void> ASSIGNABLE_POI_CAP =
             BlockCapability.createVoid(
                     ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "assignable_poi_cap"),
-                    AssignablePoiCapability.class
+                    AssignableWorksiteCapability.class
             );
 
     public static void registerCapabilities(RegisterCapabilitiesEvent event) {

@@ -1,7 +1,7 @@
 package net.bumblebee.claysoldiers.menu.escritoire;
 
 import com.google.common.collect.Lists;
-import net.bumblebee.claysoldiers.blueprint.BlueprintManger;
+import net.bumblebee.claysoldiers.blueprint.BlueprintManager;
 import net.bumblebee.claysoldiers.init.ModBlocks;
 import net.bumblebee.claysoldiers.init.ModItems;
 import net.bumblebee.claysoldiers.init.ModMenuTypes;
@@ -215,7 +215,7 @@ public class EscritoireMenu extends AbstractContainerMenu {
         this.selectedRecipeIndex.set(-1);
         this.resultSlot.set(ItemStack.EMPTY);
         if (!stack.isEmpty() && container.hasAnyMatching(EscritoireMenu::isValidBlueprintPage)) {
-            this.recipes.addAll(BlueprintManger.getBlueprintItems(level.registryAccess()));
+            this.recipes.addAll(BlueprintManager.getBlueprintItems(level.registryAccess()));
         }
     }
 }

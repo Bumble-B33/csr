@@ -1,7 +1,5 @@
 package net.bumblebee.claysoldiers.blueprint;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.mojang.logging.LogUtils;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
@@ -12,9 +10,11 @@ import net.bumblebee.claysoldiers.item.blueprint.BlueprintItem;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.RegistryAccess;
+import net.minecraft.resources.FileToIdConverter;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
+import net.minecraft.util.ExtraCodecs;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
@@ -27,16 +27,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
 
-public class BlueprintManger extends SimpleJsonResourceReloadListener {
-    private static final Gson GSON = (new GsonBuilder()).setPrettyPrinting().disableHtmlEscaping().create();
+public class BlueprintManager extends SimpleJsonResourceReloadListener<JsonElement> {
+    public static final ResourceLocation LISTENER_KEY = ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "blueprint_manager");
     public static final String BLUEPRINT_FILE_PATH = "%s/blueprint".formatted(ClaySoldiersCommon.MOD_ID);
     private static final Logger LOGGER = LogUtils.getLogger();
     private final HolderLookup<Block> blockLookup;
     private final HolderLookup<BlueprintData> blueprintHolders;
-    private final BiConsumer<BlueprintManger, ResourceManager> tagLoader;
+    private final BiConsumer<BlueprintManager, ResourceManager> tagLoader;
 
-    public BlueprintManger(HolderLookup<Block> blockLookup, HolderLookup<BlueprintData> blueprintRegistry, BiConsumer<BlueprintManger, ResourceManager> tagLoader) {
-        super(GSON, BLUEPRINT_FILE_PATH);
+    public BlueprintManager(HolderLookup<Block> blockLookup, HolderLookup<BlueprintData> blueprintRegistry, BiConsumer<BlueprintManager, ResourceManager> tagLoader) {
+        super(ExtraCodecs.JSON, FileToIdConverter.json(BLUEPRINT_FILE_PATH));
         this.blockLookup = blockLookup;
         this.blueprintHolders = blueprintRegistry;
         this.tagLoader = tagLoader;
@@ -65,14 +65,14 @@ public class BlueprintManger extends SimpleJsonResourceReloadListener {
     }
 
     public static ItemStack createBlueprintItem(BlueprintData data, RegistryAccess registryAccess) {
-        return BlueprintItem.createStackFromData(registryAccess.registryOrThrow(ModRegistries.BLUEPRINTS).wrapAsHolder(data));
+        return BlueprintItem.createStackFromData(registryAccess.lookupOrThrow(ModRegistries.BLUEPRINTS).wrapAsHolder(data));
     }
 
     @ApiStatus.Internal
     public static void setupClient(Map<ResourceLocation, BaseImmutableTemplate> blueprintShapes, RegistryAccess access) {
-        var reg = access.registryOrThrow(ModRegistries.BLUEPRINTS);
-        reg.holders().forEach(holder -> holder.value().bindStructure(blueprintShapes.get(holder.key().location())));
-        reg.holders().forEach(data -> {
+        var reg = access.lookupOrThrow(ModRegistries.BLUEPRINTS);
+        reg.listElements().forEach(holder -> holder.value().bindStructure(blueprintShapes.get(holder.key().location())));
+        reg.listElements().forEach(data -> {
             if (!data.value().isValid()) {
                 LOGGER.error("Clay Soldiers: Loaded Invalid Blueprint Data on the Client {}", data);
             }
@@ -84,7 +84,7 @@ public class BlueprintManger extends SimpleJsonResourceReloadListener {
     @ApiStatus.Internal
     public static Map<ResourceLocation, BaseImmutableTemplate> getBlueprintShapeData(RegistryAccess registryAccess) {
         Map<ResourceLocation, BaseImmutableTemplate> map = new HashMap<>();
-        registryAccess.registryOrThrow(ModRegistries.BLUEPRINTS).holders().filter(h -> h.value().isValid()).forEach(h -> map.put(h.key().location(), h.value().getTemplate()));
+        registryAccess.lookupOrThrow(ModRegistries.BLUEPRINTS).listElements().filter(h -> h.value().isValid()).forEach(h -> map.put(h.key().location(), h.value().getTemplate()));
         return map;
     }
 }

@@ -5,19 +5,20 @@ import net.bumblebee.claysoldiers.init.ModDataComponents;
 import net.bumblebee.claysoldiers.init.ModEnchantments;
 import net.bumblebee.claysoldiers.init.ModItems;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ItemUseAnimation;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.Level;
@@ -45,8 +46,8 @@ public class ClayStaffItem extends Item {
     }
 
     @Override
-    public UseAnim getUseAnimation(ItemStack stack) {
-        return UseAnim.BOW;
+    public ItemUseAnimation getUseAnimation(ItemStack stack) {
+        return ItemUseAnimation.BOW;
     }
 
     @Override
@@ -60,9 +61,9 @@ public class ClayStaffItem extends Item {
     }
 
     @Override
-    public void releaseUsing(ItemStack stack, Level level, LivingEntity livingEntity, int timeRemaining) {
+    public boolean releaseUsing(ItemStack stack, Level level, LivingEntity livingEntity, int timeRemaining) {
         if (!(livingEntity instanceof Player player) || level.isClientSide) {
-            return;
+            return false;
         }
         boolean infiniteMaterials = livingEntity.hasInfiniteMaterials();
 
@@ -81,7 +82,7 @@ public class ClayStaffItem extends Item {
                     if (content == null) {
                         player.getInventory().removeItem(i, 1);
                     } else {
-                        ammoSlot.set(ModDataComponents.CLAY_POUCH_CONTENT.get(), content.shrink(1));
+                        ammoSlot.set(ModDataComponents.CLAY_POUCH_CONTENT.get(), content.shrink(1, content.getMaxCapacity()));
                     }
                 }
 
@@ -94,7 +95,9 @@ public class ClayStaffItem extends Item {
 
         if (ammo != null) {
             shootBlock(livingEntity, level, stack, timeRemaining, ammo.get(ModDataComponents.CLAY_MOB_TEAM_COMPONENT.get()));
+            return true;
         }
+        return false;
     }
 
     public static ItemStack getClayStaffAmmo(Predicate<ItemStack> ammoPredicate, Player player) {
@@ -114,15 +117,15 @@ public class ClayStaffItem extends Item {
         return null;
     }
 
-    protected void shootBlock(LivingEntity shooter, Level level, ItemStack stack, int timeRemaining, @Nullable ResourceLocation clayTeam) {
-        int pierce = getEnchantmentLevel(stack, Enchantments.PIERCING, level.registryAccess());
+    protected void shootBlock(LivingEntity shooter, Level level, ItemStack firedFrom, int timeRemaining, @Nullable ResourceLocation clayTeam) {
+        int pierce = getEnchantmentLevel(firedFrom, Enchantments.PIERCING, level.registryAccess());
 
-        float blockSize = ((MAX_HOLD_DURATION - timeRemaining) * 3f) / getMaxPower(stack, level.registryAccess());
+        float blockSize = ((MAX_HOLD_DURATION - timeRemaining) * 3f) / getMaxPower(firedFrom, level.registryAccess());
         blockSize = Mth.clamp(blockSize + 1f, MIN_BLOCK_SIZE, MAX_BLOCK_SIZE);
-        shootBlock(shooter, level, blockSize, 0f, pierce, clayTeam);
-        if (getEnchantmentLevel(stack, Enchantments.MULTISHOT, level.registryAccess()) > 0) {
-            shootBlock(shooter, level, blockSize, -15.0f, pierce, clayTeam);
-            shootBlock(shooter, level, blockSize, 15.0f, pierce, clayTeam);
+        shootBlock(shooter, level, blockSize, 0f, pierce, clayTeam, firedFrom);
+        if (getEnchantmentLevel(firedFrom, Enchantments.MULTISHOT, level.registryAccess()) > 0) {
+            shootBlock(shooter, level, blockSize, -15.0f, pierce, clayTeam, firedFrom);
+            shootBlock(shooter, level, blockSize, 15.0f, pierce, clayTeam, firedFrom);
         }
     }
 
@@ -131,10 +134,11 @@ public class ClayStaffItem extends Item {
      * @param blockSize Value in range [{@value MIN_BLOCK_SIZE} - {@value MAX_BLOCK_SIZE}]
      * @param yAngleOffset y angle offset in degree
      */
-    protected void shootBlock(LivingEntity shooter, Level level, float blockSize, float yAngleOffset, int pierce, @Nullable ResourceLocation clayTeam) {
+    protected void shootBlock(LivingEntity shooter, Level level, float blockSize, float yAngleOffset, int pierce, @Nullable ResourceLocation clayTeam, ItemStack firedFrom) {
 
         ClayBlockProjectileEntity clayBlock = new ClayBlockProjectileEntity(level, shooter, shooter.getEyeHeight());
         clayBlock.shootFromRotation(shooter, shooter.getXRot(), shooter.getYRot() + yAngleOffset, 0.0F, blockSize / 2f, 1.0F);
+        clayBlock.setFiredFrom(firedFrom);
 
         if (clayTeam != null) {
             clayBlock.setClayTeam(clayTeam);
@@ -155,38 +159,28 @@ public class ClayStaffItem extends Item {
         };
     }
 
-    public static int getEnchantmentLevel(ItemStack stack, ResourceKey<Enchantment> key, RegistryAccess registries) {
-        return registries.registry(Registries.ENCHANTMENT)
-                .map(r -> r.getHolder(key)
+    public static int getEnchantmentLevel(ItemStack stack, ResourceKey<Enchantment> key, HolderLookup.Provider registries) {
+        return registries.lookup(Registries.ENCHANTMENT)
+                .map(r -> r.get(key)
                         .map(h -> stack.getEnchantments().getLevel(h))
                         .orElse(0))
                 .orElse(0);
     }
 
     @Override
-    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand usedHand) {
+    public InteractionResult use(Level level, Player player, InteractionHand usedHand) {
         ItemStack itemInHand = player.getItemInHand(usedHand);
         Predicate<ItemStack> ammoPredicate = getAmmoPredicate(itemInHand, player.registryAccess());
         if (player.hasInfiniteMaterials() || player.getInventory().contains(ammoPredicate)) {
             player.startUsingItem(usedHand);
 
-            return InteractionResultHolder.consume(itemInHand);
+            return InteractionResult.SUCCESS;
         }
 
-        return InteractionResultHolder.fail(itemInHand);
+        return InteractionResult.FAIL;
     }
 
     private static Predicate<ItemStack> getAmmoPredicate(ItemStack stack, RegistryAccess registries) {
         return getEnchantmentLevel(stack, ModEnchantments.SOLDIER_PROJECTILE, registries) > 0 ? SOLDIER_PREDICATE : PROJECTILE_PREDICATE;
-    }
-
-    @Override
-    public int getEnchantmentValue() {
-        return 1;
-    }
-
-    @Override
-    public boolean isEnchantable(ItemStack stack) {
-        return stack.getCount() == 1;
     }
 }

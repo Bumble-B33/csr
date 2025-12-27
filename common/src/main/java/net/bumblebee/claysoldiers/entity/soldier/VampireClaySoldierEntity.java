@@ -1,11 +1,13 @@
 package net.bumblebee.claysoldiers.entity.soldier;
 
+import net.bumblebee.claysoldiers.entity.VampireSubjugate;
 import net.bumblebee.claysoldiers.entity.VampiricClayMob;
 import net.bumblebee.claysoldiers.soldierproperties.customproperties.AttackTypeProperty;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -54,11 +56,11 @@ public class VampireClaySoldierEntity extends UndeadClaySoldier implements Vampi
     }
 
     @Override
-    protected boolean specificTargetPredicate(LivingEntity target) {
+    protected boolean specificTargetPredicate(LivingEntity target, ServerLevel level) {
         if (target instanceof VampireSubjugate vampireSubjugate && vampireSubjugate.isSubjugateOf(this)) {
             return false;
         }
-        return super.specificTargetPredicate(target);
+        return super.specificTargetPredicate(target, level);
     }
 
     @Override

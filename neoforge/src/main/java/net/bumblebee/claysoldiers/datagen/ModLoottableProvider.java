@@ -93,7 +93,7 @@ public class ModLoottableProvider extends LootTableProvider {
                                     .add(LootItem.lootTableItem(ModItems.CLAY_POUCH))
                                     .add(LootItem.lootTableItem(Items.BOOK)
                                             .apply(new SetEnchantmentsFunction.Builder()
-                                                    .withEnchantment(FakeHolder.createForSlingShot(lookup), ConstantValue.exactly(1f))
+                                                    .withEnchantment(createForSlingShot(lookup), ConstantValue.exactly(1f))
                                             )
                                     )
                                     .when(LootItemKilledByPlayerCondition.killedByPlayer())
@@ -119,7 +119,7 @@ public class ModLoottableProvider extends LootTableProvider {
                                     .add(LootItem.lootTableItem(ModItems.CLAY_STAFF))
                                     .add(LootItem.lootTableItem(Items.BOOK)
                                             .apply(new SetEnchantmentsFunction.Builder()
-                                                    .withEnchantment(FakeHolder.createForSlingShot(lookup), ConstantValue.exactly(1f))
+                                                    .withEnchantment(createForSlingShot(lookup), ConstantValue.exactly(1f))
                                             )
                                     )
                                     .when(LootItemKilledByPlayerCondition.killedByPlayer())
@@ -140,25 +140,23 @@ public class ModLoottableProvider extends LootTableProvider {
         }
     }
 
+    public static Holder.Reference<Enchantment> createForSlingShot(HolderLookup.Provider lookup) {
+        return new FakeHolder(lookup, ModEnchantments.SOLDIER_PROJECTILE, Enchantment.enchantment(
+                Enchantment.definition(
+                        HolderSet.empty(),
+                        2,
+                        1,
+                        Enchantment.constantCost(20),
+                        Enchantment.constantCost(50),
+                        4,
+                        EquipmentSlotGroup.ANY
+                )
+        ).build(ModEnchantments.SOLDIER_PROJECTILE.location()));
+    }
 
     private static class FakeHolder extends Holder.Reference<Enchantment> {
         public FakeHolder(HolderLookup.Provider lookup, ResourceKey<Enchantment> key, Enchantment value) {
             super(Type.STAND_ALONE, lookup.lookupOrThrow(Registries.ENCHANTMENT), key, value);
-        }
-
-        public static FakeHolder createForSlingShot(HolderLookup.Provider lookup) {
-            return new FakeHolder(lookup, ModEnchantments.SOLDIER_PROJECTILE, Enchantment.enchantment(
-                    Enchantment.definition(
-                            HolderSet.empty(),
-                            2,
-                            1,
-                            Enchantment.constantCost(20),
-                            Enchantment.constantCost(50),
-                            4,
-                            EquipmentSlotGroup.ANY
-                    )
-            ).build(ModEnchantments.SOLDIER_PROJECTILE.location())
-            );
         }
 
         @Override

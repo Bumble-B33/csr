@@ -2,14 +2,17 @@ package net.bumblebee.claysoldiers.block.blueprint;
 
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.blueprint.BlueprintData;
-import net.bumblebee.claysoldiers.blueprint.BlueprintManger;
+import net.bumblebee.claysoldiers.blueprint.BlueprintManager;
 import net.bumblebee.claysoldiers.blueprint.BlueprintRequest;
 import net.bumblebee.claysoldiers.blueprint.BlueprintTemplateSettings;
 import net.bumblebee.claysoldiers.blueprint.templates.BlueprintPlan;
 import net.bumblebee.claysoldiers.blueprint.templates.ClientBlueprintPlan;
 import net.bumblebee.claysoldiers.blueprint.templates.ServerBlueprintPlan;
 import net.bumblebee.claysoldiers.capability.BlueprintRequestHandler;
+import net.bumblebee.claysoldiers.entity.ClayMobEntity;
 import net.bumblebee.claysoldiers.init.ModBlockEntities;
+import net.bumblebee.claysoldiers.init.ModCriterions;
+import net.bumblebee.claysoldiers.init.ModRegistries;
 import net.bumblebee.claysoldiers.networking.BlueprintPlacePayload;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -19,6 +22,8 @@ import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Mirror;
 import net.minecraft.world.level.block.Rotation;
@@ -46,8 +51,8 @@ public class EaselBlockEntity extends BlockEntity {
         }
 
         @Override
-        public boolean doRequest(@Nullable BlueprintRequest request) {
-            return doBlueprintRequest(request);
+        public boolean doRequest(@Nullable BlueprintRequest request, ClayMobEntity placer) {
+            return doBlueprintRequest(request, placer);
         }
     };
 
@@ -85,7 +90,7 @@ public class EaselBlockEntity extends BlockEntity {
     }
 
     public ItemStack getBlueprintItem() {
-        return BlueprintManger.createBlueprintItem(data, level.registryAccess());
+        return BlueprintManager.createBlueprintItem(data, level.registryAccess());
     }
 
 
@@ -201,7 +206,8 @@ public class EaselBlockEntity extends BlockEntity {
             case EAST -> Rotation.CLOCKWISE_90;
             case SOUTH -> Rotation.CLOCKWISE_180;
             case WEST -> Rotation.COUNTERCLOCKWISE_90;
-            default -> throw new IllegalStateException("Easel Block Entity should never have a BlockState Facing of:" + direction);
+            default ->
+                    throw new IllegalStateException("Easel Block Entity should never have a BlockState Facing of:" + direction);
         };
     }
 
@@ -224,17 +230,18 @@ public class EaselBlockEntity extends BlockEntity {
         );
     }
 
-    private boolean doBlueprintRequest(BlueprintRequest request) {
+    private boolean doBlueprintRequest(@Nullable BlueprintRequest request, ClayMobEntity placer) {
         if (request == null) {
             return false;
         }
-        return tryPlacingSoldier(request.getItem().getDefaultInstance()).isSuccess();
+        return tryPlacingSoldier(request.getItem().getDefaultInstance(), placer).isSuccess();
     }
 
-    public BlueprintPlan.PlaceResult tryPlacingSoldier(ItemStack item) {
+    public BlueprintPlan.PlaceResult tryPlacingSoldier(ItemStack item, @Nullable LivingEntity placer) {
         if (template == null) {
             return BlueprintPlan.PlaceResult.NOT_NEEDED;
         }
+
         var settings = getTemplateSettings();
         var result = template.tryPlacing(level, item,
                 getTemplateBase(settings),
@@ -244,10 +251,21 @@ public class EaselBlockEntity extends BlockEntity {
         if (result.isSuccess()) {
             if (!level.isClientSide()) {
                 ClaySoldiersCommon.NETWORK_MANGER.sendToPlayersTrackingBlockEntity(this, new BlueprintPlacePayload(worldPosition, item.getItem()));
+                triggerAdvancement(placer, template.isFinished());
             }
             setChanged();
         }
         return result;
+    }
+
+    private void triggerAdvancement(@Nullable LivingEntity placer, boolean isFinished) {
+        var key = level.registryAccess().lookupOrThrow(ModRegistries.BLUEPRINTS).getResourceKey(data).orElseThrow(() -> new IllegalStateException("Key for BlueprintData does not exist"));
+
+        if (placer instanceof ServerPlayer serverPlayer) {
+            ModCriterions.BLUEPRINT_COMPLETION_TRIGGER.get().trigger(serverPlayer, key, isFinished);
+        } else if (placer instanceof ClayMobEntity clayMob && clayMob.getClayTeamOwner() instanceof ServerPlayer serverPlayer) {
+            ModCriterions.BLUEPRINT_COMPLETION_TRIGGER.get().trigger(serverPlayer, key, isFinished);
+        }
     }
 
     public BlueprintRequestHandler getBlueprintRequestHandler() {

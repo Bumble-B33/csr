@@ -1,9 +1,13 @@
 package net.bumblebee.claysoldiers.soldierpoi;
 
+import com.mojang.serialization.Codec;
 import net.bumblebee.claysoldiers.claypoifunction.ClayPoiSource;
 import net.bumblebee.claysoldiers.claysoldierpredicate.ClaySoldierInventoryQuery;
 import net.bumblebee.claysoldiers.entity.ClayMobEntity;
 import net.bumblebee.claysoldiers.entity.soldier.AbstractClaySoldierEntity;
+import net.bumblebee.claysoldiers.init.ModCriterions;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.item.ItemEntity;
 import org.jetbrains.annotations.Nullable;
@@ -29,12 +33,16 @@ public abstract class SoldierPoiWithSource<T> {
     }
     public void performEffect(AbstractClaySoldierEntity soldier) {
         if (poi != null && stillValid(soldier)) {
-            poi.performEffect(soldier, createPoiSource(source));
+            var createdSource = createPoiSource(source);
+            if (createdSource.getOwner() instanceof ServerPlayer serverPlayer) {
+                ModCriterions.SOLDIER_POI_USE_TRIGGER.get().trigger(serverPlayer, getType());
+            }
+            poi.performEffect(soldier, createdSource);
             animateEffect(soldier);
             onUse(source, soldier);
-
         }
     }
+
     protected abstract ClayPoiSource createPoiSource(T source);
     protected boolean stillValid(AbstractClaySoldierEntity soldier) {
         return true;
@@ -55,5 +63,26 @@ public abstract class SoldierPoiWithSource<T> {
         return "SoldierPoiWithSource{" + poi +
                 ", " + source +
                 '}';
+    }
+
+    protected abstract Type getType();
+
+    public enum Type implements StringRepresentable {
+        ITEM("item"),
+        BLOCK("block");
+
+        public static final Codec<Type> CODEC = StringRepresentable.fromEnum(Type::values);
+
+        private final String serializedName;
+
+        Type(String serializedName) {
+            this.serializedName = serializedName;
+        }
+
+
+        @Override
+        public String getSerializedName() {
+            return serializedName;
+        }
     }
 }

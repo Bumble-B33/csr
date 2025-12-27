@@ -57,8 +57,8 @@ public class ModDatapackProvider extends DatapackBuiltinEntriesProvider {
             @Override
             protected void gather() {
                 register("small_house", ResourceLocation.withDefaultNamespace("village/plains/houses/plains_small_house_1"), SMALL_HOUSE_LANG, 0);
-                register("small_farm", ResourceLocation.withDefaultNamespace("village/plains/houses/plains_small_farm_1"), SMALL_FARM_LANG, 0.1f);
-                register("large_house", ResourceLocation.withDefaultNamespace("village/plains/houses/plains_medium_house_1"), LARGE_HOUSE_LANG, 0.2f);
+                register("small_farm", ResourceLocation.withDefaultNamespace("village/plains/houses/plains_small_farm_1"), SMALL_FARM_LANG, 0.5f);
+                register("large_house", ResourceLocation.withDefaultNamespace("village/plains/houses/plains_medium_house_1"), LARGE_HOUSE_LANG, 1f);
             }
         });
         BUILDER.add(ModRegistries.SOLDIER_ITEM_TYPES, DefaultSoldierItemTypes::registerAll);
@@ -66,7 +66,7 @@ public class ModDatapackProvider extends DatapackBuiltinEntriesProvider {
             @Override
             protected void gather() {
                 register(ClayMobTeamManger.DEFAULT_TYPE.getPath(), ClayMobTeam.of("Normal", ColorHelper.EMPTY).build());
-                register(ClayMobTeamManger.NO_TEAM_TYPE.getPath(), ClayMobTeam.of("No Team", ColorHelper.EMPTY).allowFriendlyFire().build());
+                register(ClayMobTeamManger.NO_TEAM_TYPE.getPath(), ClayMobTeam.of("No Team", ColorHelper.EMPTY).allowFriendlyFire().disableTaming().build());
 
                 register("white", "White", 16383998, Items.WHITE_DYE);
                 register("orange", "Orange", 16351261, Items.ORANGE_DYE);

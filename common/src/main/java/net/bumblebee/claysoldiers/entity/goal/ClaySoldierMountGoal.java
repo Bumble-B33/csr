@@ -44,7 +44,7 @@ public class ClaySoldierMountGoal extends Goal {
             LivingEntity target = this.claySoldier.getTarget();
             if (target == null) {
                 return false;
-            } else if (!target.isAlive() || !claySoldier.canMountEntity(target)) {
+            } else if (!target.isAlive() || !claySoldier.canMountEntity(target, getServerLevel(claySoldier))) {
                 return false;
             } else {
                 this.path = this.claySoldier.getNavigation().createPath(target, 0);
@@ -66,7 +66,7 @@ public class ClaySoldierMountGoal extends Goal {
         LivingEntity livingentity = this.claySoldier.getTarget();
         if (livingentity == null) {
             return false;
-        } else if (!livingentity.isAlive() || !claySoldier.canMountEntity(livingentity)) {
+        } else if (!livingentity.isAlive() || !claySoldier.canMountEntity(livingentity, getServerLevel(claySoldier))) {
             return false;
         } else if (!this.followingTargetEvenIfNotSeen) {
             return !this.claySoldier.getNavigation().isDone();

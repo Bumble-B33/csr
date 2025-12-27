@@ -13,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Consumer;
 
 public class SoldierMultiWearable {
     public static final Codec<SoldierMultiWearable> CODEC = RecordCodecBuilder.create(in -> in.group(
@@ -31,6 +32,10 @@ public class SoldierMultiWearable {
     private SoldierMultiWearable(Map<SoldierEquipmentSlot, SoldierWearableEffect> map, Map<SoldierAccessorySlot<?>, RenderableAccessory> accessories) {
         this.armorItemSlotMap = map.isEmpty() ? new EnumMap<>(SoldierEquipmentSlot.class) : new EnumMap<>(map);
         this.accessories = accessories;
+    }
+
+    public void forEachWearableEffect(Consumer<SoldierWearableEffect> action) {
+        armorItemSlotMap.values().forEach(action);
     }
 
     @Nullable

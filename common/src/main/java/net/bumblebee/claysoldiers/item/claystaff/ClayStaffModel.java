@@ -2,7 +2,6 @@ package net.bumblebee.claysoldiers.item.claystaff;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import net.bumblebee.claysoldiers.ClaySoldiersClient;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.init.ModDataComponents;
 import net.bumblebee.claysoldiers.init.ModEnchantments;
@@ -33,19 +32,17 @@ public class ClayStaffModel extends Model {
     private static final float SOLDIER_Y = -3f;
 
     public static final ModelLayerLocation LAYER_LOCATION = new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_staff"), "main");
-    public static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "textures/item/clay_staff.png");
+    public static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "textures/item/clay_staff_in_hand.png");
 
     public static final ModelLayerLocation SOLDIER_LAYER_LOCATION = new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_staff_soldier"), "main");
     public static final ResourceLocation SOLDIER_TEXTURE = ResourceLocation.withDefaultNamespace("textures/block/clay.png");
     private static final RenderType DOLL_RENDER_TYPE = RenderType.entityCutout(SOLDIER_TEXTURE);
 
-    private final ModelPart root;
     private final ModelPart cube;
     private final ModelPart doll;
 
     public ClayStaffModel(ModelPart root, ModelPart doll) {
-        super(RenderType::entitySolid);
-        this.root = root;
+        super(root, RenderType::entitySolid);
         this.cube = root.getChild("cube");
         this.doll = doll;
 
@@ -53,11 +50,6 @@ public class ClayStaffModel extends Model {
 
     public static ClayStaffModel create(Function<ModelLayerLocation, ModelPart> bakery) {
         return new ClayStaffModel(bakery.apply(LAYER_LOCATION), bakery.apply(SOLDIER_LAYER_LOCATION));
-    }
-
-    @Override
-    public void renderToBuffer(PoseStack poseStack, VertexConsumer vertexConsumer, int packedLight, int packedOverlay, int color) {
-        root.render(poseStack, vertexConsumer, packedLight, packedOverlay, color);
     }
 
     public void setCubeRotation(float radian) {
@@ -83,8 +75,8 @@ public class ClayStaffModel extends Model {
         }
     }
 
-    public static void renderAsItem(ItemStack pStack, ItemDisplayContext pDisplayContext, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        if (ClaySoldiersClient.clayStaffModel == null) {
+    public static void renderAsItem(ClayStaffModel model, ItemStack pStack, ItemDisplayContext pDisplayContext, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (model == null) {
             return;
         }
 
@@ -96,21 +88,21 @@ public class ClayStaffModel extends Model {
 
         if (pDisplayContext.firstPerson() || pDisplayContext == ItemDisplayContext.THIRD_PERSON_LEFT_HAND || pDisplayContext == ItemDisplayContext.THIRD_PERSON_RIGHT_HAND) {
             float scale = ((float) Minecraft.getInstance().player.getTicksUsingItem()) / ClayStaffItem.getMaxPower(pStack, Minecraft.getInstance().level.registryAccess());
-            ClaySoldiersClient.clayStaffModel.hideCube(doll);
-            ClaySoldiersClient.clayStaffModel.scale(Math.min(scale, 1), doll);
+            model.hideCube(doll);
+            model.scale(Math.min(scale, 1), doll);
             if (doll) {
-                ClaySoldiersClient.clayStaffModel.renderDoll(poseStack, buffer, packedLight, packedOverlay);
+                model.renderDoll(poseStack, buffer, packedLight, packedOverlay);
             } else {
-                ClaySoldiersClient.clayStaffModel.setCubeRotation(((Minecraft.getInstance().level.getGameTime() + getPartialTick()) % 360) * DEG_2);
+                model.setCubeRotation(((Minecraft.getInstance().level.getGameTime() + getPartialTick()) % 360) * DEG_2);
             }
         } else {
-            ClaySoldiersClient.clayStaffModel.hideCube(true);
+            model.hideCube(true);
         }
 
-        VertexConsumer vertexConsumer = ItemRenderer.getFoilBufferDirect(
-                buffer, ClaySoldiersClient.clayStaffModel.renderType(ClayStaffModel.TEXTURE), false, pStack.hasFoil()
+        VertexConsumer vertexConsumer = ItemRenderer.getFoilBuffer(
+                buffer, model.renderType(ClayStaffModel.TEXTURE), false, pStack.hasFoil()
         );
-        ClaySoldiersClient.clayStaffModel.renderToBuffer(poseStack, vertexConsumer, packedLight, packedOverlay);
+        model.renderToBuffer(poseStack, vertexConsumer, packedLight, packedOverlay);
 
 
         poseStack.popPose();
@@ -184,6 +176,6 @@ public class ClayStaffModel extends Model {
     }
 
     private static float getPartialTick() {
-        return Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(true);
+        return Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(true);
     }
 }

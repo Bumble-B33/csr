@@ -2,6 +2,7 @@ package net.bumblebee.claysoldiers.entity.boss;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.bumblebee.claysoldiers.entity.soldier.AbstractClaySoldierEntity;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.ai.Brain;
 import net.minecraft.world.entity.ai.behavior.LookAtTargetSink;
@@ -47,8 +48,8 @@ public class SmartBossClaySoldierEntity extends BossClaySoldierEntity implements
     }
 
     @Override
-    protected void customServerAiStep() {
-        super.customServerAiStep();
+    protected void customServerAiStep(ServerLevel level) {
+        super.customServerAiStep(level);
         this.tickBrain(this);
     }
 
@@ -57,7 +58,9 @@ public class SmartBossClaySoldierEntity extends BossClaySoldierEntity implements
         return ObjectArrayList.of(
                 new HurtBySensor<>(),
                 new NearbyPlayersSensor<>(),
-                new NearbyLivingEntitySensor<SmartBossClaySoldierEntity>().setPredicate((target, entity) -> entity.targetPredicate(target))
+                new NearbyLivingEntitySensor<SmartBossClaySoldierEntity>().setPredicate((target, entity) -> {
+                    return entity.targetPredicate(target, (ServerLevel) entity.level());
+                })
         );
     }
 

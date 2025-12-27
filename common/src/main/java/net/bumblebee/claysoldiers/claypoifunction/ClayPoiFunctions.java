@@ -349,7 +349,7 @@ public final class ClayPoiFunctions {
         @Override
         public void accept(ClaySoldierInventorySetter soldier, ClayPoiSource source) {
             if (soldier instanceof AbstractClaySoldierEntity entity) {
-                data.convert(entity);
+                data.convert(entity, source.getOwner() instanceof Player player ? player : null);
             }
         }
 

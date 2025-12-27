@@ -5,12 +5,11 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.serialization.Codec;
 import io.netty.buffer.ByteBuf;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
+import net.bumblebee.claysoldiers.datamap.armor.accessories.AccessoryRenderState;
 import net.bumblebee.claysoldiers.datamap.armor.accessories.IAccessoryRenderLayer;
 import net.bumblebee.claysoldiers.datamap.armor.accessories.RenderableAccessory;
-import net.bumblebee.claysoldiers.entity.soldier.AbstractClaySoldierEntity;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
 
@@ -29,12 +28,11 @@ public class StringRenderLayer implements RenderableAccessory {
     }
 
     @Override
-    public void render(IAccessoryRenderLayer renderedFrom, PoseStack pPoseStack, MultiBufferSource pBuffer, int pPackedLight, AbstractClaySoldierEntity claySoldier, float pPartialTick, boolean isFalling) {
+    public void render(IAccessoryRenderLayer renderedFrom, PoseStack pPoseStack, MultiBufferSource pBuffer, int pPackedLight, AccessoryRenderState claySoldier) {
         if (renderType == null) {
             renderType = RenderType.entityTranslucent(textureLocation);
         }
         VertexConsumer stringBuffer = pBuffer.getBuffer(renderType);
-        renderedFrom.getSoldierModel().renderToBuffer(pPoseStack, stringBuffer, pPackedLight, LivingEntityRenderer.getOverlayCoords(claySoldier, 0.0F));
-
+        renderedFrom.getSoldierModel().renderToBuffer(pPoseStack, stringBuffer, pPackedLight, claySoldier.overlayCords0);
     }
 }

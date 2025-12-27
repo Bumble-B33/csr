@@ -1,7 +1,7 @@
 package net.bumblebee.claysoldiers.networking;
 
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
-import net.bumblebee.claysoldiers.blueprint.BlueprintManger;
+import net.bumblebee.claysoldiers.blueprint.BlueprintManager;
 import net.bumblebee.claysoldiers.blueprint.templates.BaseImmutableTemplate;
 import net.bumblebee.claysoldiers.platform.services.INetworkManger;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -28,6 +28,6 @@ public record BlueprintClientPayload(Map<ResourceLocation, BaseImmutableTemplate
 
     @Override
     public void handleClient(INetworkManger.PayloadContext context) {
-        BlueprintManger.setupClient(blueprintShapeMap, context.player().registryAccess());
+        BlueprintManager.setupClient(blueprintShapeMap, context.player().registryAccess());
     }
 }

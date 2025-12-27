@@ -40,24 +40,7 @@ public class PickUpItemsGoal extends AbstractWorkGoal {
     }
 
     public void pushToWardsItem(ItemEntity itemEntity) {
-        double xDif = itemEntity.getX() - soldier.getX();
-        double zDif = itemEntity.getZ() - soldier.getZ();
-        double absMax = Mth.absMax(xDif, zDif);
-        if (absMax >= 0.01F) {
-            absMax = Math.sqrt(absMax);
-            xDif /= absMax;
-            zDif /= absMax;
-            double invertedAbsMax = 1.0 / absMax;
-            if (invertedAbsMax > 1.0) {
-                invertedAbsMax = 1.0;
-            }
-
-            xDif *= invertedAbsMax;
-            zDif *= invertedAbsMax;
-            xDif *= 0.05F;
-            zDif *= 0.05F;
-            soldier.setDeltaMovement(soldier.getDeltaMovement().add(xDif, 0, zDif));
-        }
+        pushToWardsItem(soldier, itemEntity);
     }
 
     @Override
@@ -102,11 +85,35 @@ public class PickUpItemsGoal extends AbstractWorkGoal {
         if (!list.isEmpty()) {
             soldier.getNavigation().moveTo(list.getFirst(), 1.2F);
         }
-
     }
 
     private List<ItemEntity> getItemsInArea() {
-        return soldier.level().getEntitiesOfClass(ItemEntity.class, soldier.getBoundingBox().inflate(8.0, VERTICAL_SEARCH_RANGE, 8.0), ALLOWED_ITEMS);
+        return getItemsInArea(soldier, VERTICAL_SEARCH_RANGE, ALLOWED_ITEMS);
+    }
+
+    public static List<ItemEntity> getItemsInArea(AbstractClaySoldierEntity soldier, float verticalSearchRange, Predicate<ItemEntity> allowed) {
+        return soldier.level().getEntitiesOfClass(ItemEntity.class, soldier.getBoundingBox().inflate(8.0, verticalSearchRange, 8.0), allowed);
+    }
+
+    public static void pushToWardsItem(AbstractClaySoldierEntity soldier, ItemEntity itemEntity) {
+        double xDif = itemEntity.getX() - soldier.getX();
+        double zDif = itemEntity.getZ() - soldier.getZ();
+        double absMax = Mth.absMax(xDif, zDif);
+        if (absMax >= 0.01F) {
+            absMax = Math.sqrt(absMax);
+            xDif /= absMax;
+            zDif /= absMax;
+            double invertedAbsMax = 1.0 / absMax;
+            if (invertedAbsMax > 1.0) {
+                invertedAbsMax = 1.0;
+            }
+
+            xDif *= invertedAbsMax;
+            zDif *= invertedAbsMax;
+            xDif *= 0.05F;
+            zDif *= 0.05F;
+            soldier.setDeltaMovement(soldier.getDeltaMovement().add(xDif, 0, zDif));
+        }
     }
 
     @Override

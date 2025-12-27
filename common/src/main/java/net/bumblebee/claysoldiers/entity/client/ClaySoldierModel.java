@@ -3,6 +3,7 @@ package net.bumblebee.claysoldiers.entity.client;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
+import net.bumblebee.claysoldiers.entity.client.renderstates.AbstractClaySoldierRenderState;
 import net.bumblebee.claysoldiers.entity.soldier.AbstractClaySoldierEntity;
 import net.minecraft.client.model.AnimationUtils;
 import net.minecraft.client.model.HumanoidModel;
@@ -16,42 +17,51 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.HumanoidArm;
 import org.jetbrains.annotations.Nullable;
 
-public class ClaySoldierModel extends HumanoidModel<AbstractClaySoldierEntity> {
+public class ClaySoldierModel extends HumanoidModel<AbstractClaySoldierRenderState> {
     public static final ModelLayerLocation LAYER_LOCATION =
             new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_soldier"), "main");
     private static final float SCALE = AbstractClaySoldierEntity.DEFAULT_SCALE;
     protected static final CubeDeformation SHRINK_DEFORMATION = new CubeDeformation(SCALE, SCALE, SCALE);
+    public static final String BAMBOO_STICK_NAME = "bamboo_stick";
     @Nullable
     public final ModelPart bambooStick;
 
     public ClaySoldierModel(ModelPart pRoot) {
         super(pRoot);
-        if (pRoot.hasChild("bamboo_stick")) {
-            this.bambooStick = pRoot.getChild("bamboo_stick");
+        if (pRoot.hasChild(BAMBOO_STICK_NAME)) {
+            this.bambooStick = pRoot.getChild(BAMBOO_STICK_NAME);
         } else {
             this.bambooStick = null;
         }
     }
 
-    public static LayerDefinition createLayer() {
+    public void hideBambooStick() {
+        if (bambooStick != null) {
+            bambooStick.visible = false;
+        }
+    }
+
+    public static LayerDefinition createSoldierLayer() {
         return LayerDefinition.create(createSoldierMesh(SHRINK_DEFORMATION, 0), 64, 64);
     }
 
-    private static MeshDefinition createSoldierMesh(CubeDeformation cubeDeformation, float pYOffset) {
+    protected static MeshDefinition createSoldierMesh(CubeDeformation cubeDeformation, float pYOffset) {
         MeshDefinition meshDefinition = createMesh(cubeDeformation, pYOffset);
         PartDefinition partdefinition = meshDefinition.getRoot();
-        partdefinition.addOrReplaceChild("bamboo_stick",
-                CubeListBuilder.create().texOffs(0, 0).addBox(1.0F, -16.0F, -6.0F, 2.0F, 12.0F, 2.0F, cubeDeformation, 0.25f, 0.25f), PartPose.offset(0.0F, pYOffset, 0.0F));
+        partdefinition.addOrReplaceChild(BAMBOO_STICK_NAME,
+                CubeListBuilder.create()
+                        .texOffs(0, 0).addBox(1.0F, -16.0F, -6.0F, 2.0F, 12.0F, 2.0F, cubeDeformation, 0.25f, 0.25f),
+                PartPose.offset(0.0F, pYOffset, 0.0F));
 
         return meshDefinition;
     }
 
     @Override
-    public void setupAnim(AbstractClaySoldierEntity claySoldier, float pLimbSwing, float pLimbSwingAmount, float pAgeInTicks, float pNetHeadYaw, float pHeadPitch) {
-        super.setupAnim(claySoldier, pLimbSwing, pLimbSwingAmount, pAgeInTicks, pNetHeadYaw, pHeadPitch);
+    public void setupAnim(AbstractClaySoldierRenderState claySoldier) {
+        super.setupAnim(claySoldier);
 
-        if (claySoldier.isZombie()) {
-            AnimationUtils.animateZombieArms(leftArm, rightArm, claySoldier.isAggressive(), this.attackTime, pAgeInTicks);
+        if (claySoldier.isZombie) {
+            AnimationUtils.animateZombieArms(leftArm, rightArm, claySoldier.isAggressive, claySoldier.attackTime, claySoldier.ageInTicks);
         }
         animateArms(claySoldier);
 
@@ -60,11 +70,12 @@ public class ClaySoldierModel extends HumanoidModel<AbstractClaySoldierEntity> {
 
         if (bambooStick != null) {
             this.bambooStick.copyFrom(this.getHead());
+            bambooStick.visible = false;
         }
     }
 
-    private void animateArms(AbstractClaySoldierEntity claySoldier) {
-        boolean isRightHanded = claySoldier.getMainArm() == HumanoidArm.RIGHT;
+    private void animateArms(AbstractClaySoldierRenderState claySoldier) {
+        boolean isRightHanded = claySoldier.mainArm == HumanoidArm.RIGHT;
         boolean right = isRightHanded ? claySoldier.hasShieldInHand(InteractionHand.MAIN_HAND) : claySoldier.hasShieldInHand(InteractionHand.OFF_HAND);
         boolean left = isRightHanded ? claySoldier.hasShieldInHand(InteractionHand.OFF_HAND) : claySoldier.hasShieldInHand(InteractionHand.MAIN_HAND);
         if (right) {
@@ -75,7 +86,7 @@ public class ClaySoldierModel extends HumanoidModel<AbstractClaySoldierEntity> {
             this.leftArm.xRot = -Mth.PI / (2.45F);
             this.leftArm.yRot = 0.5f;
         }
-        if (claySoldier.isFallingWithGlider() || !claySoldier.getCarriedStack().isEmpty()) {
+        if (claySoldier.isFallingWithGlider || !claySoldier.carriedItemStack.isEmpty()) {
             this.leftArm.xRot = -Mth.PI;
             this.rightArm.xRot = -Mth.PI;
             this.rightArm.yRot = 0;
@@ -87,17 +98,19 @@ public class ClaySoldierModel extends HumanoidModel<AbstractClaySoldierEntity> {
         if (bambooStick == null) {
             return;
         }
+        bambooStick.visible = true;
         this.bambooStick.render(pPoseStack, pBuffer, pPackedLight, pPackedOverlay);
+        bambooStick.visible = false;
+
     }
 
-    private void setUpRidingPose(AbstractClaySoldierEntity claySoldier) {
-        if (claySoldier.getRidingPose() == AbstractClaySoldierEntity.RidingPose.RABBIT) {
+    private void setUpRidingPose(AbstractClaySoldierRenderState claySoldier) {
+        if (claySoldier.ridingPose == AbstractClaySoldierEntity.RidingPose.RABBIT) {
             setRabbitRidingPose();
         } else {
             body.z = 0;
             head.z = 0;
         }
-
     }
 
     private void setRabbitRidingPose() {
@@ -123,16 +136,16 @@ public class ClaySoldierModel extends HumanoidModel<AbstractClaySoldierEntity> {
         rightLeg.yRot = -0.2f;
     }
 
-    private void setSittingPose(AbstractClaySoldierEntity claySoldier) {
-        if (claySoldier.isInSittingPose() && !claySoldier.isPassenger()) {
-            if (claySoldier.getId() % 2 == 0) {
+    private void setSittingPose(AbstractClaySoldierRenderState claySoldier) {
+        if (claySoldier.isInSittingPose && !claySoldier.isPassenger) {
+            if (claySoldier.id % 2 == 0) {
                 sittingPose1();
             } else {
                 sittingPose2();
             }
         }
     }
-    private void sittingPose1() {
+    public void sittingPose1() {
         head.y = 7.5f;
         leftArm.y = 9.5f;
         rightArm.y = 9.5f;

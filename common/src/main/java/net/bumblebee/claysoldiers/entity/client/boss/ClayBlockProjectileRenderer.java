@@ -4,6 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.entity.boss.ClayBlockProjectileEntity;
+import net.bumblebee.claysoldiers.entity.client.renderstates.ClayBlockProjectileRenderState;
 import net.minecraft.client.model.SkullModel;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.PartPose;
@@ -15,7 +16,7 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 
-public class ClayBlockProjectileRenderer extends EntityRenderer<ClayBlockProjectileEntity> {
+public class ClayBlockProjectileRenderer extends EntityRenderer<ClayBlockProjectileEntity, ClayBlockProjectileRenderState> {
     public static final ModelLayerLocation LAYER_LOCATION =
             new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_block_projectile"), "main");
 
@@ -40,26 +41,25 @@ public class ClayBlockProjectileRenderer extends EntityRenderer<ClayBlockProject
     }
 
     @Override
-    public void render(ClayBlockProjectileEntity entity, float entityYaw, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
-
-        var clientSoldier = entity.getClientSoldier();
+    public void render(ClayBlockProjectileRenderState renderState, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
+        var clientSoldier = renderState.clientClaySoldierEntity;
         if (clientSoldier != null) {
-            entity.clientTick(partialTicks);
-            clientSoldier.render(entityYaw, partialTicks, poseStack, buffer, packedLight);
+            clientSoldier.render(renderState.partialRot, poseStack, buffer, packedLight);
         } else {
-            renderBlock(entity, partialTicks, poseStack, buffer, packedLight);
+            renderBlock(renderState, poseStack, buffer, packedLight);
         }
-
-        super.render(entity, entityYaw, partialTicks, poseStack, buffer, packedLight);
+        super.render(renderState, poseStack, buffer, packedLight);
     }
 
-    private void renderBlock(ClayBlockProjectileEntity entity, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
+
+
+    private void renderBlock(ClayBlockProjectileRenderState entity, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
         poseStack.pushPose();
 
-        float blockSize = entity.getBlockSize();
+        float blockSize = entity.size;
         poseStack.scale(-blockSize, -blockSize, blockSize);
-        VertexConsumer vertexconsumer = buffer.getBuffer(this.model.renderType(this.getTextureLocation(entity)));
-        this.model.setupAnim(0.0F, entity.rot + partialTicks, entity.rot + partialTicks);
+        VertexConsumer vertexconsumer = buffer.getBuffer(this.model.renderType(TEXTURE_LOCATION));
+        this.model.setupAnim(0.0F, entity.rot + entity.partialRot, entity.rot + entity.partialRot);
         this.model.renderToBuffer(poseStack, vertexconsumer, packedLight, OverlayTexture.NO_OVERLAY);
         poseStack.popPose();
 
@@ -68,7 +68,18 @@ public class ClayBlockProjectileRenderer extends EntityRenderer<ClayBlockProject
     }
 
     @Override
-    public ResourceLocation getTextureLocation(ClayBlockProjectileEntity entity) {
-        return TEXTURE_LOCATION;
+    public ClayBlockProjectileRenderState createRenderState() {
+        return new ClayBlockProjectileRenderState();
     }
+
+    @Override
+    public void extractRenderState(ClayBlockProjectileEntity clayBlock, ClayBlockProjectileRenderState reusedState, float partialTick) {
+        super.extractRenderState(clayBlock, reusedState, partialTick);
+        reusedState.size = clayBlock.getBlockSize();
+        reusedState.partialRot = partialTick;
+        reusedState.rot += 1;
+        reusedState.clientClaySoldierEntity = clayBlock.getClientSoldier();
+        clayBlock.clientTick(partialTick);
+    }
+
 }

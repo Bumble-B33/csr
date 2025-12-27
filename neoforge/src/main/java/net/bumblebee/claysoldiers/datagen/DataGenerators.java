@@ -2,48 +2,51 @@ package net.bumblebee.claysoldiers.datagen;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.mojang.serialization.JsonOps;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.ClaySoldiersNeoForge;
+import net.bumblebee.claysoldiers.datagen.advancements.ModAdvancements;
+import net.bumblebee.claysoldiers.datagen.advancements.ModBlueprintAdvancementProvider;
 import net.bumblebee.claysoldiers.datagen.tags.ModBlockTagsProvider;
 import net.bumblebee.claysoldiers.datagen.tags.ModItemTagProvider;
 import net.bumblebee.claysoldiers.datagen.tags.ModTagProvider;
-import net.bumblebee.claysoldiers.integration.curios.ModCuriosProvider;
+import net.bumblebee.claysoldiers.init.ModArmorMaterials;
+import net.bumblebee.claysoldiers.integration.curios.ModCuriosDataProvider;
 import net.minecraft.DetectedVersion;
+import net.minecraft.client.data.models.EquipmentAssetProvider;
+import net.minecraft.client.resources.model.EquipmentClientInfo;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.data.CachedOutput;
 import net.minecraft.data.DataGenerator;
 import net.minecraft.data.DataProvider;
 import net.minecraft.data.PackOutput;
+import net.minecraft.data.advancements.AdvancementProvider;
 import net.minecraft.data.metadata.PackMetadataGenerator;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.metadata.MetadataSectionType;
 import net.minecraft.server.packs.metadata.pack.PackMetadataSection;
 import net.minecraft.world.flag.FeatureFlagSet;
-import net.neoforged.neoforge.common.data.ExistingFileHelper;
+import net.minecraft.world.item.equipment.EquipmentAsset;
 import net.neoforged.neoforge.data.event.GatherDataEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
 public class DataGenerators {
     public static final Logger LOGGER = LoggerFactory.getLogger("CSR DataGeneration");
 
-    public static void gatherData(final GatherDataEvent event) {
+    public static void gatherData(final GatherDataEvent.Client event) {
         final DataGenerator generator = event.getGenerator();
         final PackOutput packOutput = generator.getPackOutput();
-        final ExistingFileHelper helper = event.getExistingFileHelper();
-
-        helper.trackGenerated(ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_soldier_holdable"), PackType.SERVER_DATA, ".json", "tags/item");
-        helper.trackGenerated(ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_hurt"), PackType.SERVER_DATA, ".json", "damage_type");
-        helper.trackGenerated(ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_on_fire"), PackType.SERVER_DATA, ".json", "damage_type");
-
 
         PackOutput neoforge = new PackOutput(Path.of(packOutput.getOutputFolder().toString().replace("common", "neoforge")));
         PackOutput fabric = new PackOutput(Path.of(packOutput.getOutputFolder().toString().replace("common", "fabric")));
@@ -54,58 +57,66 @@ public class DataGenerators {
 
         final CompletableFuture<HolderLookup.Provider> lookupProvider = event.getLookupProvider();
 
-        generator.addProvider(event.includeServer(), ModDatapackProvider.builtin(packOutput, lookupProvider));
+        event.createProvider(ModDatapackProvider::builtin);
 
+        ModTagProvider.getTagProviders().forEach(event::createProvider);
+        event.createBlockAndItemTags(ModBlockTagsProvider::new, ModItemTagProvider::new);
 
-        ModTagProvider.getTagProviders(packOutput, lookupProvider, helper).forEach(tag -> generator.addProvider(event.includeServer(), tag));
-        var blockProvider = new ModBlockTagsProvider(packOutput, lookupProvider, helper);
-        generator.addProvider(event.includeServer(), blockProvider);
-        generator.addProvider(event.includeServer(), new ModItemTagProvider(packOutput, lookupProvider, blockProvider.contentsGetter(), helper));
+        event.createProvider(ModLoottableProvider::new);
+        event.createProvider(ModRecipeProvider.Runner::new);
+        event.createProvider(ModModelProvider::new);
+        event.createProvider(ModLangProvider::new);
+        event.createProvider(ModParticleProvider::new);
 
+        event.addProvider(new EquipmentAssetProvider(packOutput) {
+            @Override
+            protected void registerModels(BiConsumer<ResourceKey<EquipmentAsset>, EquipmentClientInfo> output) {
+                output.accept(ModArmorMaterials.CLAY_GOGGLES_ID,
+                        EquipmentClientInfo.builder().addMainHumanoidLayer(ModArmorMaterials.CLAY_GOGGLES_ID.location(), false).build()
+                );
+            }
+        });
 
-        generator.addProvider(event.includeClient(), new ModRecipeProvider(packOutput, lookupProvider));
+        event.createProvider((p, l) -> new AdvancementProvider(
+                p, l, List.of(new ModAdvancements())
+        ));
 
-        generator.addProvider(event.includeClient(), new ModItemModelProvider(packOutput, helper));
+        event.addProvider(new ModCuriosDataProvider(neoforge, lookupProvider));
 
-        generator.addProvider(event.includeClient(), new ModLangProvider(packOutput));
-        generator.addProvider(event.includeClient(), new ModParticleProvider(packOutput, helper));
-        generator.addProvider(event.includeServer(), new ModBlockStateProvider(packOutput, helper));
-        generator.addProvider(event.includeServer(), new ModLoottableProvider(packOutput, lookupProvider));
+        DataGenerator.PackGenerator featurePack = generator.getBuiltinDatapack(true, ClaySoldiersCommon.MOD_ID, ClaySoldiersCommon.BLUEPRINT_PACK_PATH);
 
-        generator.addProvider(event.includeServer(), new ModCuriosProvider(neoforge, helper, lookupProvider));
-
-        DataGenerator.PackGenerator featurePack = generator.getBuiltinDatapack(event.includeServer(), ClaySoldiersCommon.MOD_ID, ClaySoldiersCommon.BLUEPRINT_PACK_PATH);
-
+        PackOutput neoBlueprintPackOut = new PackOutput(neoforge.getOutputFolder(PackOutput.Target.DATA_PACK).resolve(ClaySoldiersCommon.MOD_ID).resolve("datapacks").resolve(ClaySoldiersCommon.BLUEPRINT_PACK_PATH));
         featurePack.addProvider(packOut -> PackMetadataGenerator.forFeaturePack(
-                new PackOutput(neoforge.getOutputFolder(PackOutput.Target.DATA_PACK).resolve(ClaySoldiersCommon.MOD_ID).resolve("datapacks").resolve(ClaySoldiersCommon.BLUEPRINT_PACK_PATH)),
+                neoBlueprintPackOut,
                 Component.translatable(ClaySoldiersCommon.BLUEPRINT_PACK_DESCRIPTION),
                 FeatureFlagSet.of(ClaySoldiersNeoForge.BLUEPRINT_FLAG)
         ));
+        event.addProvider(new ModBlueprintAdvancementProvider("NeoForge", neoBlueprintPackOut, lookupProvider));
 
-        generator.addProvider(event.includeServer(), new PackMetadataGenerator(
-                new PackOutput(fabric.getOutputFolder().resolve(ClaySoldiersCommon.CSR_DEFAULT_PACK_LOCATION).resolve(ClaySoldiersCommon.BLUEPRINT_PACK_PATH))).add(
+
+        PackOutput fabricBluePrintPackOut = new PackOutput(fabric.getOutputFolder().resolve(ClaySoldiersCommon.CSR_DATA_PACK_LOCATION).resolve(ClaySoldiersCommon.BLUEPRINT_PACK_PATH));
+        event.addProvider(new PackMetadataGenerator(
+                fabricBluePrintPackOut).add(
                 PackMetadataSection.TYPE, new PackMetadataSection(Component.translatable(ClaySoldiersCommon.BLUEPRINT_PACK_DESCRIPTION), DetectedVersion.BUILT_IN.getPackVersion(PackType.SERVER_DATA))
         ));
+        event.addProvider(new ModBlueprintAdvancementProvider("Fabric", fabricBluePrintPackOut, lookupProvider));
 
         itemsDataPack(packOutput.getOutputFolder(), event);
+
     }
 
-    private static void itemsDataPack(Path output, GatherDataEvent event) {
-        PackOutput path = new PackOutput(output.resolve(ClaySoldiersCommon.CSR_DEFAULT_PACK_LOCATION).resolve(ClaySoldiersCommon.CSR_DEFAULT_DATA_PACK_PATH));
-        final DataGenerator generator = event.getGenerator();
-        final ExistingFileHelper helper = event.getExistingFileHelper();
+    private static void itemsDataPack(Path output, GatherDataEvent.Client event) {
+        PackOutput path = new PackOutput(output.resolve(ClaySoldiersCommon.CSR_DATA_PACK_LOCATION).resolve(ClaySoldiersCommon.CSR_DEFAULT_DATA_PACK_PATH));
         final CompletableFuture<HolderLookup.Provider> lookupProvider = event.getLookupProvider();
 
-        generator.addProvider(event.includeServer(), new CustomPackMetadataProvider(path)
+        event.addProvider(new CustomPackMetadataProvider(path)
                 .add(
                         PackMetadataSection.TYPE, new PackMetadataSection(Component.translatable(ClaySoldiersCommon.CSR_DEFAULT_PACK_DESCRIPTION), DetectedVersion.BUILT_IN.getPackVersion(PackType.SERVER_DATA))
-                )
-        );
+                ));
 
-        generator.addProvider(event.includeServer(), ModDatapackProvider.datapack(path, lookupProvider));
-        generator.addProvider(event.includeServer(), new ModDataMapAndTagProvider(path, lookupProvider, helper));
-        generator.addProvider(event.includeServer(), new ModDataMapProvider(path, lookupProvider));
-
+        event.addProvider(ModDatapackProvider.datapack(path, lookupProvider));
+        event.addProvider(new ModDataMapAndTagProvider(path, lookupProvider));
+        event.addProvider(new ModDataMapProvider(path, lookupProvider));
     }
 
     private static class CustomPackMetadataProvider implements DataProvider {
@@ -117,7 +128,12 @@ public class DataGenerators {
         }
 
         public <T> CustomPackMetadataProvider add(MetadataSectionType<T> type, T value) {
-            this.elements.put(type.getMetadataSectionName(), () -> type.toJson(value));
+            this.elements.put(
+                    type.name(),
+                    () -> type.codec().encodeStart(JsonOps.INSTANCE, value)
+                            .ifError(err -> LOGGER.error("Error encoding PackMetadata for {}: {}", output.getOutputFolder(), err.message()))
+                            .result().orElseThrow()
+            );
             return this;
         }
 

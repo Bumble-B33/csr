@@ -19,7 +19,7 @@ public class ClientBlueprintTooltip implements ClientTooltipComponent {
 
     public ClientBlueprintTooltip(ResourceLocation dataKey) {
         List<ItemStack> contentCopy;
-        BlueprintData data = Minecraft.getInstance().player.registryAccess().registryOrThrow(ModRegistries.BLUEPRINTS).get(dataKey);
+        BlueprintData data = Minecraft.getInstance().player.registryAccess().lookupOrThrow(ModRegistries.BLUEPRINTS).getValue(dataKey);
         if (data == null) {
             contentCopy = List.of();
         } else {
@@ -33,7 +33,7 @@ public class ClientBlueprintTooltip implements ClientTooltipComponent {
     }
 
     @Override
-    public int getHeight() {
+    public int getHeight(Font font) {
         return 4 + ITEM_SIZE * divideCeil(contents.size());
     }
 
@@ -43,11 +43,11 @@ public class ClientBlueprintTooltip implements ClientTooltipComponent {
     }
 
     @Override
-    public void renderImage(Font pFont, int pX, int pY, GuiGraphics pGuiGraphics) {
+    public void renderImage(Font font, int pX, int pY, int width, int height, GuiGraphics guiGraphics) {
         for (int itemIndex = 0; itemIndex < contents.size(); itemIndex++) {
             int elementX = ITEM_PADDING + pX + ((itemIndex % MAX_ITEMS_PER_ROW) * ITEM_SIZE);
             int elementY = ITEM_PADDING + pY + ((itemIndex / MAX_ITEMS_PER_ROW) * ITEM_SIZE);
-            renderItem(elementX, elementY, itemIndex, pGuiGraphics, pFont);
+            renderItem(elementX, elementY, itemIndex, guiGraphics, font);
         }
     }
 

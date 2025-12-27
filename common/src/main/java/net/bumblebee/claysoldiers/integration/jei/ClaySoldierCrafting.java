@@ -7,6 +7,8 @@ import net.bumblebee.claysoldiers.team.ClayMobTeamManger;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -22,8 +24,8 @@ public class ClaySoldierCrafting {
     private static final String CLAY_SOLDIER_CRAFTING = "jei." + ClaySoldiersCommon.MOD_ID + ".soldier.crafting";
 
     public static List<RecipeHolder<CraftingRecipe>> createRecipes() {
-
-        return ClayMobTeamManger.getAllKeys(getRegistries()).<RecipeHolder<CraftingRecipe>>mapMulti((entry, r) -> {
+        var allKeys = ClayMobTeamManger.getAllKeys(getRegistries());
+        return allKeys.<RecipeHolder<CraftingRecipe>>mapMulti((entry, r) -> {
             for (int i = 1; i <= 8; i++) {
                 r.accept(createRecipe(entry, i));
             }
@@ -38,11 +40,13 @@ public class ClaySoldierCrafting {
         NonNullList<Ingredient> inputs = NonNullList.createWithCapacity(count + 1);
         inputs.add(Ingredient.of(getFrom));
         for (int i = 0; i < count; i++) {
-            inputs.add(Ingredient.of(ClayMobTeamManger.getAllKeys(getRegistries()).map(team -> ClayMobTeamManger.createStackForTeam(team, getRegistries()))));
+            // Todo stacks
+            inputs.add(Ingredient.of(ModItems.CLAY_SOLDIER.get()));
+            //inputs.add(Ingredient.of(ClayMobTeamManger.getAllKeys(getRegistries()).map(team -> ClayMobTeamManger.createStackForTeam(team, getRegistries()).getItem())));
         }
         ItemStack output = ClayMobTeamManger.createStackForTeam(entry, getRegistries());
         output.setCount(count);
-        ResourceLocation recipeId = ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, CLAY_SOLDIER_CRAFTING + "." + output.getDescriptionId() + "_" + count);
+        ResourceKey<Recipe<?>> recipeId = ResourceKey.create(Registries.RECIPE, ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, CLAY_SOLDIER_CRAFTING + "." + entry.getPath().toString() + "_" + count));
         CraftingRecipe recipe = new ShapelessRecipe(CLAY_SOLDIER_CRAFTING, CraftingBookCategory.MISC, output, inputs);
 
         return new RecipeHolder<>(recipeId, recipe);
@@ -54,10 +58,14 @@ public class ClaySoldierCrafting {
     public static RecipeHolder<CraftingRecipe> createClaySoldierRevive(ResourceLocation team) {
         ItemStack output = ClayMobTeamManger.createStackForTeam(team, getRegistries());
         ItemStack input = ModItems.BRICKED_CLAY_SOLDIER.get().getDefaultInstance();
+        // Todo use stack
         input.set(ModDataComponents.CLAY_MOB_TEAM_COMPONENT.get(), team);
 
-        ResourceLocation recipeId = ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, CLAY_SOLDIER_REVIVING + "." + output.getDescriptionId());
-        NonNullList<Ingredient> inputs = NonNullList.of(Ingredient.EMPTY, Ingredient.of(input), Ingredient.of(Items.GHAST_TEAR));
+        ResourceKey<Recipe<?>> recipeId = ResourceKey.create(Registries.RECIPE, ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, CLAY_SOLDIER_REVIVING + "." + team.getPath()));
+        List<Ingredient> inputs = List.of(
+                Ingredient.of(ModItems.BRICKED_CLAY_SOLDIER.get()),
+                Ingredient.of(Items.GHAST_TEAR)
+        );
 
         CraftingRecipe recipe = new ShapelessRecipe(CLAY_SOLDIER_REVIVING, CraftingBookCategory.MISC, output, inputs);
         return new RecipeHolder<>(recipeId, recipe);

@@ -173,6 +173,9 @@ public interface SoldierPropertyMapReader extends Iterable<SoldierProperty<?>> {
     default boolean canBounce() {
         return hasPropertyType(SoldierPropertyTypes.BOUNCE.get());
     }
+    default int getBreakingPower() {
+        return getValueOrDfault(SoldierPropertyTypes.BREAKING_POWER);
+    }
 
 
     @NotNull

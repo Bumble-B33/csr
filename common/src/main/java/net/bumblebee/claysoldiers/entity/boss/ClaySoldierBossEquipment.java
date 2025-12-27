@@ -41,7 +41,7 @@ public enum ClaySoldierBossEquipment {
             boss.setBaseProperties(baseProperties.get());
             if (team == null) {
                 team = Util.getRandomSafe(
-                        boss.registryAccess().registryOrThrow(ModRegistries.CLAY_MOB_TEAMS).keySet().stream().filter(t -> !t.equals(ClayMobTeamManger.NO_TEAM_TYPE)).toList(), boss.getRandom()
+                        boss.registryAccess().lookupOrThrow(ModRegistries.CLAY_MOB_TEAMS).keySet().stream().filter(t -> !t.equals(ClayMobTeamManger.NO_TEAM_TYPE)).toList(), boss.getRandom()
                 ).orElse(ClayMobTeamManger.DEFAULT_TYPE);
             }
             boss.setClayTeamType(team);
@@ -64,7 +64,7 @@ public enum ClaySoldierBossEquipment {
 
 
         ResourceLocation team = Util.getRandomSafe(
-                boss.registryAccess().registryOrThrow(ModRegistries.CLAY_MOB_TEAMS).keySet().stream().filter(t -> !t.equals(ClayMobTeamManger.NO_TEAM_TYPE)).toList(), random
+                boss.registryAccess().lookupOrThrow(ModRegistries.CLAY_MOB_TEAMS).keySet().stream().filter(t -> !t.equals(ClayMobTeamManger.NO_TEAM_TYPE)).toList(), random
         ).orElse(ClayMobTeamManger.DEFAULT_TYPE);
 
 

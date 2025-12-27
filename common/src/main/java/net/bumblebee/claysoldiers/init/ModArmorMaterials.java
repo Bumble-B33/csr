@@ -2,35 +2,34 @@ package net.bumblebee.claysoldiers.init;
 
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.minecraft.Util;
-import net.minecraft.core.Holder;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
-import net.minecraft.world.item.ArmorItem;
-import net.minecraft.world.item.ArmorMaterial;
-import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.equipment.ArmorMaterial;
+import net.minecraft.world.item.equipment.ArmorType;
+import net.minecraft.world.item.equipment.EquipmentAsset;
+import net.minecraft.world.item.equipment.EquipmentAssets;
 
 import java.util.EnumMap;
-import java.util.List;
 
 public final class ModArmorMaterials {
-    public static final Holder<ArmorMaterial> CLAY_ARMOR_MATERIAL = ClaySoldiersCommon.PLATFORM.registerArmorMaterial("clay_armor",
-            () -> new ArmorMaterial(
-                    Util.make(new EnumMap<>(ArmorItem.Type.class), slotId -> {
-                        slotId.put(ArmorItem.Type.BOOTS, 1);
-                        slotId.put(ArmorItem.Type.LEGGINGS, 2);
-                        slotId.put(ArmorItem.Type.CHESTPLATE, 3);
-                        slotId.put(ArmorItem.Type.HELMET, 1);
-                        slotId.put(ArmorItem.Type.BODY, 3);
+    public static final ResourceKey<EquipmentAsset> CLAY_GOGGLES_ID = ResourceKey.create(EquipmentAssets.ROOT_ID, ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_goggles"));
+    public static final ArmorMaterial CLAY_ARMOR_MATERIAL = new ArmorMaterial(
+                    5,
+                    Util.make(new EnumMap<>(ArmorType.class), p_371485_ -> {
+                        p_371485_.put(ArmorType.BOOTS, 2);
+                        p_371485_.put(ArmorType.LEGGINGS, 2);
+                        p_371485_.put(ArmorType.CHESTPLATE, 3);
+                        p_371485_.put(ArmorType.HELMET, 1);
+                        p_371485_.put(ArmorType.BODY, 3);
                     }),
                     20,
                     SoundEvents.ARMOR_EQUIP_LEATHER,
-                    () -> Ingredient.of(ModTags.Items.INGOTS_COPPER),
-                    List.of(
-                            new ArmorMaterial.Layer(ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_goggles"))
-                    ),
-                    0,
-                    0
-            ));
+                    0F,
+                    0F,
+                    ModTags.Items.INGOTS_COPPER,
+                    CLAY_GOGGLES_ID
+            );
 
     private ModArmorMaterials() {
     }

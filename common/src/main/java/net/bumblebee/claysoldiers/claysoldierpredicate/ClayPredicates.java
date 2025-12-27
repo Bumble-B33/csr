@@ -5,6 +5,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.datamap.SoldierEquipmentSlot;
+import net.bumblebee.claysoldiers.soldierproperties.SoldierPropertyMapReader;
 import net.bumblebee.claysoldiers.soldierproperties.SoldierPropertyType;
 import net.bumblebee.claysoldiers.soldierproperties.SoldierPropertyTypes;
 import net.bumblebee.claysoldiers.soldierproperties.customproperties.AttackTypeProperty;
@@ -166,9 +167,9 @@ public class ClayPredicates {
         public @Nullable Component getDisplayName() {
             if (slot == null) {
                 assert specialSlot != null;
-                return Component.translatable(ITEM_PREDICATE_ANY_COMPONENT, item.getDescription(), specialSlot.getDisplayName()).withStyle(ChatFormatting.DARK_GRAY);
+                return Component.translatable(ITEM_PREDICATE_ANY_COMPONENT, Component.translatable(item.getDescriptionId()), specialSlot.getDisplayName()).withStyle(ChatFormatting.DARK_GRAY);
             }
-            return Component.translatable(ITEM_PREDICATE_COMPONENT, item.getDescription(), slot.getDisplayName()).withStyle(ChatFormatting.DARK_GRAY);
+            return Component.translatable(ITEM_PREDICATE_COMPONENT, Component.translatable(item.getDescriptionId()), slot.getDisplayName()).withStyle(ChatFormatting.DARK_GRAY);
         }
 
         @Override
@@ -254,8 +255,8 @@ public class ClayPredicates {
             return new SoldierPropertyPredicate(PropertyTestType.COUNT, propertyIdentifier, count);
         }
 
-        public static SoldierPropertyPredicate isExactly(SoldierPropertyType<?> propertyIdentifier, int toBe) {
-            return new SoldierPropertyPredicate(PropertyTestType.IS_EXACTLY, propertyIdentifier, toBe);
+        public static <T> SoldierPropertyPredicate isExactly(SoldierPropertyType<T> propertyIdentifier, T toBe) {
+            return new SoldierPropertyPredicate(PropertyTestType.IS_EXACTLY, propertyIdentifier, propertyIdentifier.applyAsInt(toBe));
         }
 
         @Override
@@ -265,9 +266,19 @@ public class ClayPredicates {
 
         @Override
         public boolean test(ClaySoldierInventoryQuery soldier) {
-            int value = soldier.allProperties().getPropertyValueAsInt(propertyIdentifier);
+            return testMap(soldier.allProperties(), soldier.getAttackType());
+        }
+
+        /**
+         * Test if the give {@code SoldierPropertyMap} satisfies this predicate.
+         * @param map the map to test.
+         * @param defaultAttackType the default AttackType.
+         * @return whether the given {@code SoldierPropertyMap} satisfies this predicate.
+         */
+        public boolean testMap(SoldierPropertyMapReader map, AttackTypeProperty defaultAttackType) {
+            int value = map.getPropertyValueAsInt(propertyIdentifier);
             if (propertyIdentifier == SoldierPropertyTypes.ATTACK_TYPE.get() && value == AttackTypeProperty.NORMAL.ordinal()) {
-                value = soldier.getAttackType().ordinal();
+                value = SoldierPropertyTypes.ATTACK_TYPE.get().applyAsInt(defaultAttackType);
             }
             return testType.test(value, countNeeded);
         }
@@ -276,7 +287,6 @@ public class ClayPredicates {
         public Component getDisplayName() {
             return testType.getDisplayName(propertyIdentifier.getDisplayName(), countNeeded);
         }
-
     }
 
     public enum PropertyTestType implements StringRepresentable {

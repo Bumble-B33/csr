@@ -49,7 +49,7 @@ public abstract class DefaultedResourceLocationArgument implements ArgumentType<
 
     @Override
     public ResourceLocation parse(StringReader reader) throws CommandSyntaxException {
-        var res =read(reader);
+        var res = read(reader);
         if (!isValid(res)) {
             throw ERROR_INVALID_VALUE.create(res.toString());
         }

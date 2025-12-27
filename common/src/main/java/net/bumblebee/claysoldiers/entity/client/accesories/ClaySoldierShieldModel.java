@@ -1,9 +1,7 @@
 package net.bumblebee.claysoldiers.entity.client.accesories;
 
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
-import net.bumblebee.claysoldiers.entity.soldier.AbstractClaySoldierEntity;
+import net.bumblebee.claysoldiers.entity.client.renderstates.AbstractClaySoldierRenderState;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
@@ -11,12 +9,11 @@ import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.client.model.geom.builders.*;
 import net.minecraft.resources.ResourceLocation;
 
-public class ClaySoldierShieldModel extends EntityModel<AbstractClaySoldierEntity> {
+public class ClaySoldierShieldModel extends EntityModel<AbstractClaySoldierRenderState> {
     public static final ModelLayerLocation LAYER_LOCATION = new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_soldier_shield"), "main");
-    private final ModelPart shield;
 
     public ClaySoldierShieldModel(ModelPart root) {
-        this.shield = root.getChild("plate");
+        super(root.getChild("plate"));
     }
 
     public static LayerDefinition createShieldLayer() {
@@ -32,15 +29,5 @@ public class ClaySoldierShieldModel extends EntityModel<AbstractClaySoldierEntit
 
 
         return LayerDefinition.create(meshdefinition, 32, 32);
-    }
-
-    @Override
-    public void setupAnim(AbstractClaySoldierEntity pEntity, float pLimbSwing, float pLimbSwingAmount, float pAgeInTicks, float pNetHeadYaw, float pHeadPitch) {
-
-    }
-
-    @Override
-    public void renderToBuffer(PoseStack pPoseStack, VertexConsumer pBuffer, int pPackedLight, int pPackedOverlay, int color) {
-        shield.render(pPoseStack, pBuffer, pPackedLight, pPackedOverlay, color);
     }
 }

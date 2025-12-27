@@ -16,7 +16,7 @@ import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.BossEvent;
 import net.minecraft.world.damagesource.DamageTypes;
-import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.storage.loot.LootTable;
@@ -34,7 +34,11 @@ public final class ModBossBehaviours {
     public static final Supplier<BossClaySoldierBehaviour> DEFAULT = ClaySoldiersCommon.PLATFORM.registerClayBossBehaviour("default",
             () -> BossClaySoldierBehaviour.of(BossClaySoldierEntity.BossTypes.NORMAL, DEFAULT_LOOT_TABLE)
                     .setAllowedBossTypes(BossClaySoldierEntity.BossTypes.ZOMBIE)
-                    .setOnDeath((boss, damageSource) -> boss.getBossDeathLoot(damageSource).forEach(boss::spawnAtLocation))
+                    .setOnDeath((boss, damageSource) -> boss.getBossDeathLoot(damageSource).forEach(loot -> {
+                        if (boss.level() instanceof ServerLevel serverLevel) {
+                            boss.spawnAtLocation(serverLevel, loot);
+                        }
+                    }))
                     .setShouldDie(boss -> {
                         if (boss.getBossType() == BossClaySoldierEntity.BossTypes.NORMAL) {
                             boss.setHealth(boss.getMaxHealth());
@@ -108,7 +112,11 @@ public final class ModBossBehaviours {
                             event.setProgress(boss.getHealth() / boss.getMaxHealth());
                         }
                     })
-                    .setOnDeath((boss, damageSource) -> boss.getBossDeathLoot(damageSource).forEach(boss::spawnAtLocation))
+                    .setOnDeath((boss, damageSource) -> boss.getBossDeathLoot(damageSource).forEach(loot ->  {
+                        if (boss.level() instanceof ServerLevel serverLevel) {
+                            boss.spawnAtLocation(serverLevel, loot);
+                        }
+                    }))
                     .build());
 
     public static final Supplier<BossClaySoldierBehaviour> ZOMBIE_MINION = ClaySoldiersCommon.PLATFORM.registerClayBossBehaviour("zombie_minion",
@@ -125,7 +133,7 @@ public final class ModBossBehaviours {
         if (loot.isEmpty()) {
             return;
         }
-        BossBatEntity bat = ModEntityTypes.VAMPIRE_BAT.get().spawn(level, pos, MobSpawnType.MOB_SUMMONED);
+        BossBatEntity bat = ModEntityTypes.VAMPIRE_BAT.get().spawn(level, pos, EntitySpawnReason.MOB_SUMMONED);
         if (bat != null) {
             bat.setLoot(loot);
         }
@@ -135,7 +143,7 @@ public final class ModBossBehaviours {
         int size = 6;
         List<BossClaySoldierEntity> minions = new ArrayList<>(size);
         for (int i = 0; i < size; i++) {
-            BossClaySoldierEntity minion = ModEntityTypes.BOSS_CLAY_SOLDIER_ENTITY.get().create(level);
+            BossClaySoldierEntity minion = ModEntityTypes.BOSS_CLAY_SOLDIER_ENTITY.get().create(level, EntitySpawnReason.MOB_SUMMONED);
             if (minion == null) {
                 return;
             }

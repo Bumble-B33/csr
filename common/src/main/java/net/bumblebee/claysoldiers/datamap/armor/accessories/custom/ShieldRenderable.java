@@ -6,9 +6,9 @@ import com.mojang.math.Axis;
 import com.mojang.serialization.Codec;
 import io.netty.buffer.ByteBuf;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
+import net.bumblebee.claysoldiers.datamap.armor.accessories.AccessoryRenderState;
 import net.bumblebee.claysoldiers.datamap.armor.accessories.IAccessoryRenderLayer;
 import net.bumblebee.claysoldiers.datamap.armor.accessories.RenderableAccessory;
-import net.bumblebee.claysoldiers.entity.soldier.AbstractClaySoldierEntity;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.OverlayTexture;
@@ -30,12 +30,12 @@ public class ShieldRenderable implements RenderableAccessory {
     }
 
     @Override
-    public void render(IAccessoryRenderLayer renderedFrom, PoseStack pPoseStack, MultiBufferSource pBuffer, int pPackedLight, AbstractClaySoldierEntity claySoldier, float pPartialTick, boolean isFalling) {
-        if (isFalling || claySoldier.isInSittingPose()) {
+    public void render(IAccessoryRenderLayer renderedFrom, PoseStack pPoseStack, MultiBufferSource pBuffer, int pPackedLight, AccessoryRenderState claySoldier) {
+        if (claySoldier.isFalling || claySoldier.isInSittingPose) {
             return;
         }
 
-        boolean isRightHanded = claySoldier.getMainArm() == HumanoidArm.RIGHT;
+        boolean isRightHanded = claySoldier.mainArm == HumanoidArm.RIGHT;
         boolean right = isRightHanded ? claySoldier.hasShieldInHand(InteractionHand.MAIN_HAND) : claySoldier.hasShieldInHand(InteractionHand.OFF_HAND);
         boolean left = isRightHanded ? claySoldier.hasShieldInHand(InteractionHand.OFF_HAND) : claySoldier.hasShieldInHand(InteractionHand.MAIN_HAND);
 

@@ -11,7 +11,7 @@ import net.minecraft.resources.ResourceLocation;
 import java.util.function.Supplier;
 
 public final class ClayPredicateSerializer<P extends ClayPredicate<P>> {
-    public static final Codec<ClayPredicateSerializer<?>> CODEC = ResourceLocation.CODEC.xmap(ModRegistries.CLAY_SOLDIER_PREDICATE_REGISTRY::get, ClayPredicateSerializer::getId);
+    public static final Codec<ClayPredicateSerializer<?>> CODEC = ResourceLocation.CODEC.xmap(ModRegistries.CLAY_SOLDIER_PREDICATE_REGISTRY::getValue, ClayPredicateSerializer::getId);
     public static final StreamCodec<RegistryFriendlyByteBuf, ClayPredicateSerializer<?>> STREAM_CODEC = ByteBufCodecs.registry(ModRegistries.CLAY_PREDICATE_SERIALIZERS);
 
     private final Supplier<MapCodec<P>> subCodec;

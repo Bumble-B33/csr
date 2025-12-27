@@ -10,7 +10,7 @@ import java.util.function.Supplier;
 
 public class SoldierStatusManager implements SoldierStatusHolder {
     public static final String SITTING_LANG = "clay_mob_status." + ClaySoldiersCommon.MOD_ID + ".sitting";
-    public static final String USING_POI_LANG = "clay_mob_status." + ClaySoldiersCommon.MOD_ID + ".using_poi";
+    public static final String USING_POI_LANG = "clay_mob_status." + ClaySoldiersCommon.MOD_ID + ".using_work_poi";
 
     private final List<Supplier<SoldierStatusHolder>> statuses;
 

@@ -3,21 +3,22 @@ package net.bumblebee.claysoldiers.item.disruptor;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.block.ClayMobContainer;
 import net.bumblebee.claysoldiers.entity.ClayMobEntity;
+import net.bumblebee.claysoldiers.init.ModCriterions;
 import net.bumblebee.claysoldiers.init.ModDataComponents;
-import net.bumblebee.claysoldiers.team.TeamLoyaltyManger;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ItemUseAnimation;
 import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.level.Level;
 
 import java.util.List;
@@ -33,12 +34,14 @@ public class ClayMobKillItem extends Item {
     }
 
     @Override
-    public InteractionResultHolder<ItemStack> use(Level pLevel, Player pPlayer, InteractionHand pUsedHand) {
-        if (!pLevel.isClientSide() && pUsedHand == InteractionHand.MAIN_HAND) {
-            killSoldiers(pPlayer.getItemInHand(pUsedHand), (ServerLevel) pLevel, pPlayer.getOnPos(), pPlayer);
-            return InteractionResultHolder.success(pPlayer.getItemInHand(pUsedHand));
+    public InteractionResult use(Level pLevel, Player pPlayer, InteractionHand pUsedHand) {
+        if (pLevel instanceof ServerLevel serverLevel && pPlayer instanceof ServerPlayer serverPlayer && pUsedHand == InteractionHand.MAIN_HAND) {
+            int amountKilled = killSoldiers(pPlayer.getItemInHand(pUsedHand), serverLevel, pPlayer.getOnPos(), serverPlayer);
+            ModCriterions.DISRUPTOR_KILL_TRIGGER.get().trigger(serverPlayer, amountKilled);
+
+            return InteractionResult.SUCCESS;
         }
-        return InteractionResultHolder.pass(pPlayer.getItemInHand(pUsedHand));
+        return InteractionResult.PASS;
     }
 
     @Override
@@ -51,32 +54,25 @@ public class ClayMobKillItem extends Item {
         }
     }
 
-    private int killSoldiers(ItemStack stack, ServerLevel level, BlockPos center, Player player) {
+    private int killSoldiers(ItemStack stack, ServerLevel level, BlockPos center, ServerPlayer player) {
         var killRange = stack.get(ModDataComponents.DISRUPTOR_KILL_RANGE.get());
         if (killRange == null) {
             return -1;
         }
-        List<? extends ClayMobEntity> clayMobEntities = killRange.getEntitiesInRange(level, center);
+        List<? extends ClayMobEntity> clayMobEntities = killRange.getEntitiesInRange(level, player, center);
         for(ClayMobEntity entity : clayMobEntities) {
-            kill(level, player, entity);
+            entity.kill(level);
         }
 
-        List<ClayMobContainer> soldierContainer = killRange.getClaySoldierContainers(level, center);
+        List<ClayMobContainer> soldierContainer = killRange.getClaySoldierContainers(level, player, center);
         soldierContainer.forEach(blockEntity -> blockEntity.killSoldier(level, player));
 
         return clayMobEntities.size() + soldierContainer.size();
     }
 
-    private static void kill(ServerLevel level, Player player, ClayMobEntity clayMob) {
-        var owner = TeamLoyaltyManger.getTeamPlayerData(level).getPlayerForTeam(clayMob.getClayTeamType());
-        if (owner == null || owner.is(player)) {
-            clayMob.kill();
-        }
-    }
-
     @Override
-    public UseAnim getUseAnimation(ItemStack pStack) {
-        return UseAnim.BRUSH;
+    public ItemUseAnimation getUseAnimation(ItemStack pStack) {
+        return ItemUseAnimation.BRUSH;
     }
 
     @Override

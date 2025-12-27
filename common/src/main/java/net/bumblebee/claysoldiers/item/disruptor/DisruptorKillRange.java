@@ -14,6 +14,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.ai.village.poi.PoiManager;
 import net.minecraft.world.level.entity.EntityTypeTest;
 import net.minecraft.world.phys.AABB;
@@ -51,23 +52,23 @@ public class DisruptorKillRange {
         return unlimited ? Component.translatable(rangedKey, Component.translatable(unlimitedKey)) : Component.translatable(rangedKey, range);
     }
 
-    public List<? extends ClayMobEntity> getEntitiesInRange(ServerLevel level, BlockPos center) {
+    public List<? extends ClayMobEntity> getEntitiesInRange(ServerLevel level, ServerPlayer serverPlayer, BlockPos center) {
         List<? extends ClayMobEntity> clayMobs;
         if (unlimited) {
-            clayMobs = level.getEntities(EntityTypeTest.forClass(ClayMobEntity.class), ClayMobEntity::canBeKilledByItem);
+            clayMobs = level.getEntities(EntityTypeTest.forClass(ClayMobEntity.class), c -> c.canBeKilledByDisruptor(level, serverPlayer));
         } else if (range >= 1) {
-            clayMobs = level.getEntitiesOfClass(ClayMobEntity.class, new AABB(center).inflate(range), ClayMobEntity::canBeKilledByItem);
+            clayMobs = level.getEntitiesOfClass(ClayMobEntity.class, new AABB(center).inflate(range), c -> c.canBeKilledByDisruptor(level, serverPlayer));
         } else {
             clayMobs = List.of();
         }
         return clayMobs;
     }
 
-    public List<ClayMobContainer> getClaySoldierContainers(ServerLevel level, BlockPos center) {
+    public List<ClayMobContainer> getClaySoldierContainers(ServerLevel level, ServerPlayer player, BlockPos center) {
         int range = unlimited ? MAX_RANGE : Math.max(MAX_RANGE, (int) this.range);
         return level.getPoiManager().getInSquare(h -> h.is(ModTags.PoiTypes.SOLDIER_CONTAINER), center, range, PoiManager.Occupancy.IS_OCCUPIED)
                 .map(p -> getClayMobContainer(level, p.getPos()))
-                .filter(Objects::nonNull)
+                .filter(c -> c != null && c.canKillClayMob(level, player))
                 .toList();
     }
     private static @Nullable ClayMobContainer getClayMobContainer(ServerLevel level, BlockPos pos) {

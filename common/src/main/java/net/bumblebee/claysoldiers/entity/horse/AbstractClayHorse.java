@@ -14,6 +14,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.tags.DamageTypeTags;
@@ -188,8 +189,8 @@ public abstract class AbstractClayHorse extends ClayMobRideableEntity implements
     }
 
     @Override
-    public boolean hurt(DamageSource pSource, float pAmount) {
-        boolean flag = super.hurt(pSource, pAmount);
+    public boolean hurtServer(ServerLevel serverLevel, DamageSource source, float amount) {
+        boolean flag = super.hurtServer(serverLevel, source, amount);
         if (flag && this.random.nextInt(3) == 0) {
             this.standIfPossible();
         }
@@ -336,13 +337,16 @@ public abstract class AbstractClayHorse extends ClayMobRideableEntity implements
         }
     }
 
+
+
     @Override
-    public boolean wantsToPickUp(ItemStack pStack) {
+    public boolean wantsToPickUp(ServerLevel level, ItemStack pStack) {
         return pStack.is(ModTags.Items.CLAY_HORSE_ARMOR);
     }
 
+
     @Override
-    public ItemStack equipItemIfPossible(ItemStack pStack) {
+    public ItemStack equipItemIfPossible(ServerLevel level, ItemStack pStack) {
         HorseWearableItemStack horseWearableItemStack = new HorseWearableItemStack(pStack);
         if (horseWearableItemStack.effect() == null) {
             return ItemStack.EMPTY;

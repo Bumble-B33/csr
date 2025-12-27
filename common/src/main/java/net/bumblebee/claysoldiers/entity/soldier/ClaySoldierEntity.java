@@ -1,6 +1,7 @@
 package net.bumblebee.claysoldiers.entity.soldier;
 
 import net.bumblebee.claysoldiers.entity.ClayMobEntity;
+import net.bumblebee.claysoldiers.entity.VampireSubjugate;
 import net.bumblebee.claysoldiers.init.ModEffects;
 import net.bumblebee.claysoldiers.init.ModEntityTypes;
 import net.bumblebee.claysoldiers.soldierproperties.customproperties.AttackTypeProperty;
@@ -8,6 +9,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
@@ -91,7 +93,7 @@ public class ClaySoldierEntity extends AbstractClaySoldierEntity implements Vamp
 
     @Override
     public void convertToVampire() {
-        VampireClaySoldierEntity vampire = ModEntityTypes.VAMPIRE_CLAY_SOLDIER_ENTITY.get().create(level());
+        VampireClaySoldierEntity vampire = ModEntityTypes.VAMPIRE_CLAY_SOLDIER_ENTITY.get().create(level(), EntitySpawnReason.CONVERSION);
         if (vampire != null) {
             vampire.moveTo(getX(), getY(), getZ(), getYRot(), getXRot());
             vampire.setIsAlpha(false);

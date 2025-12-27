@@ -2,7 +2,7 @@ package net.bumblebee.claysoldiers;
 
 import com.mojang.serialization.Codec;
 import net.bumblebee.claysoldiers.blueprint.BlueprintData;
-import net.bumblebee.claysoldiers.blueprint.BlueprintManger;
+import net.bumblebee.claysoldiers.blueprint.BlueprintManager;
 import net.bumblebee.claysoldiers.claypoifunction.ClayPoiFunctions;
 import net.bumblebee.claysoldiers.claysoldierpredicate.ClayPredicates;
 import net.bumblebee.claysoldiers.entity.ClayWraithEntity;
@@ -23,14 +23,16 @@ import net.bumblebee.claysoldiers.soldierproperties.customproperties.specialatta
 import net.bumblebee.claysoldiers.team.ClayMobTeam;
 import net.bumblebee.claysoldiers.team.ClayMobTeamManger;
 import net.bumblebee.claysoldiers.team.TeamLoyaltyManger;
+import net.minecraft.core.Holder;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.Registry;
-import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
@@ -41,6 +43,8 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.ServiceLoader;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
@@ -63,7 +67,7 @@ public class ClaySoldiersCommon {
     public static final GameRules.Key<GameRules.IntegerValue> CLAY_SOLDIER_DROP_RULE = PLATFORM.createIntRule("soldierDropThemSelf", GameRules.Category.DROPS, 50);
     public static final GameRules.Key<GameRules.BooleanValue> CLAY_SOLDIER_INVENTORY_DROP_RULE = PLATFORM.createBoolRule("soldierDropInventory", GameRules.Category.DROPS, true);
 
-    public static final String CSR_DEFAULT_PACK_LOCATION = "data/datapacks";
+    public static final String CSR_DATA_PACK_LOCATION = "data/datapacks";
     public static final String CSR_DEFAULT_DATA_PACK_PATH = "csr_default_datapack";
 
     public static final String CSR_DEFAULT_DATA_PACK_LANG = "resourcePack.%s.csr_default.name".formatted(ClaySoldiersCommon.MOD_ID);
@@ -75,6 +79,8 @@ public class ClaySoldiersCommon {
     public static final String BLUEPRINT_PACK_SOURCE = "pack.source.%s.%s".formatted(MOD_ID, BLUEPRINT_PACK_PATH);
 
     public static Predicate<Player> IS_WEARING_GOGGLES = p -> p.getItemBySlot(EquipmentSlot.HEAD).is(ModItems.CLAY_GOGGLES.get());
+    public final static List<Predicate<Player>> IS_WEARING_CLAY_SOLDIER = new ArrayList<>();
+
     @Nullable
     public static Supplier<@Nullable Player> clientPlayer;
 
@@ -102,6 +108,7 @@ public class ClaySoldiersCommon {
         ModItemGenerators.init();
         ModBossBehaviours.init();
         ModPoiTypes.init();
+        ModCriterions.init();
 
         NETWORK_MANGER.registerS2CPayload(ClayMobItemBreakParticles.ID, ClayMobItemBreakParticles.STREAM_CODEC, ClayMobItemBreakParticles::handleClient);
         NETWORK_MANGER.registerS2CPayload(SoldierItemChangePayload.ID, SoldierItemChangePayload.STREAM_CODEC, SoldierItemChangePayload::handleClient);
@@ -141,7 +148,7 @@ public class ClaySoldiersCommon {
         sendWhenChannel(player, new ClayTeamPlayerDataPayload.Creation(TeamLoyaltyManger.getTeamData(player.serverLevel()), reload), reload);
 
         if (!reload) {
-            sendWhenChannel(player, new BlueprintClientPayload(BlueprintManger.getBlueprintShapeData(player.registryAccess())), false);
+            sendWhenChannel(player, new BlueprintClientPayload(BlueprintManager.getBlueprintShapeData(player.registryAccess())), false);
         }
 
         if (NETWORK_MANGER.isMemoryConnection(player)) {
@@ -185,11 +192,15 @@ public class ClaySoldiersCommon {
         event.register(ModRegistries.CLAY_MOB_TEAMS, ClayMobTeam.CODEC_JSON, ClayMobTeam.CODEC_JSON, (id, key, value) -> ClayMobTeamManger.appendFromItemMap(value.getGetFrom(), key));
     }
 
-    public static void onTagLoad(RegistryAccess registryAccess, boolean client) {
+    public static void onTagLoad(HolderLookup.Provider registryAccess, boolean client) {
         if (!client) {
-            var reg = registryAccess.registryOrThrow(ModRegistries.SOLDIER_ITEM_TYPES);
-            reg.forEach(type -> type.onTagLoad(tag -> registryAccess.registryOrThrow(Registries.ITEM).getTag(tag)));
-            SoldierItemType.postTagLoad(reg.stream());
+
+            var reg = registryAccess.lookupOrThrow(ModRegistries.SOLDIER_ITEM_TYPES);
+            reg.listElements().forEach(type -> type.value()
+                    .onTagLoad(tag -> registryAccess.lookupOrThrow(Registries.ITEM).get(tag)));
+            SoldierItemType.postTagLoad(reg.listElements().map(Holder::value));
+
+
         }
     }
 
@@ -211,5 +222,29 @@ public class ClaySoldiersCommon {
 
     public interface RegistryRegisteredCallBack<T> {
         void onRegister(int id, ResourceLocation location, T value);
+    }
+
+    public static class BlueprintTagLoad implements BiConsumer<BlueprintManager, ResourceManager> {
+        private BlueprintManager manger;
+        private ResourceManager resourceManager;
+
+        @Override
+        public void accept(BlueprintManager manger, ResourceManager resourceManager) {
+            this.manger = manger;
+            this.resourceManager = resourceManager;
+        }
+
+        public void onTagLoad(HolderLookup.Provider registries) {
+            if (manger == null) {
+                if (ClaySoldiersCommon.PLATFORM.isClient()) {
+                    return;
+                } else {
+                    throw new IllegalStateException("Cannot load Blueprint Tags on the Client");
+                }
+            }
+            manger.onTagLoad(resourceManager, registries.lookupOrThrow(Registries.BLOCK).get(ModTags.Blocks.BLUEPRINT_BLACK_LISTED).orElseThrow().stream().toList());
+            manger = null;
+            resourceManager = null;
+        }
     }
 }

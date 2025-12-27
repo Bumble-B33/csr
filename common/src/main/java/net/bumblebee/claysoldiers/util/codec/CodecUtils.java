@@ -137,7 +137,7 @@ public final class CodecUtils {
     private static <T> Codec<Holder.Reference<T>> referenceHolderWithLifecycle(Registry<T> registry) {
         Codec<Holder.Reference<T>> codec = CODEC_DEFAULT_MOD_ID
                 .comapFlatMap(
-                        holder -> registry.getHolder(holder)
+                        holder -> registry.get(holder)
                                 .map(DataResult::success)
                                 .orElseGet(() -> DataResult.error(() -> "Unknown registry key in " + registry.key() + ": " + holder)),
                         p_325513_ -> p_325513_.key().location()

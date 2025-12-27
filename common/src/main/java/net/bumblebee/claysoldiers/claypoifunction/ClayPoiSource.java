@@ -1,6 +1,8 @@
 package net.bumblebee.claysoldiers.claypoifunction;
 
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.*;
 import net.minecraft.world.level.block.Block;
 import org.jetbrains.annotations.Nullable;
@@ -14,6 +16,14 @@ public interface ClayPoiSource {
      */
     @Nullable
     ItemStack getItemStack();
+
+    /**
+     * Returns the owner of this poi if the is one.
+     */
+    @Nullable
+    default Entity getOwner() {
+        return null;
+    }
 
     /**
      * Returns the {@code Item} associated with this Source if there is one.
@@ -47,8 +57,20 @@ public interface ClayPoiSource {
      * Creates a new source from a give {@code ItemEntity}.
      */
     static ClayPoiSource createSource(ItemEntity itemEntity) {
-        return itemEntity::getItem;
+        return new ClayPoiSource() {
+            @Override
+            public ItemStack getItemStack() {
+                return itemEntity.getItem();
+            }
+
+            @Override
+            public @Nullable Entity getOwner() {
+                return itemEntity.getOwner() instanceof Player player ? player : null;
+            }
+        };
     }
+
+
 
     static ClayPoiSource createSource(Block block) {
         return new ClayPoiSource() {

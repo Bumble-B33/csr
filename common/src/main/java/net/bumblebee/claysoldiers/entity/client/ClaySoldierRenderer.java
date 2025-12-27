@@ -1,7 +1,7 @@
 package net.bumblebee.claysoldiers.entity.client;
 
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
-import net.bumblebee.claysoldiers.entity.soldier.AbstractClaySoldierEntity;
+import net.bumblebee.claysoldiers.entity.client.renderstates.AbstractClaySoldierRenderState;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.resources.ResourceLocation;
 
@@ -16,7 +16,7 @@ public class ClaySoldierRenderer extends AbstractClaySoldierRenderer {
     }
 
     @Override
-    public ResourceLocation getTextureLocation(AbstractClaySoldierEntity pEntity) {
-        return pEntity.getSkinVariant() == 0 ? VARIANT_1 : VARIANT_2;
+    public ResourceLocation getTextureLocation(AbstractClaySoldierRenderState pEntity) {
+        return pEntity.skinVariantId == 0 ? VARIANT_1 : VARIANT_2;
     }
 }

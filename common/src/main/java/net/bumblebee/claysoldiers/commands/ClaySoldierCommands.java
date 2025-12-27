@@ -13,6 +13,7 @@ import net.bumblebee.claysoldiers.init.ModItems;
 import net.bumblebee.claysoldiers.init.ModRegistries;
 import net.bumblebee.claysoldiers.item.claymobspawn.ClaySoldierSpawnItem;
 import net.bumblebee.claysoldiers.soldieritemtypes.SoldierItemType;
+import net.bumblebee.claysoldiers.team.ClayMobTeam;
 import net.bumblebee.claysoldiers.team.ClayMobTeamManger;
 import net.bumblebee.claysoldiers.team.TeamLoyaltyManger;
 import net.bumblebee.claysoldiers.util.color.ColorHelper;
@@ -27,6 +28,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
@@ -52,6 +54,8 @@ public final class ClaySoldierCommands {
     public static final String COMMAND_ITEM_SET_FAILURE = "commands." + ClaySoldiersCommon.MOD_ID + ".spawn_item_set.failure";
 
     public static final String COMMAND_TEAM_LOYALTY_FAILURE = "commands." + ClaySoldiersCommon.MOD_ID + ".team_loyalty.set.failure";
+    public static final String COMMAND_TEAM_LOYALTY_DISABLE_FAILURE = "commands." + ClaySoldiersCommon.MOD_ID + ".team_loyalty.disabled.failure";
+
     public static final String COMMAND_TEAM_LOYALTY_REMOVE_FAILURE = "commands." + ClaySoldiersCommon.MOD_ID + ".team_loyalty.remove.failure";
     public static final String COMMAND_TEAM_LOYALTY_REMOVE = "commands." + ClaySoldiersCommon.MOD_ID + ".team_loyalty.remove.success";
     public static final String COMMAND_TEAM_LOYALTY_SET = "commands." + ClaySoldiersCommon.MOD_ID + ".team_loyalty.set.success";
@@ -66,7 +70,7 @@ public final class ClaySoldierCommands {
         csrCommand.then(Commands.literal("items")
                 .requires(c -> c.hasPermission(2))
                 .then(Commands.argument("set", DefaultedResourceLocationArgument.itemType(context))
-                        .then(Commands.argument("amount", IntegerArgumentType.integer(1))
+                        .then(Commands.argument("amountRequired", IntegerArgumentType.integer(1))
                                 .executes(c -> spawnItems(c, true))
                                 .then(Commands.literal("uniform")
                                         .executes(c -> spawnItems(c, false))
@@ -162,13 +166,13 @@ public final class ClaySoldierCommands {
     private static int spawnItems(CommandContext<CommandSourceStack> command, boolean random) {
         CommandSourceStack source = command.getSource();
 
-        SoldierItemType type = command.getSource().registryAccess().registryOrThrow(ModRegistries.SOLDIER_ITEM_TYPES).get(command.getArgument("set", ResourceLocation.class));
+        SoldierItemType type = command.getSource().registryAccess().lookupOrThrow(ModRegistries.SOLDIER_ITEM_TYPES).getValue(command.getArgument("set", ResourceLocation.class));
         if (type == null) {
             source.sendFailure(Component.translatable(COMMAND_ITEM_SET_ERROR));
             return -1;
         }
 
-        int count = IntegerArgumentType.getInteger(command, "amount");
+        int count = IntegerArgumentType.getInteger(command, "amountRequired");
 
         Vec3 pos = source.getPosition();
         RandomSource randomSource = random ? source.getLevel().getRandom() : RandomSource.create(42);
@@ -224,21 +228,28 @@ public final class ClaySoldierCommands {
 
     private static int setTeamLoyalty(CommandContext<CommandSourceStack> command, @Nullable Player player) {
         ResourceLocation teamId = DefaultedResourceLocationArgument.key("team", command);
-        Component team = ClayMobTeamManger.getFromKeyOrError(teamId, command.getSource().registryAccess()).getDisplayNameWithColor(ColorHelper::getColorStatic);
+        ClayMobTeam team = ClayMobTeamManger.getFromKeyOrError(teamId, command.getSource().registryAccess());
+        Component teamName = team.getDisplayNameWithColor(ColorHelper::getColorStatic);
+
+        if (!team.canBeTamed()) {
+            command.getSource().sendFailure(Component.translatable(COMMAND_TEAM_LOYALTY_DISABLE_FAILURE, teamName));
+            return -1;
+        }
+
 
         if (TeamLoyaltyManger.setTeamPlayer(command.getSource().getLevel(), teamId, player)) {
             if (player == null) {
-                command.getSource().sendSuccess(() -> Component.translatable(COMMAND_TEAM_LOYALTY_REMOVE, team), true);
+                command.getSource().sendSuccess(() -> Component.translatable(COMMAND_TEAM_LOYALTY_REMOVE, teamName), true);
             } else {
-                command.getSource().sendSuccess(() -> Component.translatable(COMMAND_TEAM_LOYALTY_SET, team, player.getDisplayName()), true);
+                command.getSource().sendSuccess(() -> Component.translatable(COMMAND_TEAM_LOYALTY_SET, teamName, player.getDisplayName()), true);
             }
             return 1;
         }
 
         if (player == null) {
-            command.getSource().sendFailure(Component.translatable(COMMAND_TEAM_LOYALTY_REMOVE_FAILURE, team));
+            command.getSource().sendFailure(Component.translatable(COMMAND_TEAM_LOYALTY_REMOVE_FAILURE, teamName));
         } else {
-            command.getSource().sendFailure(Component.translatable(COMMAND_TEAM_LOYALTY_FAILURE, team, player.getDisplayName()));
+            command.getSource().sendFailure(Component.translatable(COMMAND_TEAM_LOYALTY_FAILURE, teamName, player.getDisplayName()));
 
         }
         return -1;
@@ -273,7 +284,7 @@ public final class ClaySoldierCommands {
     }
 
     private static int summonBossClaySoldier(CommandContext<CommandSourceStack> command, ClaySoldierBossEquipment equipment, int weight, @Nullable ResourceLocation team, boolean waxed) {
-        var boss = ModEntityTypes.BOSS_CLAY_SOLDIER_ENTITY.get().create(command.getSource().getLevel());
+        var boss = ModEntityTypes.BOSS_CLAY_SOLDIER_ENTITY.get().create(command.getSource().getLevel(), EntitySpawnReason.COMMAND);
         if (boss == null) {
             return -1;
         }

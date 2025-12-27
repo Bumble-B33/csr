@@ -24,7 +24,7 @@ public record BlueprintPlacePayload(BlockPos pos, Item item) implements IClientP
     @Override
     public void handleClient(INetworkManger.PayloadContext context) {
         if (context.client().level.getBlockEntity(pos) instanceof EaselBlockEntity easelBlockEntity) {
-            easelBlockEntity.tryPlacingSoldier(item.getDefaultInstance());
+            easelBlockEntity.tryPlacingSoldier(item.getDefaultInstance(), null);
         }
     }
 

@@ -2,7 +2,9 @@ package net.bumblebee.claysoldiers.entity.client.undead;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.bumblebee.claysoldiers.entity.VampiricClayMob;
 import net.bumblebee.claysoldiers.entity.client.ClaySoldierRenderer;
+import net.bumblebee.claysoldiers.entity.client.renderstates.AbstractClaySoldierRenderState;
 import net.bumblebee.claysoldiers.entity.soldier.AbstractClaySoldierEntity;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 
@@ -14,8 +16,16 @@ public class VampireClaySoldierRenderer extends ClaySoldierRenderer {
     }
 
     @Override
-    protected void renderModel(AbstractClaySoldierEntity soldier, PoseStack pPoseStack, VertexConsumer vertexConsumer, int pPackedLight, int overlayCords, int color, int alpha) {
+    protected void renderModel(AbstractClaySoldierRenderState soldier, PoseStack pPoseStack, VertexConsumer vertexConsumer, int pPackedLight, int overlayCords, int color, int alpha) {
         super.renderModel(soldier, pPoseStack, vertexConsumer, pPackedLight, overlayCords, shiftColor(color), alpha);
+    }
+
+    @Override
+    public void extractRenderState(AbstractClaySoldierEntity claySoldierEntity, AbstractClaySoldierRenderState claySoldierRenderState, float partialTick) {
+        super.extractRenderState(claySoldierEntity, claySoldierRenderState, partialTick);
+        if (claySoldierEntity instanceof VampiricClayMob vampire) {
+            claySoldierRenderState.isNightForVampire = vampire.isNightForVampire();
+        }
     }
 
     public static int shiftColor(int color) {

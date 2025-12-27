@@ -63,6 +63,11 @@ public class SoldierPoiWithItem extends SoldierPoiWithSource<ItemEntity> {
     }
 
     @Override
+    protected Type getType() {
+        return Type.ITEM;
+    }
+
+    @Override
     public String toString() {
         return "Poi{" + getPoi() + ", " + getSource().getItem() + '}';
     }

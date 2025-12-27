@@ -8,9 +8,9 @@ import net.bumblebee.claysoldiers.init.ModItems;
 import net.bumblebee.claysoldiers.init.ModRegistries;
 import net.bumblebee.claysoldiers.item.TestItem;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.flag.FeatureFlagSet;
 import net.minecraft.world.item.ItemStack;
@@ -25,7 +25,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-import net.minecraft.world.level.block.state.properties.DirectionProperty;
+import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
@@ -34,7 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 
 public class EaselBlock extends BaseEntityBlock {
-    public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
+    public static final EnumProperty<Direction> FACING = BlockStateProperties.HORIZONTAL_FACING;
 
     private static final VoxelShape SHAPE = Block.box(3, 0, 3, 13, 14, 13);
     private static final MapCodec<EaselBlock> CODEC = simpleCodec(EaselBlock::new);
@@ -64,36 +64,36 @@ public class EaselBlock extends BaseEntityBlock {
     }
 
     @Override
-    protected ItemInteractionResult useItemOn(ItemStack pStack, BlockState pState, Level pLevel, BlockPos pPos, Player pPlayer, InteractionHand pHand, BlockHitResult pHitResult) {
+    protected InteractionResult useItemOn(ItemStack pStack, BlockState pState, Level pLevel, BlockPos pPos, Player pPlayer, InteractionHand pHand, BlockHitResult pHitResult) {
         var easeBlockEntity = ((EaselBlockEntity) Objects.requireNonNull(pLevel.getBlockEntity(pPos)));
         if ((ModItems.TEST_ITEM.is(pStack))) {
             TestItem.log((EaselBlockEntity) pLevel.getBlockEntity(pPos), ((EaselBlockEntity) pLevel.getBlockEntity(pPos)).getInfoState());
-            return ItemInteractionResult.sidedSuccess(pLevel.isClientSide());
+            return InteractionResult.SUCCESS_SERVER;
         }
 
         if (pStack.isEmpty()) {
-            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+            return InteractionResult.PASS;
         }
 
-        BlueprintData bluePrintData = pLevel.registryAccess().registryOrThrow(ModRegistries.BLUEPRINTS).get(pStack.get(ModDataComponents.BLUEPRINT_DATA.get()));
+        BlueprintData bluePrintData = pLevel.registryAccess().lookupOrThrow(ModRegistries.BLUEPRINTS).getValue(pStack.get(ModDataComponents.BLUEPRINT_DATA.get()));
 
         if (bluePrintData != null && bluePrintData.isValid()) {
             easeBlockEntity.setBlueprintData(bluePrintData);
-            return ItemInteractionResult.sidedSuccess(pLevel.isClientSide());
+            return InteractionResult.SUCCESS_SERVER;
         }
 
         if (easeBlockEntity.hasBlueprintData()) {
             if (!pLevel.isClientSide()) {
-                var placeResult = easeBlockEntity.tryPlacingSoldier(pStack);
+                var placeResult = easeBlockEntity.tryPlacingSoldier(pStack, pPlayer);
                 if (placeResult.isSuccess()) {
                     if (!pPlayer.isCreative()) {
                         pStack.shrink(1);
                     }
                 }
             }
-            return ItemInteractionResult.sidedSuccess(pLevel.isClientSide());
+            return InteractionResult.SUCCESS_SERVER;
         }
-        return ItemInteractionResult.FAIL;
+        return InteractionResult.FAIL;
     }
 
     @Override
@@ -112,7 +112,7 @@ public class EaselBlock extends BaseEntityBlock {
             return InteractionResult.FAIL;
         }
 
-        return InteractionResult.sidedSuccess(pLevel.isClientSide());
+        return InteractionResult.SUCCESS_SERVER;
     }
 
     @Override

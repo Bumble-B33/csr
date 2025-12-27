@@ -7,7 +7,6 @@ import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.blueprint.BlueprintData;
 import net.bumblebee.claysoldiers.init.ModDataComponents;
 import net.bumblebee.claysoldiers.init.ModItems;
-import net.bumblebee.claysoldiers.item.ClayBrushItem;
 import net.bumblebee.claysoldiers.item.blueprint.tooltip.BlueprintTooltip;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.Holder;
@@ -15,7 +14,6 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
@@ -24,7 +22,6 @@ import java.util.List;
 import java.util.Optional;
 
 public class BlueprintItem extends BlueprintPageItem {
-    public static final ResourceLocation MARKING_PROPERTY = ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "markings");
     public static final String DESCRIPTION_ID = "item." + ClaySoldiersCommon.MOD_ID + ".blueprint";
     public static final String DESCRIPTION_ID_WITH_STRUCTURE = DESCRIPTION_ID + "_with_structure";
     public static final String STRUCTURE_NAME_LANG = DESCRIPTION_ID + ".structure_name";
@@ -68,14 +65,6 @@ public class BlueprintItem extends BlueprintPageItem {
         stack.set(DataComponents.ITEM_NAME, Component.translatable(DESCRIPTION_ID_WITH_STRUCTURE, holder.value().getDisplayName()));
         stack.set(ModDataComponents.BLUEPRINT_ITEM_DATA.get(), new BlueprintItemData(holder.value().marking()));
         return stack;
-    }
-
-    public static void registerProperties(ClayBrushItem.ItemPropertiesFactory factory) {
-        factory.register(ModItems.BLUEPRINT.get(), MARKING_PROPERTY,
-                (stack, level, entity, seed) -> {
-                    var data = stack.get(ModDataComponents.BLUEPRINT_ITEM_DATA.get());
-                    return data != null ? data.marking() : 0f;
-                });
     }
 
     public record BlueprintItemData(float marking) {

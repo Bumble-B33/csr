@@ -2,24 +2,23 @@ package net.bumblebee.claysoldiers.datamap.armor.accessories.custom;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.math.Axis;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.netty.buffer.ByteBuf;
-import net.bumblebee.claysoldiers.datamap.SoldierEquipmentSlot;
+import net.bumblebee.claysoldiers.datamap.armor.accessories.AccessoryRenderState;
 import net.bumblebee.claysoldiers.datamap.armor.accessories.IAccessoryRenderLayer;
 import net.bumblebee.claysoldiers.datamap.armor.accessories.RenderableAccessory;
-import net.bumblebee.claysoldiers.entity.soldier.AbstractClaySoldierEntity;
 import net.bumblebee.claysoldiers.util.color.ColorHelper;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.client.resources.model.EquipmentClientInfo;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
+import net.minecraft.world.item.equipment.Equippable;
 
 public class CapeRenderable implements RenderableAccessory {
     public static final Codec<CapeRenderable> CODEC = RecordCodecBuilder.create(in -> in.group(
@@ -47,8 +46,7 @@ public class CapeRenderable implements RenderableAccessory {
         this.affectedByOffsetColor = affectedByOffsetColor;
     }
 
-    @Override
-    public void render(IAccessoryRenderLayer renderedFrom, PoseStack pPoseStack, MultiBufferSource pBuffer, int pPackedLight, AbstractClaySoldierEntity claySoldier, float pPartialTick, boolean isFalling) {
+    /*public void render(int i,IAccessoryRenderLayer renderedFrom, PoseStack pPoseStack, MultiBufferSource pBuffer, int pPackedLight, AbstractClaySoldierRenderState claySoldier, boolean isFalling) {
         if (textureLocation != null) {
             ItemStack itemstack = claySoldier.getItemBySlot(SoldierEquipmentSlot.CHEST).stack();
             if (!itemstack.is(Items.ELYTRA)) {
@@ -72,7 +70,7 @@ public class CapeRenderable implements RenderableAccessory {
 
                 float f4 = Mth.lerp(pPartialTick, claySoldier.oBob, claySoldier.bob);
                 f1 += Mth.sin(Mth.lerp(pPartialTick, claySoldier.walkDistO, claySoldier.walkDist) * 6.0F) * 32.0F * f4;
-                if (claySoldier.isCrouching()) {
+                if (claySoldier.isCrouching) {
                     f1 += 25.0F;
                 }
 
@@ -80,11 +78,11 @@ public class CapeRenderable implements RenderableAccessory {
                 pPoseStack.mulPose(Axis.ZP.rotationDegrees(f3 / 2.0F));
                 pPoseStack.mulPose(Axis.YP.rotationDegrees(180.0F - f3 / 2.0F));
                 VertexConsumer vertexconsumer = pBuffer.getBuffer(RenderType.entitySolid(textureLocation));
-                final int offsetColor = getColor(claySoldier, pPartialTick);
+                final int offsetColor = getColor(claySoldier);
 
-                if (claySoldier.isInSittingPose()) {
+                if (claySoldier.isInSittingPose) {
                     pPoseStack.translate(0, 0.5, 0);
-                    if (claySoldier.getId() % 2 == 1) {
+                    if (claySoldier.id % 2 == 1) {
                         pPoseStack.translate(0, 0.25, -0.2);
 
                     }
@@ -93,20 +91,46 @@ public class CapeRenderable implements RenderableAccessory {
                 pPoseStack.popPose();
             }
         }
+    }*/
+
+
+    @Override
+    public void render(IAccessoryRenderLayer renderedFrom, PoseStack pPoseStack, MultiBufferSource pBuffer, int pPackedLight, AccessoryRenderState claySoldier) {
+        if (!claySoldier.isInvisible && textureLocation != null) {
+                if (!this.hasLayer(claySoldier.chestEquipment, EquipmentClientInfo.LayerType.WINGS, renderedFrom)) {
+                    pPoseStack.pushPose();
+                    if (this.hasLayer(claySoldier.chestEquipment, EquipmentClientInfo.LayerType.HUMANOID, renderedFrom)) {
+                        pPoseStack.translate(0.0F, -0.053125F, 0.06875F);
+                    }
+
+                    VertexConsumer vertexconsumer = pBuffer.getBuffer(RenderType.entitySolid(textureLocation));
+
+                    //ØrenderedFrom.getCapeModel().setupAnim((AbstractClaySoldierRenderState) claySoldier.renderStateFrom);
+                    renderedFrom.getCapeModel().renderToBuffer(pPoseStack, vertexconsumer, pPackedLight, OverlayTexture.NO_OVERLAY, getCapeColor(claySoldier));
+                    pPoseStack.popPose();
+                }
+
+        }
+    }
+
+    private boolean hasLayer(ItemStack stack, EquipmentClientInfo.LayerType layer, IAccessoryRenderLayer renderer) {
+        Equippable equippable = stack.get(DataComponents.EQUIPPABLE);
+        if (equippable != null && equippable.assetId().isPresent()) {
+            EquipmentClientInfo equipmentclientinfo = renderer.getEquipmentAssets().get(equippable.assetId().get());
+            return !equipmentclientinfo.getLayers(layer).isEmpty();
+        } else {
+            return false;
+        }
     }
 
     private boolean affectByOffsetColor() {
         return affectedByOffsetColor;
     }
 
-    private int getColor(AbstractClaySoldierEntity soldier, float partialTick) {
-        ColorHelper offsetColor = ColorHelper.EMPTY;
+    public int getCapeColor(AccessoryRenderState soldier) {
         if (affectByOffsetColor()) {
-            offsetColor = soldier.getOffsetColor();
+            return soldier.offsetColor;
         }
-        if (offsetColor.isEmpty()) {
-            offsetColor = color;
-        }
-        return soldier.unpackDynamicColor(offsetColor, partialTick);
+        return color.getColor(soldier.id, soldier.ageInTicks);
     }
 }

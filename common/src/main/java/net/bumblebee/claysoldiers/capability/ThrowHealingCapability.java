@@ -1,8 +1,7 @@
 package net.bumblebee.claysoldiers.capability;
 
-import net.bumblebee.claysoldiers.datamap.SoldierHoldableEffect;
-import net.bumblebee.claysoldiers.entity.soldier.AbstractClaySoldierEntity;
 import net.bumblebee.claysoldiers.entity.throwables.ClaySoldierThrownPotion;
+import net.bumblebee.claysoldiers.item.itemeffectholder.ItemStackWithEffect;
 import net.minecraft.core.Holder;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.LivingEntity;
@@ -20,12 +19,12 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ThrowHealingCapability implements ThrowableItemCapability {
     @Override
-    public @NotNull ThrownPotion createProjectile(Level level, LivingEntity shooter, SoldierHoldableEffect holdableEffect) {
+    public @NotNull ThrownPotion createProjectile(Level level, LivingEntity shooter, ItemStackWithEffect holdableEffect) {
         return new ClaySoldierThrownPotion(level, shooter);
     }
 
     @Override
-    public void performRangedAttack(AbstractClaySoldierEntity shooter, Level level, LivingEntity pTarget, SoldierHoldableEffect holdableEffect, float pVelocity) {
+    public void performRangedAttack(LivingEntity shooter, Level level, LivingEntity pTarget, ItemStackWithEffect holdableEffect, float pVelocity) {
         Vec3 targetMovement = pTarget.getDeltaMovement();
         double potionX = pTarget.getX() + targetMovement.x - shooter.getX();
         double potionY = pTarget.getEyeY() - 1.1F - shooter.getY();

@@ -3,6 +3,7 @@ package net.bumblebee.claysoldiers.menu.escritoire;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -52,10 +53,10 @@ public class EscritoireScreen extends AbstractContainerScreen<EscritoireMenu> {
     protected void renderBg(GuiGraphics guiGraphics, float partialTick, int mouseX, int mouseY) {
         int i = this.leftPos;
         int j = this.topPos;
-        guiGraphics.blit(BG_LOCATION, i, j, 0, 0, this.imageWidth, this.imageHeight);
+        guiGraphics.blit(RenderType::guiTextured, BG_LOCATION, i, j, 0, 0, this.imageWidth, this.imageHeight, 256, 256);
         int k = (int)(41.0F * this.scrollOffs);
         ResourceLocation scrollBarLocation = this.isScrollBarActive() ? SCROLLER_SPRITE : SCROLLER_DISABLED_SPRITE;
-        guiGraphics.blitSprite(scrollBarLocation, i + 119, j + 15 + k, SCROLLER_WIDTH, SCROLLER_HEIGHT);
+        guiGraphics.blitSprite(RenderType::guiTextured, scrollBarLocation, i + 119, j + 15 + k, SCROLLER_WIDTH, SCROLLER_HEIGHT);
         int recipeX = this.leftPos + RECIPES_X;
         int recipeY = this.topPos + RECIPES_Y;
         int startIndex = this.startIndex + 12;
@@ -109,7 +110,7 @@ public class EscritoireScreen extends AbstractContainerScreen<EscritoireMenu> {
                 resourcelocation = RECIPE_SPRITE;
             }
 
-            guiGraphics.blitSprite(resourcelocation, k, i1 - 1, 16, 18);
+            guiGraphics.blitSprite(RenderType::guiTextured, resourcelocation, k, i1 - 1, 16, 18);
         }
     }
 

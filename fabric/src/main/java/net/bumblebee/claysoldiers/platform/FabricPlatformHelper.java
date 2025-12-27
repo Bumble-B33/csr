@@ -1,5 +1,6 @@
 package net.bumblebee.claysoldiers.platform;
 
+import com.mojang.serialization.MapCodec;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.claypoifunction.ClayPoiFunction;
 import net.bumblebee.claysoldiers.claypoifunction.ClayPoiFunctionSerializer;
@@ -18,9 +19,13 @@ import net.fabricmc.fabric.api.event.registry.RegistryAttribute;
 import net.fabricmc.fabric.api.gamerule.v1.GameRuleFactory;
 import net.fabricmc.fabric.api.gamerule.v1.GameRuleRegistry;
 import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
+import net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityTypeBuilder;
 import net.fabricmc.fabric.api.object.builder.v1.world.poi.PointOfInterestHelper;
 import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerType;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.advancements.CriterionTrigger;
+import net.minecraft.advancements.critereon.EntitySubPredicate;
+import net.minecraft.advancements.critereon.ItemSubPredicate;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
@@ -39,7 +44,10 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.ai.village.poi.PoiType;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.MenuType;
-import net.minecraft.world.item.*;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.GameMasterBlockItem;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.level.GameRules;
@@ -84,23 +92,26 @@ public class FabricPlatformHelper implements IPlatformHelper {
 
     @Override
     public <T extends Item> ItemLikeSupplier<T> registerItem(String id, Function<Item.Properties, T> item, Item.Properties properties) {
-        var unpacked = item.apply(properties);
+        ResourceLocation location = ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, id);
+        var unpacked = item.apply(properties.setId(ResourceKey.create(Registries.ITEM, location)));
         items.add(unpacked);
-        Registry.register(BuiltInRegistries.ITEM, ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, id), unpacked);
+        Registry.register(BuiltInRegistries.ITEM, location, unpacked);
         return () -> unpacked;
     }
 
     @Override
     public <T extends Block> ItemLikeSupplier<T> registerBlockWithItem(String id, Function<BlockBehaviour.Properties, T> block, BlockBehaviour.Properties properties, BiFunction<Block, Item.Properties, BlockItem> createBlockItem) {
-        var unpacked = block.apply(properties);
-        registerItem(id, props -> new BlockItem(unpacked, props), new Item.Properties());
-        Registry.register(BuiltInRegistries.BLOCK, ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, id), unpacked);
+        ResourceLocation location = ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, id);
+        var unpacked = block.apply(properties.setId(ResourceKey.create(Registries.BLOCK, location)));
+        registerItem(id, props -> new BlockItem(unpacked, props), new Item.Properties().useBlockDescriptionPrefix());
+
+        Registry.register(BuiltInRegistries.BLOCK, location, unpacked);
         return () -> unpacked;
     }
 
     @Override
     public <T extends BlockEntity> Supplier<BlockEntityType<T>> registerBlockEntity(String id, BlockEntityFactory<T> factory, List<Supplier<Block>> blocks) {
-        var unpacked = BlockEntityType.Builder.of(factory::create, blocks.stream().map(Supplier::get).toArray(Block[]::new)).build();
+        var unpacked = FabricBlockEntityTypeBuilder.create(factory::create, blocks.stream().map(Supplier::get).toArray(Block[]::new)).build();
         Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE, ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, id), unpacked);
         return () -> unpacked;
     }
@@ -181,6 +192,21 @@ public class FabricPlatformHelper implements IPlatformHelper {
     }
 
     @Override
+    public <T extends CriterionTrigger<?>> Supplier<T> registerCriterionTrigger(String name, Supplier<T> criterionTrigger) {
+        return defaultRegistration(BuiltInRegistries.TRIGGER_TYPES, name, criterionTrigger);
+    }
+
+    @Override
+    public <T extends ItemSubPredicate.Type<?>> Supplier<T> registerItemSubPredicate(String name, Supplier<T> itemSubPredicate) {
+        return defaultRegistration(BuiltInRegistries.ITEM_SUB_PREDICATE_TYPE, name, itemSubPredicate);
+    }
+
+    @Override
+    public <T extends EntitySubPredicate> Supplier<MapCodec<T>> registerEntitySubPredicate(String name, Supplier<MapCodec<T>> subPredicate) {
+        return defaultRegistration(BuiltInRegistries.ENTITY_SUB_PREDICATE_TYPE, name, subPredicate);
+    }
+
+    @Override
     public List<Item> getAllItems() {
         return items;
     }
@@ -221,13 +247,6 @@ public class FabricPlatformHelper implements IPlatformHelper {
         }
         output.accept(item.value(), CreativeModeTab.TabVisibility.PARENT_TAB_ONLY);
     }
-
-    @Override
-    public Holder<ArmorMaterial> registerArmorMaterial(String name, Supplier<ArmorMaterial> armorMaterial) {
-        var unpacked = armorMaterial.get();
-        return Registry.registerForHolder(BuiltInRegistries.ARMOR_MATERIAL, ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, name), unpacked);
-    }
-
 
     @Override
     public Holder<MobEffect> registerMobEffect(String id, Supplier<MobEffect> effect) {

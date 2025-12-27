@@ -1,6 +1,7 @@
 package net.bumblebee.claysoldiers.datagen.api;
 
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
+import net.bumblebee.claysoldiers.datagen.tags.ModTagProvider;
 import net.bumblebee.claysoldiers.datamap.SoldierHoldableEffect;
 import net.bumblebee.claysoldiers.datamap.armor.SoldierMultiWearable;
 import net.bumblebee.claysoldiers.datamap.armor.SoldierWearableEffect;
@@ -19,11 +20,9 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.block.Block;
 import net.neoforged.neoforge.common.data.DataMapProvider;
-import net.neoforged.neoforge.common.data.ExistingFileHelper;
 import net.neoforged.neoforge.registries.datamaps.AdvancedDataMapType;
 import net.neoforged.neoforge.registries.datamaps.DataMapType;
 import net.neoforged.neoforge.registries.datamaps.DataMapValueRemover;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -39,12 +38,12 @@ public abstract class ClaySoldiersItemProvider implements DataProvider {
     private final Set<Item> allItems;
     private final Set<TagKey<Item>> allTags;
 
-    protected ClaySoldiersItemProvider(PackOutput packOutput, CompletableFuture<HolderLookup.Provider> lookupProvider, String modid, ExistingFileHelper helper) {
+    protected ClaySoldiersItemProvider(PackOutput packOutput, CompletableFuture<HolderLookup.Provider> lookupProvider, String modid) {
         this.dataMapProvider = new DataMapProvider(packOutput, lookupProvider) {
             @Override
             protected void gather(HolderLookup.Provider provider) {}
         };
-        this.itemTagsProvider = new CustomItemTagsProvider(packOutput, lookupProvider, modid, helper);
+        this.itemTagsProvider = new CustomItemTagsProvider(packOutput, lookupProvider, modid);
         this.holdableBuilder = dataMapProvider.builder(ModDataMaps.SOLDIER_HOLDABLE);
         this.poiItemBuilder = dataMapProvider.builder(ModDataMaps.SOLDIER_ITEM_POI);
         this.armorBuilder = dataMapProvider.builder(ModDataMaps.SOLDIER_ARMOR);
@@ -83,7 +82,7 @@ public abstract class ClaySoldiersItemProvider implements DataProvider {
 
     protected void addHoldable(TagKey<Item> tagKey, SoldierHoldableEffect holdableEffect, TagType type, ItemTagHolder... itemTypes) {
         holdableBuilder.add(tagKey, holdableEffect, false);
-        itemTagsProvider.getTag(type).addTag(tagKey);
+        itemTagsProvider.getTag(type).add(ModTagProvider.ForcedTagEntry.tag(tagKey));
         addItemToItemTypes(tagKey, itemTypes);
         warnHoldableEffect(tagKey.toString(), holdableEffect, itemTypes);
 
@@ -144,7 +143,7 @@ public abstract class ClaySoldiersItemProvider implements DataProvider {
     }
     private void addItemToItemTypes(TagKey<Item> item, ItemTagHolder... itemTypes) {
         for (ItemTagHolder type : itemTypes) {
-            itemTagsProvider.getTag(type.getTag()).addTag(item);
+            itemTagsProvider.getTag(type.getTag()).add(ModTagProvider.ForcedTagEntry.tag(item));
         }
     }
 
@@ -172,8 +171,8 @@ public abstract class ClaySoldiersItemProvider implements DataProvider {
     private static class CustomItemTagsProvider extends IntrinsicHolderTagsProvider<Item> {
         private final CompletableFuture<HolderLookup.Provider> lookupProviderCopy;
 
-        private CustomItemTagsProvider(PackOutput packOutput, CompletableFuture<HolderLookup.Provider> lookUpProvider, String modId, @Nullable ExistingFileHelper existingFileHelper) {
-            super(packOutput, Registries.ITEM, lookUpProvider, (item -> item.builtInRegistryHolder().key()), modId, existingFileHelper);
+        private CustomItemTagsProvider(PackOutput packOutput, CompletableFuture<HolderLookup.Provider> lookUpProvider, String modId) {
+            super(packOutput, Registries.ITEM, lookUpProvider, (item -> item.builtInRegistryHolder().key()), modId);
             this.lookupProviderCopy = lookUpProvider;
         }
 

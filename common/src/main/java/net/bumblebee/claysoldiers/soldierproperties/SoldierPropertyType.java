@@ -121,9 +121,9 @@ public class SoldierPropertyType<T> implements ToIntFunction<T>, ValueCombiner<T
 
     private Holder.Reference<SoldierPropertyType<?>> getOrCreateReference() {
         if (holder == null) {
-            holder = ModRegistries.SOLDIER_PROPERTY_TYPES_REGISTRY.getHolderOrThrow(
+            holder = ModRegistries.SOLDIER_PROPERTY_TYPES_REGISTRY.get(
                     ResourceKey.create(ModRegistries.SOLDIER_PROPERTY_TYPES, ModRegistries.SOLDIER_PROPERTY_TYPES_REGISTRY.getKey(this)
-                    ));
+                    )).orElseThrow();
         }
         return holder;
     }

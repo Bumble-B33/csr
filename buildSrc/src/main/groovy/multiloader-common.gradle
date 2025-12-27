@@ -101,7 +101,8 @@ processResources {
             'accessories_version'          : accessories_version,
             'create_version'               : create_version,
             'create_version_range'         : create_version_range,
-            'sbl_version'                  : sbl_version
+            'sbl_version'                  : sbl_version,
+            'curios_version'               : curios_version
     ]
 
     filesMatching(['pack.mcmeta', 'fabric.mod.json', 'META-INF/mods.toml', 'META-INF/neoforge.mods.toml', '*.mixins.json']) {

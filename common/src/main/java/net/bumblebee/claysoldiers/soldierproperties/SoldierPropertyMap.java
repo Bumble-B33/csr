@@ -200,8 +200,8 @@ public class SoldierPropertyMap implements SoldierPropertyMapReader {
         public Builder setExplosionResistance(float protection) {
             return addProperty(SoldierPropertyTypes.EXPLOSION_RESISTANCE, protection);
         }
-        public Builder setSetOnFire(int setOnFire) {
-            return addProperty(SoldierPropertyTypes.SET_ON_FIRE, setOnFire);
+        public Builder setSetOnFire(int sec) {
+            return addProperty(SoldierPropertyTypes.SET_ON_FIRE, sec);
         }
         public Builder throwable(RangedAttackType type) {
             return addProperty(SoldierPropertyTypes.THROWABLE, type);
@@ -218,7 +218,6 @@ public class SoldierPropertyMap implements SoldierPropertyMapReader {
         }
         public Builder setBreathHold(int holdBreath) {
             return addProperty(SoldierPropertyTypes.BREATH_HOLD, holdBreath);
-
         }
         public Builder infiniteBreathHold() {
             return this.setBreathHold(BreathHoldPropertyType.MAX_BREATH_HOLD);
@@ -303,6 +302,9 @@ public class SoldierPropertyMap implements SoldierPropertyMapReader {
         }
         public Builder canBounce() {
             return addUnitProperty(SoldierPropertyTypes.BOUNCE);
+        }
+        public Builder setBreakingPower(int breakingPower) {
+            return addProperty(SoldierPropertyTypes.BREAKING_POWER, breakingPower);
         }
 
         public Builder addUnitProperty(Supplier<UnitPropertyType> unit) {

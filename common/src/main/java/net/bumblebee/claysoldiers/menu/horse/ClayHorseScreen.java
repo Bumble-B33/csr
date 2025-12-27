@@ -7,6 +7,7 @@ import net.bumblebee.claysoldiers.entity.horse.AbstractClayHorse;
 import net.bumblebee.claysoldiers.menu.AbstractClayMobScreen;
 import net.bumblebee.claysoldiers.util.ComponentFormating;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
@@ -29,7 +30,8 @@ public class ClayHorseScreen extends AbstractClayMobScreen<AbstractClayHorse, Cl
     protected void renderBg(GuiGraphics pGuiGraphics, float pPartialTick, int pMouseX, int pMouseY) {
         int x = (this.width - this.imageWidth) / 2;
         int y = (this.height - this.imageHeight) / 2;
-        pGuiGraphics.blit(HORSE_INVENTORY_LOCATION, x, y, 0, 0, this.imageWidth, this.imageHeight);
+
+        pGuiGraphics.blit(RenderType::guiTextured, HORSE_INVENTORY_LOCATION, x, y, 0, 0, this.imageWidth, this.imageHeight, 256, 256);
 
         renderSource(pGuiGraphics, x + 26, y + 18, x + 78, y + 70, 51, 0.25F, pMouseX, pMouseY);
     }

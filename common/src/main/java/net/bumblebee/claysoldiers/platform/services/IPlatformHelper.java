@@ -1,5 +1,6 @@
 package net.bumblebee.claysoldiers.platform.services;
 
+import com.mojang.serialization.MapCodec;
 import net.bumblebee.claysoldiers.claypoifunction.ClayPoiFunction;
 import net.bumblebee.claysoldiers.claypoifunction.ClayPoiFunctionSerializer;
 import net.bumblebee.claysoldiers.claysoldierpredicate.ClayPredicate;
@@ -10,6 +11,9 @@ import net.bumblebee.claysoldiers.soldieritemtypes.ItemGenerator;
 import net.bumblebee.claysoldiers.soldierproperties.SoldierPropertyType;
 import net.bumblebee.claysoldiers.soldierproperties.customproperties.specialattack.SpecialAttack;
 import net.bumblebee.claysoldiers.soldierproperties.customproperties.specialattack.SpecialAttackSerializer;
+import net.minecraft.advancements.CriterionTrigger;
+import net.minecraft.advancements.critereon.EntitySubPredicate;
+import net.minecraft.advancements.critereon.ItemSubPredicate;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
@@ -25,7 +29,6 @@ import net.minecraft.world.entity.ai.village.poi.PoiType;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.MenuType;
-import net.minecraft.world.item.ArmorMaterial;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
@@ -90,12 +93,14 @@ public interface IPlatformHelper {
 
     GameRules.Key<GameRules.IntegerValue> createIntRule(String name, GameRules.Category category, int defaultValue);
     GameRules.Key<GameRules.BooleanValue> createBoolRule(String name, GameRules.Category category, boolean defaultValue);
+    <T extends CriterionTrigger<?>> Supplier<T> registerCriterionTrigger(String name, Supplier<T> criterionTrigger);
+    <T extends ItemSubPredicate.Type<?>> Supplier<T> registerItemSubPredicate(String name, Supplier<T> itemSubPredicate);
+    <T extends EntitySubPredicate> Supplier<MapCodec<T>> registerEntitySubPredicate(String name, Supplier<MapCodec<T>> subPredicate);
 
     List<Item> getAllItems();
     Supplier<CreativeModeTab> registerCreativeModeTab(String id, Function<CreativeModeTab.Builder, CreativeModeTab> creativeModeTab);
     Supplier<CreativeModeTab> registerCreativeModeTabSoldierItems();
 
-    Holder<ArmorMaterial> registerArmorMaterial(String name, Supplier<ArmorMaterial> armorMaterial);
     Holder<MobEffect> registerMobEffect(String id, Supplier<MobEffect> effect);
     Holder<PoiType> registerPoiType(ResourceKey<PoiType> id, Supplier<PoiType> poiType);
 

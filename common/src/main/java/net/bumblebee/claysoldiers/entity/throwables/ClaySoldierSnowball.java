@@ -1,9 +1,9 @@
 package net.bumblebee.claysoldiers.entity.throwables;
 
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
-import net.bumblebee.claysoldiers.datamap.SoldierHoldableEffect;
 import net.bumblebee.claysoldiers.entity.soldier.AbstractClaySoldierEntity;
 import net.bumblebee.claysoldiers.init.ModEntityTypes;
+import net.bumblebee.claysoldiers.item.itemeffectholder.ItemStackWithEffect;
 import net.bumblebee.claysoldiers.soldierproperties.SoldierPropertyMap;
 import net.bumblebee.claysoldiers.soldierproperties.customproperties.specialattack.SpecialAttackType;
 import net.bumblebee.claysoldiers.soldierproperties.customproperties.specialattack.SpecialEffectCategory;
@@ -25,11 +25,16 @@ public class ClaySoldierSnowball extends Snowball {
         this.soldierProperties = SoldierPropertyMap.EMPTY_MAP;
     }
 
-    public ClaySoldierSnowball(Level pLevel, LivingEntity shooter, SoldierHoldableEffect holdableEffect) {
+    public ClaySoldierSnowball(Level pLevel, LivingEntity shooter, ItemStackWithEffect stackWithEffect) {
         super(ModEntityTypes.CLAY_SOLDIER_SNOWBALL.get(), pLevel);
         this.setPos(shooter.getX(), shooter.getEyeY() - 0.1F, shooter.getZ());
         this.setOwner(shooter);
-        this.soldierProperties = holdableEffect.properties();
+        var effect = stackWithEffect.effect();
+        if (effect != null) {
+            this.soldierProperties = effect.properties();
+        } else {
+            this.soldierProperties = SoldierPropertyMap.EMPTY_MAP;
+        }
     }
 
     @Override

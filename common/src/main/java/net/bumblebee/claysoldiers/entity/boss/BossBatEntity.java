@@ -49,6 +49,6 @@ public class BossBatEntity extends Bat {
     @Override
     protected void dropCustomDeathLoot(ServerLevel level, DamageSource damageSource, boolean recentlyHit) {
         super.dropCustomDeathLoot(level, damageSource, recentlyHit);
-        inventory.forEach(this::spawnAtLocation);
+        inventory.forEach(stack -> spawnAtLocation(level, stack));
     }
 }

@@ -12,11 +12,13 @@ import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class ZombieClaySoldierEntity extends UndeadClaySoldier {
     private static final EntityDataAccessor<String> PREVIOUS_TEAM_SYNC = SynchedEntityData.defineId(ZombieClaySoldierEntity.class, EntityDataSerializers.STRING);
@@ -90,8 +92,8 @@ public class ZombieClaySoldierEntity extends UndeadClaySoldier {
     }
 
     @Override
-    public boolean wantsToPickUp(ItemStack pStack) {
-        return (canPickItems && super.wantsToPickUp(pStack)) || isItemStackHelm(pStack);
+    public boolean wantsToPickUp(ServerLevel level, ItemStack pStack) {
+        return (canPickItems && super.wantsToPickUp(level, pStack)) || isItemStackHelm(pStack);
     }
 
     /**
@@ -134,7 +136,7 @@ public class ZombieClaySoldierEntity extends UndeadClaySoldier {
                         copyInventory(curedSoldier);
                         curedSoldier.setClayTeamType(getPreviousTeamId());
                     },
-                    this.blockPosition(), MobSpawnType.CONVERSION, false, false);
+                    this.blockPosition(), EntitySpawnReason.CONVERSION, false, false);
             this.discard();
         }
     }
@@ -158,7 +160,7 @@ public class ZombieClaySoldierEntity extends UndeadClaySoldier {
     }
 
     @Override
-    public void onConversion(ClayMobEntity oldSoldier, CompoundTag tag) {
+    public void onConversion(ClayMobEntity oldSoldier, CompoundTag tag, @Nullable Player player) {
         if (tag.contains(MATCH_TEAMS) && tag.getBoolean(MATCH_TEAMS)) {
             setPreviousTeam(oldSoldier.getClayTeamType());
         }

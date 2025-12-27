@@ -5,23 +5,19 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.netty.buffer.ByteBuf;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.init.ModDataComponents;
-import net.bumblebee.claysoldiers.init.ModItems;
 import net.bumblebee.claysoldiers.soldierproperties.translation.KeyableTranslatableProperty;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.renderer.item.ClampedItemPropertyFunction;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.ByIdMap;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -32,11 +28,9 @@ import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.function.IntFunction;
 
 public class ClayBrushItem extends Item {
-    public static final ResourceLocation MODE_PROPERTY = ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "mode");
     public static final String POI_SET_LANG = "item." + ClaySoldiersCommon.MOD_ID + ".clay_brush.poi.set";
     public static final String POI_CLEAR_LANG = "item." + ClaySoldiersCommon.MOD_ID + ".clay_brush.poi.clear";
     public static final String NO_MODE_LANG = "item." + ClaySoldiersCommon.MOD_ID + ".clay_brush.mode.no_mode";
@@ -84,13 +78,13 @@ public class ClayBrushItem extends Item {
     public InteractionResult useOn(UseOnContext pContext) {
         ItemStack itemInHand = pContext.getItemInHand();
         cycleMode(itemInHand, pContext.getPlayer());
-        return InteractionResult.sidedSuccess(pContext.getLevel().isClientSide());
+        return InteractionResult.SUCCESS;
     }
 
     @Override
-    public InteractionResultHolder<ItemStack> use(Level pLevel, Player pPlayer, InteractionHand pUsedHand) {
+    public InteractionResult use(Level pLevel, Player pPlayer, InteractionHand pUsedHand) {
         cycleMode(pPlayer.getItemInHand(pUsedHand), pPlayer);
-        return InteractionResultHolder.sidedSuccess(pPlayer.getItemInHand(pUsedHand), pLevel.isClientSide());
+        return InteractionResult.SUCCESS;
     }
 
     private static void message(ServerPlayer pPlayer, Component pMessageComponent) {
@@ -174,14 +168,5 @@ public class ClayBrushItem extends Item {
                 Codec.BOOL.optionalFieldOf("empty", true).forGetter(PoiPos::isEmpty)
         ).apply(in, PoiPos::new));
         public static final StreamCodec<ByteBuf, PoiPos> STREAM_CODEC = StreamCodec.composite(BlockPos.STREAM_CODEC, PoiPos::pos, ByteBufCodecs.BOOL, PoiPos::isEmpty, PoiPos::new);
-    }
-
-    public static void registerProperties(ItemPropertiesFactory factory) {
-        factory.register(ModItems.CLAY_BRUSH.get(), MODE_PROPERTY,
-                (stack, level, entity, seed) -> Objects.requireNonNullElse(stack.get(ModDataComponents.CLAY_BRUSH_MODE.get()), Mode.COMMAND).overrideProperty);
-    }
-
-    public interface ItemPropertiesFactory {
-        void register(Item item, ResourceLocation name, ClampedItemPropertyFunction property);
     }
 }

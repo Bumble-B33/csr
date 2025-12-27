@@ -1,12 +1,11 @@
-package net.bumblebee.claysoldiers.entity.soldier;
+package net.bumblebee.claysoldiers.entity;
 
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
-import net.bumblebee.claysoldiers.entity.ClayMobEntity;
 import net.bumblebee.claysoldiers.init.ModEffects;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * This Interface represents any {@code ClayMob} that can be converted to a {@code Vampire}
+ * This Interface represents any {@code ClayMob} that can be converted to a Vampire
  */
 public interface VampireSubjugate {
     String VAMPIRIC_OWNER_TAG = "VampiricOnwer";

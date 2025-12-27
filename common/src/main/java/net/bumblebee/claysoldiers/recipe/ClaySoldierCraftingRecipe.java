@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ClaySoldierCraftingRecipe extends CustomRecipe {
+
     public ClaySoldierCraftingRecipe(CraftingBookCategory pCategory) {
         super(pCategory);
     }
@@ -67,11 +68,6 @@ public class ClaySoldierCraftingRecipe extends CustomRecipe {
             return soldierPuppet;
         }
         throw new IllegalStateException("Crafting: Tried Crafting a Clay Soldier without a team item");
-    }
-
-    @Override
-    public boolean canCraftInDimensions(int pWidth, int pHeight) {
-        return pWidth * pHeight >= 2;
     }
 
     @Override

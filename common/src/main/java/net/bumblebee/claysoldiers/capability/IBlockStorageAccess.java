@@ -25,7 +25,7 @@ public interface IBlockStorageAccess {
      * Extracts an ItemStack matching the predicate.
      * <p>
      * The returned value must be empty if nothing is extracted,
-     * otherwise its stack size must be less than or equal to {@code amount} and {@link ItemStack#getMaxStackSize()}.
+     * otherwise its stack size must be less than or equal to {@code amountRequired} and {@link ItemStack#getMaxStackSize()}.
      * </p>
      * @param stackPredicate the ItemStack to extract
      * @param amount Amount to extract (may be greater than the current stack's max limit)
@@ -38,7 +38,7 @@ public interface IBlockStorageAccess {
      * Iterates over every {@code ItemStack} in this Storage and test for wanted quantity.
      * If the quantity is more than 0, the {@code ItemStack} is extracted and handled.
      *
-     * @param test returns the amount that is wanted of the given {@code ItemStack}
+     * @param test returns the amountRequired that is wanted of the given {@code ItemStack}
      * @param thenDo handles the extracted {@code ItemStack}
      * @param finished indicates that all wanted {@code ItemStacks} got extracted, called after each extraction
      */

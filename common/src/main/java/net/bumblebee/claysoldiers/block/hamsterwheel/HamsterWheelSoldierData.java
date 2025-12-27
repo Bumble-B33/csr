@@ -25,15 +25,11 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.Leashable;
-import net.minecraft.world.entity.WalkAnimationState;
+import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.CustomData;
-import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -251,11 +247,11 @@ public class HamsterWheelSoldierData {
     /**
      * Recreates a ClaySoldier form this SoldierBlockData.
      */
-    public AbstractClaySoldierEntity createSoldier(Level level) {
+    public AbstractClaySoldierEntity createSoldier(ServerLevel level) {
         CompoundTag newEntityData = this.data.copy();
         IGNORED_TAGS.forEach(newEntityData::remove);
 
-        AbstractClaySoldierEntity entity = type.create(level);
+        AbstractClaySoldierEntity entity = type.create(level, EntitySpawnReason.EVENT);
         ClayMobTeam.save(getTeamId(), newEntityData);
 
         if (entity != null) {

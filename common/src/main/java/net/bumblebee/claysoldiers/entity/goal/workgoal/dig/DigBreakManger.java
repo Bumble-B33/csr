@@ -1,5 +1,6 @@
 package net.bumblebee.claysoldiers.entity.goal.workgoal.dig;
 
+import net.bumblebee.claysoldiers.entity.soldier.AbstractClaySoldierEntity;
 import net.bumblebee.claysoldiers.util.ErrorHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
@@ -32,7 +33,7 @@ public class DigBreakManger {
      * @param pos    the pos of the block
      * @param entity the Clay Soldier breaking the block
      */
-    public void registerPos(BlockPos pos, Entity entity) {
+    public void registerPos(BlockPos pos, AbstractClaySoldierEntity entity) {
         var breakData = getBreakData(entity.level(), pos);
         if (breakData == null) {
             putBreakData(entity, pos, new BreakData(entity));
@@ -66,7 +67,7 @@ public class DigBreakManger {
      * @param pos    the pos of the block
      * @param entity the Clay Soldier breaking the block
      */
-    public void unregisterPos(BlockPos pos, Entity entity) {
+    public void unregisterPos(BlockPos pos, AbstractClaySoldierEntity entity) {
         var breakData = getBreakData(entity.level(), pos);
         if (breakData != null) {
             breakData.removeEntity(entity);
@@ -145,12 +146,12 @@ public class DigBreakManger {
     }
 
     private static class BreakData {
-        private final Set<Entity> working;
+        private final Set<AbstractClaySoldierEntity> working;
         private int progress = 0;
         private int lastBreakProgress = -1;
         private int anyEntity;
 
-        public BreakData(Entity entity) {
+        public BreakData(AbstractClaySoldierEntity entity) {
             working = new HashSet<>();
             working.add(entity);
             anyEntity = entity.getId();
@@ -160,11 +161,11 @@ public class DigBreakManger {
             return anyEntity;
         }
 
-        public void addEntity(Entity entity) {
+        public void addEntity(AbstractClaySoldierEntity entity) {
             working.add(entity);
         }
 
-        public void removeEntity(Entity entity) {
+        public void removeEntity(AbstractClaySoldierEntity entity) {
             if (!working.remove(entity)) {
                 ErrorHandler.INSTANCE.debug("Tried removing non existing entity from BreakData");
             }
@@ -174,7 +175,7 @@ public class DigBreakManger {
         }
 
         public int size() {
-            return working.size();
+            return working.stream().map(s -> s.allProperties().getBreakingPower() + 1).filter(b -> b >=  1).reduce(0, Integer::sum);
         }
 
         public boolean isEmpty() {

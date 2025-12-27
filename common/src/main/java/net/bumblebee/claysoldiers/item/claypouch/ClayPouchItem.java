@@ -5,6 +5,7 @@ import net.bumblebee.claysoldiers.init.ModDataComponents;
 import net.bumblebee.claysoldiers.item.claymobspawn.MultiSpawnItem;
 import net.bumblebee.claysoldiers.util.color.ColorHelper;
 import net.minecraft.ChatFormatting;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
@@ -40,8 +41,10 @@ public class ClayPouchItem extends Item {
             return false;
         } else {
             ItemStack toAbsorb = slot.getItem();
+            int maxCapacity = getMaxCapacity(pouch, player.registryAccess());
+
             if (toAbsorb.isEmpty()) {
-                if (ClayPouchContent.onPouch(pouch, c -> c.takeStack(slot::safeInsert, player.registryAccess()))) {
+                if (ClayPouchContent.onPouch(pouch, c -> c.takeStack(slot::safeInsert, maxCapacity, player.registryAccess()))) {
                     playRemoveOneSound(player);
                     return true;
                 }
@@ -57,11 +60,11 @@ public class ClayPouchItem extends Item {
                 ClayPouchContent newContent;
                 int used;
                 if (content == null) {
-                    used = Math.min(toAbsorb.getCount(), ClayPouchContent.MAX_CAPACITY);
-                    newContent = new ClayPouchContent(multi, used, multi.requiredForPouch(toAbsorb));
+                    used = Math.min(toAbsorb.getCount(), maxCapacity);
+                    newContent = new ClayPouchContent(multi, used, maxCapacity, multi.requiredForPouch(toAbsorb));
                 } else {
-                    used = Math.min(toAbsorb.getCount(), content.maxRemaining());
-                    newContent = content.increment(used);
+                    used = Math.min(toAbsorb.getCount(), content.maxRemaining(maxCapacity));
+                    newContent = content.increment(used, maxCapacity);
                 }
                 this.playInsertSound(player);
 
@@ -79,20 +82,22 @@ public class ClayPouchItem extends Item {
     public boolean overrideOtherStackedOnMe(ItemStack pouch, ItemStack other, Slot slot, ClickAction action, Player player, SlotAccess access) {
         if (action == ClickAction.SECONDARY && slot.allowModification(player)) {
             ClayPouchContent content = pouch.get(ModDataComponents.CLAY_POUCH_CONTENT.get());
+            int maxCapacity = getMaxCapacity(pouch, player.registryAccess());
+
             if (content == null) {
                 if (other.getItem() instanceof MultiSpawnItem<?> multi) {
-                    int used = Math.min(other.getCount(), ClayPouchContent.MAX_CAPACITY);
-                    pouch.set(ModDataComponents.CLAY_POUCH_CONTENT.get(), new ClayPouchContent(multi, used, multi.requiredForPouch(other)));
+                    int used = Math.min(other.getCount(), maxCapacity);
+                    pouch.set(ModDataComponents.CLAY_POUCH_CONTENT.get(), new ClayPouchContent(multi, used, maxCapacity, multi.requiredForPouch(other)));
                     other.shrink(used);
                     return true;
                 }
                 return false;
             } else {
                 if (other.isEmpty()) {
-                    pouch.set(ModDataComponents.CLAY_POUCH_CONTENT.get(), content.takeStack(access::set, player.registryAccess()));
+                    pouch.set(ModDataComponents.CLAY_POUCH_CONTENT.get(), content.takeStack(access::set, maxCapacity, player.registryAccess()));
                     this.playRemoveOneSound(player);
                 } else {
-                    content.insert(other, (c, i) -> {
+                    content.insert(other, maxCapacity, (c, i) -> {
                         other.shrink(i);
                         pouch.set(ModDataComponents.CLAY_POUCH_CONTENT.get(), c);
                         this.playInsertSound(player);
@@ -110,7 +115,9 @@ public class ClayPouchItem extends Item {
     public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltipComponents, TooltipFlag tooltipFlag) {
         var content = stack.get(ModDataComponents.CLAY_POUCH_CONTENT.get());
         if (content != null && tooltipFlag.isAdvanced()) {
-            tooltipComponents.add(Component.translatable(FULLNESS_LANG, content.getCount(), ClayPouchContent.MAX_CAPACITY).withStyle(ChatFormatting.GRAY));
+            tooltipComponents.add(Component.translatable(FULLNESS_LANG, content.getCount(), content.getMaxCapacity()).withStyle(ChatFormatting.GRAY));
+            tooltipComponents.add(Component.translatable(FULLNESS_LANG, content.getCount(), getMaxCapacity(stack, context.registries())).withStyle(ChatFormatting.GRAY));
+
         }
     }
 
@@ -138,8 +145,10 @@ public class ClayPouchItem extends Item {
     @Override
     public int getBarWidth(ItemStack stack) {
         ClayPouchContent content = stack.get(ModDataComponents.CLAY_POUCH_CONTENT.get());
-        return content == null ? 0 : content.getFillPercent();
+        return content == null ? 0 : content.getFillPercent(getMaxCapacity(stack));
     }
+
+
 
     @Override
     public void onDestroyed(ItemEntity itemEntity) {
@@ -172,10 +181,9 @@ public class ClayPouchItem extends Item {
             return InteractionResult.FAIL;
         }
 
-        itemInHand.set(ModDataComponents.CLAY_POUCH_CONTENT.get(), content.shrink(res));
+        itemInHand.set(ModDataComponents.CLAY_POUCH_CONTENT.get(), content.shrink(res, getMaxCapacity(itemInHand, context.getLevel().registryAccess())));
 
-
-        return InteractionResult.sidedSuccess(context.getLevel().isClientSide());
+        return InteractionResult.SUCCESS;
     }
 
     private void playRemoveOneSound(Entity entity) {
@@ -184,5 +192,13 @@ public class ClayPouchItem extends Item {
 
     private void playInsertSound(Entity entity) {
         entity.playSound(SoundEvents.BUNDLE_INSERT, 0.8F, 0.8F + entity.level().getRandom().nextFloat() * 0.4F);
+    }
+
+    public static int getMaxCapacity(ItemStack stack, HolderLookup.Provider registryAccess) {
+        return getMaxCapacity(stack);
+    }
+
+    public static int getMaxCapacity(ItemStack stack) {
+        return ClayPouchContent.verifyMaxCapacity(256);
     }
 }

@@ -1,7 +1,7 @@
 package net.bumblebee.claysoldiers.init;
 
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
-import net.bumblebee.claysoldiers.blueprint.BlueprintManger;
+import net.bumblebee.claysoldiers.blueprint.BlueprintManager;
 import net.bumblebee.claysoldiers.item.blueprint.BlueprintDependendBlockItem;
 import net.bumblebee.claysoldiers.team.ClayMobTeamManger;
 import net.minecraft.core.HolderLookup;
@@ -39,7 +39,9 @@ public final class ModCreativeTab {
                 }
             }
             modifySoldierItems(output, itemDisplayParameters.holders());
-            output.accept(ModItems.createEnchantedBook(itemDisplayParameters.holders(), ModEnchantments.SOLDIER_PROJECTILE, 1));
+            output.accept(
+                    ModItems.createEnchantedBook(itemDisplayParameters.holders(), ModEnchantments.SOLDIER_PROJECTILE, 1)
+            );
         });
     }
 
@@ -54,7 +56,7 @@ public final class ModCreativeTab {
     }
 
     private static void modifyBlueprint(CreativeModeTab.Output out, HolderLookup.Provider holders) {
-        for (var items : BlueprintManger.getBlueprintItems(holders)) {
+        for (var items : BlueprintManager.getBlueprintItems(holders)) {
             out.accept(items);
         }
     }

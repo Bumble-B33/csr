@@ -3,7 +3,6 @@ package net.bumblebee.claysoldiers.soldierproperties.customproperties.specialatt
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
-import net.bumblebee.claysoldiers.entity.ClayMobEntity;
 import net.bumblebee.claysoldiers.soldierproperties.combined.ValueCombiner;
 import net.bumblebee.claysoldiers.soldierproperties.translation.ITranslatableProperty;
 import net.bumblebee.claysoldiers.util.codec.CodecUtils;
@@ -89,20 +88,20 @@ public class SpecialAttack<T extends SpecialAttack<T>> implements ITranslatableP
     /**
      * Test if this attack should be performed
      */
-    public boolean condition(ClayMobEntity attacker, Entity target) {
+    public boolean condition(LivingEntity attacker, Entity target) {
         return true;
     }
 
     /**
      * The effect of this attack
      */
-    public void attackEffect(ClayMobEntity attacker, Entity target) {
+    public void attackEffect(LivingEntity attacker, Entity target) {
     }
 
-    public float getBonusDamage(ClayMobEntity attacker, Entity target) {
+    public float getBonusDamage(LivingEntity attacker, Entity target) {
         return (condition(attacker, target)) ? bonusDamage : 0f;
     }
-    public void  performAttackEffect(ClayMobEntity attacker, Entity target) {
+    public void  performAttackEffect(LivingEntity attacker, Entity target) {
         if (condition(attacker, target)) {
             attackEffect(attacker, target);
         }

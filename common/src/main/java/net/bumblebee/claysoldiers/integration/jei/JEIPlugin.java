@@ -15,14 +15,14 @@ import net.bumblebee.claysoldiers.util.ComponentFormating;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.BlastingRecipe;
-import net.minecraft.world.item.crafting.CampfireCookingRecipe;
-import net.minecraft.world.item.crafting.SmeltingRecipe;
-import net.minecraft.world.item.crafting.SmokingRecipe;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,16 +39,17 @@ public class JEIPlugin implements IModPlugin {
     public void registerRecipes(IRecipeRegistration registration) {
         registration.addRecipes(RecipeTypes.CRAFTING, ClaySoldierCrafting.createRecipes());
         registration.addRecipes(RecipeTypes.CRAFTING, ClaySoldierCrafting.createClaySoldierRevive());
+        registration.addRecipes(RecipeTypes.CRAFTING, createShearBladeRecipe());
         registration.addRecipes(RecipeTypes.SMELTING, ClaySoldierCookingRecipe.createCookingRecipe(SmeltingRecipe::new, 100));
         registration.addRecipes(RecipeTypes.BLASTING, ClaySoldierCookingRecipe.createCookingRecipe(BlastingRecipe::new, 50));
         registration.addRecipes(RecipeTypes.CAMPFIRE_COOKING, ClaySoldierCookingRecipe.createCookingRecipe(CampfireCookingRecipe::new, 200));
         registration.addRecipes(RecipeTypes.SMOKING, ClaySoldierCookingRecipe.createCookingRecipe(SmokingRecipe::new, 300));
 
-        BuiltInRegistries.ITEM.getTag(ModTags.Items.SOLDIER_HOLDABLE).ifPresentOrElse(set -> {
+        BuiltInRegistries.ITEM.get(ModTags.Items.SOLDIER_HOLDABLE).ifPresentOrElse(set -> {
             addItemToInfo(registration, set.stream().map(Holder::value), ClaySoldiersCommon.DATA_MAP::getEffect, ComponentFormating::addHoldableTooltip);
         }, () -> ClaySoldiersCommon.LOGGER.error("Could not load JEI Info for Clay Soldier Holdable Items"));
 
-        BuiltInRegistries.ITEM.getTag(ModTags.Items.SOLDIER_POI).ifPresentOrElse(set -> {
+        BuiltInRegistries.ITEM.get(ModTags.Items.SOLDIER_POI).ifPresentOrElse(set -> {
             addItemToInfo(registration, set.stream().map(Holder::value), ClaySoldiersCommon.DATA_MAP::getItemPoi, (poi, list) -> {
                 list.add(Component.translatable(ComponentFormating.SOLDIER_POI_ITEM).withStyle(ChatFormatting.DARK_GRAY));
                 ComponentFormating.addPoiTooltip(poi, list);
@@ -58,8 +59,9 @@ public class JEIPlugin implements IModPlugin {
                 ComponentFormating.addPoiTooltip(poi, list);
             });
         }, () -> ClaySoldiersCommon.LOGGER.error("Could not load JEI Info for Clay Soldier POIs "));
-
     }
+
+
 
     private static <T> void addItemToInfo(IRecipeRegistration registration, Stream<Item> items, Function<Item, T> effectGetter, BiConsumer<T, List<Component>> getDescription) {
         items.forEach(item -> {
@@ -87,17 +89,23 @@ public class JEIPlugin implements IModPlugin {
         return ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "jei_plugin");
     }
 
+    public static List<RecipeHolder<CraftingRecipe>> createShearBladeRecipe() {
+        return List.of(new RecipeHolder<>(
+                ResourceKey.create(Registries.RECIPE, ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "jei.shear_blade")),
+                new ShapelessRecipe(
+                        "%s.shear_blade".formatted(ClaySoldiersCommon.MOD_ID),
+                        CraftingBookCategory.EQUIPMENT,
+                        ModItems.SHEAR_BLADE.get().getDefaultInstance(),
+                        List.of(Ingredient.of(Items.SHEARS))
+                )));
+    }
+
     private enum ClaySoldierPuppetInterpreter implements ISubtypeInterpreter<ItemStack> {
         INSTANCE;
 
         @Override
         public @Nullable Object getSubtypeData(ItemStack ingredient, UidContext context) {
             return ingredient.get(ModDataComponents.CLAY_MOB_TEAM_COMPONENT.get());
-        }
-
-        @Override
-        public String getLegacyStringSubtypeInfo(ItemStack ingredient, UidContext context) {
-            return ingredient.get(ModDataComponents.CLAY_MOB_TEAM_COMPONENT.get()).toString();
         }
     }
 
@@ -107,12 +115,6 @@ public class JEIPlugin implements IModPlugin {
         @Override
         public @Nullable Object getSubtypeData(ItemStack ingredient, UidContext context) {
             return ingredient.get(ModDataComponents.BLUEPRINT_DATA.get());
-        }
-
-        @Override
-        public String getLegacyStringSubtypeInfo(ItemStack ingredient, UidContext context) {
-            var data = ingredient.get(ModDataComponents.BLUEPRINT_DATA.get());
-            return data == null ? "" : data.toString();
         }
     }
 }

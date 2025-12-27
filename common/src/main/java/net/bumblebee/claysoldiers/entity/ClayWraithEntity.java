@@ -50,7 +50,7 @@ public class ClayWraithEntity extends ClayMobTeamOwnerEntity implements ClaySold
     protected static final EntityDataAccessor<Byte> DATA_FLAGS_ID = SynchedEntityData.defineId(ClayWraithEntity.class, EntityDataSerializers.BYTE);
     private static final int FLAG_IS_CHARGING = 1;
     private static final byte MIN_LIFE_SPAN = 0;
-    private static final byte MAX_LIFE_SPAN = 63;
+    public static final byte MAX_LIFE_SPAN = 63;
     public static final String WRAITH_ATTACK_TAG = "WraithAttacks";
     public static final String LIFE_TICKS_TAG = "LifeTicks";
     public static final String MAX_LIFE_TICKS_TAG = "MaxLifeTicks";
@@ -80,6 +80,7 @@ public class ClayWraithEntity extends ClayMobTeamOwnerEntity implements ClaySold
                 .add(Attributes.MOVEMENT_SPEED, 0.3D)
                 .add(Attributes.FOLLOW_RANGE, 16.0)
                 .add(Attributes.KNOCKBACK_RESISTANCE, 0.5)
+                .add(Attributes.TEMPT_RANGE)
                 .build();
     }
 
@@ -94,7 +95,7 @@ public class ClayWraithEntity extends ClayMobTeamOwnerEntity implements ClaySold
     }
 
     @Override
-    protected boolean targetPredicate(LivingEntity other) {
+    protected boolean targetPredicate(LivingEntity other, ServerLevel serverLevel) {
         if (!(other instanceof ClayMobEntity target)) {
             return false;
         }
@@ -113,7 +114,6 @@ public class ClayWraithEntity extends ClayMobTeamOwnerEntity implements ClaySold
     @Override
     public void move(MoverType pType, Vec3 pPos) {
         super.move(pType, pPos);
-        this.checkInsideBlocks();
     }
 
     @Override
@@ -128,7 +128,10 @@ public class ClayWraithEntity extends ClayMobTeamOwnerEntity implements ClaySold
 
         if (hasLimitedLife() && this.limitedLifeTicks <= MIN_LIFE_SPAN) {
             updateLifePercent();
-            this.kill();
+            if (level() instanceof ServerLevel serverLevel) {
+                this.kill(serverLevel);
+            }
+
         }
         if (!level().isClientSide && hasLimitedLife() && limitedLifeTicks % 5 == 0) {
             updateLifePercent();
@@ -312,6 +315,16 @@ public class ClayWraithEntity extends ClayMobTeamOwnerEntity implements ClaySold
         return super.getSpeed() * getPowerMultiplier();
     }
 
+    @Override
+    public boolean canBeNameTagged() {
+        return false;
+    }
+
+    @Override
+    public boolean canBeLeashed() {
+        return false;
+    }
+
     @Nullable
     public static ClayWraithEntity spawnWraith(ServerLevel level, ClayMobEntity caster, int duration) {
         return spawnWraith(level, caster, duration, true, (w) -> {
@@ -330,10 +343,10 @@ public class ClayWraithEntity extends ClayMobTeamOwnerEntity implements ClaySold
         }
 
         BlockPos bound = caster.blockPosition();
-        ClayWraithEntity wraith = ModEntityTypes.CLAY_WRAITH.get().create(caster.level());
+        ClayWraithEntity wraith = ModEntityTypes.CLAY_WRAITH.get().create(caster.level(), summoned ? EntitySpawnReason.MOB_SUMMONED : EntitySpawnReason.CONVERSION);
         if (wraith != null) {
             wraith.moveTo(caster.position(), caster.getYRot(), caster.getXRot());
-            wraith.finalizeSpawn(level, level.getCurrentDifficultyAt(bound), summoned ? MobSpawnType.MOB_SUMMONED : MobSpawnType.CONVERSION, null);
+            wraith.finalizeSpawn(level, level.getCurrentDifficultyAt(bound), summoned ? EntitySpawnReason.MOB_SUMMONED : EntitySpawnReason.CONVERSION, null);
             wraith.setBoundOrigin(bound);
             wraith.setLimitedLife(20 * (duration + caster.getRandom().nextInt(duration)));
             wraith.setClayTeamType(caster.getClayTeamType());
@@ -425,7 +438,7 @@ public class ClayWraithEntity extends ClayMobTeamOwnerEntity implements ClaySold
             LivingEntity target = ClayWraithEntity.this.getTarget();
             if (target != null) {
                 if (ClayWraithEntity.this.getBoundingBox().inflate(2).intersects(target.getBoundingBox())) {
-                    ClayWraithEntity.this.doHurtTarget(target);
+                    ClayWraithEntity.this.doHurtTarget(getServerLevel(ClayWraithEntity.this.level()), target);
                     doAttackFunctions(target);
                     ClayWraithEntity.this.setIsCharging(false);
                 } else {

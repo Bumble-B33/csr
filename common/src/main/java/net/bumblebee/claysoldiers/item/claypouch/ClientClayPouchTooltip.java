@@ -15,11 +15,10 @@ public class ClientClayPouchTooltip implements ClientTooltipComponent {
     public ClientClayPouchTooltip(ClayPouchContent content) {
         this.count = content.getCount();
         this.stack = content.createStack(Minecraft.getInstance().level.registryAccess());
-
     }
 
     @Override
-    public int getHeight() {
+    public int getHeight(Font font) {
         return 4 + ITEM_SIZE;
     }
 
@@ -29,7 +28,7 @@ public class ClientClayPouchTooltip implements ClientTooltipComponent {
     }
 
     @Override
-    public void renderImage(Font font, int x, int y, GuiGraphics guiGraphics) {
+    public void renderImage(Font font, int x, int y, int width, int height, GuiGraphics guiGraphics) {
         renderItem(ITEM_PADDING + x, ITEM_PADDING + y, stack, count +"", guiGraphics, font);
     }
 

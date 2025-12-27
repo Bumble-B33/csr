@@ -2,6 +2,7 @@ package net.bumblebee.claysoldiers.soldieritemtypes;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.init.ModRegistries;
 import net.minecraft.Util;
 import net.minecraft.core.HolderSet;
@@ -14,6 +15,7 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
 
 import java.util.List;
 import java.util.Optional;
@@ -27,6 +29,8 @@ public class SoldierItemType {
             Codec.STRING.optionalFieldOf("name", "").forGetter(s -> s.name)
     ).apply(in, SoldierItemType::new));
     public static final String LANG = "clay_soldier_item_type";
+    private static final Logger LOGGER = ClaySoldiersCommon.LOGGER;
+
 
     private static Runnable postTagLoad = () -> {};
     private static List<Generator> types;
@@ -55,16 +59,22 @@ public class SoldierItemType {
                 holderSet -> {
                     available = holderSet.stream().map(h -> new WeightedItem(h.value())).toList();
                 },
-                () -> available = List.of()
+                () -> {
+                    available = List.of();
+                    LOGGER.warn("Tag {} for SoldierItemType {} not present", tag, name);
+                }
         );
     }
 
     public void afterDataMapLoad() {
-        if (available == null) {
+        if (available != null) {
+            available = available.stream().filter(w -> w.finalizeWeight() > 0).toList();
+        } else {
             throw new IllegalStateException("Cannot complete SoldierItemType before tags are loaded");
         }
-        available = available.stream().filter(w -> w.finalizeWeight() > 0).toList();
     }
+
+
 
     public boolean isEmpty() {
         return available.isEmpty();

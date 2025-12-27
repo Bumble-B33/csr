@@ -22,10 +22,7 @@ import net.minecraft.tags.EntityTypeTags;
 import net.minecraft.util.ExtraCodecs;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.LightningBolt;
-import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.*;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,7 +48,7 @@ public final class SpecialAttacks {
         }
 
         @Override
-        public boolean condition(ClayMobEntity attacker, Entity target) {
+        public boolean condition(LivingEntity attacker, Entity target) {
             return attacker.getRandom().nextFloat() < 0.75f;
         }
 
@@ -71,14 +68,14 @@ public final class SpecialAttacks {
         }
 
         @Override
-        public void attackEffect(ClayMobEntity attacker, Entity target) {
+        public void attackEffect(LivingEntity attacker, Entity target) {
             if (attacker.level() instanceof ServerLevel serverLevel) {
                 serverLevel.sendParticles(ParticleTypes.DAMAGE_INDICATOR, target.getX(), target.getY(0.1), target.getZ(), 1, 0.1, 0.0, 0.1, 0.2);
             }
         }
 
         @Override
-        public boolean condition(ClayMobEntity attacker, Entity target) {
+        public boolean condition(LivingEntity attacker, Entity target) {
             return attacker.isInvisible();
         }
 
@@ -97,9 +94,9 @@ public final class SpecialAttacks {
             super(LIGHTNING_ATTACK_SERIALIZER, attackType, bonusDamage);
         }
         @Override
-        public void attackEffect(ClayMobEntity attacker, Entity target) {
+        public void attackEffect(LivingEntity attacker, Entity target) {
             if (attacker.level() instanceof ServerLevel serverLevel) {
-                LightningBolt lightningbolt = EntityType.LIGHTNING_BOLT.create(serverLevel);
+                LightningBolt lightningbolt = EntityType.LIGHTNING_BOLT.create(serverLevel, EntitySpawnReason.TRIGGERED);
                 if (lightningbolt != null) {
                     lightningbolt.moveTo(Vec3.atBottomCenterOf(target.blockPosition()));
                     lightningbolt.setVisualOnly(true);
@@ -149,7 +146,7 @@ public final class SpecialAttacks {
         }
 
         @Override
-        public void attackEffect(ClayMobEntity attacker, Entity target) {
+        public void attackEffect(LivingEntity attacker, Entity target) {
             if (target instanceof LivingEntity livingTarget) {
                 livingTarget.addEffect(new MobEffectInstance(effect, duration, amplifier, false, true, true));
             }
@@ -215,7 +212,7 @@ public final class SpecialAttacks {
         }
 
         @Override
-        public boolean condition(ClayMobEntity attacker, Entity target) {
+        public boolean condition(LivingEntity attacker, Entity target) {
             return attacker.getRandom().nextFloat() >= chance;
         }
 
@@ -235,14 +232,14 @@ public final class SpecialAttacks {
         }
 
         @Override
-        public boolean condition(ClayMobEntity attacker, Entity target) {
+        public boolean condition(LivingEntity attacker, Entity target) {
             return target.getType().is(EntityTypeTags.UNDEAD);
         }
 
         @Override
-        public void attackEffect(ClayMobEntity attacker, Entity target) {
-            if (target instanceof ZombieClaySoldierEntity zombie) {
-                if (zombie.previousTeamSameAs(attacker)) {
+        public void attackEffect(LivingEntity attacker, Entity target) {
+            if (target instanceof ZombieClaySoldierEntity zombie && attacker instanceof ClayMobEntity clayMob) {
+                if (zombie.previousTeamSameAs(clayMob)) {
                     zombie.cureZombieSoldier();
                 }
             }
@@ -285,7 +282,7 @@ public final class SpecialAttacks {
 
 
         @Override
-        public void attackEffect(ClayMobEntity attacker, Entity target) {
+        public void attackEffect(LivingEntity attacker, Entity target) {
             target.igniteForTicks(duration);
         }
 

@@ -1,67 +1,89 @@
 package net.bumblebee.claysoldiers.datamap.armor;
 
-import net.bumblebee.claysoldiers.datamap.SoldierEquipmentSlot;
+import net.bumblebee.claysoldiers.util.ErrorHandler;
 import net.bumblebee.claysoldiers.util.color.ColorHelper;
-import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponents;
-import net.minecraft.tags.ItemTags;
 import net.minecraft.world.item.ArmorItem;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
-import net.minecraft.world.item.armortrim.ArmorTrim;
-import net.minecraft.world.item.component.DyedItemColor;
+import net.minecraft.world.item.equipment.Equippable;
+import net.minecraft.world.item.equipment.trim.ArmorTrim;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
-public class ClientSoldierWearableEffect extends SoldierWearableEffect implements ClientWearableRenderer {
-    private static final Map<SoldierEquipmentSlot, ArmorItem> DEFAULT_MAP = new EnumMap<>(SoldierEquipmentSlot.class);
-    static {
-        DEFAULT_MAP.put(SoldierEquipmentSlot.HEAD, (ArmorItem) Items.IRON_HELMET);
-        DEFAULT_MAP.put(SoldierEquipmentSlot.CHEST, (ArmorItem) Items.IRON_CHESTPLATE);
-        DEFAULT_MAP.put(SoldierEquipmentSlot.LEGS, (ArmorItem) Items.IRON_LEGGINGS);
-        DEFAULT_MAP.put(SoldierEquipmentSlot.FEET, (ArmorItem) Items.IRON_BOOTS);
-    }
-    private ItemStack armorStack;
+public class ClientSoldierWearableEffect extends SoldierWearableEffect {
+
+    private Equippable equippable;
+    private boolean createdEquippable = false;
+    private final boolean shouldRenderArmor;
     private List<TrimHolder> finishedArmorTrims;
 
 
-    public ClientSoldierWearableEffect(ArmorItem item, ColorHelper color, Set<SoldierArmorTrim> trims, boolean offsetColor) {
+    public ClientSoldierWearableEffect(@Nullable ArmorItem item, ColorHelper color, Set<SoldierArmorTrim> trims, boolean offsetColor) {
         super(item, color, trims, offsetColor);
+        this.shouldRenderArmor = item != null;
     }
 
     public static SoldierWearableEffect create(ArmorItem item, ColorHelper color, Set<SoldierArmorTrim> trims, boolean offsetColor) {
         return new ClientSoldierWearableEffect(item, color, trims, offsetColor);
     }
 
-    public ArmorItem defaultModel(SoldierEquipmentSlot slot) {
-        return DEFAULT_MAP.get(slot);
+    public boolean shouldRenderArmor() {
+        return shouldRenderArmor;
     }
 
-    @Override
-    public ItemStack getArmorCopyStack() {
-        if (armorStack != null) {
-            return armorStack;
+    @Nullable
+    public Equippable getEquippable() {
+        if (createdEquippable || equippable != null) {
+            return equippable;
         }
         ArmorItem copyModel = copyModel();
+        createdEquippable = true;
         if (copyModel == null) {
-            return ItemStack.EMPTY;
+            return null;
         }
 
-        armorStack = copyModel.getDefaultInstance();
+        equippable = copyModel.getDefaultInstance().get(DataComponents.EQUIPPABLE);
 
-        if (armorStack.is(ItemTags.DYEABLE) && !getColorHelper().equals(ColorHelper.EMPTY)) {
-            armorStack.set(DataComponents.DYED_COLOR, new DyedItemColor(getColorHelper().getColorStatic(), false));
-        }
-
-        return armorStack;
+        return equippable;
     }
 
     @Override
-    public Iterable<TrimHolder> getArmorTrims(RegistryAccess access) {
+    public void buildTrims(HolderLookup.Provider access) {
+        if (finishedArmorTrims != null) {
+            return;
+        }
+        finishedArmorTrims = new ArrayList<>(trims.size());
+
+        for (SoldierArmorTrim trim : trims) {
+            ArmorTrim armorTrim = trim.createTrim(access);
+            if (armorTrim != null) {
+                finishedArmorTrims.add(new TrimHolder(armorTrim, trim.getColor()));
+            } else {
+                ErrorHandler.INSTANCE.error("Failed to create an ArmorTrim for " + trim);
+            }
+        }
+    }
+
+    public Iterable<TrimHolder> getArmorTrims() {
+        return finishedArmorTrims == null ? List.of() : finishedArmorTrims;
+    }
+
+    @Override
+    public String toString() {
+        return "%s{%s, %s}".formatted(this.getClass().getSimpleName(),
+                copyModel(),
+                "Finished Trims(" + finishedArmorTrims.size() + ")"
+        );
+    }
+
+    /*public Iterable<TrimHolder> getArmorTrims(RegistryAccess access) {
         if (finishedArmorTrims != null) {
             return finishedArmorTrims;
         }
-        finishedArmorTrims = new ArrayList<>();
+        finishedArmorTrims = new ArrayList<>(trims.size());
 
         for (SoldierArmorTrim trim : trims) {
             ArmorTrim armorTrim = trim.createTrim(access);
@@ -71,5 +93,8 @@ public class ClientSoldierWearableEffect extends SoldierWearableEffect implement
             }
         }
         return finishedArmorTrims;
-    }
+    }*/
+
+    public record TrimHolder(ArmorTrim trim, ColorHelper color) {}
+
 }

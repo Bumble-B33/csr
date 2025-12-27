@@ -31,7 +31,7 @@ public class ClayMobTeamManger {
     public static final ResourceLocation DEFAULT_TYPE = ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "normal");
     public static final ResourceLocation NO_TEAM_TYPE = ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "no_team");
     private static final ClayMobTeam DEFAULT = ClayMobTeam.of("Normal", ColorHelper.EMPTY).build();
-    private static final ClayMobTeam NO_TEAM = ClayMobTeam.of("NoTeam", ColorHelper.EMPTY).allowFriendlyFire().build();
+    private static final ClayMobTeam NO_TEAM = ClayMobTeam.of("NoTeam", ColorHelper.EMPTY).allowFriendlyFire().disableTaming().build();
 
     private static final Map<Item, ResourceLocation> FROM_ITEM_MAP = new HashMap<>();
 
@@ -46,7 +46,7 @@ public class ClayMobTeamManger {
      * @return a {@code ClayMobTeamReference} with the given key
      */
     public static IClayMobTeamReference getReferenceOrDefault(ResourceLocation key, RegistryAccess access, Runnable ifInValid) {
-        var holder = access.registryOrThrow(ModRegistries.CLAY_MOB_TEAMS).getHolder(key);
+        var holder = access.lookupOrThrow(ModRegistries.CLAY_MOB_TEAMS).get(key);
         if (holder.isPresent()) {
             return new ClayMobTeamReference(holder.orElseThrow());
         }
@@ -76,7 +76,7 @@ public class ClayMobTeamManger {
 
     @NotNull
     public static ClayMobTeam getFromKeyAssumeValid(ResourceLocation key, RegistryAccess access) {
-        return Objects.requireNonNull(access.registryOrThrow(ModRegistries.CLAY_MOB_TEAMS).get(key), "Tried accessing in valid team");
+        return Objects.requireNonNull(access.lookupOrThrow(ModRegistries.CLAY_MOB_TEAMS).getValue(key), "Tried accessing in valid team");
     }
 
     /**
@@ -86,7 +86,7 @@ public class ClayMobTeamManger {
      */
     @Nullable
     public static ClayMobTeam getFromKey(ResourceLocation key, RegistryAccess registryAccess) {
-        return registryAccess.registryOrThrow(ModRegistries.CLAY_MOB_TEAMS).get(key);
+        return registryAccess.lookupOrThrow(ModRegistries.CLAY_MOB_TEAMS).getValue(key);
     }
 
     public static Optional<ClayMobTeam> getOptional(ResourceLocation key, HolderLookup.Provider registryAccess) {
@@ -102,7 +102,7 @@ public class ClayMobTeamManger {
      * Returns whether this key is for a valid team.
      */
     public static boolean isValidTeam(ResourceLocation key, RegistryAccess access) {
-        return access.registryOrThrow(ModRegistries.CLAY_MOB_TEAMS).containsKey(key);
+        return access.lookupOrThrow(ModRegistries.CLAY_MOB_TEAMS).containsKey(key);
     }
 
     @NotNull
@@ -153,7 +153,7 @@ public class ClayMobTeamManger {
 
     private static class ErrorClayMobTeam extends ClayMobTeam {
         protected ErrorClayMobTeam() {
-            super("Error", ColorHelper.color(0xFF5555), true, Items.AIR);
+            super("Error", ColorHelper.color(0xFF5555), true, true, Items.AIR);
         }
 
         @Override
@@ -166,16 +166,23 @@ public class ClayMobTeamManger {
         boolean defaultType = false;
         boolean noTeamType = false;
 
-        if (registry.get(DEFAULT_TYPE) == null) {
+        //Todo test
+
+        if (registry.get(DEFAULT_TYPE).isEmpty()) {
             Registry.register(registry, DEFAULT_TYPE, DEFAULT);
             defaultType = true;
         }
         var noTeam = registry.get(NO_TEAM_TYPE);
-        if (noTeam == null) {
+        if (noTeam.isEmpty()) {
             Registry.register(registry, NO_TEAM_TYPE, NO_TEAM);
             noTeamType = true;
-        } else if (!noTeam.isFriendlyFireAllowed()) {
-            LOGGER.warn("Created {} without friendly-fire enabled, however it probably should be", NO_TEAM);
+        } else {
+            if (!noTeam.orElseThrow().value().isFriendlyFireAllowed()) {
+                LOGGER.warn("Created {} without friendly-fire enabled, however it probably should be", NO_TEAM);
+            }
+            if (noTeam.orElseThrow().value().canBeTamed()) {
+                LOGGER.warn("Created {} without taming disabled, however it probably should be", NO_TEAM);
+            }
         }
 
         if (noTeamType && defaultType) {

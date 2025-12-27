@@ -1,9 +1,7 @@
 package net.bumblebee.claysoldiers.entity.client.horse;
 
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
-import net.bumblebee.claysoldiers.entity.horse.AbstractClayHorse;
+import net.bumblebee.claysoldiers.entity.client.renderstates.ClayHorseRenderState;
 import net.bumblebee.claysoldiers.entity.horse.ClayHorseEntity;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.model.geom.ModelLayerLocation;
@@ -13,20 +11,20 @@ import net.minecraft.client.model.geom.builders.*;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 
-public class ClayHorseWingsModel extends EntityModel<AbstractClayHorse> {
+public class ClayHorseWingsModel extends EntityModel<ClayHorseRenderState> {
     public static final ModelLayerLocation LAYER_LOCATION =
             new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_horse_wings"), "main");
 
     private static final float SCALE = ClayHorseEntity.SCALE;
     private static final CubeDeformation SHRINK_DEFORMATION = new CubeDeformation(SCALE, 0, SCALE);
-    private final ModelPart wings;
     private final ModelPart leftWing;
     private final ModelPart rightWing;
 
     public ClayHorseWingsModel(ModelPart root) {
-        this.wings = root.getChild("wings");
-        this.leftWing = this.wings.getChild("left_wing");
-        this.rightWing = this.wings.getChild("right_wing");
+        super(root);
+        ModelPart wings = root.getChild("wings");
+        this.leftWing = wings.getChild("left_wing");
+        this.rightWing = wings.getChild("right_wing");
     }
 
     public static LayerDefinition createBodyLayer() {
@@ -45,7 +43,7 @@ public class ClayHorseWingsModel extends EntityModel<AbstractClayHorse> {
     }
 
 
-    public void setUpWingAnim(AbstractClayHorse pEntity, float pAgeInTicks) {
+    public void setUpWingAnim(ClayHorseRenderState pEntity, float pAgeInTicks) {
         this.leftWing.z = 5;
         this.rightWing.z = 5;
         this.leftWing.y = 5.1F;
@@ -53,7 +51,7 @@ public class ClayHorseWingsModel extends EntityModel<AbstractClayHorse> {
         this.leftWing.zRot = 0;
         this.rightWing.zRot = 0;
 
-        if (pEntity.onGround()) {
+        if (pEntity.onGround) {
             this.leftWing.zRot = 0.85f;
             this.rightWing.zRot = -0.85f;
         } else {
@@ -62,12 +60,4 @@ public class ClayHorseWingsModel extends EntityModel<AbstractClayHorse> {
             this.leftWing.zRot = -this.rightWing.zRot;
         }
     }
-
-    @Override
-    public void renderToBuffer(PoseStack pPoseStack, VertexConsumer pBuffer, int pPackedLight, int pPackedOverlay, int color) {
-        wings.render(pPoseStack, pBuffer, pPackedLight, pPackedOverlay, color);
-    }
-
-    @Override
-    public void setupAnim(AbstractClayHorse pEntity, float pLimbSwing, float pLimbSwingAmount, float pAgeInTicks, float pNetHeadYaw, float pHeadPitch) {}
 }

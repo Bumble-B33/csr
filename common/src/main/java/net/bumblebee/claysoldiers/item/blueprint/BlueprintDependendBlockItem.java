@@ -7,7 +7,7 @@ import net.minecraft.world.level.block.Block;
 
 public class BlueprintDependendBlockItem extends BlockItem {
     public BlueprintDependendBlockItem(Block block, Properties properties) {
-        super(block, properties);
+        super(block, properties.useBlockDescriptionPrefix());
     }
 
     @Override

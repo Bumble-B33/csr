@@ -1,5 +1,6 @@
 package net.bumblebee.claysoldiers.platform;
 
+import com.mojang.serialization.MapCodec;
 import net.bumblebee.claysoldiers.ClaySoldiersNeoForge;
 import net.bumblebee.claysoldiers.claypoifunction.ClayPoiFunction;
 import net.bumblebee.claysoldiers.claypoifunction.ClayPoiFunctionSerializer;
@@ -15,6 +16,9 @@ import net.bumblebee.claysoldiers.soldieritemtypes.ItemGenerator;
 import net.bumblebee.claysoldiers.soldierproperties.SoldierPropertyType;
 import net.bumblebee.claysoldiers.soldierproperties.customproperties.specialattack.SpecialAttack;
 import net.bumblebee.claysoldiers.soldierproperties.customproperties.specialattack.SpecialAttackSerializer;
+import net.minecraft.advancements.CriterionTrigger;
+import net.minecraft.advancements.critereon.EntitySubPredicate;
+import net.minecraft.advancements.critereon.ItemSubPredicate;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
@@ -31,7 +35,10 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.ai.village.poi.PoiType;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.MenuType;
-import net.minecraft.world.item.*;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.GameMasterBlockItem;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.level.GameRules;
@@ -98,7 +105,7 @@ public class NeoForgePlatformHelper implements IPlatformHelper {
 
     @Override
     public <T extends BlockEntity> Supplier<BlockEntityType<T>> registerBlockEntity(String id, BlockEntityFactory<T> factory, List<Supplier<Block>> blocks) {
-        return ClaySoldiersNeoForge.BLOCK_ENTITIES.register(id, () -> BlockEntityType.Builder.of(factory::create, blocks.stream().map(Supplier::get).toArray(Block[]::new)).build(null));
+        return ClaySoldiersNeoForge.BLOCK_ENTITIES.register(id, () -> new BlockEntityType<T>(factory::create, blocks.stream().map(Supplier::get).toArray(Block[]::new)));
     }
 
     @Override
@@ -171,6 +178,20 @@ public class NeoForgePlatformHelper implements IPlatformHelper {
         return GameRules.register(name, category, GameRules.BooleanValue.create(defaultValue));
     }
 
+    @Override
+    public <T extends CriterionTrigger<?>> Supplier<T> registerCriterionTrigger(String name, Supplier<T> criterionTrigger) {
+        return ClaySoldiersNeoForge.CRITERION_TRIGGERS.register(name, criterionTrigger);
+    }
+
+    @Override
+    public <T extends EntitySubPredicate> Supplier<MapCodec<T>> registerEntitySubPredicate(String name, Supplier<MapCodec<T>> subPredicate) {
+        return ClaySoldiersNeoForge.ENTITY_SUB_PREDICATE.register(name, subPredicate);
+    }
+
+    @Override
+    public <T extends ItemSubPredicate.Type<?>> Supplier<T> registerItemSubPredicate(String name, Supplier<T> itemSubPredicate) {
+        return ClaySoldiersNeoForge.ITEM_SUB_PREDICATES.register(name, itemSubPredicate);
+    }
 
     @Override
     public List<Item> getAllItems() {
@@ -203,11 +224,6 @@ public class NeoForgePlatformHelper implements IPlatformHelper {
             return;
         }
         output.accept(item.value(), CreativeModeTab.TabVisibility.PARENT_TAB_ONLY);
-    }
-
-    @Override
-    public Holder<ArmorMaterial> registerArmorMaterial(String name, Supplier<ArmorMaterial> armorMaterial) {
-        return ClaySoldiersNeoForge.ARMOR_MATERIALS.register(name, armorMaterial);
     }
 
     @Override

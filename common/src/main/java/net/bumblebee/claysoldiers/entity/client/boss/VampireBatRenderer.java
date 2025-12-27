@@ -7,8 +7,8 @@ import net.minecraft.client.renderer.entity.BatRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.RenderLayerParent;
 import net.minecraft.client.renderer.entity.layers.EyesLayer;
+import net.minecraft.client.renderer.entity.state.BatRenderState;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.entity.ambient.Bat;
 
 public class VampireBatRenderer extends BatRenderer {
     public VampireBatRenderer(EntityRendererProvider.Context context) {
@@ -16,10 +16,10 @@ public class VampireBatRenderer extends BatRenderer {
         addLayer(new BatEyesLayer(this));
     }
 
-    private static class BatEyesLayer extends EyesLayer<Bat, BatModel> {
+    private static class BatEyesLayer extends EyesLayer<BatRenderState, BatModel> {
         private static final RenderType PHANTOM_EYES = RenderType.eyes(ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "textures/entity/bat_eyes.png"));
 
-        public BatEyesLayer(RenderLayerParent<Bat, BatModel> renderer) {
+        public BatEyesLayer(RenderLayerParent<BatRenderState, BatModel> renderer) {
             super(renderer);
         }
 

@@ -193,12 +193,16 @@ public final class TeamLoyaltyManger {
             for (String teamId : mapTag.getAllKeys()) {
                 var resTeamId = ResourceLocation.parse(teamId);
 
-                if (ClayMobTeamManger.isValidTeam(resTeamId, level.registryAccess())) {
+                var team = ClayMobTeamManger.getOptional(resTeamId, level.registryAccess());
+
+                if (team.isEmpty()) {
+                    LOGGER.error("{} Team does not exist anymore removing it from SavedData", teamId);
+                } else if (!team.orElseThrow().canBeTamed()) {
+                    LOGGER.error("{} Team cannot be loyal to anyone removing it from SavedData", teamId);
+                } else {
                     loadPlayerData(mapTag.get(teamId),
                             (playerData) -> teamPlayerData.teamPlayerMap.put(resTeamId, playerData)
                     );
-                } else {
-                    LOGGER.error("{} Team does not exist anymore removing it from SavedData", teamId);
                 }
             }
             LOGGER.debug("Finished Loading TeamLoyaltyData");

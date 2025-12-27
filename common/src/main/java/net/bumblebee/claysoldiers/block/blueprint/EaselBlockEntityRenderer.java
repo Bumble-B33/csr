@@ -7,6 +7,7 @@ import net.bumblebee.claysoldiers.ClaySoldiersClient;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.blueprint.BlueprintData;
 import net.bumblebee.claysoldiers.blueprint.BlueprintTemplateSettings;
+import net.minecraft.client.model.geom.EntityModelSet;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
@@ -39,6 +40,11 @@ public class EaselBlockEntityRenderer implements BlockEntityRenderer<EaselBlockE
     public EaselBlockEntityRenderer(BlockEntityRendererProvider.Context pContext) {
         this.stand = pContext.bakeLayer(STAND_LAYER_LOCATION);
         this.blueprint = pContext.bakeLayer(BLUEPRINT_LAYER_LOCATION);
+    }
+
+    public EaselBlockEntityRenderer(EntityModelSet set) {
+        this.stand = set.bakeLayer(STAND_LAYER_LOCATION);
+        this.blueprint = set.bakeLayer(BLUEPRINT_LAYER_LOCATION);
     }
 
     @Override
@@ -86,6 +92,17 @@ public class EaselBlockEntityRenderer implements BlockEntityRenderer<EaselBlockE
                     0.4f);
 
         }
+    }
+
+    public void render(PoseStack pPoseStack, MultiBufferSource pBuffer, int pPackedLight, int pPackedOverlay) {
+
+        pPoseStack.pushPose();
+        pPoseStack.translate(0.5F, 0.5F, 0.5F);
+        pPoseStack.translate(-0.5F, -0.5F, -0.5F);
+        stand.render(pPoseStack, pBuffer.getBuffer(RENDER_TYPE_STAND), pPackedLight, pPackedOverlay, -1);
+
+        pPoseStack.popPose();
+
     }
 
     @Override

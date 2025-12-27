@@ -2,7 +2,7 @@ package net.bumblebee.claysoldiers.block.hamsterwheel;
 
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.block.ClayMobContainer;
-import net.bumblebee.claysoldiers.capability.AssignablePoiCapability;
+import net.bumblebee.claysoldiers.capability.AssignableWorksiteCapability;
 import net.bumblebee.claysoldiers.entity.ClayMobEntity;
 import net.bumblebee.claysoldiers.entity.soldier.AbstractClaySoldierEntity;
 import net.bumblebee.claysoldiers.init.ModBlockEntities;
@@ -16,37 +16,39 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
-import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.WalkAnimationState;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-
 public class HamsterWheelBlockEntity extends BlockEntity implements ClayMobContainer {
-    public static final Map<ResourceKey<Level>, Collection<String>> withSoldiers = new HashMap<>();
+    public static final ResourceLocation WORKSITE_ID = ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "hamster_wheel");
     private final WalkAnimationState walkAnimation = new WalkAnimationState();
     private final IHamsterWheelEnergyStorage energyStorage;
-    private final AssignablePoiCapability poiCap = new AssignablePoiCapability() {
+    private final AssignableWorksiteCapability poiCap = new AssignableWorksiteCapability() {
         @Override
         public boolean canUse(ClayMobEntity clayMob) {
             return clayMob instanceof AbstractClaySoldierEntity soldier && soldier.getSoldierSize() <= 1.45f;
         }
 
         @Override
-        public void use(ClayMobEntity clayMob) {
+        public int onUse(ClayMobEntity clayMob) {
             if (clayMob instanceof AbstractClaySoldierEntity soldier) {
                 addSoldier(soldier);
+                return 1;
             } else {
                 throw new IllegalArgumentException(clayMob + " cannot use this poi");
             }
+        }
+
+        @Override
+        public ResourceLocation descriptionId() {
+            return WORKSITE_ID;
         }
     };
     @Nullable
@@ -67,7 +69,8 @@ public class HamsterWheelBlockEntity extends BlockEntity implements ClayMobConta
             soldierData.getClientSoldier().tickCount++;
 
             float f = Math.min(partialTick * 4.0F, 1.0F);
-            this.walkAnimation.update(f, 0.4F);
+            walkAnimation.update(f, 0.4F, 1f);
+
         }
     }
 
@@ -95,7 +98,7 @@ public class HamsterWheelBlockEntity extends BlockEntity implements ClayMobConta
         soldier.discard();
     }
 
-    public AssignablePoiCapability getPoiCap() {
+    public AssignableWorksiteCapability getPoiCap() {
         return poiCap;
     }
 
@@ -130,8 +133,8 @@ public class HamsterWheelBlockEntity extends BlockEntity implements ClayMobConta
 
     public void spawnSoldier(int flags) {
         if (hasSoldier()) {
-            if (!getLevel().isClientSide) {
-                AbstractClaySoldierEntity soldier = soldierData.createSoldier(getLevel());
+            if ((getLevel() instanceof ServerLevel serverLevel)) {
+                AbstractClaySoldierEntity soldier = soldierData.createSoldier(serverLevel);
                 soldier.moveTo(getExitPosition());
                 soldier.setHealth(soldier.getMaxHealth());
 
@@ -188,7 +191,7 @@ public class HamsterWheelBlockEntity extends BlockEntity implements ClayMobConta
     }
 
     @Override
-    public void killSoldier(ServerLevel level, Player player) {
+    public void killSoldier(ServerLevel level, ServerPlayer player) {
         if (soldierData == null) {
             return;
         }
@@ -200,7 +203,15 @@ public class HamsterWheelBlockEntity extends BlockEntity implements ClayMobConta
             setChanged();
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 2);
         }
+    }
 
+    @Override
+    public boolean canKillClayMob(ServerLevel level, ServerPlayer player) {
+        if (soldierData == null) {
+            return false;
+        }
+        var owner = TeamLoyaltyManger.getTeamPlayerData(level).getPlayerForTeam(soldierData.getTeamId());
+        return owner == null || owner.is(player);
     }
 
     @Override

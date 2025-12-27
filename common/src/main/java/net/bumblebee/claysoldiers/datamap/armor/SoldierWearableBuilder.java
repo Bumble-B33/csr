@@ -3,8 +3,8 @@ package net.bumblebee.claysoldiers.datamap.armor;
 import net.bumblebee.claysoldiers.util.color.ColorHelper;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.ArmorItem;
-import net.minecraft.world.item.armortrim.TrimMaterial;
-import net.minecraft.world.item.armortrim.TrimPattern;
+import net.minecraft.world.item.equipment.trim.TrimMaterial;
+import net.minecraft.world.item.equipment.trim.TrimPattern;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;

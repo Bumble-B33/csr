@@ -1,30 +1,34 @@
 package net.bumblebee.claysoldiers.capability;
 
-import net.bumblebee.claysoldiers.datamap.SoldierHoldableEffect;
-import net.bumblebee.claysoldiers.entity.soldier.AbstractClaySoldierEntity;
 import net.bumblebee.claysoldiers.entity.throwables.ClaySoldierSnowball;
+import net.bumblebee.claysoldiers.entity.throwables.ClaySoldierThrowableItemEntity;
+import net.bumblebee.claysoldiers.item.itemeffectholder.ItemStackWithEffect;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.projectile.Projectile;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.BiFunction;
+import java.util.function.Function;
 
 /**
  * A capability for custom item throwing behaviour, where the default functionality is not enough
  */
 public interface ThrowableItemCapability {
-    BiFunction<ItemStack, @Nullable SoldierHoldableEffect, ThrowableItemCapability> SNOWBALL = (stack, effect) -> ClaySoldierSnowball::new;
-    BiFunction<ItemStack, @Nullable SoldierHoldableEffect, ThrowableItemCapability> GLISTERING_MELON_SLICE = (stack, effect) -> new ThrowHealingCapability();
+    ThrowableItemCapability DEFAULT = (level, shooter, holdableEffect) -> {
+        var pr = new ClaySoldierThrowableItemEntity(level, shooter, holdableEffect);
+        pr.setItem(holdableEffect.stack());
+        return pr;
+    };
+    Function<ItemStackWithEffect, ThrowableItemCapability> SNOWBALL = (stack) -> ClaySoldierSnowball::new;
+    Function<ItemStackWithEffect, ThrowableItemCapability> GLISTERING_MELON_SLICE = (stack) -> new ThrowHealingCapability();
 
-    Map<ItemLike, BiFunction<ItemStack, @Nullable SoldierHoldableEffect, ThrowableItemCapability>> THROWABLE_ITEM_MAP = new HashMap<>(Map.of(
+
+    Map<ItemLike, Function<ItemStackWithEffect, ThrowableItemCapability>> THROWABLE_ITEM_MAP = new HashMap<>(Map.of(
             Items.SNOWBALL, SNOWBALL,
             Items.GLISTERING_MELON_SLICE, GLISTERING_MELON_SLICE
     ));
@@ -36,7 +40,7 @@ public interface ThrowableItemCapability {
      * @return the projectile of this attack
      */
     @NotNull
-    Projectile createProjectile(Level level, LivingEntity shooter, SoldierHoldableEffect holdableEffect);
+    Projectile createProjectile(Level level, LivingEntity shooter, ItemStackWithEffect holdableEffect);
 
     /**
      * Performs a ranged attack for the given {@code ClaySoldier} with the give {@code SoldierHoldableEffect}
@@ -45,7 +49,7 @@ public interface ThrowableItemCapability {
      * @param pTarget        the target of the attack
      * @param holdableEffect the thrown effect
      */
-    default void performRangedAttack(AbstractClaySoldierEntity shooter, Level level, LivingEntity pTarget, SoldierHoldableEffect holdableEffect, float pVelocity) {
+    default void performRangedAttack(LivingEntity shooter, Level level, LivingEntity pTarget, ItemStackWithEffect holdableEffect, float pVelocity) {
         Projectile projectile = createProjectile(level, shooter, holdableEffect);
 
         double deltaX = pTarget.getX() - shooter.getX();

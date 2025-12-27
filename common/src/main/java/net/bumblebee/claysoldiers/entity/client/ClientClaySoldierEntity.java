@@ -31,12 +31,14 @@ public class ClientClaySoldierEntity extends AbstractClaySoldierEntity {
     private static final Logger LOGGER = LogUtils.getLogger();
     @Nullable
     private final AbstractClaySoldierRenderer renderer;
-    private final WalkAnimationState fakeWalkState;
     private ColorHelper offsetColor = ColorHelper.EMPTY;
     private Holder.Reference<ClayMobTeam> clayMobTeamId;
     private ItemStack cachedPickResult;
     private float scale = 1f;
     private boolean waxed = false;
+
+    public final WalkAnimationState fakeWalkState;
+
 
     private ClientClaySoldierEntity(EntityType<? extends AbstractClaySoldierEntity> pEntityType, BlockPos pos, WalkAnimationState fakeWalkState, Holder.Reference<ClayMobTeam> clayMobTeamId) {
         super(pEntityType, Minecraft.getInstance().level, AttackTypeProperty.NORMAL);
@@ -62,7 +64,6 @@ public class ClientClaySoldierEntity extends AbstractClaySoldierEntity {
 
     public void setUpCape() {
         moveCloak(0, 0, 0);
-        moveCloak(0, 0, 10);
     }
 
     private static AbstractClaySoldierRenderer createRenderer(EntityType<? extends AbstractClaySoldierEntity> type, AbstractClaySoldierEntity soldier) {
@@ -74,7 +75,7 @@ public class ClientClaySoldierEntity extends AbstractClaySoldierEntity {
         }
     }
 
-    public void render(float yaw, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
+    public void render(float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
         if (renderer != null) {
             yBodyRotO = 0;
             yBodyRot = 0;
@@ -83,7 +84,13 @@ public class ClientClaySoldierEntity extends AbstractClaySoldierEntity {
             yRotO = 0;
             xRotO = 0;
 
-            renderer.render(this, yaw, partialTicks, poseStack, buffer, packedLight);
+            var renderState = renderer.createRenderState(this, partialTicks);
+
+            renderState.walkAnimationPos = fakeWalkState.position();
+            renderState.walkAnimationSpeed = fakeWalkState.speed();
+
+
+            renderer.render(renderState, poseStack, buffer, packedLight);
         }
     }
 
@@ -103,8 +110,8 @@ public class ClientClaySoldierEntity extends AbstractClaySoldierEntity {
     }
 
     @Override
-    public float getScale() {
-        return scale;
+    protected float sanitizeScale(float scale) {
+        return this.scale;
     }
 
     @Override
@@ -142,11 +149,6 @@ public class ClientClaySoldierEntity extends AbstractClaySoldierEntity {
     @Override
     public ColorHelper getOffsetColor() {
         return offsetColor;
-    }
-
-    @Override
-    public WalkAnimationState getWalkAnimation() {
-        return fakeWalkState;
     }
 
     @Override

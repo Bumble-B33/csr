@@ -5,6 +5,7 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.bumblebee.claysoldiers.entity.boss.BossClaySoldierEntity;
 import net.bumblebee.claysoldiers.entity.client.ClaySoldierModel;
 import net.bumblebee.claysoldiers.entity.client.ClaySoldierRenderer;
+import net.bumblebee.claysoldiers.entity.client.renderstates.AbstractClaySoldierRenderState;
 import net.bumblebee.claysoldiers.entity.client.undead.SoldierSuitLayer;
 import net.bumblebee.claysoldiers.entity.client.undead.VampireClaySoldierRenderer;
 import net.bumblebee.claysoldiers.entity.client.undead.VampireEyesLayer;
@@ -24,23 +25,30 @@ public class BossClaySoldierRenderer extends ClaySoldierRenderer {
         addLayer(new TypeBasedRenderLayer(this));
     }
 
+
     @Override
-    protected void renderModel(AbstractClaySoldierEntity soldier, PoseStack pPoseStack, VertexConsumer vertexConsumer, int pPackedLight, int overlayCords, int color, int alpha) {
-        int newColor = color;
-        if (soldier instanceof BossClaySoldierEntity bossSoldier) {
-            switch (bossSoldier.getBossType()) {
-                case ZOMBIE -> newColor = ZombieClaySoldierRenderer.shiftColor(newColor);
-                case VAMPIRE -> newColor = VampireClaySoldierRenderer.shiftColor(newColor);
-            }
+    public void extractRenderState(AbstractClaySoldierEntity claySoldierEntity, AbstractClaySoldierRenderState claySoldierRenderState, float partialTick) {
+        super.extractRenderState(claySoldierEntity, claySoldierRenderState, partialTick);
+        if (claySoldierEntity instanceof BossClaySoldierEntity boss) {
+            claySoldierRenderState.bossType = boss.getBossType();
         }
+    }
+
+    @Override
+    protected void renderModel(AbstractClaySoldierRenderState soldier, PoseStack pPoseStack, VertexConsumer vertexConsumer, int pPackedLight, int overlayCords, int color, int alpha) {
+        int newColor = switch (soldier.bossType) {
+                case ZOMBIE -> ZombieClaySoldierRenderer.shiftColor(color);
+                case VAMPIRE -> VampireClaySoldierRenderer.shiftColor(color);
+                case null, default -> color;
+        };
 
         super.renderModel(soldier, pPoseStack, vertexConsumer, pPackedLight, overlayCords, newColor, alpha);
     }
 
-    private static class TypeBasedRenderLayer extends RenderLayer<AbstractClaySoldierEntity, ClaySoldierModel> {
-        private final EnumMap<BossClaySoldierEntity.BossTypes, List<RenderLayer<AbstractClaySoldierEntity, ClaySoldierModel>>> typeRenderLayer = new EnumMap<>(BossClaySoldierEntity.BossTypes.class);
+    private static class TypeBasedRenderLayer extends RenderLayer<AbstractClaySoldierRenderState, ClaySoldierModel> {
+        private final EnumMap<BossClaySoldierEntity.BossTypes, List<RenderLayer<AbstractClaySoldierRenderState, ClaySoldierModel>>> typeRenderLayer = new EnumMap<>(BossClaySoldierEntity.BossTypes.class);
 
-        public TypeBasedRenderLayer(RenderLayerParent<AbstractClaySoldierEntity, ClaySoldierModel> renderer) {
+        public TypeBasedRenderLayer(RenderLayerParent<AbstractClaySoldierRenderState, ClaySoldierModel> renderer) {
             super(renderer);
             typeRenderLayer.put(BossClaySoldierEntity.BossTypes.NORMAL, List.of());
             typeRenderLayer.put(BossClaySoldierEntity.BossTypes.ZOMBIE, List.of(SoldierSuitLayer.zombie(renderer)));
@@ -51,8 +59,8 @@ public class BossClaySoldierRenderer extends ClaySoldierRenderer {
         }
 
         @Override
-        public void render(PoseStack poseStack, MultiBufferSource multiBufferSource, int packedLight, AbstractClaySoldierEntity soldier, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch) {
-            typeRenderLayer.get(((BossClaySoldierEntity) soldier).getBossType()).forEach(render -> render.render(poseStack, multiBufferSource, packedLight, soldier, limbSwing, limbSwingAmount, partialTicks, ageInTicks, netHeadYaw, headPitch));
+        public void render(PoseStack poseStack, MultiBufferSource buffer, int packedLight, AbstractClaySoldierRenderState claySoldierRenderState, float v, float v1) {
+            typeRenderLayer.get(claySoldierRenderState.bossType).forEach(layer -> layer.render(poseStack, buffer, packedLight, claySoldierRenderState,v, v1));
         }
     }
 }

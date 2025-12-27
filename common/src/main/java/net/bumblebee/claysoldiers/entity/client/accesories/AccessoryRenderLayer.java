@@ -7,8 +7,10 @@ import net.bumblebee.claysoldiers.datamap.armor.accessories.IAccessoryRenderLaye
 import net.bumblebee.claysoldiers.datamap.armor.accessories.RenderableAccessory;
 import net.bumblebee.claysoldiers.datamap.armor.accessories.SoldierAccessorySlot;
 import net.bumblebee.claysoldiers.entity.client.ClaySoldierModel;
-import net.bumblebee.claysoldiers.entity.soldier.AbstractClaySoldierEntity;
+import net.bumblebee.claysoldiers.entity.client.renderstates.AbstractClaySoldierRenderState;
 import net.bumblebee.claysoldiers.item.itemeffectholder.ItemStackWithEffect;
+import net.minecraft.Util;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.SkullModelBase;
 import net.minecraft.client.model.geom.EntityModelSet;
 import net.minecraft.client.renderer.ItemInHandRenderer;
@@ -17,37 +19,38 @@ import net.minecraft.client.renderer.blockentity.SkullBlockRenderer;
 import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.client.renderer.entity.RenderLayerParent;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
+import net.minecraft.client.resources.model.EquipmentAssetManager;
 import net.minecraft.world.level.block.SkullBlock;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
 
-public class AccessoryRenderLayer extends RenderLayer<AbstractClaySoldierEntity, ClaySoldierModel> implements IAccessoryRenderLayer {
+public class AccessoryRenderLayer extends RenderLayer<AbstractClaySoldierRenderState, ClaySoldierModel> implements IAccessoryRenderLayer {
     public final ClaySoldierCapeModel capeModel;
     public final ClaySoldierShieldModel shieldModel;
     public final ItemInHandRenderer itemInHandRenderer;
-    private final Map<SkullBlock.Type, SkullModelBase> skullModels;
-    private final ItemRenderer itemRenderer;
+    private final Function<SkullBlock.Type, SkullModelBase> modelByType;
+    private final EquipmentAssetManager equipmentAssetManager;
 
 
-    public AccessoryRenderLayer(RenderLayerParent<AbstractClaySoldierEntity, ClaySoldierModel> pRendererParent, EntityModelSet entityModelSet, ItemInHandRenderer renderer, ItemRenderer itemRenderer) {
+    public AccessoryRenderLayer(RenderLayerParent<AbstractClaySoldierRenderState, ClaySoldierModel> pRendererParent, EntityModelSet entityModelSet, EquipmentAssetManager equipmentAssetManager) {
         super(pRendererParent);
         this.capeModel = new ClaySoldierCapeModel(entityModelSet.bakeLayer(ClaySoldierCapeModel.LAYER_LOCATION));
-        this.itemInHandRenderer = renderer;
-        this.skullModels = SkullBlockRenderer.createSkullRenderers(entityModelSet);
+        this.itemInHandRenderer = Minecraft.getInstance().gameRenderer.itemInHandRenderer;
+        this.modelByType = Util.memoize(type -> SkullBlockRenderer.createModel(entityModelSet, type));
         this.shieldModel = new ClaySoldierShieldModel(entityModelSet.bakeLayer(ClaySoldierShieldModel.LAYER_LOCATION));
-
-        this.itemRenderer = itemRenderer;
+        this.equipmentAssetManager = equipmentAssetManager;
     }
 
     @Override
-    public ItemRenderer getItemRenderer() {
-        return itemRenderer;
+    public EquipmentAssetManager getEquipmentAssets() {
+        return equipmentAssetManager;
     }
 
     @Override
-    public void render(PoseStack pPoseStack, MultiBufferSource pBuffer, int pPackedLight, AbstractClaySoldierEntity claySoldier, float pLimbSwing, float pLimbSwingAmount, float pPartialTick, float pAgeInTicks, float pNetHeadYaw, float pHeadPitch) {
+    public void render(PoseStack pPoseStack, MultiBufferSource pBuffer, int pPackedLight, AbstractClaySoldierRenderState claySoldier, float v, float v1) {
         Map<SoldierAccessorySlot<?>, RenderableAccessory> map = new HashMap<>();
         for (SoldierEquipmentSlot slot : SoldierEquipmentSlot.values()) {
             var multi = getMulti(claySoldier, slot);
@@ -55,15 +58,15 @@ public class AccessoryRenderLayer extends RenderLayer<AbstractClaySoldierEntity,
                 map.putAll(multi.getAccessories());
             }
         }
-        boolean falling = claySoldier.isFalling();
         for (var acc : map.values()) {
-            acc.render(this, pPoseStack, pBuffer, pPackedLight, claySoldier, pPartialTick, falling);
+            acc.render(this, pPoseStack, pBuffer, pPackedLight, claySoldier.accessoryRenderState);
         }
     }
 
+
     @Nullable
     public SkullModelBase getSkullBase(SkullBlock.Type type) {
-        return skullModels.get(type);
+        return modelByType.apply(type);
     }
 
     @Override
@@ -80,13 +83,8 @@ public class AccessoryRenderLayer extends RenderLayer<AbstractClaySoldierEntity,
         return shieldModel;
     }
 
-    @Override
-    public ItemInHandRenderer getItemInHandRenderer() {
-        return itemInHandRenderer;
-    }
-
     @Nullable
-    private SoldierMultiWearable getMulti(AbstractClaySoldierEntity claySoldier, SoldierEquipmentSlot slot) {
+    private SoldierMultiWearable getMulti(AbstractClaySoldierRenderState claySoldier, SoldierEquipmentSlot slot) {
         ItemStackWithEffect stackWithEffect = claySoldier.getItemBySlot(slot);
 
         if (stackWithEffect == null || stackWithEffect.isEmpty()) {

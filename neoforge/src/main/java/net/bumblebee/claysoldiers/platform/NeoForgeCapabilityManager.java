@@ -4,7 +4,7 @@ import net.bumblebee.claysoldiers.block.hamsterwheel.HamsterWheelBlockEntity;
 import net.bumblebee.claysoldiers.block.hamsterwheel.IHamsterWheelEnergyStorage;
 import net.bumblebee.claysoldiers.cap.NeoForgeBlockStorageCapability;
 import net.bumblebee.claysoldiers.cap.NeoForgeEnergy;
-import net.bumblebee.claysoldiers.capability.AssignablePoiCapability;
+import net.bumblebee.claysoldiers.capability.AssignableWorksiteCapability;
 import net.bumblebee.claysoldiers.capability.BlueprintRequestHandler;
 import net.bumblebee.claysoldiers.capability.IBlockCache;
 import net.bumblebee.claysoldiers.capability.IBlockStorageAccess;
@@ -17,9 +17,9 @@ import net.neoforged.neoforge.capabilities.Capabilities;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
-public class NeoForgeCapabilityManger extends AbstractCapabilityManger {
+public class NeoForgeCapabilityManager extends AbstractCapabilityManger {
     @ApiStatus.Internal
-    public NeoForgeCapabilityManger() {
+    public NeoForgeCapabilityManager() {
     }
 
     @Override
@@ -38,7 +38,7 @@ public class NeoForgeCapabilityManger extends AbstractCapabilityManger {
     }
 
     @Override
-    public IBlockCache<AssignablePoiCapability> createPoiCache(ServerLevel level, BlockPos pos) {
+    public IBlockCache<AssignableWorksiteCapability> createPoiCache(ServerLevel level, BlockPos pos) {
         return new NeoForgePoiCache(BlockCapabilityCache.create(ModCapabilities.ASSIGNABLE_POI_CAP, level, pos, null));
     }
 
@@ -54,14 +54,14 @@ public class NeoForgeCapabilityManger extends AbstractCapabilityManger {
         }
     }
 
-    private record NeoForgePoiCache(BlockCapabilityCache<AssignablePoiCapability, Void> cache) implements IBlockCache<AssignablePoiCapability> {
+    private record NeoForgePoiCache(BlockCapabilityCache<AssignableWorksiteCapability, Void> cache) implements IBlockCache<AssignableWorksiteCapability> {
         @Override
         public BlockPos pos() {
             return cache.pos();
         }
 
         @Override
-        public @Nullable AssignablePoiCapability getCapability() {
+        public @Nullable AssignableWorksiteCapability getCapability() {
             return cache.getCapability();
         }
     }

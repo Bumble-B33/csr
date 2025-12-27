@@ -9,7 +9,7 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.util.FastColor;
+import net.minecraft.util.ARGB;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.animal.Sheep;
 import net.minecraft.world.item.DyeColor;
@@ -118,6 +118,13 @@ public class ColorHelper {
     /**
      * Returns the dynamic color. This includes all color changing effects.
      */
+    public int getColor(int offset, float ageInTicks) {
+        return getColor(offset, (int) ageInTicks, ageInTicks - ((int) ageInTicks));
+    }
+
+    /**
+     * Returns the dynamic color. This includes all color changing effects.
+     */
     public int getColor(int offset, int tickCount, float pPartialTicks) {
         if (jeb) {
             int k = tickCount / MAGIC_NUMBER + offset;
@@ -127,7 +134,7 @@ public class ColorHelper {
             float lerp = ((float) (tickCount % MAGIC_NUMBER) + pPartialTicks) / MAGIC_NUMBER;
             int min = Sheep.getColor(DyeColor.byId(colorIdMin));
             int max = Sheep.getColor(DyeColor.byId(colorIdMax));
-            return FastColor.ARGB32.lerp(lerp, min, max);
+            return ARGB.lerp(lerp, min, max);
         }
         return color;
     }

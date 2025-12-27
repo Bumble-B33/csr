@@ -46,7 +46,7 @@ public class ClaySoldierMeleeAttackGoal extends ClaySoldierMeleeGoal implements 
         } else {
             this.claySoldier.swing(InteractionHand.MAIN_HAND);
         }
-        this.claySoldier.doHurtTarget(pTarget);
+        this.claySoldier.doHurtTarget(getServerLevel(claySoldier), pTarget);
         if (this.claySoldier.getAttackType() == AttackTypeProperty.KING) {
             alertOthersSoldiers(this.claySoldier);
         }

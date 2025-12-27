@@ -23,16 +23,18 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.VariantHolder;
 import net.minecraft.world.item.*;
 import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.EnchantmentInstance;
+import net.minecraft.world.item.equipment.ArmorType;
 
 import java.util.Map;
 import java.util.function.Supplier;
 
 public class ModItems {
     public static final Supplier<Item> SHEAR_BLADE = ClaySoldiersCommon.PLATFORM.registerItem("shear_blade",
-            properties -> new SwordItem(Tiers.STONE, properties), new Item.Properties().attributes(SwordItem.createAttributes(Tiers.STONE, 3, -2.4F)));
+            properties -> new SwordItem(ToolMaterial.STONE, 3f, -2.4f, properties), new Item.Properties());
     public static final Supplier<Item> SHARPENED_STICK = ClaySoldiersCommon.PLATFORM.registerItem("sharpened_stick",
-            properties -> new SwordItem(Tiers.WOOD, properties), new Item.Properties().attributes(SwordItem.createAttributes(Tiers.WOOD, 3, -2.4F)));
+            properties -> new SwordItem(ToolMaterial.WOOD, 3f, -2.4f, properties), new Item.Properties());
 
     public static final Supplier<BrickedClaySoldierItem> BRICKED_CLAY_SOLDIER = ClaySoldiersCommon.PLATFORM.registerItem("bricked_clay_soldier",
             BrickedClaySoldierItem::new, new Item.Properties());
@@ -49,7 +51,11 @@ public class ModItems {
     public static final Supplier<ClayBrushItem> CLAY_BRUSH = ClaySoldiersCommon.PLATFORM.registerItem("clay_brush",
             ClayBrushItem::new, new Item.Properties().stacksTo(1).rarity(Rarity.UNCOMMON));
     public static final ItemLikeSupplier<ArmorItem> CLAY_GOGGLES = ClaySoldiersCommon.PLATFORM.registerItem("clay_goggles",
-            properties -> new ArmorItem(ModArmorMaterials.CLAY_ARMOR_MATERIAL, ArmorItem.Type.HELMET, properties), new Item.Properties().stacksTo(1).rarity(Rarity.UNCOMMON));
+            properties -> new ArmorItem(ModArmorMaterials.CLAY_ARMOR_MATERIAL, ArmorType.HELMET, properties), new Item.Properties().stacksTo(1).rarity(Rarity.UNCOMMON));
+
+    public static final ItemLikeSupplier<ArmorItem> SLIME_BOOTS = ClaySoldiersCommon.PLATFORM.registerItem("slime_boots",
+            properties -> new ArmorItem(ModArmorMaterials.CLAY_ARMOR_MATERIAL, ArmorType.BOOTS, properties), new Item.Properties().stacksTo(1).rarity(Rarity.UNCOMMON));
+
 
     public static final ItemLikeSupplier<Item> TEST_ITEM = ClaySoldiersCommon.PLATFORM.ifDevEv(() -> ClaySoldiersCommon.PLATFORM.registerItem("debug_device",
             TestItem::new, new Item.Properties().stacksTo(1)), ItemLikeSupplier.EMPTY);
@@ -61,7 +67,7 @@ public class ModItems {
             BlueprintPageItem::new, new Item.Properties());
 
     public static final ItemLikeSupplier<ClayStaffItem> CLAY_STAFF = ClaySoldiersCommon.PLATFORM.registerItem("clay_staff",
-            ClayStaffItem::new, new Item.Properties().stacksTo(1).rarity(Rarity.RARE));
+            ClayStaffItem::new, new Item.Properties().stacksTo(1).rarity(Rarity.RARE).enchantable(1));
 
     public static final ItemLikeSupplier<ClayPouchItem> CLAY_POUCH = ClaySoldiersCommon.PLATFORM.registerItem("clay_pouch",
             ClayPouchItem::new, new Item.Properties().stacksTo(1).rarity(Rarity.UNCOMMON));
@@ -85,8 +91,7 @@ public class ModItems {
     }
 
     public static ItemStack createEnchantedBook(HolderLookup.Provider registries, ResourceKey<Enchantment> key, int level) {
-        return EnchantedBookItem.createForEnchantment(
-                new EnchantmentInstance(registries.lookupOrThrow(Registries.ENCHANTMENT).getOrThrow(key), level));
+        return EnchantmentHelper.createBook(new EnchantmentInstance(registries.lookupOrThrow(Registries.ENCHANTMENT).getOrThrow(key), level));
     }
 
     public static void init() {

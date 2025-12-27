@@ -3,9 +3,9 @@ package net.bumblebee.claysoldiers.entity.client.undead;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.bumblebee.claysoldiers.entity.client.ClaySoldierRenderer;
+import net.bumblebee.claysoldiers.entity.client.renderstates.AbstractClaySoldierRenderState;
 import net.bumblebee.claysoldiers.entity.soldier.AbstractClaySoldierEntity;
 import net.bumblebee.claysoldiers.entity.soldier.ZombieClaySoldierEntity;
-import net.bumblebee.claysoldiers.team.ClayMobTeam;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 
 public class ZombieClaySoldierRenderer extends ClaySoldierRenderer {
@@ -15,8 +15,16 @@ public class ZombieClaySoldierRenderer extends ClaySoldierRenderer {
     }
 
     @Override
-    protected void renderModel(AbstractClaySoldierEntity soldier, PoseStack pPoseStack, VertexConsumer vertexConsumer, int pPackedLight, int overlayCords, int color, int alpha) {
+    protected void renderModel(AbstractClaySoldierRenderState soldier, PoseStack pPoseStack, VertexConsumer vertexConsumer, int pPackedLight, int overlayCords, int color, int alpha) {
         super.renderModel(soldier, pPoseStack, vertexConsumer, pPackedLight, overlayCords, shiftColor(color), alpha);
+    }
+
+    @Override
+    public void extractRenderState(AbstractClaySoldierEntity claySoldierEntity, AbstractClaySoldierRenderState claySoldierRenderState, float partialTick) {
+        super.extractRenderState(claySoldierEntity, claySoldierRenderState, partialTick);
+        if (claySoldierEntity instanceof ZombieClaySoldierEntity zombie) {
+            claySoldierRenderState.previousTeamColor = zombie.getPreviousTeam().getColor(claySoldierEntity, partialTick);
+        }
     }
 
     public static int shiftColor(int color) {
@@ -28,10 +36,7 @@ public class ZombieClaySoldierRenderer extends ClaySoldierRenderer {
     }
 
     @Override
-    protected ClayMobTeam getVariantForColor(AbstractClaySoldierEntity claySoldier) {
-        if (claySoldier instanceof ZombieClaySoldierEntity zombie) {
-            return zombie.getPreviousTeam();
-        }
-        return super.getVariantForColor(claySoldier);
+    protected int getVariantForColor(AbstractClaySoldierRenderState claySoldier) {
+        return claySoldier.previousTeamColor != -1 ? claySoldier.previousTeamColor : super.getVariantForColor(claySoldier);
     }
 }

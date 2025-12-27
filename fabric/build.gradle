@@ -46,8 +46,9 @@ dependencies {
 
     modImplementation "net.tslat.smartbrainlib:SmartBrainLib-fabric-${minecraft_version}:${sbl_version}"
 
-    modCompileOnlyApi("mezz.jei:jei-${minecraft_version}-fabric-api:${jei_version}")
-    modRuntimeOnly("mezz.jei:jei-${minecraft_version}-fabric:${jei_version}")
+    // Todo use Fabric JEI when available
+    modCompileOnlyApi("mezz.jei:jei-${minecraft_version}-common-api:${jei_version}")
+    modRuntimeOnly("mezz.jei:jei-${minecraft_version}-common:${jei_version}")
 
     modImplementation "curse.maven:jade-324717:${jade_id_fabric}"
 

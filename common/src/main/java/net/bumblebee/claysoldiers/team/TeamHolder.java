@@ -74,7 +74,12 @@ public interface TeamHolder extends OwnableEntity {
     /**
      * Returns the Player which is in favor with this team.
      */
-    @Nullable Player getClayTeamOwner();
+    default Player getClayTeamOwner() {
+        if (getClayTeamOwnerUUID() == null) {
+            return null;
+        }
+        return level().getPlayerByUUID(getClayTeamOwnerUUID());
+    }
 
     default boolean hasClayTeamOwner() {
         return getClayTeamOwnerUUID() != null;

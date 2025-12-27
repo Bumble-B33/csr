@@ -39,7 +39,7 @@ public class BreakCropGoal extends MoveToBlockGoal implements IWorkGoal {
 
     @Override
     public boolean canUse() {
-        if (!ClaySoldiersCommon.COMMON_HOOKS.canEntityGrief(this.mob.level(), this.mob)) {
+        if (!ClaySoldiersCommon.COMMON_HOOKS.canEntityGrief(getServerLevel(this.mob.level()), this.mob)) {
             if (status != CANT_BREAK_BLOCK_STATUS) {
                 status = CANT_BREAK_BLOCK_STATUS;
                 workSelector.get().onWorkStatusChange();

@@ -23,7 +23,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.ai.village.poi.PoiManager;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -48,7 +48,6 @@ public class TestItem extends Item {
 
     @Override
     public InteractionResult useOn(UseOnContext context) {
-        Level level = context.getLevel();
         BlockEntity blockEntity = context.getLevel().getBlockEntity(context.getClickedPos());
 
         if (context.getLevel() instanceof ServerLevel serverLevel) {
@@ -64,14 +63,14 @@ public class TestItem extends Item {
             log(hamsterWheel, List.of(data == null ? "HamsterWheelSoldierData(null)" : data.toString()));
         }
 
-        return InteractionResult.sidedSuccess(context.getLevel().isClientSide());
+        return InteractionResult.SUCCESS;
     }
 
     @Override
-    public InteractionResultHolder<ItemStack> use(Level level, Player pPlayer, InteractionHand pUsedHand) {
+    public InteractionResult use(Level level, Player pPlayer, InteractionHand pUsedHand) {
 
         var itemInHand = pPlayer.getItemInHand(pUsedHand);
-        System.out.println((level.isClientSide ? "Client " : "Server ") + HamsterWheelBlockEntity.withSoldiers);
+
         if (level instanceof ServerLevel serverLevel) {
             serverLevel.getPoiManager().getInSquare(h -> h.is(ModTags.PoiTypes.SOLDIER_CONTAINER), pPlayer.getOnPos(), 10, PoiManager.Occupancy.ANY);
         }
@@ -102,7 +101,7 @@ public class TestItem extends Item {
             info.forEach(LOGGER::info);
 
         }
-        return InteractionResultHolder.sidedSuccess(itemInHand, level.isClientSide());
+        return InteractionResult.SUCCESS;
     }
 
     private static void cycleMode(ItemStack itemInHand, Player player) {
@@ -140,8 +139,8 @@ public class TestItem extends Item {
     public enum Mode implements StringRepresentable {
         TEAM("team", ChatFormatting.DARK_GREEN,
                 ((level, player, list) -> {
-                    list.add("Custom Reg and Level: " + level.registryAccess().registry(ModRegistries.CLAY_MOB_TEAMS));
-                    list.add("Teams: " + ClayMobTeamManger.getAllKeys(level.registryAccess()));
+                    list.add("Custom Reg and Level: " + level.registryAccess().lookup(ModRegistries.CLAY_MOB_TEAMS));
+                    list.add("Teams: " + ClayMobTeamManger.getAllKeys(level.registryAccess()).toList());
                     list.add("From Item: " + ClayMobTeamManger.getFromItemMap());
                 }),
                 (s, p, info) -> info.add("Loyalty: " + TeamLoyaltyManger.getTeamPlayerData(s)),
@@ -165,12 +164,12 @@ public class TestItem extends Item {
             infos.add("Caps: " + ClaySoldiersCommon.CAPABILITY_MANGER.toString());
         }),
         BLUEPRINT("blueprint", ChatFormatting.AQUA, (l, p, info) -> {
-            var reg = l.registryAccess().registryOrThrow(ModRegistries.BLUEPRINTS);
+            var reg = l.registryAccess().lookupOrThrow(ModRegistries.BLUEPRINTS);
             info.add("Registry(%s): %s".formatted(reg.size(), reg.keySet()));
-            info.add("Content: " + reg.holders().map(Holder::value).toList());
+            info.add("Content: " + reg.listElements().map(Holder::value).toList());
         }),
         TAGS("soldier_item_tags", ChatFormatting.DARK_PURPLE, (l, p, info) -> {
-            var reg = l.registryAccess().registry(ModRegistries.SOLDIER_ITEM_TYPES);
+            var reg = l.registryAccess().lookup(ModRegistries.SOLDIER_ITEM_TYPES);
             info.add("Type Reg: " + reg);
             info.add("Values: " + reg.map(r -> r.stream().toList()));
             info.add("Entries: " + reg.map(Registry::entrySet));
@@ -179,7 +178,7 @@ public class TestItem extends Item {
             info.add("Entries: " + ModRegistries.ITEM_GENERATORS_REGISTRY.entrySet());
         }),
         BOSS("boss", ChatFormatting.RED, InfoGenerator.EMPTY, (serverLevel, p, info) -> {
-            var boss = ModEntityTypes.BOSS_CLAY_SOLDIER_ENTITY.get().create(serverLevel);
+            var boss = ModEntityTypes.BOSS_CLAY_SOLDIER_ENTITY.get().create(serverLevel, EntitySpawnReason.COMMAND);
             if (boss == null) {
                 info.add("Error creating Boss");
                 return;

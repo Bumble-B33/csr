@@ -33,6 +33,7 @@ public class ClayMobTeam {
             Codec.BOOL.optionalFieldOf("friendly_fire", false).forGetter(ClayMobTeam::isFriendlyFireAllowed),
             BuiltInRegistries.ITEM.byNameCodec().optionalFieldOf("from", Items.AIR).forGetter(ClayMobTeam::getGetFromOrAir),
             SoldierPropertyMap.CODEC_FOR_NON_ITEM.optionalFieldOf("properties", SoldierPropertyMap.EMPTY_MAP).forGetter(ClayMobTeam::getProperties),
+            Codec.BOOL.optionalFieldOf("tamable", true).forGetter(ClayMobTeam::canBeTamed),
             PlayerUUIDAndName.CODEC.listOf().optionalFieldOf("players", List.of()).forGetter(c -> c.players)
     ).apply(in, ClayMobTeam::new));
 
@@ -42,6 +43,7 @@ public class ClayMobTeam {
             ByteBufCodecs.BOOL, ClayMobTeam::isFriendlyFireAllowed,
             ByteBufCodecs.registry(Registries.ITEM), t -> t.getFrom == null ? Items.AIR : t.getFrom,
             SoldierPropertyMap.STREAM_CODEC, ClayMobTeam::getProperties,
+            ByteBufCodecs.BOOL, ClayMobTeam::canBeTamed,
             PlayerUUIDAndName.STREAM_CODEC.apply(ByteBufCodecs.collection(ArrayList::new)), c -> c.players,
             ClayMobTeam::new
     );
@@ -58,8 +60,9 @@ public class ClayMobTeam {
     private final List<PlayerUUIDAndName> players;
     private final Collection<UUID> playerUUIDs;
     private final List<String> playerNames;
+    private final boolean tamable;
 
-    private ClayMobTeam(String name, ColorHelper color, boolean friendlyFire, @NotNull Item getFrom, SoldierPropertyMap properties, Collection<PlayerUUIDAndName> players) {
+    private ClayMobTeam(String name, ColorHelper color, boolean friendlyFire, @NotNull Item getFrom, SoldierPropertyMap properties, boolean tamable, Collection<PlayerUUIDAndName> players) {
         this.name = name;
         this.color = color;
         this.friendlyFire = friendlyFire;
@@ -68,14 +71,15 @@ public class ClayMobTeam {
         this.players = List.copyOf(players);
         this.playerUUIDs = players.stream().map(PlayerUUIDAndName::uuid).toList();
         this.playerNames = players.stream().map(PlayerUUIDAndName::name).toList();
+        this.tamable = tamable;
     }
 
-    protected ClayMobTeam(String name, ColorHelper color, boolean friendlyFire, @NotNull Item getFrom) {
-        this(name, color, friendlyFire, getFrom, SoldierPropertyMap.EMPTY_MAP, List.of());
+    protected ClayMobTeam(String name, ColorHelper color, boolean friendlyFire, boolean tamable, @NotNull Item getFrom) {
+        this(name, color, friendlyFire, getFrom, SoldierPropertyMap.EMPTY_MAP, tamable, List.of());
     }
 
-    private ClayMobTeam(String name, ColorHelper color, boolean friendlyFire, @NotNull Item getFrom, SoldierPropertyMap properties) {
-        this(name, color, friendlyFire, getFrom, properties, List.of());
+    private ClayMobTeam(String name, ColorHelper color, boolean friendlyFire, @NotNull Item getFrom, SoldierPropertyMap properties, boolean tamable) {
+        this(name, color, friendlyFire, getFrom, properties, tamable, List.of());
     }
 
     public SoldierPropertyMap getProperties() {
@@ -120,6 +124,13 @@ public class ClayMobTeam {
     }
 
     /**
+     * Returns the dynamic color of this Team.
+     */
+    public int getColor(int offsetStart, float ageInTicks) {
+        return color.getColor(offsetStart, ageInTicks);
+    }
+
+    /**
      * Returns the {@code Item} associated with this team.
      *
      * @return the {@code Item} associated with this team
@@ -138,6 +149,13 @@ public class ClayMobTeam {
      */
     public boolean isFriendlyFireAllowed() {
         return friendlyFire;
+    }
+
+    /**
+     * @return whether this team can be loyal to any player.
+     */
+    public boolean canBeTamed() {
+        return tamable;
     }
 
     /**
@@ -270,6 +288,7 @@ public class ClayMobTeam {
         private boolean friendlyFire = false;
         private final String name;
         private final ColorHelper color;
+        private boolean tamable = true;
 
         public Builder(String name, ColorHelper color) {
             this.name = name;
@@ -291,8 +310,13 @@ public class ClayMobTeam {
             return this;
         }
 
+        public Builder disableTaming() {
+            this.tamable = false;
+            return this;
+        }
+
         public ClayMobTeam build() {
-            return new ClayMobTeam(name, color, friendlyFire, getFrom, properties);
+            return new ClayMobTeam(name, color, friendlyFire, getFrom, properties, tamable);
         }
     }
 }

@@ -1,5 +1,6 @@
 package net.bumblebee.claysoldiers.platform.services;
 
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
@@ -7,7 +8,6 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.flag.FeatureFlagSet;
 import net.minecraft.world.level.GameRules;
-import net.minecraft.world.level.Level;
 
 import java.util.OptionalInt;
 
@@ -21,12 +21,8 @@ public interface ICommonHooks {
 
     OptionalInt openMenu(Player serverPlayer, MenuProvider menuProvider, int extraData);
 
-    default boolean canEntityGrief(Level level, Entity livingEntity) {
+    default boolean canEntityGrief(ServerLevel level, Entity livingEntity) {
         return level.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING);
-    }
-
-    default boolean shouldRiderSit(Entity vehicle) {
-        return true;
     }
 
     boolean isBlueprintEnabled(FeatureFlagSet set);

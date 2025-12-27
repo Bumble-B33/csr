@@ -102,7 +102,7 @@ public class BuildBlueprintGoal extends AbstractWorkGoal {
             assert getCapCache() != null;
             var storage = getCapCache().getCapability();
             if (storage != null) {
-                soldier.spawnAtLocation(storage.tryInserting(soldier.getCarriedStack()));
+                soldier.spawnAtLocation(getServerLevel(soldier), storage.tryInserting(soldier.getCarriedStack()));
                 soldier.setCarriedStack(ItemStack.EMPTY);
             } else {
                 soldier.dropCarried();
@@ -133,7 +133,7 @@ public class BuildBlueprintGoal extends AbstractWorkGoal {
     private void placeBlock() {
         var requestHandler = easelPos.getCapability();
         if (requestHandler != null) {
-            if (requestHandler.doRequest(request)) {
+            if (requestHandler.doRequest(request, soldier)) {
                 soldier.setCarriedStack(ItemStack.EMPTY);
                 request.setFinished();
             } else {

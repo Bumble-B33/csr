@@ -41,6 +41,8 @@ public class ItemStackWithEffect extends ItemStackEffectHolder<SoldierHoldableEf
     public boolean isThrowable() {
         return effect != null && effect.throwable();
     }
+
+    //Todo
     public boolean throwableTypeMatchAttackType(AttackTypeProperty attackType) {
         if (effect == null || !effect.throwable()) {
             return true;
@@ -64,13 +66,13 @@ public class ItemStackWithEffect extends ItemStackEffectHolder<SoldierHoldableEf
     }
 
 
-    @Nullable
+    @NotNull
     public ThrowableItemCapability getThrowableCap() {
         var factory = ClaySoldiersCommon.CAPABILITY_MANGER.getThrowableItem(stack);
         if (factory != null) {
-            return factory.apply(stack, effect);
+            return factory.apply(this);
         }
-        return null;
+        return ThrowableItemCapability.DEFAULT;
     }
     @Override
     @Nullable

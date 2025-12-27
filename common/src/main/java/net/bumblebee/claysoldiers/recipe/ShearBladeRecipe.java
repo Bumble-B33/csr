@@ -7,10 +7,19 @@ import net.minecraft.core.NonNullList;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.*;
+import net.minecraft.world.item.crafting.display.RecipeDisplay;
+import net.minecraft.world.item.crafting.display.ShapelessCraftingRecipeDisplay;
+import net.minecraft.world.item.crafting.display.SlotDisplay;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public class ShearBladeRecipe extends CustomRecipe {
+    @Nullable
+    private PlacementInfo placementInfo;
+
     public ShearBladeRecipe(CraftingBookCategory pCategory) {
         super(pCategory);
     }
@@ -52,30 +61,26 @@ public class ShearBladeRecipe extends CustomRecipe {
     }
 
     @Override
-    public boolean canCraftInDimensions(int pWidth, int pHeight) {
-        return pWidth * pHeight >= 1;
-    }
-
-    @Override
     @NotNull
     public RecipeSerializer<ShearBladeRecipe> getSerializer() {
         return ModRecipes.SHEAR_BLADE_CRAFTING.get();
     }
 
-    // Show In Recipe Book
-
     @Override
-    public boolean isSpecial() {
-        return false;
+    public PlacementInfo placementInfo() {
+        if (placementInfo == null) {
+            placementInfo = PlacementInfo.create(Ingredient.of(Items.SHEARS));
+        }
+
+        return placementInfo;
     }
 
     @Override
-    public ItemStack getResultItem(HolderLookup.Provider registries) {
-        return ModItems.SHEAR_BLADE.get().getDefaultInstance();
-    }
-
-    @Override
-    public NonNullList<Ingredient> getIngredients() {
-        return NonNullList.of(Ingredient.EMPTY, Ingredient.of(Items.SHEARS));
+    public List<RecipeDisplay> display() {
+        return List.of(new ShapelessCraftingRecipeDisplay(
+                List.of(new SlotDisplay.ItemSlotDisplay(Items.SHEARS)),
+                new SlotDisplay.ItemSlotDisplay(ModItems.SHEAR_BLADE.get()),
+                new SlotDisplay.ItemSlotDisplay(Items.CRAFTING_TABLE)
+        ));
     }
 }

@@ -14,12 +14,15 @@ public class ClaySoldierCookingRecipe {
     public static ClaySoldierSmeltingRecipe smelting() {
         return new ClaySoldierSmeltingRecipe(ModRecipes.CLAY_SOLDIER_SMELTING, 100);
     }
+
     public static ClaySoldierBlastingRecipe blasting() {
         return new ClaySoldierBlastingRecipe(ModRecipes.CLAY_SOLDIER_BLASTING, 50);
     }
+
     public static ClaySoldierCampfireRecipe campfire() {
         return new ClaySoldierCampfireRecipe(ModRecipes.CLAY_SOLDIER_CAMPFIRE, 200);
     }
+
     public static ClaySoldierSmokingRecipe smoking() {
         return new ClaySoldierSmokingRecipe(ModRecipes.CLAY_SOLDIER_SMOKING, 300);
     }
@@ -34,16 +37,16 @@ public class ClaySoldierCookingRecipe {
         return bricked.getBrickedItem(stack);
     }
 
-    public static class ClaySoldierSmeltingRecipe extends SmeltingRecipe  {
-        private final Supplier<RecipeSerializer<ClaySoldierSmeltingRecipe>> serializer;
+    public static class ClaySoldierSmeltingRecipe extends SmeltingRecipe {
+        private final Supplier<RecipeSerializer<SmeltingRecipe>> serializer;
 
-        public ClaySoldierSmeltingRecipe(Supplier<RecipeSerializer<ClaySoldierSmeltingRecipe>> serializer, int cookingTime) {
+        public ClaySoldierSmeltingRecipe(Supplier<RecipeSerializer<SmeltingRecipe>> serializer, int cookingTime) {
             super("clay_mob_cooking", CookingBookCategory.MISC, Ingredient.of(ModItems.CLAY_SOLDIER.get()), ModItems.BRICKED_CLAY_SOLDIER.get().getDefaultInstance(), 1, cookingTime);
             this.serializer = serializer;
         }
 
         @Override
-        public RecipeSerializer<?> getSerializer() {
+        public RecipeSerializer<SmeltingRecipe> getSerializer() {
             return serializer.get();
         }
 
@@ -56,23 +59,18 @@ public class ClaySoldierCookingRecipe {
         public ItemStack assemble(SingleRecipeInput input, HolderLookup.Provider registries) {
             return assembleRecipe(input);
         }
-
-        @Override
-        public boolean canCraftInDimensions(int width, int height) {
-            return true;
-        }
     }
 
-    public static class ClaySoldierBlastingRecipe extends BlastingRecipe  {
-        private final Supplier<RecipeSerializer<ClaySoldierBlastingRecipe>> serializer;
+    public static class ClaySoldierBlastingRecipe extends BlastingRecipe {
+        private final Supplier<RecipeSerializer<BlastingRecipe>> serializer;
 
-        public ClaySoldierBlastingRecipe(Supplier<RecipeSerializer<ClaySoldierBlastingRecipe>> serializer, int cookingTime) {
+        public ClaySoldierBlastingRecipe(Supplier<RecipeSerializer<BlastingRecipe>> serializer, int cookingTime) {
             super("clay_mob_cooking", CookingBookCategory.MISC, Ingredient.of(ModItems.CLAY_SOLDIER.get()), ModItems.BRICKED_CLAY_SOLDIER.get().getDefaultInstance(), 1, cookingTime);
             this.serializer = serializer;
         }
 
         @Override
-        public RecipeSerializer<?> getSerializer() {
+        public RecipeSerializer<BlastingRecipe> getSerializer() {
             return serializer.get();
         }
 
@@ -85,23 +83,18 @@ public class ClaySoldierCookingRecipe {
         public ItemStack assemble(SingleRecipeInput input, HolderLookup.Provider registries) {
             return assembleRecipe(input);
         }
-
-        @Override
-        public boolean canCraftInDimensions(int width, int height) {
-            return true;
-        }
     }
 
-    public static class ClaySoldierCampfireRecipe extends CampfireCookingRecipe  {
-        private final Supplier<RecipeSerializer<ClaySoldierCampfireRecipe>> serializer;
+    public static class ClaySoldierCampfireRecipe extends CampfireCookingRecipe {
+        private final Supplier<RecipeSerializer<CampfireCookingRecipe>> serializer;
 
-        public ClaySoldierCampfireRecipe(Supplier<RecipeSerializer<ClaySoldierCampfireRecipe>> serializer, int cookingTime) {
+        public ClaySoldierCampfireRecipe(Supplier<RecipeSerializer<CampfireCookingRecipe>> serializer, int cookingTime) {
             super("clay_mob_cooking", CookingBookCategory.MISC, Ingredient.of(ModItems.CLAY_SOLDIER.get()), ModItems.BRICKED_CLAY_SOLDIER.get().getDefaultInstance(), 1, cookingTime);
             this.serializer = serializer;
         }
 
         @Override
-        public RecipeSerializer<?> getSerializer() {
+        public RecipeSerializer<CampfireCookingRecipe> getSerializer() {
             return serializer.get();
         }
 
@@ -114,23 +107,18 @@ public class ClaySoldierCookingRecipe {
         public ItemStack assemble(SingleRecipeInput input, HolderLookup.Provider registries) {
             return assembleRecipe(input);
         }
-
-        @Override
-        public boolean canCraftInDimensions(int width, int height) {
-            return true;
-        }
     }
 
-    public static class ClaySoldierSmokingRecipe extends SmokingRecipe  {
-        private final Supplier<RecipeSerializer<ClaySoldierSmokingRecipe>> serializer;
+    public static class ClaySoldierSmokingRecipe extends SmokingRecipe {
+        private final Supplier<RecipeSerializer<SmokingRecipe>> serializer;
 
-        public ClaySoldierSmokingRecipe(Supplier<RecipeSerializer<ClaySoldierSmokingRecipe>> serializer, int cookingTime) {
+        public ClaySoldierSmokingRecipe(Supplier<RecipeSerializer<SmokingRecipe>> serializer, int cookingTime) {
             super("clay_mob_cooking", CookingBookCategory.MISC, Ingredient.of(ModItems.CLAY_SOLDIER.get()), ModItems.BRICKED_CLAY_SOLDIER.get().getDefaultInstance(), 1, cookingTime);
             this.serializer = serializer;
         }
 
         @Override
-        public RecipeSerializer<?> getSerializer() {
+        public RecipeSerializer<SmokingRecipe> getSerializer() {
             return serializer.get();
         }
 
@@ -143,11 +131,5 @@ public class ClaySoldierCookingRecipe {
         public ItemStack assemble(SingleRecipeInput input, HolderLookup.Provider registries) {
             return assembleRecipe(input);
         }
-
-        @Override
-        public boolean canCraftInDimensions(int width, int height) {
-            return true;
-        }
     }
-
 }

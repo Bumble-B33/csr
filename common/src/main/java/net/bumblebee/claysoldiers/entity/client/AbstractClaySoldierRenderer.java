@@ -3,14 +3,12 @@ package net.bumblebee.claysoldiers.entity.client;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
-import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.datamap.SoldierEquipmentSlot;
 import net.bumblebee.claysoldiers.entity.client.accesories.AccessoryRenderLayer;
+import net.bumblebee.claysoldiers.entity.client.renderstates.AbstractClaySoldierRenderState;
+import net.bumblebee.claysoldiers.entity.client.renderstates.ClayMobRenderState;
 import net.bumblebee.claysoldiers.entity.soldier.AbstractClaySoldierEntity;
-import net.bumblebee.claysoldiers.team.ClayMobTeam;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.ModelLayers;
-import net.minecraft.client.renderer.ItemInHandRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
@@ -19,162 +17,155 @@ import net.minecraft.client.renderer.entity.RenderLayerParent;
 import net.minecraft.client.renderer.entity.layers.CustomHeadLayer;
 import net.minecraft.client.renderer.entity.layers.ItemInHandLayer;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
+import net.minecraft.client.renderer.item.ItemStackRenderState;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.util.FastColor;
+import net.minecraft.util.ARGB;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.Entity;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.HumanoidArm;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.item.ItemDisplayContext;
-import net.minecraft.world.item.ItemStack;
 
-public abstract class AbstractClaySoldierRenderer extends HumanoidMobRenderer<AbstractClaySoldierEntity, ClaySoldierModel> {
-    private static final float SCALE = AbstractClaySoldierEntity.DEFAULT_SCALE;
-    private final ItemInHandRenderer itemInHandRenderer;
+public abstract class AbstractClaySoldierRenderer extends HumanoidMobRenderer<AbstractClaySoldierEntity, AbstractClaySoldierRenderState, ClaySoldierModel> {
+    public static final float SCALE = AbstractClaySoldierEntity.DEFAULT_SCALE;
 
     protected AbstractClaySoldierRenderer(EntityRendererProvider.Context pContext, ClaySoldierModel model) {
-        super(pContext, model, 0.5f * SCALE, SCALE, SCALE, SCALE);
+        super(pContext, model, model, 0.5f * SCALE, new CustomHeadLayer.Transforms(SCALE, SCALE, SCALE));
         this.layers.removeIf(layer -> layer.getClass() == CustomHeadLayer.class || layer.getClass() == ItemInHandLayer.class);
 
-        this.itemInHandRenderer = pContext.getItemInHandRenderer();
 
         this.addLayer(new ClaySoldierArmorLayer(this,
                 new ClaySoldierModel(pContext.bakeLayer(ModelLayers.ZOMBIE_INNER_ARMOR)),
                 new ClaySoldierModel(pContext.bakeLayer(ModelLayers.ZOMBIE_OUTER_ARMOR)),
                 pContext.getModelManager(),
-                pContext.getItemRenderer()
+                pContext.getEquipmentAssets()
         ));
-        this.addLayer(new AccessoryRenderLayer(this, pContext.getModelSet(), itemInHandRenderer, pContext.getItemRenderer()));
-        this.addLayer(new ClayMobStatusRenderlayer<>(this, pContext.getEntityRenderDispatcher(), pContext.getItemRenderer()));
+        this.addLayer(new AccessoryRenderLayer(this, pContext.getModelSet(), pContext.getEquipmentAssets()));
+        this.addLayer(new ClayMobStatusRenderlayer<>(this, pContext.getEntityRenderDispatcher(), e -> e.isInSittingPose, s -> s.shouldShowStatus, s -> s.workStatus, s -> s.statusAttachmentPoint));
         this.addLayer(new WaxedRenderLayer<>(this));
-        this.addLayer(new ClaySoldierItemInHandLayer(this, itemInHandRenderer));
+        this.addLayer(new ClaySoldierItemInHandLayer(this));
     }
 
     @Override
-    protected void scale(AbstractClaySoldierEntity claySoldier, PoseStack poseStack, float partialTickTime) {
+    protected void scale(AbstractClaySoldierRenderState renderState, PoseStack poseStack) {
         poseStack.scale(SCALE, SCALE, SCALE);
-        scaleExplode(claySoldier, poseStack, partialTickTime);
+        scaleExplode(renderState, poseStack);
     }
 
     @Override
-    public void render(AbstractClaySoldierEntity claySoldier, float pEntityYaw, float pPartialTicks, PoseStack pPoseStack, MultiBufferSource pBuffer, int pPackedLight) {
+    public void render(AbstractClaySoldierRenderState claySoldier, PoseStack pPoseStack, MultiBufferSource pBuffer, int pPackedLight) {
         pPoseStack.pushPose();
-        this.model.attackTime = this.getAttackAnim(claySoldier, pPartialTicks);
-
-        boolean shouldSit = claySoldier.isPassenger() && (claySoldier.getVehicle() != null && ClaySoldiersCommon.COMMON_HOOKS.shouldRiderSit(claySoldier.getVehicle()));
-        this.model.riding = shouldSit;
-        this.model.young = claySoldier.isBaby();
-        float yBodyRot = Mth.rotLerp(pPartialTicks, claySoldier.yBodyRotO, claySoldier.yBodyRot);
-        float yHeadRot = Mth.rotLerp(pPartialTicks, claySoldier.yHeadRotO, claySoldier.yHeadRot);
-        float netHeadYaw = yHeadRot - yBodyRot;
-        if (shouldSit && claySoldier.getVehicle() instanceof LivingEntity) {
-            Entity vehicle = claySoldier.getVehicle();
-            if (vehicle instanceof LivingEntity livingentity) {
-                yBodyRot = Mth.rotLerp(pPartialTicks, livingentity.yBodyRotO, livingentity.yBodyRot);
-                netHeadYaw = yHeadRot - yBodyRot;
-                float f6 = Mth.wrapDegrees(netHeadYaw);
-                if (f6 < -85.0F) {
-                    f6 = -85.0F;
-                }
-
-                if (f6 >= 85.0F) {
-                    f6 = 85.0F;
-                }
-
-                yBodyRot = yHeadRot - f6;
-                if (f6 * f6 > 2500.0F) {
-                    yBodyRot += f6 * 0.2F;
-                }
-
-                netHeadYaw = yHeadRot - yBodyRot;
-            }
-        }
-
-        float headPitch = Mth.lerp(pPartialTicks, claySoldier.xRotO, claySoldier.getXRot());
-        if (isEntityUpsideDown(claySoldier)) {
-            headPitch *= -1.0F;
-            netHeadYaw *= -1.0F;
-        }
-        netHeadYaw = Mth.wrapDegrees(netHeadYaw);
-
         if (claySoldier.hasPose(Pose.SLEEPING)) {
-            Direction direction = claySoldier.getBedOrientation();
+            Direction direction = claySoldier.bedOrientation;
             if (direction != null) {
-                float f3 = claySoldier.getEyeHeight(Pose.STANDING) - 0.1F;
+                float f3 = claySoldier.eyeHeight - 0.1F;
                 pPoseStack.translate((float) (-direction.getStepX()) * f3, 0.0F, (float) (-direction.getStepZ()) * f3);
             }
         }
 
-        float ageInTicks = this.getBob(claySoldier, pPartialTicks);
-        float scale = claySoldier.getScale();
+        float scale = claySoldier.scale;
         pPoseStack.scale(scale, scale, scale);
-        this.setupRotations(claySoldier, pPoseStack, ageInTicks, yBodyRot, pPartialTicks, 1f);
+        this.setupRotations(claySoldier, pPoseStack, claySoldier.bodyRot, 1f);
         pPoseStack.scale(-1.0F, -1.0F, 1.0F);
-        this.scale(claySoldier, pPoseStack, pPartialTicks);
+        this.scale(claySoldier, pPoseStack);
         pPoseStack.translate(0.0F, -1.501F, 0.0F);
-        float limbSwingAmount = 0.0F;
-        float limbSwing = 0.0F;
-        if (!shouldSit && claySoldier.isAlive()) {
-            limbSwingAmount = claySoldier.getWalkAnimation().speed(pPartialTicks);
-            limbSwing = claySoldier.getWalkAnimation().position(pPartialTicks);
-            if (claySoldier.isBaby()) {
-                limbSwing *= 3.0F;
-            }
+        this.model.setupAnim(claySoldier);
 
-            if (limbSwingAmount > 1.0F) {
-                limbSwingAmount = 1.0F;
-            }
-        }
-
-        this.model.prepareMobModel(claySoldier, limbSwing, limbSwingAmount, pPartialTicks);
-        this.model.setupAnim(claySoldier, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch);
-        if (claySoldier.getRidingPose() == AbstractClaySoldierEntity.RidingPose.FIREWORK) {
+        if (claySoldier.ridingPose == AbstractClaySoldierEntity.RidingPose.FIREWORK) {
             pPoseStack.translate(0, 0.5, 0);
         }
 
-        Minecraft minecraft = Minecraft.getInstance();
         boolean bodyVisible = this.isBodyVisible(claySoldier);
         boolean isInvisible = !bodyVisible;
-        boolean shouldGlow = minecraft.shouldEntityAppearGlowing(claySoldier);
-        RenderType rendertype = this.getRenderType(claySoldier, bodyVisible, isInvisible, shouldGlow);
+        RenderType rendertype = this.getRenderType(claySoldier, bodyVisible, isInvisible, claySoldier.appearsGlowing);
 
         if (rendertype != null) {
             VertexConsumer vertexconsumer = pBuffer.getBuffer(rendertype);
-            int overlay = getOverlayCoords(claySoldier, this.getWhiteOverlayProgress(claySoldier, pPartialTicks));
-            ClayMobTeam variant = getVariantForColor(claySoldier);
-            renderModel(claySoldier, pPoseStack, vertexconsumer, pPackedLight, overlay, variant.getColor(claySoldier, pPartialTicks), isInvisible ? 0x26 : 0xFF);
+            int overlay = getOverlayCoords(claySoldier, this.getWhiteOverlayProgress(claySoldier));
+            int color = getVariantForColor(claySoldier);
+            if (claySoldier.veryAngry) {
+                color = shiftColorAngry(color);
+            }
+            renderModel(claySoldier, pPoseStack, vertexconsumer, pPackedLight, overlay, color, isInvisible ? 0x26 : 0xFF);
         }
 
-        for (RenderLayer<AbstractClaySoldierEntity, ClaySoldierModel> renderlayer : this.layers) {
-            renderlayer.render(pPoseStack, pBuffer, pPackedLight, claySoldier, limbSwing, limbSwingAmount, pPartialTicks, ageInTicks, netHeadYaw, headPitch);
+        if (shouldRenderLayers(claySoldier)) {
+            for (RenderLayer<AbstractClaySoldierRenderState, ClaySoldierModel> renderlayer : this.layers) {
+                renderlayer.render(pPoseStack, pBuffer, pPackedLight, claySoldier, claySoldier.yRot, claySoldier.xRot);
+            }
         }
-        renderCarried(claySoldier, pPoseStack, pBuffer, pPackedLight);
+
+        renderCarried(claySoldier, pPoseStack, pBuffer, pPackedLight, OverlayTexture.NO_OVERLAY);
 
         pPoseStack.popPose();
-        if (shouldShowName(claySoldier)) {
-            renderNameTag(claySoldier, claySoldier.getDisplayName(), pPoseStack, pBuffer, pPackedLight, pPartialTicks);
-        }
 
+        if (claySoldier.nameTag != null) {
+            this.renderNameTag(claySoldier, claySoldier.nameTag, pPoseStack, pBuffer, pPackedLight);
+        }
+    }
+
+    @Override
+    public AbstractClaySoldierRenderState createRenderState() {
+        return new AbstractClaySoldierRenderState();
+    }
+
+    @Override
+    public void extractRenderState(AbstractClaySoldierEntity claySoldierEntity, AbstractClaySoldierRenderState claySoldierRenderState, float partialTick) {
+        super.extractRenderState(claySoldierEntity, claySoldierRenderState, partialTick);
+        ClayMobRenderState.extractClayMobRenderState(claySoldierEntity, claySoldierRenderState, partialTick);
+
+        claySoldierRenderState.isZombie = claySoldierEntity.isZombie();
+        claySoldierRenderState.isAggressive = claySoldierEntity.isAggressive();
+        claySoldierRenderState.hasShieldInOffhand = claySoldierEntity.hasShieldInHand(InteractionHand.OFF_HAND);
+        claySoldierRenderState.hasShieldInMainHand = claySoldierEntity.hasShieldInHand(InteractionHand.MAIN_HAND);
+
+        claySoldierRenderState.carriedItemStack = claySoldierEntity.getCarriedStack();
+        this.itemModelResolver.updateForLiving(claySoldierRenderState.carriedItemRenderState, claySoldierRenderState.carriedItemStack, ItemDisplayContext.FIXED, false, claySoldierEntity);
+
+        claySoldierRenderState.ridingPose = claySoldierEntity.getRidingPose();
+        claySoldierRenderState.id = claySoldierEntity.getId();
+        claySoldierRenderState.skinVariantId = claySoldierEntity.getSkinVariant();
+
+        claySoldierRenderState.offhandOccupied = claySoldierEntity.handsOccupied(SoldierEquipmentSlot.OFFHAND);
+        claySoldierRenderState.mainhandOccupied = claySoldierEntity.handsOccupied(SoldierEquipmentSlot.MAINHAND);
+
+        claySoldierRenderState.isAlive = claySoldierEntity.isAlive();
+        claySoldierRenderState.isFalling = claySoldierEntity.isFalling();
+
+        claySoldierRenderState.swelling = claySoldierEntity.getSwelling(partialTick);
+
+        claySoldierRenderState.offsetColor = claySoldierEntity.getOffsetColor().getColor(claySoldierEntity, partialTick);
+
+        claySoldierRenderState.allProperties = claySoldierEntity.allProperties();
+
+        claySoldierRenderState.gliderSlot = claySoldierEntity.gliderSlot();
+        claySoldierRenderState.isFallingWithGlider = claySoldierEntity.isFallingWithGlider();
+        claySoldierRenderState.veryAngry = claySoldierEntity.isVeryAngry();
+
+        claySoldierRenderState.setUpInventory(claySoldierEntity);
+        claySoldierRenderState.fallFlyingTimeInTicks = (float)claySoldierEntity.getFallFlyingTicks() + partialTick;
+        AbstractClaySoldierRenderState.extractCloakState(claySoldierEntity, claySoldierRenderState, partialTick);
+        AbstractClaySoldierRenderState.extractAccessoryRenderState(claySoldierEntity, claySoldierRenderState, itemModelResolver);
     }
 
     /**
      * Renders the ClaySoldierModel
      */
-    protected void renderModel(AbstractClaySoldierEntity soldier, PoseStack pPoseStack, VertexConsumer vertexConsumer, int pPackedLight, int overlayCords, int color, int alpha) {
-        this.model.renderToBuffer(pPoseStack, vertexConsumer, pPackedLight, overlayCords, FastColor.ARGB32.color(alpha, color));
+    protected void renderModel(AbstractClaySoldierRenderState soldier, PoseStack pPoseStack, VertexConsumer vertexConsumer, int pPackedLight, int overlayCords, int color, int alpha) {
+        this.model.renderToBuffer(pPoseStack, vertexConsumer, pPackedLight, overlayCords, ARGB.color(alpha, color));
     }
 
     /**
      * Returns the {@code ClayMobTeam} used for coloring the model.
      */
-    protected ClayMobTeam getVariantForColor(AbstractClaySoldierEntity claySoldier) {
-        return claySoldier.getClayTeam();
+    protected int getVariantForColor(AbstractClaySoldierRenderState claySoldier) {
+        return claySoldier.clayTeamColor;
     }
 
-    private void renderCarried(AbstractClaySoldierEntity soldier, PoseStack pPoseStack, MultiBufferSource pBuffer, int pPackedLight) {
-        if (!soldier.getCarriedStack().isEmpty()) {
+    private void renderCarried(AbstractClaySoldierRenderState soldier, PoseStack pPoseStack, MultiBufferSource pBuffer, int pPackedLight, int pPackedOverleay) {
+        if (!soldier.carriedItemRenderState.isEmpty()) {
             pPoseStack.pushPose();
             pPoseStack.translate(0, -0.55, 0);
 
@@ -182,14 +173,14 @@ public abstract class AbstractClaySoldierRenderer extends HumanoidMobRenderer<Ab
             pPoseStack.mulPose(Axis.XP.rotationDegrees(90F));
 
             pPoseStack.scale(1.5f, 1.5f, 1.5f);
-            itemInHandRenderer.renderItem(soldier, soldier.getCarriedStack(), ItemDisplayContext.FIXED, false, pPoseStack, pBuffer, pPackedLight);
+            soldier.carriedItemRenderState.render(pPoseStack, pBuffer, pPackedLight, pPackedOverleay);
             pPoseStack.popPose();
 
         }
     }
 
-    private void scaleExplode(AbstractClaySoldierEntity claySoldier, PoseStack pPoseStack, float pPartialTickTime) {
-        float swelling = claySoldier.getSwelling(pPartialTickTime);
+    private void scaleExplode(AbstractClaySoldierRenderState claySoldier, PoseStack pPoseStack) {
+        float swelling = claySoldier.swelling;
         float f1 = 1.0F + Mth.sin(swelling * 100.0F) * swelling * 0.01F;
         swelling = Mth.clamp(swelling, 0.0F, 1.0F);
         swelling *= swelling;
@@ -200,8 +191,8 @@ public abstract class AbstractClaySoldierRenderer extends HumanoidMobRenderer<Ab
     }
 
     @Override
-    protected float getWhiteOverlayProgress(AbstractClaySoldierEntity claySoldier, float pPartialTicks) {
-        float swelling = claySoldier.getSwelling(pPartialTicks);
+    protected float getWhiteOverlayProgress(AbstractClaySoldierRenderState claySoldier) {
+        float swelling = claySoldier.swelling;
         return (int) (swelling * 10.0F) % 2 == 0 ? 0.0F : Mth.clamp(swelling, 0.5F, 1.0F);
     }
 
@@ -211,8 +202,8 @@ public abstract class AbstractClaySoldierRenderer extends HumanoidMobRenderer<Ab
     }
 
     @Override
-    protected boolean isBodyVisible(AbstractClaySoldierEntity livingEntity) {
-        return super.isBodyVisible(livingEntity) && !livingEntity.allProperties().isInvisible();
+    protected boolean isBodyVisible(AbstractClaySoldierRenderState livingEntity) {
+        return super.isBodyVisible(livingEntity) && !livingEntity.allProperties.isInvisible();
     }
 
     @Override
@@ -220,21 +211,30 @@ public abstract class AbstractClaySoldierRenderer extends HumanoidMobRenderer<Ab
         return this.getClass().getSimpleName();
     }
 
-    private static class ClaySoldierItemInHandLayer extends ItemInHandLayer<AbstractClaySoldierEntity, ClaySoldierModel> {
-        public ClaySoldierItemInHandLayer(RenderLayerParent<AbstractClaySoldierEntity, ClaySoldierModel> renderer, ItemInHandRenderer itemInHandRenderer) {
-            super(renderer, itemInHandRenderer);
+    public static int shiftColorAngry(int color) {
+        int red = Math.clamp((color >> 16 & 255) + 25, 0, 255);
+        int green = Math.clamp((color >> 8 & 255) - 0, 0, 255);
+        int blue = Math.clamp((color & 255) - 0, 0, 255);
+
+        return (red << 16) | (green << 8) | blue;
+    }
+
+    private static class ClaySoldierItemInHandLayer extends ItemInHandLayer<AbstractClaySoldierRenderState, ClaySoldierModel> {
+        public ClaySoldierItemInHandLayer(RenderLayerParent<AbstractClaySoldierRenderState, ClaySoldierModel> renderer) {
+            super(renderer);
         }
 
         @Override
-        protected void renderArmWithItem(LivingEntity livingEntity, ItemStack itemStack, ItemDisplayContext displayContext, HumanoidArm arm, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
-            if (arm == HumanoidArm.LEFT && ((AbstractClaySoldierEntity) livingEntity).handsOccupied(SoldierEquipmentSlot.OFFHAND)) {
+        protected void renderArmWithItem(AbstractClaySoldierRenderState renderState, ItemStackRenderState itemStackRenderState, HumanoidArm arm, PoseStack poseStack, MultiBufferSource bufferSource, int packedLight) {
+            if (arm == HumanoidArm.LEFT && renderState.offhandOccupied) {
                 return;
             }
-            if (arm == HumanoidArm.RIGHT && ((AbstractClaySoldierEntity) livingEntity).handsOccupied(SoldierEquipmentSlot.MAINHAND)) {
+            if (arm == HumanoidArm.RIGHT && renderState.mainhandOccupied) {
                 return;
             }
-
-            super.renderArmWithItem(livingEntity, itemStack, displayContext, arm, poseStack, buffer, packedLight);
+            super.renderArmWithItem(renderState, itemStackRenderState, arm, poseStack, bufferSource, packedLight);
         }
+
+
     }
 }

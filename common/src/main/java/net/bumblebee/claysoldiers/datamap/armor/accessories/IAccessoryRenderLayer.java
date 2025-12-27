@@ -6,6 +6,7 @@ import net.bumblebee.claysoldiers.entity.client.accesories.ClaySoldierShieldMode
 import net.minecraft.client.model.SkullModelBase;
 import net.minecraft.client.renderer.ItemInHandRenderer;
 import net.minecraft.client.renderer.entity.ItemRenderer;
+import net.minecraft.client.resources.model.EquipmentAssetManager;
 import net.minecraft.world.level.block.SkullBlock;
 
 public interface IAccessoryRenderLayer {
@@ -13,6 +14,5 @@ public interface IAccessoryRenderLayer {
     ClaySoldierCapeModel getCapeModel();
     ClaySoldierShieldModel getShieldModel();
     SkullModelBase getSkullBase(SkullBlock.Type type);
-    ItemInHandRenderer getItemInHandRenderer();
-    ItemRenderer getItemRenderer();
+    EquipmentAssetManager getEquipmentAssets();
 }
