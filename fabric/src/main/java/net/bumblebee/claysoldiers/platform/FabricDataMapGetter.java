@@ -22,7 +22,6 @@ import net.fabricmc.fabric.api.resource.ResourceReloadListenerKeys;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.Registry;
-import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
@@ -43,7 +42,6 @@ import org.slf4j.Logger;
 
 import java.util.*;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 public class FabricDataMapGetter extends SimpleJsonResourceReloadListener implements IdentifiableResourceReloadListener, IDataMapGetter {
@@ -78,7 +76,6 @@ public class FabricDataMapGetter extends SimpleJsonResourceReloadListener implem
 
     private final EnumMap<SoldierEquipmentSlot, List<Item>> bySlot;
     private final HolderLookup.Provider provider;
-    private static final List<Consumer<RegistryAccess>> afterTagLoad = new ArrayList<>();
 
     @ApiStatus.Internal
     @SuppressWarnings("unused")
@@ -107,8 +104,9 @@ public class FabricDataMapGetter extends SimpleJsonResourceReloadListener implem
         if (!removed.isEmpty()) {
             ErrorHandler.INSTANCE.error("Removed %s Wearable Properties, because they where empty.".formatted(removed));
         }
-        SoldierItemType.setTagLoadCallback(() -> {
-            provider.lookupOrThrow(ModRegistries.SOLDIER_ITEM_TYPES).listElements().forEach(h -> h.value().afterDataMapLoad());
+        SoldierItemType.onDataMapLoad(() -> {
+            var reg = provider.lookupOrThrow(ModRegistries.SOLDIER_ITEM_TYPES);
+            reg.listElements().forEach(h -> h.value().afterDataMapLoad());
         });
 
         TagLoader<Holder<Item>> itemTagLoader = new TagLoader<>(BuiltInRegistries.ITEM::getHolder, Registries.tagsDirPath(Registries.ITEM));
@@ -124,11 +122,6 @@ public class FabricDataMapGetter extends SimpleJsonResourceReloadListener implem
         });
 
 
-    }
-
-    public static void onTagLoad(RegistryAccess registries) {
-        afterTagLoad.forEach(c -> c.accept(registries));
-        afterTagLoad.clear();
     }
 
     private void loadItems(Map<ResourceLocation, JsonElement> object, ResourceManager resourceManager) {

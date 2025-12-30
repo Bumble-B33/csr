@@ -25,7 +25,6 @@ import net.bumblebee.claysoldiers.team.ClayMobTeamManger;
 import net.bumblebee.claysoldiers.team.TeamLoyaltyManger;
 import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -187,9 +186,7 @@ public class ClaySoldiersCommon {
 
     public static void onTagLoad(RegistryAccess registryAccess, boolean client) {
         if (!client) {
-            var reg = registryAccess.registryOrThrow(ModRegistries.SOLDIER_ITEM_TYPES);
-            reg.forEach(type -> type.onTagLoad(tag -> registryAccess.registryOrThrow(Registries.ITEM).getTag(tag)));
-            SoldierItemType.postTagLoad(reg.stream());
+            SoldierItemType.onTagLoad(registryAccess);
         }
     }
 

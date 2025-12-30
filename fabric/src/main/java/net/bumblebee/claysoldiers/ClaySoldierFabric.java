@@ -154,7 +154,6 @@ public class ClaySoldierFabric implements ModInitializer {
         CommonLifecycleEvents.TAGS_LOADED.register((r, client) -> {
             ClaySoldiersCommon.onTagLoad(r, client);
             if (!client) {
-                FabricDataMapGetter.onTagLoad(r);
                 blueprintTagLoad.onTagLoad(r);
             }
         });

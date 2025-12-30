@@ -241,7 +241,9 @@ public class ClaySoldiersNeoForge {
     private void afterDataMapLoad(final DataMapsUpdatedEvent event) {
         event.ifRegistry(Registries.ITEM, (registry) -> {
             if (event.getCause() == DataMapsUpdatedEvent.UpdateCause.SERVER_RELOAD) {
-                event.getRegistries().registryOrThrow(ModRegistries.SOLDIER_ITEM_TYPES).forEach(SoldierItemType::afterDataMapLoad);
+                SoldierItemType.onDataMapLoad(() -> {
+                    event.getRegistries().registryOrThrow(ModRegistries.SOLDIER_ITEM_TYPES).forEach(SoldierItemType::afterDataMapLoad);
+                });
             }
             var map = registry.getDataMap(ModDataMaps.SOLDIER_HOLDABLE);
             IDataMapGetter.warnHoldable(map, (itemResourceKey, itemTagKey) -> {
