@@ -70,7 +70,7 @@ public class ClaySoldierMountGoal extends Goal {
             return false;
         } else if (!this.followingTargetEvenIfNotSeen) {
             return !this.claySoldier.getNavigation().isDone();
-        } else return this.claySoldier.isWithinRestriction(livingentity.blockPosition());
+        } else return this.claySoldier.isWithinHome(livingentity.blockPosition());
     }
 
     @Override

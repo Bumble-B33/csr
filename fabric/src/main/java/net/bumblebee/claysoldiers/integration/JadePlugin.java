@@ -12,8 +12,10 @@ import net.minecraft.world.item.Items;
 import org.jetbrains.annotations.Nullable;
 import snownee.jade.api.*;
 import snownee.jade.api.config.IPluginConfig;
+import snownee.jade.api.ui.Element;
 import snownee.jade.api.ui.IElement;
 import snownee.jade.api.ui.IElementHelper;
+import snownee.jade.api.ui.JadeUI;
 import snownee.jade.impl.ui.CompoundElement;
 import snownee.jade.impl.ui.HorizontalLineElement;
 import snownee.jade.impl.ui.ItemStackElement;
@@ -71,18 +73,17 @@ public class JadePlugin implements IWailaPlugin {
         }
 
         @Override
-        public @Nullable IElement getIcon(EntityAccessor accessor, IPluginConfig config, IElement currentIcon) {
+        public @Nullable Element getIcon(EntityAccessor accessor, IPluginConfig config, Element currentIcon) {
             if (provider != ClayMobProvider.INSTANCE) {
                 return IEntityComponentProvider.super.getIcon(accessor, config, currentIcon);
             }
             if (accessor.getPickedResult().isEmpty()) {
                 return currentIcon;
             }
-            IElementHelper helper = IElementHelper.get();
-            IElement largeIcon = helper.item(accessor.getPickedResult());
+            Element largeIcon = JadeUI.item(accessor.getPickedResult());
 
             if (((ClayMobEntity) accessor.getEntity()).isWaxed()) {
-                return new CompoundElement(largeIcon, helper.item(Items.HONEYCOMB.getDefaultInstance(), 0.5f));
+                return new CompoundElement(largeIcon, JadeUI.item(Items.HONEYCOMB.getDefaultInstance(), 0.5f));
             } else {
                 return largeIcon;
             }

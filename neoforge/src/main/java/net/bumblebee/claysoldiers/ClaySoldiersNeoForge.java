@@ -31,7 +31,6 @@ import net.bumblebee.claysoldiers.soldierproperties.SoldierPropertyType;
 import net.bumblebee.claysoldiers.soldierproperties.customproperties.specialattack.SpecialAttackSerializer;
 import net.minecraft.advancements.CriterionTrigger;
 import net.minecraft.advancements.critereon.EntitySubPredicate;
-import net.minecraft.advancements.critereon.ItemSubPredicate;
 import net.minecraft.client.Minecraft;
 import net.minecraft.commands.synchronization.ArgumentTypeInfo;
 import net.minecraft.commands.synchronization.ArgumentTypeInfos;
@@ -77,11 +76,13 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import net.neoforged.neoforge.registries.DataPackRegistryEvent;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.neoforged.neoforge.registries.NewRegistryEvent;
+import net.neoforged.neoforge.registries.callback.BakeCallback;
 import net.neoforged.neoforge.registries.datamaps.DataMapsUpdatedEvent;
 import net.neoforged.neoforge.resource.VanillaServerListeners;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
+import java.util.function.Consumer;
 
 @Mod(ClaySoldiersCommon.MOD_ID)
 public class ClaySoldiersNeoForge {
@@ -104,7 +105,6 @@ public class ClaySoldiersNeoForge {
     public static final DeferredRegister<BossClaySoldierBehaviour> BOSS_BEHAVIOURS = DeferredRegister.create(ModRegistries.BOSS_CLAY_SOLDIER_BEHAVIOURS, ClaySoldiersCommon.MOD_ID);
     public static final DeferredRegister<PoiType> POI_TYPES = DeferredRegister.create(Registries.POINT_OF_INTEREST_TYPE, ClaySoldiersCommon.MOD_ID);
     public static final DeferredRegister<CriterionTrigger<?>> CRITERION_TRIGGERS = DeferredRegister.create(Registries.TRIGGER_TYPE, ClaySoldiersCommon.MOD_ID);
-    public static final DeferredRegister<ItemSubPredicate.Type<?>> ITEM_SUB_PREDICATES = DeferredRegister.create(Registries.ITEM_SUB_PREDICATE_TYPE, ClaySoldiersCommon.MOD_ID);
     public static final DeferredRegister<MapCodec<? extends EntitySubPredicate>> ENTITY_SUB_PREDICATE = DeferredRegister.create(Registries.ENTITY_SUB_PREDICATE_TYPE, ClaySoldiersCommon.MOD_ID);
 
 
@@ -140,7 +140,6 @@ public class ClaySoldiersNeoForge {
         BOSS_BEHAVIOURS.register(modEventBus);
         POI_TYPES.register(modEventBus);
         CRITERION_TRIGGERS.register(modEventBus);
-        ITEM_SUB_PREDICATES.register(modEventBus);
         ENTITY_SUB_PREDICATE.register(modEventBus);
 
         modEventBus.addListener(this::registerRegistry);
@@ -260,12 +259,19 @@ public class ClaySoldiersNeoForge {
     private void addDataPackRegistry(final DataPackRegistryEvent.NewRegistry event) {
         ClaySoldiersCommon.registerDynamicRegistry(new ClaySoldiersCommon.DynamicRegistryEvent() {
             @Override
-            public <T> void register(ResourceKey<Registry<T>> registry, Codec<T> codec, @Nullable Codec<T> sync, @Nullable ClaySoldiersCommon.RegistryRegisteredCallBack<T> callBack) {
-                if (callBack == null) {
-                    event.dataPackRegistry(registry, codec, codec);
+            public <T> void register(ResourceKey<Registry<T>> registry, Codec<T> codec, @Nullable Codec<T> sync, @Nullable ClaySoldiersCommon.RegistryRegisteredCallBack<T> callBack, @Nullable Consumer<Registry<T>> onLoadCallback) {
+                if (callBack != null && onLoadCallback != null) {
+                    event.dataPackRegistry(registry, codec, codec, r -> r
+                            .onAdd((ignored, i, k, v) -> callBack.onRegister(i, k.location(), v))
+                            .onBake(onLoadCallback::accept));
+                } else if (callBack != null) {
+                    event.dataPackRegistry(registry, codec, codec, r -> r
+                            .onAdd((ignored, i, k, v) -> callBack.onRegister(i, k.location(), v)));
+                } else if (onLoadCallback != null) {
+                    event.dataPackRegistry(registry, codec, codec, r -> r
+                            .onBake(onLoadCallback::accept));
                 } else {
-                    event.dataPackRegistry(registry, codec, codec, r -> r.onAdd((ignored, i, k, v) -> callBack.onRegister(i, k.location(), v)));
-
+                    event.dataPackRegistry(registry, codec, codec);
                 }
             }
         });
@@ -274,8 +280,9 @@ public class ClaySoldiersNeoForge {
     private void afterDataMapLoad(final DataMapsUpdatedEvent event) {
         event.ifRegistry(Registries.ITEM, (registry) -> {
             if (event.getCause() == DataMapsUpdatedEvent.UpdateCause.SERVER_RELOAD) {
-                event.getRegistries().lookupOrThrow(ModRegistries.SOLDIER_ITEM_TYPES).forEach(SoldierItemType::afterDataMapLoad);
-            }
+                SoldierItemType.onDataMapLoad(() -> {
+                    event.getRegistries().lookupOrThrow(ModRegistries.SOLDIER_ITEM_TYPES).forEach(SoldierItemType::afterDataMapLoad);
+                });}
 
             registry.getDataMap(ModDataMaps.SOLDIER_ARMOR).values().forEach(multiWearable -> {
                 multiWearable.forEachWearableEffect(wearable -> wearable.buildTrims(event.getRegistries()));

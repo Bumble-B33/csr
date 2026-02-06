@@ -9,6 +9,7 @@ import net.bumblebee.claysoldiers.item.claypouch.ClayPouchContent;
 import net.bumblebee.claysoldiers.item.disruptor.DisruptorKillRange;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Unit;
 
 import java.util.function.Supplier;
 
@@ -19,6 +20,12 @@ public final class ModDataComponents {
                     .networkSynchronized(ResourceLocation.STREAM_CODEC)
                     .build()
     );
+    public static final Supplier<DataComponentType<Unit>> CLAY_MOB_RANDOM_TEAM_COMPONENT = ClaySoldiersCommon.PLATFORM.registerDataComponent("random_clay_mob_team",
+            () -> DataComponentType.<Unit>builder()
+                    .persistent(Unit.CODEC)
+                    .build()
+    );
+
     public static final Supplier<DataComponentType<AdditionalSoldierData>> CLAY_SOLDIER_ADDITIONAL_DATA = ClaySoldiersCommon.PLATFORM.registerDataComponent("clay_soldier_additional",
             () -> DataComponentType.<AdditionalSoldierData>builder()
                     .persistent(AdditionalSoldierData.CODEC)

@@ -5,8 +5,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.init.ModRegistries;
 import net.minecraft.Util;
-import net.minecraft.core.HolderSet;
-import net.minecraft.core.NonNullList;
+import net.minecraft.core.*;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -14,6 +13,7 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
@@ -31,8 +31,10 @@ public class SoldierItemType {
     public static final String LANG = "clay_soldier_item_type";
     private static final Logger LOGGER = ClaySoldiersCommon.LOGGER;
 
-
-    private static Runnable postTagLoad = () -> {};
+    @Nullable
+    private static Runnable dataMapLoad = null;
+    @Nullable
+    private static Runnable postTagLoad = null;
     private static List<Generator> types;
 
     private final TagKey<Item> tag;
@@ -51,6 +53,38 @@ public class SoldierItemType {
         this.name = name;
     }
 
+    public static void onDataMapLoad(@NotNull Runnable runnable) {
+        dataMapLoad = () -> {
+            runnable.run();
+            ClaySoldiersCommon.LOGGER.info("SoldierItemTypes: Weight finalized");
+        };
+        ClaySoldiersCommon.LOGGER.info("Datamap Loaded {}", (postTagLoad == null ? "Tags Not Loaded" : "Tags Loaded"));
+
+        if (postTagLoad != null) {
+            dataMapLoad.run();
+            dataMapLoad = null;
+
+            postTagLoad.run();
+            postTagLoad = null;
+        }
+    }
+
+    public static void onTagLoad(HolderLookup.Provider registries) {
+        var reg = registries.lookupOrThrow(ModRegistries.SOLDIER_ITEM_TYPES);
+        reg.listElements().forEach(type -> type.value().onTagLoad(tag -> registries.lookupOrThrow(Registries.ITEM).get(tag)));
+        if (dataMapLoad != null) {
+            postTagLoad(reg.listElements().map(Holder::value));
+            dataMapLoad.run();
+            dataMapLoad = null;
+        } else {
+            postTagLoad = () -> postTagLoad(reg.listElements().map(Holder::value));
+        }
+    }
+
+    private static void postTagLoad(Stream< SoldierItemType> all) {
+        ClaySoldiersCommon.LOGGER.info("Post Tag Loaded");
+        types = all.filter(s -> !s.available.isEmpty() && s.generator.limitedBy() != ItemGenerator.Limit.ZERO).map(SoldierItemType::asGenerator).toList();
+    }
 
     public void onTagLoad(Function<TagKey<Item>, Optional<HolderSet.Named<Item>>> tagGetter) {
         var opt = tagGetter.apply(tag);
@@ -80,14 +114,7 @@ public class SoldierItemType {
         return available.isEmpty();
     }
 
-    public static void postTagLoad(Stream<SoldierItemType> all) {
-        types = all.filter(s -> !s.available.isEmpty() && s.generator.limitedBy() != ItemGenerator.Limit.ZERO).map(SoldierItemType::asGenerator).toList();
-        postTagLoad.run();
-    }
 
-    public static void setTagLoadCallback(Runnable runnable) {
-        postTagLoad = runnable;
-    }
 
 
     private Generator asGenerator() {

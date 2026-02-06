@@ -3,7 +3,6 @@ package net.bumblebee.claysoldiers.init;
 import com.mojang.serialization.MapCodec;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.advancements.*;
-import net.minecraft.advancements.critereon.ItemSubPredicate;
 
 import java.util.function.Supplier;
 
@@ -32,10 +31,6 @@ public class ModCriterions {
             SoldierPoiUseTrigger::new
     );
 
-    public static final Supplier<ItemSubPredicate.Type<SoldierPropertyItemPredicate>> SOLDIER_PROPERTY_ITEM_PREDICATE = ClaySoldiersCommon.PLATFORM.registerItemSubPredicate("soldier_property_item_predicate",
-            () -> new ItemSubPredicate.Type<>(SoldierPropertyItemPredicate.CODEC)
-    );
-
     public static final Supplier<HitWithClayBlockTrigger> HIT_WITH_CLAY_BLOCK_TRIGGER = ClaySoldiersCommon.PLATFORM.registerCriterionTrigger("hit_with_clay_block",
             HitWithClayBlockTrigger::new
     );
@@ -54,6 +49,10 @@ public class ModCriterions {
 
     public static final Supplier<MapCodec<BossClaySoldierSubPredicate>> BOSS_CLAY_SOLDIER_PREDICATE = ClaySoldiersCommon.PLATFORM.registerEntitySubPredicate("boss_clay_soldier_predicate",
             () -> BossClaySoldierSubPredicate.CODEC
+    );
+
+    public static final Supplier<MapCodec<PropertyClaySoldierSubPredicate>> SOLDIER_PROPERTY_PREDICATE = ClaySoldiersCommon.PLATFORM.registerEntitySubPredicate("property_clay_soldier_predicate",
+            () -> PropertyClaySoldierSubPredicate.CODEC
     );
 
 

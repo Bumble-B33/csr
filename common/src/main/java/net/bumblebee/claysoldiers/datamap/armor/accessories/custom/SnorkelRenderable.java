@@ -8,8 +8,10 @@ import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.datamap.armor.accessories.AccessoryRenderState;
 import net.bumblebee.claysoldiers.datamap.armor.accessories.IAccessoryRenderLayer;
 import net.bumblebee.claysoldiers.datamap.armor.accessories.RenderableAccessory;
+import net.bumblebee.claysoldiers.entity.client.renderstates.AbstractClaySoldierRenderState;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
@@ -27,8 +29,16 @@ public class SnorkelRenderable implements RenderableAccessory {
     }
 
     @Override
-    public void render(IAccessoryRenderLayer renderedFrom, PoseStack pPoseStack, MultiBufferSource pBuffer, int pPackedLight, AccessoryRenderState claySoldier) {
-        VertexConsumer bambooStickBuffer = pBuffer.getBuffer(RenderType.entitySolid(textureLocation));
-        renderedFrom.getSoldierModel().renderBambooStick(pPoseStack, bambooStickBuffer, pPackedLight, OverlayTexture.NO_OVERLAY);
+    public void submit(IAccessoryRenderLayer renderedFrom, PoseStack pPoseStack, SubmitNodeCollector nodeCollector, int pPackedLight, AccessoryRenderState claySoldier) {
+        nodeCollector.submitModel(
+                renderedFrom.getSnorkelModel(),
+                (AbstractClaySoldierRenderState) claySoldier.renderStateFrom,
+                pPoseStack,
+                RenderType.entitySolid(textureLocation),
+                pPackedLight,
+                OverlayTexture.NO_OVERLAY,
+                0,
+                null
+                );
     }
 }

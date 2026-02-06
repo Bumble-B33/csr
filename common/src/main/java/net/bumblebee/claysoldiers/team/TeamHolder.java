@@ -3,10 +3,12 @@ package net.bumblebee.claysoldiers.team;
 import net.bumblebee.claysoldiers.entity.ClayMobEntity;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityReference;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.OwnableEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.EntityGetter;
+import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -135,13 +137,13 @@ public interface TeamHolder extends OwnableEntity {
     void setInSittingPose(boolean pSitting);
 
     @Override
-    @Nullable
-    default UUID getOwnerUUID() {
-        return getClayTeamOwnerUUID();
+    default @Nullable EntityReference<LivingEntity> getOwnerReference() {
+        var uuid = getClayTeamOwnerUUID();
+        return uuid == null ? null : EntityReference.of(uuid);
     }
 
     @Override
-    EntityGetter level();
+    Level level();
 
     @Override
     @Nullable

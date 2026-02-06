@@ -1,8 +1,11 @@
 package net.bumblebee.claysoldiers.menu.escritoire;
 
+import com.mojang.blaze3d.pipeline.RenderPipeline;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
@@ -53,10 +56,10 @@ public class EscritoireScreen extends AbstractContainerScreen<EscritoireMenu> {
     protected void renderBg(GuiGraphics guiGraphics, float partialTick, int mouseX, int mouseY) {
         int i = this.leftPos;
         int j = this.topPos;
-        guiGraphics.blit(RenderType::guiTextured, BG_LOCATION, i, j, 0, 0, this.imageWidth, this.imageHeight, 256, 256);
+        guiGraphics.blit(RenderPipelines.GUI_TEXTURED, BG_LOCATION, i, j, 0, 0, this.imageWidth, this.imageHeight, 256, 256);
         int k = (int)(41.0F * this.scrollOffs);
         ResourceLocation scrollBarLocation = this.isScrollBarActive() ? SCROLLER_SPRITE : SCROLLER_DISABLED_SPRITE;
-        guiGraphics.blitSprite(RenderType::guiTextured, scrollBarLocation, i + 119, j + 15 + k, SCROLLER_WIDTH, SCROLLER_HEIGHT);
+        guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, scrollBarLocation, i + 119, j + 15 + k, SCROLLER_WIDTH, SCROLLER_HEIGHT);
         int recipeX = this.leftPos + RECIPES_X;
         int recipeY = this.topPos + RECIPES_Y;
         int startIndex = this.startIndex + 12;
@@ -78,7 +81,7 @@ public class EscritoireScreen extends AbstractContainerScreen<EscritoireMenu> {
                 int j1 = i + i1 % 4 * 16;
                 int k1 = j + i1 / 4 * 18 + 2;
                 if (x >= j1 && x < j1 + 16 && y >= k1 && y < k1 + 18) {
-                    guiGraphics.renderTooltip(this.font, list.get(l), x, y);
+                    guiGraphics.setTooltipForNextFrame(this.font, list.get(l), x, y);
                 }
             }
         }
@@ -110,12 +113,13 @@ public class EscritoireScreen extends AbstractContainerScreen<EscritoireMenu> {
                 resourcelocation = RECIPE_SPRITE;
             }
 
-            guiGraphics.blitSprite(RenderType::guiTextured, resourcelocation, k, i1 - 1, 16, 18);
+            guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, resourcelocation, k, i1 - 1, 16, 18);
         }
     }
 
+
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+    public boolean mouseClicked(MouseButtonEvent mouse, boolean p_435496_) {
         this.scrolling = false;
         if (this.displayRecipes) {
             int i = this.leftPos + 52;
@@ -124,8 +128,8 @@ public class EscritoireScreen extends AbstractContainerScreen<EscritoireMenu> {
 
             for (int l = this.startIndex; l < k; l++) {
                 int i1 = l - this.startIndex;
-                double d0 = mouseX - (double)(i + i1 % 4 * 16);
-                double d1 = mouseY - (double)(j + i1 / 4 * 18);
+                double d0 = mouse.x() - (double)(i + i1 % 4 * 16);
+                double d1 = mouse.y() - (double)(j + i1 / 4 * 18);
                 if (d0 >= 0.0 && d1 >= 0.0 && d0 < 16.0 && d1 < 18.0 && this.menu.clickMenuButton(this.minecraft.player, l)) {
                     Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_STONECUTTER_SELECT_RECIPE, 1.0F));
                     this.minecraft.gameMode.handleInventoryButtonClick(this.menu.containerId, l);
@@ -135,24 +139,24 @@ public class EscritoireScreen extends AbstractContainerScreen<EscritoireMenu> {
 
             i = this.leftPos + 119;
             j = this.topPos + 9;
-            if (mouseX >= (double)i && mouseX < (double)(i + 12) && mouseY >= (double)j && mouseY < (double)(j + 54)) {
+            if (mouse.x() >= (double)i && mouse.x() < (double)(i + 12) && mouse.y() >= (double)j && mouse.y() < (double)(j + 54)) {
                 this.scrolling = true;
             }
         }
 
-        return super.mouseClicked(mouseX, mouseY, button);
+        return super.mouseClicked(mouse, p_435496_);
     }
     @Override
-    public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
+    public boolean mouseDragged(MouseButtonEvent mouse, double dragX, double dragY) {
         if (this.scrolling && this.isScrollBarActive()) {
             int i = this.topPos + 14;
             int j = i + 54;
-            this.scrollOffs = ((float)mouseY - (float)i - 7.5F) / ((float)(j - i) - 15.0F);
+            this.scrollOffs = ((float)mouse.y() - (float)i - 7.5F) / ((float)(j - i) - 15.0F);
             this.scrollOffs = Mth.clamp(this.scrollOffs, 0.0F, 1.0F);
             this.startIndex = (int)((double)(this.scrollOffs * (float)this.getOffscreenRows()) + 0.5) * 4;
             return true;
         } else {
-            return super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
+            return super.mouseDragged(mouse, dragX, dragY);
         }
     }
     @Override

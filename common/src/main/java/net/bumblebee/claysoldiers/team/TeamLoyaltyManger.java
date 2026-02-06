@@ -1,6 +1,9 @@
 package net.bumblebee.claysoldiers.team;
 
 import com.mojang.datafixers.util.Pair;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
+import com.mojang.serialization.DynamicOps;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.networking.ClayTeamPlayerDataPayload;
 import net.minecraft.core.HolderLookup;
@@ -16,6 +19,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.saveddata.SavedData;
+import net.minecraft.world.level.saveddata.SavedDataType;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -160,65 +164,59 @@ public final class TeamLoyaltyManger {
 
     private static class ServerTeamPlayerData extends SavedData implements TeamPlayerData {
         private static final Logger LOGGER = ClaySoldiersCommon.LOGGER;
+        public static final SavedDataType<ServerTeamPlayerData> SAVED_DATA_TYPE = new SavedDataType<>(
+                "clayTeamLoyalty",
+                ServerTeamPlayerData::new,
+                ServerTeamPlayerData::codec,
+                null
+        );
 
-        private static final String TAG_NAME = "teamPlayerMap";
         private final ServerLevel level;
-        private final Map<ResourceLocation, PlayerData> teamPlayerMap = new HashMap<>();
+        private final Map<ResourceLocation, PlayerData> teamPlayerMap;
+
+        private static final Codec<Map<ResourceLocation, PlayerData>> BASE_CODEC = Codec.unboundedMap(ResourceLocation.CODEC, TeamPlayerData.PLAYER_DATA_CODEC);
         private long timeStampLastChange = 0L;
 
-        private ServerTeamPlayerData(ServerLevel level) {
-            this.level = level;
+        private ServerTeamPlayerData(SavedData.Context level) {
+            this.level = level.levelOrThrow();
+            this.teamPlayerMap = new HashMap<>();
+        }
+
+        private static Codec<ServerTeamPlayerData> codec(SavedData.Context ctx) {
+            return BASE_CODEC.xmap(map -> load(ctx, map), s -> s.teamPlayerMap);
         }
 
         public static ServerTeamPlayerData getFromLevel(ServerLevel level) {
-            return level.getServer().overworld().getDataStorage().computeIfAbsent(ServerTeamPlayerData.factory(level), "clayTeamLoyalty");
+            return level.getServer().overworld().getDataStorage().computeIfAbsent(SAVED_DATA_TYPE);
         }
 
         public List<Pair<ResourceLocation, PlayerData>> toData() {
             return teamPlayerMap.entrySet().stream().map(e -> Pair.of(e.getKey(), (PlayerData) e.getValue())).toList();
         }
 
-        private static Factory<ServerTeamPlayerData> factory(ServerLevel pLevel) {
-            return new Factory<>(() -> new ServerTeamPlayerData(pLevel), (tag, provider) -> load(pLevel, tag), null);
-        }
-
-        private static ServerTeamPlayerData load(ServerLevel level, CompoundTag tag) {
+        private static ServerTeamPlayerData load(Context level, Map<ResourceLocation, PlayerData> map) {
             ServerTeamPlayerData teamPlayerData = new ServerTeamPlayerData(level);
-            if (!tag.contains(TAG_NAME)) {
-                return teamPlayerData;
-            }
 
-            CompoundTag mapTag = tag.getCompound(TAG_NAME).copy();
+
             LOGGER.debug("Started Loading TeamLoyaltyData");
-            for (String teamId : mapTag.getAllKeys()) {
-                var resTeamId = ResourceLocation.parse(teamId);
+            for (var entry : map.entrySet()) {
+                ResourceLocation teamId = entry.getKey();
 
-                var team = ClayMobTeamManger.getOptional(resTeamId, level.registryAccess());
+                var team = ClayMobTeamManger.getOptional(teamId, level.levelOrThrow().registryAccess());
 
                 if (team.isEmpty()) {
                     LOGGER.error("{} Team does not exist anymore removing it from SavedData", teamId);
                 } else if (!team.orElseThrow().canBeTamed()) {
                     LOGGER.error("{} Team cannot be loyal to anyone removing it from SavedData", teamId);
                 } else {
-                    loadPlayerData(mapTag.get(teamId),
-                            (playerData) -> teamPlayerData.teamPlayerMap.put(resTeamId, playerData)
-                    );
+                    var data = teamPlayerData.teamPlayerMap.put(teamId, entry.getValue());
+                    if (data != null) {
+                        LOGGER.error("{} Team already had player data overriding it from SavedData. Old ({}), New ({})", teamId, data, entry.getValue());
+                    }
                 }
             }
             LOGGER.debug("Finished Loading TeamLoyaltyData");
             return teamPlayerData;
-        }
-
-        @Override
-        public CompoundTag save(CompoundTag pTag, HolderLookup.Provider pRegistries) {
-            if (!teamPlayerMap.isEmpty()) {
-                CompoundTag mapTag = new CompoundTag();
-                teamPlayerMap.forEach((k, v) -> savePlayerData(mapTag, k.toString(), v));
-
-                pTag.put(TAG_NAME, mapTag);
-            }
-
-            return pTag;
         }
 
         @Override
@@ -255,7 +253,7 @@ public final class TeamLoyaltyManger {
                 }
             }
             teamPlayerMap.remove(toRemove);
-            var playerData = playerDataFromPlayer(player);
+            PlayerData playerData = PlayerData.of(player);
             teamPlayerMap.put(teamId, playerData);
             setDirty();
             timeStampLastChange = level.getGameTime();
@@ -284,22 +282,6 @@ public final class TeamLoyaltyManger {
         @Override
         public String toString() {
             return "ServerTeamLoyalData{" + teamPlayerMap + '}';
-        }
-
-        public static PlayerData playerDataFromPlayer(Player player) {
-            return new PlayerData(player.getUUID(), player.getDisplayName());
-        }
-
-        public static void loadPlayerData(Tag tag, Consumer<PlayerData> thenDo) {
-            PLAYER_DATA_CODEC.parse(NbtOps.INSTANCE, tag)
-                    .ifSuccess(thenDo)
-                    .ifError(e -> LOGGER.error("Error Loading TeamLoyalty: {}", e.message()));
-        }
-
-        public static void savePlayerData(CompoundTag tag, String key, PlayerData data) {
-            PLAYER_DATA_CODEC.encodeStart(NbtOps.INSTANCE, data)
-                    .ifSuccess(t -> tag.put(key, t))
-                    .ifError(e -> LOGGER.error("Error Saving TeamLoyalty for [{}|{}]: {}", key, data.getLastDisplayName(), e.message()));
         }
     }
 }

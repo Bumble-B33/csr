@@ -17,15 +17,19 @@ import net.minecraft.client.model.geom.builders.MeshDefinition;
 import net.minecraft.client.model.geom.builders.PartDefinition;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
+import org.joml.Vector3f;
 
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 
-public class ClayStaffModel extends Model {
+public class ClayStaffModel extends Model<ClayStaffRenderState> {
     private static final float DEG_2 = Mth.PI / 90f;
     private static final float DEG_22 = Mth.PI / 4;
     private static final float CUBE_Y = -5.5f;
@@ -75,7 +79,26 @@ public class ClayStaffModel extends Model {
         }
     }
 
-    public static void renderAsItem(ClayStaffModel model, ItemStack pStack, ItemDisplayContext pDisplayContext, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+    @Override
+    public void setupAnim(ClayStaffRenderState renderState) {
+        super.setupAnim(renderState);
+        if (renderState.hideAmmo) {
+            hideCube(true);
+        } else {
+            hideCube(renderState.hasDoll);
+            scale(renderState.scale, renderState.hasDoll);
+            if (renderState.hasDoll) {
+                setCubeRotation(renderState.cubeRotation);
+            }
+        }
+
+    }
+
+    public void getExtents(Set<Vector3f> set) {
+        root.getExtentsForGui(new PoseStack(), set);
+    }
+
+    public static void renderAsItem(ClayStaffModel model, ItemStack pStack, ItemDisplayContext pDisplayContext, PoseStack poseStack, SubmitNodeCollector nodeCollector, int packedLight, int packedOverlay) {
         if (model == null) {
             return;
         }
@@ -85,30 +108,26 @@ public class ClayStaffModel extends Model {
 
 
         boolean doll = ClayStaffItem.getEnchantmentLevel(pStack, ModEnchantments.SOLDIER_PROJECTILE, Minecraft.getInstance().level.registryAccess()) > 0;
+        boolean displayAmmo = pDisplayContext.firstPerson() || pDisplayContext == ItemDisplayContext.THIRD_PERSON_LEFT_HAND || pDisplayContext == ItemDisplayContext.THIRD_PERSON_RIGHT_HAND;
 
-        if (pDisplayContext.firstPerson() || pDisplayContext == ItemDisplayContext.THIRD_PERSON_LEFT_HAND || pDisplayContext == ItemDisplayContext.THIRD_PERSON_RIGHT_HAND) {
-            float scale = ((float) Minecraft.getInstance().player.getTicksUsingItem()) / ClayStaffItem.getMaxPower(pStack, Minecraft.getInstance().level.registryAccess());
-            model.hideCube(doll);
-            model.scale(Math.min(scale, 1), doll);
-            if (doll) {
-                model.renderDoll(poseStack, buffer, packedLight, packedOverlay);
-            } else {
-                model.setCubeRotation(((Minecraft.getInstance().level.getGameTime() + getPartialTick()) % 360) * DEG_2);
-            }
-        } else {
-            model.hideCube(true);
+        var renderState = new ClayStaffRenderState(
+                !displayAmmo,
+                 Math.min(1f, ((float) Minecraft.getInstance().player.getTicksUsingItem()) / ClayStaffItem.getMaxPower(pStack, Minecraft.getInstance().level.registryAccess())),
+                doll,
+                ((Minecraft.getInstance().level.getGameTime() + getPartialTick()) % 360) * DEG_2
+        );
+
+        if (doll && displayAmmo) {
+            model.renderDoll(poseStack, nodeCollector, packedLight, packedOverlay);
+
         }
 
-        VertexConsumer vertexConsumer = ItemRenderer.getFoilBuffer(
-                buffer, model.renderType(ClayStaffModel.TEXTURE), false, pStack.hasFoil()
-        );
-        model.renderToBuffer(poseStack, vertexConsumer, packedLight, packedOverlay);
-
+        nodeCollector.submitModel(model, renderState, poseStack, model.renderType(ClayStaffModel.TEXTURE), packedLight, packedOverlay, 0, null);
 
         poseStack.popPose();
     }
 
-    public void renderDoll(PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+    public void renderDoll(PoseStack poseStack, SubmitNodeCollector nodeCollector, int packedLight, int packedOverlay) {
         ItemStack ammo = ClayStaffItem.getClayStaffAmmo(ClayStaffItem.SOLDIER_PREDICATE, Minecraft.getInstance().player);
         int color = -1;
         if (ammo != null) {
@@ -117,7 +136,7 @@ public class ClayStaffModel extends Model {
                 color = team.getColor(Minecraft.getInstance().player, getPartialTick());
             }
         }
-        doll.render(poseStack, buffer.getBuffer(DOLL_RENDER_TYPE), packedLight, packedOverlay, color);
+        nodeCollector.submitModelPart(doll, poseStack, DOLL_RENDER_TYPE, packedLight, packedOverlay, null, color, null);
     }
 
     public static LayerDefinition createStaffLayer() {

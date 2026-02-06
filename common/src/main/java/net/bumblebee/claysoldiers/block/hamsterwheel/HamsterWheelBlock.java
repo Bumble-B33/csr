@@ -5,6 +5,7 @@ import net.bumblebee.claysoldiers.init.ModBlockEntities;
 import net.bumblebee.claysoldiers.init.ModTags;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.Containers;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -114,19 +115,6 @@ public class HamsterWheelBlock extends BaseEntityBlock {
     }
 
     @Override
-    protected void onRemove(BlockState pState, Level pLevel, BlockPos pPos, BlockState pNewState, boolean pMovedByPiston) {
-        if (!pState.is(pNewState.getBlock())) {
-            if (pLevel.getBlockEntity(pPos) instanceof HamsterWheelBlockEntity hamsterWheelBlockEntity) {
-                hamsterWheelBlockEntity.spawnSoldier(0);
-            }
-            if (hasPowerConnection(pState)) {
-                Containers.dropItemStack(pLevel, pPos.getX(), pPos.getY(), pPos.getZ(), Items.REDSTONE.getDefaultInstance());
-            }
-        }
-        super.onRemove(pState, pLevel, pPos, pNewState, pMovedByPiston);
-    }
-
-    @Override
     protected MapCodec<? extends HamsterWheelBlock> codec() {
         return CODEC;
     }
@@ -153,6 +141,8 @@ public class HamsterWheelBlock extends BaseEntityBlock {
 
     @Override
     public @Nullable <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> blockEntityType) {
-        return level.isClientSide ? null : createTickerHelper(blockEntityType, ModBlockEntities.HAMSTER_WHEEL_BLOCK_ENTITY.get(), ((level1, blockPos, blockState, hamsterWheelBlockEntity) -> hamsterWheelBlockEntity.serverTick()));
+        return level.isClientSide()
+                ? createTickerHelper(blockEntityType, ModBlockEntities.HAMSTER_WHEEL_BLOCK_ENTITY.get(), (level1, blockPos, blockState, hamsterWheelBlockEntity) -> hamsterWheelBlockEntity.clientTick())
+                : createTickerHelper(blockEntityType, ModBlockEntities.HAMSTER_WHEEL_BLOCK_ENTITY.get(), ((level1, blockPos, blockState, hamsterWheelBlockEntity) -> hamsterWheelBlockEntity.serverTick()));
     }
 }

@@ -9,7 +9,9 @@ import net.bumblebee.claysoldiers.item.ClayBrushItem;
 import net.minecraft.client.data.models.BlockModelGenerators;
 import net.minecraft.client.data.models.ItemModelGenerators;
 import net.minecraft.client.data.models.ModelProvider;
+import net.minecraft.client.data.models.blockstates.MultiVariantGenerator;
 import net.minecraft.client.data.models.model.*;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.item.RangeSelectItemModel;
 import net.minecraft.client.renderer.item.SpecialModelWrapper;
 import net.minecraft.client.renderer.item.properties.select.DisplayContext;
@@ -18,11 +20,16 @@ import net.minecraft.data.PackOutput;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.neoforged.neoforge.client.model.generators.template.ExtendedModelTemplate;
 import net.neoforged.neoforge.client.model.generators.template.ExtendedModelTemplateBuilder;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static net.minecraft.client.data.models.model.TexturedModel.createDefault;
 
 public class ModModelProvider extends ModelProvider {
     private static final ModelTemplate SPECIAL_BLOCK = ExtendedModelTemplateBuilder.builder()
@@ -38,15 +45,14 @@ public class ModModelProvider extends ModelProvider {
     public static ModelTemplate CLAY_STAFF_MODEL = ExtendedModelTemplateBuilder.builder()
             .parent(ResourceLocation.withDefaultNamespace("item/generated"))
             .guiLight(UnbakedModel.GuiLight.FRONT)
-                .transform(ItemDisplayContext.THIRD_PERSON_RIGHT_HAND, t -> t.rotation(0, 30, 0).translation(11, 17, 4.5f))
+            .transform(ItemDisplayContext.THIRD_PERSON_RIGHT_HAND, t -> t.rotation(0, 30, 0).translation(11, 17, 4.5f))
             .transform(ItemDisplayContext.THIRD_PERSON_LEFT_HAND, t -> t.rotation(0, -30, 0).translation(11, 17, 4.5f))
             .transform(ItemDisplayContext.FIRST_PERSON_RIGHT_HAND, t -> t.rotation(0, -90, 25).translation(-3, 17, 1))
             .transform(ItemDisplayContext.FIRST_PERSON_LEFT_HAND, t -> t.rotation(0, 90, 25).translation(13, 17, 1))
             .transform(ItemDisplayContext.GUI, t -> t.rotation(15, -25, -5).translation(2, 6, 0f))
             .transform(ItemDisplayContext.FIXED, t -> t.rotation(0, 180, 0).translation(-2, 4, 0.5f))
             .transform(ItemDisplayContext.GROUND, t -> t.rotation(0, 0, 0).translation(4, 16, 0.75f))
-            .build()
-            ;
+            .build();
 
     public ModModelProvider(PackOutput output) {
         super(output, ClaySoldiersCommon.MOD_ID);
@@ -95,7 +101,11 @@ public class ModModelProvider extends ModelProvider {
                 .put(TextureSlot.TOP, TextureMapping.getBlockTexture(ModBlocks.ESCRITOIRE_BLOCK.get(), "_top"))
                 .put(TextureSlot.SIDE, TextureMapping.getBlockTexture(ModBlocks.ESCRITOIRE_BLOCK.get(), "_side"));
 
-        blockModels.blockStateOutput.accept(BlockModelGenerators.createSimpleBlock(ModBlocks.ESCRITOIRE_BLOCK.get(), ModelTemplates.CUBE_BOTTOM_TOP.create(ModBlocks.ESCRITOIRE_BLOCK.get(), texturemapping, blockModels.modelOutput)));
+        blockModels.blockStateOutput.accept(BlockModelGenerators.createSimpleBlock(
+                        ModBlocks.ESCRITOIRE_BLOCK.get(),
+                        BlockModelGenerators.plainVariant(ModelTemplates.CUBE_BOTTOM_TOP.create(ModBlocks.ESCRITOIRE_BLOCK.get(), texturemapping, blockModels.modelOutput))
+                )
+        );
 
         blockModels.createParticleOnlyBlock(ModBlocks.HAMSTER_WHEEL_BLOCK.get(), Blocks.COPPER_BLOCK);
         blockModels.createParticleOnlyBlock(ModBlocks.EASEL_BLOCK.get(), Blocks.OAK_PLANKS);
@@ -119,7 +129,7 @@ public class ModModelProvider extends ModelProvider {
                 ItemModelUtils.select(
                         new DisplayContext(),
                         inHand,
-                        ItemModelUtils.when(ItemDisplayContext.HEAD, head)
+                        ItemModelUtils.when(List.of(ItemDisplayContext.HEAD, ItemDisplayContext.ON_SHELF), head)
                 )
         );
 
@@ -146,43 +156,43 @@ public class ModModelProvider extends ModelProvider {
     private void generateClayBrush(Item clayBrush, ItemModelGenerators modelGenerators) {
         modelGenerators.itemModelOutput.accept(clayBrush,
                 ItemModelUtils.rangeSelect(ClaySoldiersClient.ClayBrushConditionalProperty.INSTANCE, List.of(
-                ItemModelUtils.override(
-                        ItemModelUtils.plainModel(
-                                ModelTemplates.TWO_LAYERED_ITEM.create(
-                                        ModelLocationUtils.getModelLocation(clayBrush, "_command"),
-                                        TextureMapping.layered(ModelLocationUtils.getModelLocation(clayBrush), ModelLocationUtils.getModelLocation(clayBrush, "_command")),
-                                        modelGenerators.modelOutput
-                                )
+                        ItemModelUtils.override(
+                                ItemModelUtils.plainModel(
+                                        ModelTemplates.TWO_LAYERED_ITEM.create(
+                                                ModelLocationUtils.getModelLocation(clayBrush, "_command"),
+                                                TextureMapping.layered(ModelLocationUtils.getModelLocation(clayBrush), ModelLocationUtils.getModelLocation(clayBrush, "_command")),
+                                                modelGenerators.modelOutput
+                                        )
+                                ),
+                                ClayBrushItem.Mode.COMMAND.getOverrideProperty()
                         ),
-                        ClayBrushItem.Mode.COMMAND.getOverrideProperty()
-                ),
-                ItemModelUtils.override(
-                        ItemModelUtils.plainModel(
-                                ModelTemplates.TWO_LAYERED_ITEM.create(
-                                        ModelLocationUtils.getModelLocation(clayBrush, "_work"),
-                                        TextureMapping.layered(ModelLocationUtils.getModelLocation(clayBrush), ModelLocationUtils.getModelLocation(clayBrush, "_work")),
-                                        modelGenerators.modelOutput
-                                )
+                        ItemModelUtils.override(
+                                ItemModelUtils.plainModel(
+                                        ModelTemplates.TWO_LAYERED_ITEM.create(
+                                                ModelLocationUtils.getModelLocation(clayBrush, "_work"),
+                                                TextureMapping.layered(ModelLocationUtils.getModelLocation(clayBrush), ModelLocationUtils.getModelLocation(clayBrush, "_work")),
+                                                modelGenerators.modelOutput
+                                        )
+                                ),
+                                ClayBrushItem.Mode.WORK.getOverrideProperty()
                         ),
-                        ClayBrushItem.Mode.WORK.getOverrideProperty()
-                ),
-                ItemModelUtils.override(
-                        ItemModelUtils.plainModel(
-                                ModelTemplates.TWO_LAYERED_ITEM.create(
-                                        ModelLocationUtils.getModelLocation(clayBrush, "_poi"),
-                                        TextureMapping.layered(ModelLocationUtils.getModelLocation(clayBrush), ModelLocationUtils.getModelLocation(clayBrush, "_poi")),
-                                        modelGenerators.modelOutput
-                                )
-                        ),
-                        ClayBrushItem.Mode.POI.getOverrideProperty()
-                )
-        )));
+                        ItemModelUtils.override(
+                                ItemModelUtils.plainModel(
+                                        ModelTemplates.TWO_LAYERED_ITEM.create(
+                                                ModelLocationUtils.getModelLocation(clayBrush, "_poi"),
+                                                TextureMapping.layered(ModelLocationUtils.getModelLocation(clayBrush), ModelLocationUtils.getModelLocation(clayBrush, "_poi")),
+                                                modelGenerators.modelOutput
+                                        )
+                                ),
+                                ClayBrushItem.Mode.POI.getOverrideProperty()
+                        )
+                )));
     }
 
     private void generateBlueprint(Item blueprint, Item blueprintPage, ItemModelGenerators modelGenerators) {
         int maxCount = 3;
         List<RangeSelectItemModel.Entry> models = new ArrayList<>();
-        for (int i = 0; i < maxCount; i ++) {
+        for (int i = 0; i < maxCount; i++) {
             models.add(ItemModelUtils.override(
                     ItemModelUtils.plainModel(
                             ModelTemplates.TWO_LAYERED_ITEM.create(

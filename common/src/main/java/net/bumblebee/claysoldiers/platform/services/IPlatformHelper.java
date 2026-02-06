@@ -13,7 +13,6 @@ import net.bumblebee.claysoldiers.soldierproperties.customproperties.specialatta
 import net.bumblebee.claysoldiers.soldierproperties.customproperties.specialattack.SpecialAttackSerializer;
 import net.minecraft.advancements.CriterionTrigger;
 import net.minecraft.advancements.critereon.EntitySubPredicate;
-import net.minecraft.advancements.critereon.ItemSubPredicate;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
@@ -69,6 +68,10 @@ public interface IPlatformHelper {
 
     <T extends Item> ItemLikeSupplier<T> registerItem(String id, Function<Item.Properties, T> item, Item.Properties properties);
 
+    default  <T extends Item> ItemLikeSupplier<T> registerItem(String id, Function<Item.Properties, T> item) {
+        return registerItem(id, item, new Item.Properties());
+    }
+
     default  <T extends Block> ItemLikeSupplier<T> registerBlockWithItem(String id, Function<BlockBehaviour.Properties, T> block, BlockBehaviour.Properties properties) {
         return registerBlockWithItem(id, block, properties, BlockItem::new);
     }
@@ -94,7 +97,6 @@ public interface IPlatformHelper {
     GameRules.Key<GameRules.IntegerValue> createIntRule(String name, GameRules.Category category, int defaultValue);
     GameRules.Key<GameRules.BooleanValue> createBoolRule(String name, GameRules.Category category, boolean defaultValue);
     <T extends CriterionTrigger<?>> Supplier<T> registerCriterionTrigger(String name, Supplier<T> criterionTrigger);
-    <T extends ItemSubPredicate.Type<?>> Supplier<T> registerItemSubPredicate(String name, Supplier<T> itemSubPredicate);
     <T extends EntitySubPredicate> Supplier<MapCodec<T>> registerEntitySubPredicate(String name, Supplier<MapCodec<T>> subPredicate);
 
     List<Item> getAllItems();

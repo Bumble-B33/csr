@@ -6,7 +6,10 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.capabilities.BlockCapabilityCache;
-import net.neoforged.neoforge.items.IItemHandler;
+import net.neoforged.neoforge.transfer.ResourceHandler;
+import net.neoforged.neoforge.transfer.item.ItemResource;
+import net.neoforged.neoforge.transfer.item.ItemUtil;
+import net.neoforged.neoforge.transfer.transaction.Transaction;
 
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
@@ -14,9 +17,9 @@ import java.util.function.Predicate;
 import java.util.function.ToIntFunction;
 
 public class NeoForgeBlockStorageCapability implements IBlockCache<IBlockStorageAccess> {
-    private final BlockCapabilityCache<IItemHandler, Direction> cache;
+    private final BlockCapabilityCache<ResourceHandler<ItemResource>, Direction> cache;
 
-    public NeoForgeBlockStorageCapability(BlockCapabilityCache<IItemHandler, Direction> cache) {
+    public NeoForgeBlockStorageCapability(BlockCapabilityCache<ResourceHandler<ItemResource>, Direction> cache) {
         this.cache = cache;
     }
 
@@ -32,17 +35,17 @@ public class NeoForgeBlockStorageCapability implements IBlockCache<IBlockStorage
     }
 
     public static class NeoForgeBlockStorageAccess implements IBlockStorageAccess {
-        private final IItemHandler itemHandler;
+        private final ResourceHandler<ItemResource> itemHandler;
 
-        public NeoForgeBlockStorageAccess(IItemHandler iItemHandler) {
+        public NeoForgeBlockStorageAccess(ResourceHandler<ItemResource> iItemHandler) {
             this.itemHandler = iItemHandler;
         }
 
         @Override
         public ItemStack tryInserting(ItemStack stack) {
             var stackToInsert = stack.copy();
-            for (int i = 0; i < itemHandler.getSlots(); i++) {
-                stackToInsert = itemHandler.insertItem(i, stackToInsert, false);
+            for (int i = 0; i < itemHandler.size(); i++) {
+                stackToInsert = ItemUtil.insertItemReturnRemaining(itemHandler, i, stackToInsert, false, null);
                 if (stackToInsert.isEmpty()) {
                     break;
                 }
@@ -53,32 +56,34 @@ public class NeoForgeBlockStorageCapability implements IBlockCache<IBlockStorage
         @Override
         public ItemStack tryExtracting(Predicate<ItemStack> stackPredicate, int amount) {
             ItemStack stack = ItemStack.EMPTY;
-            for (int i = 0; i < itemHandler.getSlots(); i++) {
-                if (stackPredicate.test(itemHandler.getStackInSlot(i))) {
-                    stack = itemHandler.extractItem(i, amount, false);
-                    if (!stack.isEmpty()) {
-                        return stack;
+            for (int i = 0; i < itemHandler.size(); i++) {
+                var resource = itemHandler.getResource(i);
+                if (stackPredicate.test(resource.toStack())) {
+                    try (var tx = Transaction.openRoot()) {
+                        int extracted = itemHandler.extract(i, resource, amount, tx);
+                        tx.commit();
+                        return resource.toStack(extracted);
                     }
-
                 }
             }
-
             return stack;
         }
 
         @Override
         public void forEach(ToIntFunction<ItemStack> test, Consumer<ItemStack> thenDo, BooleanSupplier finished) {
-            for (int i = 0; i < itemHandler.getSlots(); i++) {
+            for (int i = 0; i < itemHandler.size(); i++) {
                 if (finished.getAsBoolean()) {
                     break;
                 }
-                int amountWanted = test.applyAsInt(itemHandler.getStackInSlot(i));
+                var resource = itemHandler.getResource(i);
+                int amountWanted = test.applyAsInt(resource.toStack());
                 if (amountWanted <= 0) {
                     continue;
                 }
-                ItemStack stack = itemHandler.extractItem(i, amountWanted, false);
-                if (!stack.isEmpty()) {
-                    thenDo.accept(stack);
+                try (var tx = Transaction.openRoot()) {
+                    int extracted = itemHandler.extract(i, resource, amountWanted, tx);
+                    tx.commit();
+                    thenDo.accept(resource.toStack(extracted));
                 }
             }
         }

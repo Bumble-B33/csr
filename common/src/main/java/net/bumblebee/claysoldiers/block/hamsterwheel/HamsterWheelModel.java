@@ -1,5 +1,6 @@
 package net.bumblebee.claysoldiers.block.hamsterwheel;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.minecraft.client.model.Model;
 import net.minecraft.client.model.geom.ModelLayerLocation;
@@ -12,8 +13,11 @@ import net.minecraft.client.model.geom.builders.PartDefinition;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
+import org.joml.Vector3f;
 
-public class HamsterWheelModel extends Model {
+import java.util.Set;
+
+public class HamsterWheelModel extends Model<HamsterWheelRenderState> {
     public static final ModelLayerLocation LAYER_LOCATION = new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "hamster_wheel"), "main");
 
     public HamsterWheelModel(ModelPart root) {
@@ -63,7 +67,17 @@ public class HamsterWheelModel extends Model {
         return LayerDefinition.create(meshdefinition, 32, 32);
     }
 
+    public void getExtents(Set<Vector3f> set) {
+        root().getExtentsForGui(new PoseStack(), set);
+    }
+
     public void setUpRotation(float rotation) {
         root().zRot = rotation;
+    }
+
+    @Override
+    public void setupAnim(HamsterWheelRenderState renderState) {
+        super.setupAnim(renderState);
+        setUpRotation(renderState.rotation);
     }
 }

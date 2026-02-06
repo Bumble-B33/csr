@@ -2,6 +2,7 @@ package net.bumblebee.claysoldiers.item.claymobspawn;
 
 import net.bumblebee.claysoldiers.entity.ClayMobEntity;
 import net.bumblebee.claysoldiers.entity.variant.NameableVariant;
+import net.bumblebee.claysoldiers.entity.variant.VariantHolder;
 import net.bumblebee.claysoldiers.init.ModCriterions;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;

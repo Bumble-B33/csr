@@ -1,8 +1,8 @@
 package net.bumblebee.claysoldiers.integration.accessories;
 
 import io.wispforest.accessories.api.AccessoriesCapability;
-import io.wispforest.accessories.api.Accessory;
-import io.wispforest.accessories.api.AccessoryRegistry;
+import io.wispforest.accessories.api.core.AccessoryRegistry;
+import io.wispforest.accessories.api.core.Accessory;
 import io.wispforest.accessories.api.slot.SlotReference;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.init.ModCriterions;

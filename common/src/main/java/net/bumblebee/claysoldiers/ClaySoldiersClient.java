@@ -9,6 +9,7 @@ import net.bumblebee.claysoldiers.entity.client.ClaySoldierModel;
 import net.bumblebee.claysoldiers.entity.client.ClaySoldierRenderer;
 import net.bumblebee.claysoldiers.entity.client.accesories.ClaySoldierCapeModel;
 import net.bumblebee.claysoldiers.entity.client.accesories.ClaySoldierShieldModel;
+import net.bumblebee.claysoldiers.entity.client.accesories.ClaySoldierSnorkelModel;
 import net.bumblebee.claysoldiers.entity.client.boss.BossClaySoldierRenderer;
 import net.bumblebee.claysoldiers.entity.client.boss.ClayBlockProjectileRenderer;
 import net.bumblebee.claysoldiers.entity.client.boss.VampireBatRenderer;
@@ -35,12 +36,15 @@ import net.bumblebee.claysoldiers.util.ComponentFormating;
 import net.bumblebee.claysoldiers.util.color.ColorHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.color.item.ItemTintSource;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
+import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.ModelLayerLocation;
+import net.minecraft.client.model.geom.builders.CubeDeformation;
 import net.minecraft.client.model.geom.builders.LayerDefinition;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
+import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
+import net.minecraft.client.renderer.entity.ArmorModelSet;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.ThrownItemRenderer;
 import net.minecraft.client.renderer.item.properties.numeric.RangeSelectItemModelProperty;
@@ -50,6 +54,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.ARGB;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.ItemOwner;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
@@ -76,7 +81,16 @@ public class ClaySoldiersClient {
         event.accept(ClaySoldierModel.LAYER_LOCATION, ClaySoldierModel::createSoldierLayer);
         event.accept(ClaySoldierOnHeadModel.LAYER_LOCATION, ClaySoldierOnHeadModel::createLayer);
 
-        event.accept(ClaySoldierCapeModel.LAYER_LOCATION, ClaySoldierCapeModel::createSoldierMesh);
+        ArmorModelSet<LayerDefinition> set = HumanoidModel.createArmorMeshSet(new CubeDeformation(0.5f), new CubeDeformation(1f))
+                .map(mesh -> LayerDefinition.create(mesh, 64, 32));
+        event.accept(ClaySoldierModel.HELMET_LAYER_LOCATION, set::head);
+        event.accept(ClaySoldierModel.CHESTPLATE_LAYER_LOCATION, set::chest);
+        event.accept(ClaySoldierModel.LEGGINGS_LAYER_LOCATION, set::legs);
+        event.accept(ClaySoldierModel.BOOTS_LAYER_LOCATION, set::feet);
+
+
+        event.accept(ClaySoldierSnorkelModel.SNORKEL_LAYER_LOCATION, ClaySoldierSnorkelModel::createSnorkelLayer);
+        event.accept(ClaySoldierCapeModel.LAYER_LOCATION, ClaySoldierCapeModel::createSoldierCapeLayer);
         event.accept(ClaySoldierShieldModel.LAYER_LOCATION, ClaySoldierShieldModel::createShieldLayer);
 
         event.accept(ClayBlockProjectileRenderer.LAYER_LOCATION, ClayBlockProjectileRenderer::createClayBlockLayer);
@@ -85,8 +99,11 @@ public class ClaySoldiersClient {
         event.accept(WraithModel.LAYER_LOCATION, WraithModel::createBodyLayer);
 
         event.accept(ClayHorseModel.LAYER_LOCATION, ClayHorseModel::createLayerDefinition);
+        event.accept(ClayHorseModel.ARMOR_LAYER_LOCATION, ClayHorseModel::createLayerArmorDefinition);
+
         event.accept(ClayHorseWingsModel.LAYER_LOCATION, ClayHorseWingsModel::createBodyLayer);
-        event.accept(ClayHorseArmorLayer.LAYER_LOCATION, ClayHorseModel::createLayerArmorDefinition);
+        event.accept(ClayHorseHornModel.LAYER_LOCATION, ClayHorseHornModel::createHornLayer);
+
 
         event.accept(HamsterWheelBlockEntityRenderer.POWER_LAYER_LOCATION, HamsterWheelBlockEntityRenderer::createPowerLayer);
         event.accept(HamsterWheelBlockEntityRenderer.STAND_LAYER_LOCATION, HamsterWheelBlockEntityRenderer::createStandLayer);
@@ -168,9 +185,10 @@ public class ClaySoldiersClient {
         private static final MapCodec<ClayBrushConditionalProperty> MAP_CODEC = MapCodec.unit(INSTANCE);
 
         @Override
-        public float get(ItemStack stack, @Nullable ClientLevel clientLevel, @Nullable LivingEntity livingEntity, int i) {
+        public float get(ItemStack stack, @Nullable ClientLevel clientLevel, @Nullable ItemOwner itemOwner, int i) {
             return Objects.requireNonNullElse(stack.get(ModDataComponents.CLAY_BRUSH_MODE.get()), ClayBrushItem.Mode.COMMAND).getOverrideProperty();
         }
+
 
         @Override
         public MapCodec<? extends RangeSelectItemModelProperty> type() {
@@ -185,7 +203,7 @@ public class ClaySoldiersClient {
         private static final MapCodec<BlueprintPageConditionalProperty> MAP_CODEC = MapCodec.unit(INSTANCE);
 
         @Override
-        public float get(ItemStack stack, @Nullable ClientLevel clientLevel, @Nullable LivingEntity livingEntity, int i) {
+        public float get(ItemStack stack, @Nullable ClientLevel clientLevel, @Nullable ItemOwner itemOwner, int i) {
             return stack.getOrDefault(ModDataComponents.BLUEPRINT_ITEM_DATA.get(), DEFAULT_DATA).marking();
         }
 
@@ -209,8 +227,6 @@ public class ClaySoldiersClient {
         event.accept(ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_staff_renderer"), SpecialItemRenderers.ClayStaffSpecialRenderer.Unbaked.MAP_CODEC);
         event.accept(ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "hamster_wheel_renderer"), SpecialItemRenderers.HamsterWheelSpecialRenderer.Unbaked.MAP_CODEC);
         event.accept(ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "easel_renderer"), SpecialItemRenderers.EaselBlockSpecialRenderer.Unbaked.MAP_CODEC);
-        event.accept(ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_soldier_on_head_renderer"), SpecialItemRenderers.ClaySoldierOnHeadRenderer.Unbaked.MAP_CODEC);
-
     }
 
     public static void registerSpecialBlockModelRenderer(final BiConsumer<Block, SpecialModelRenderer.Unbaked> event) {
@@ -233,7 +249,7 @@ public class ClaySoldiersClient {
      * @param player viewing the tooltip, might be null during start up
      */
     public static void tooltipEvent(@Nullable Player player, ItemStack stack, List<Component> tooltip) {
-        if (player == null || (!Screen.hasAltDown() && !CLIENT_HOOKS.hasSoldierTabOpen())) {
+        if (player == null || (Minecraft.getInstance().hasAltDown() && !CLIENT_HOOKS.hasSoldierTabOpen())) {
             return;
         }
 
@@ -252,6 +268,6 @@ public class ClaySoldiersClient {
     }
 
     public interface BlockEntityRendererFactory {
-        <T extends BlockEntity> void registerBlockEntityRenderer(BlockEntityType<? extends T> entityType, BlockEntityRendererProvider<T> entityRendererProvider);
+        <T extends BlockEntity, S extends BlockEntityRenderState> void registerBlockEntityRenderer(BlockEntityType<? extends T> entityType, BlockEntityRendererProvider<T, S> entityRendererProvider);
     }
 }

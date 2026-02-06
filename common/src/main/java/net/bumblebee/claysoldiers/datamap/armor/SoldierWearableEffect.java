@@ -15,7 +15,6 @@ import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.equipment.trim.ArmorTrim;
 import net.minecraft.world.item.equipment.trim.TrimMaterial;
@@ -58,7 +57,7 @@ public class SoldierWearableEffect {
     }
 
     @ApiStatus.Internal
-    public SoldierWearableEffect(@Nullable ArmorItem item, ColorHelper color, Set<SoldierArmorTrim> trims, boolean offsetColor) {
+    public SoldierWearableEffect(@Nullable Item item, ColorHelper color, Set<SoldierArmorTrim> trims, boolean offsetColor) {
         this(item == null ? ArmorModel.EMPTY : new ArmorModel(item), color, trims, offsetColor);
     }
 
@@ -67,7 +66,7 @@ public class SoldierWearableEffect {
     }
 
     @Nullable
-    protected ArmorItem copyModel() {
+    protected Item copyModel() {
         return armorModel.item;
     }
 
@@ -139,15 +138,15 @@ public class SoldierWearableEffect {
         }
     }
 
-    private record ArmorModel(ArmorItem item, boolean empty) {
+    private record ArmorModel(Item item, boolean empty) {
         private static final ArmorModel EMPTY = new ArmorModel(null, true);
         private static final Codec<ArmorModel> CODEC = Codec.either(BuiltInRegistries.ITEM.byNameCodec(), Codec.BOOL).xmap(
                 ArmorModel::fromEither, a -> a.empty ? Either.right(true) : Either.left(a.item)
         );
         private static final StreamCodec<RegistryFriendlyByteBuf, ArmorModel> STREAM_CODEC = ByteBufCodecs.optional(ByteBufCodecs.registry(Registries.ITEM))
-                .map(s -> s.map(i -> i instanceof ArmorItem armorItem ? new ArmorModel(armorItem) : EMPTY).orElse(EMPTY), a -> a.empty ? Optional.empty() : Optional.of(a.item));
+                .map(s -> s.map(ArmorModel::new).orElse(EMPTY), a -> a.empty ? Optional.empty() : Optional.of(a.item));
 
-        private ArmorModel(ArmorItem item) {
+        private ArmorModel(Item item) {
             this(Objects.requireNonNull(item), false);
         }
 
@@ -160,7 +159,7 @@ public class SoldierWearableEffect {
             if (either.right().isPresent()) {
                 return EMPTY;
             }
-            return either.left().orElseThrow() instanceof ArmorItem armorItem ? new ArmorModel(armorItem) : EMPTY;
+            return new ArmorModel(either.left().orElseThrow());
         }
     }
 }

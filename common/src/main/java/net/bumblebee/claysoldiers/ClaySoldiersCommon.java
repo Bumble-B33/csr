@@ -47,6 +47,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.ServiceLoader;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
@@ -145,7 +146,7 @@ public class ClaySoldiersCommon {
      * @param reload whether this was caused by a reload
      */
     public static void playerJoinedServer(ServerPlayer player, boolean reload) {
-        sendWhenChannel(player, new ClayTeamPlayerDataPayload.Creation(TeamLoyaltyManger.getTeamData(player.serverLevel()), reload), reload);
+        sendWhenChannel(player, new ClayTeamPlayerDataPayload.Creation(TeamLoyaltyManger.getTeamData(player.level()), reload), reload);
 
         if (!reload) {
             sendWhenChannel(player, new BlueprintClientPayload(BlueprintManager.getBlueprintShapeData(player.registryAccess())), false);
@@ -189,18 +190,15 @@ public class ClaySoldiersCommon {
     public static void registerDynamicRegistry(DynamicRegistryEvent event) {
         event.register(ModRegistries.BLUEPRINTS, BlueprintData.JSON_CODEC, BlueprintData.JSON_CODEC);
         event.register(ModRegistries.SOLDIER_ITEM_TYPES, SoldierItemType.CODEC, null, ((id, location, value) -> value.onRegister(location)));
-        event.register(ModRegistries.CLAY_MOB_TEAMS, ClayMobTeam.CODEC_JSON, ClayMobTeam.CODEC_JSON, (id, key, value) -> ClayMobTeamManger.appendFromItemMap(value.getGetFrom(), key));
+        event.register(ModRegistries.CLAY_MOB_TEAMS, ClayMobTeam.CODEC_JSON, ClayMobTeam.CODEC_JSON,
+                (id, key, value) -> ClayMobTeamManger.appendFromItemMap(value.getGetFrom(), key),
+                ClayMobTeamManger::onRegistryLoad
+        );
     }
 
     public static void onTagLoad(HolderLookup.Provider registryAccess, boolean client) {
         if (!client) {
-
-            var reg = registryAccess.lookupOrThrow(ModRegistries.SOLDIER_ITEM_TYPES);
-            reg.listElements().forEach(type -> type.value()
-                    .onTagLoad(tag -> registryAccess.lookupOrThrow(Registries.ITEM).get(tag)));
-            SoldierItemType.postTagLoad(reg.listElements().map(Holder::value));
-
-
+            SoldierItemType.onTagLoad(registryAccess);
         }
     }
 
@@ -217,7 +215,12 @@ public class ClaySoldiersCommon {
             register(registry, codec, synced, null);
         }
 
-        <T> void register(ResourceKey<Registry<T>> registry, Codec<T> codec, @Nullable Codec<T> synced, RegistryRegisteredCallBack<T> callback);
+        default  <T> void register(ResourceKey<Registry<T>> registry, Codec<T> codec, @Nullable Codec<T> synced, @Nullable RegistryRegisteredCallBack<T> callback) {
+            register(registry, codec, synced, callback, null);
+        }
+
+        <T> void register(ResourceKey<Registry<T>> registry, Codec<T> codec, @Nullable Codec<T> synced, @Nullable RegistryRegisteredCallBack<T> callback, @Nullable Consumer<Registry<T>> onLoadCallBack);
+
     }
 
     public interface RegistryRegisteredCallBack<T> {

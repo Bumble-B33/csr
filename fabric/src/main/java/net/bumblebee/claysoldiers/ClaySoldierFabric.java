@@ -55,6 +55,7 @@ import team.reborn.energy.api.EnergyStorage;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 public class ClaySoldierFabric implements ModInitializer {
     private static final ResourceLocation BLUEPRINT_ID = ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "csr_blueprint");
@@ -138,7 +139,7 @@ public class ClaySoldierFabric implements ModInitializer {
 
         ClaySoldiersCommon.registerDynamicRegistry(new ClaySoldiersCommon.DynamicRegistryEvent() {
             @Override
-            public <T> void register(ResourceKey<Registry<T>> registry, Codec<T> codec, @Nullable Codec<T> synced, @Nullable ClaySoldiersCommon.RegistryRegisteredCallBack<T> callback) {
+            public <T> void register(ResourceKey<Registry<T>> registry, Codec<T> codec, @Nullable Codec<T> synced, @Nullable ClaySoldiersCommon.RegistryRegisteredCallBack<T> callback, @Nullable Consumer<Registry<T>> onLoadCallback) {
                 if (synced == null) {
                     DynamicRegistries.register(registry, codec);
                 } else {
@@ -146,6 +147,10 @@ public class ClaySoldierFabric implements ModInitializer {
                 }
                 if (callback != null) {
                     DynamicRegistrySetupCallback.EVENT.register(registryView -> registryView.registerEntryAdded(registry, (callback::onRegister)));
+                }
+                if (onLoadCallback != null) {
+                    // Todo
+                    DynamicRegistrySetupCallback.EVENT.register(registryView -> registryView.getOptional(registry).ifPresent(onLoadCallback));
                 }
             }
         });
@@ -230,8 +235,8 @@ public class ClaySoldierFabric implements ModInitializer {
         }
 
         @Override
-        public CompletableFuture<Void> reload(PreparationBarrier barrier, ResourceManager manager, Executor backgroundExecutor, Executor gameExecutor) {
-            return resourceReloadListener.reload(barrier, manager, backgroundExecutor, gameExecutor);
+        public CompletableFuture<Void> reload(SharedState sharedState, Executor exectutor, PreparationBarrier barrier, Executor applyExectutor) {
+            return resourceReloadListener.reload(sharedState, exectutor, barrier, applyExectutor);
         }
     }
 

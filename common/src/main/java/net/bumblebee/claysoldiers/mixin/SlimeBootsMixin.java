@@ -19,7 +19,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class SlimeBootsMixin {
 
     @Inject(method = "fallOn", at = @At("HEAD"), cancellable = true)
-    private void noFallDamage(Level level, BlockState state, BlockPos pos, Entity entity, float fallDistance, CallbackInfo ci) {
+    private void noFallDamage(Level level, BlockState state, BlockPos pos, Entity entity, double fallDistance, CallbackInfo ci) {
         if (SlimeBootsUtil.canBounce(entity, true)) {
             entity.causeFallDamage(fallDistance, 0.0F, level.damageSources().fall());
             if (entity instanceof AbstractClaySoldierEntity claySoldier) {

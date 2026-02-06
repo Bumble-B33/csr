@@ -5,7 +5,7 @@ import net.bumblebee.claysoldiers.item.itemeffectholder.ItemStackWithEffect;
 import net.minecraft.core.Holder;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.projectile.ThrownPotion;
+import net.minecraft.world.entity.projectile.AbstractThrownPotion;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.alchemy.Potion;
 import net.minecraft.world.item.alchemy.PotionContents;
@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ThrowHealingCapability implements ThrowableItemCapability {
     @Override
-    public @NotNull ThrownPotion createProjectile(Level level, LivingEntity shooter, ItemStackWithEffect holdableEffect) {
+    public @NotNull AbstractThrownPotion createProjectile(Level level, LivingEntity shooter, ItemStackWithEffect holdableEffect) {
         return new ClaySoldierThrownPotion(level, shooter);
     }
 
@@ -36,7 +36,7 @@ public class ThrowHealingCapability implements ThrowableItemCapability {
             potion = Potions.HEALING;
         }
 
-        ThrownPotion thrownPotion = createProjectile(level, shooter, holdableEffect);
+        AbstractThrownPotion thrownPotion = createProjectile(level, shooter, holdableEffect);
         thrownPotion.setItem(PotionContents.createItemStack(Items.SPLASH_POTION, potion));
         thrownPotion.setXRot(thrownPotion.getXRot() + 20.0F);
         thrownPotion.shoot(potionX, potionY + distanceTarget * 0.2, potionZ, 0.75F, 8.0F);

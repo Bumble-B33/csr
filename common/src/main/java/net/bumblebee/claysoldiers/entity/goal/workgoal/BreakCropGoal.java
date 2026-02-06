@@ -100,7 +100,7 @@ public class BreakCropGoal extends MoveToBlockGoal implements IWorkGoal {
 
                 Vec3 mobMovement = this.mob.getDeltaMovement();
                 this.mob.setDeltaMovement(mobMovement.x, 0.3, mobMovement.z);
-                if (!level.isClientSide) {
+                if (!level.isClientSide()) {
                     double particleOffset = 0.08;
                     ((ServerLevel) level)
                             .sendParticles(
@@ -127,7 +127,7 @@ public class BreakCropGoal extends MoveToBlockGoal implements IWorkGoal {
 
             if (this.ticksSinceReachedGoal > 20) {
                 breakCrop(level, cropPos);
-                if (!level.isClientSide) {
+                if (!level.isClientSide()) {
                     this.playBreakSound(level, cropPos);
                 }
             }

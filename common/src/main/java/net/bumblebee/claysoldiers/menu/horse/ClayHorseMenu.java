@@ -21,6 +21,7 @@ public class ClayHorseMenu extends AbstractClayMobMenu<AbstractClayHorse> {
         super(ModMenuTypes.CLAY_HORSE_MENU.get(), pContainerId, inv);
         this.horse = clayHorse;
         if (horse != null) {
+            this.addSlot(ClayHorseSlot.createHornSlot(horse, 8, 18));
             this.addSlot(ClayHorseSlot.createArmorSlot(horse, 8, 36));
         }
         initPlayerInventory(inv);

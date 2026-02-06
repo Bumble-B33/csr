@@ -4,14 +4,14 @@ import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import io.netty.buffer.ByteBuf;
+import net.minecraft.client.color.ColorLerper;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.util.ARGB;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.animal.Sheep;
+import net.minecraft.world.entity.animal.sheep.Sheep;
 import net.minecraft.world.item.DyeColor;
 
 import java.util.Locale;
@@ -65,15 +65,15 @@ public class ColorHelper {
         tag.put(key, tagColor);
     }
     public static ColorHelper getFromTag(String key, CompoundTag tag) {
-        if (!tag.contains(key, Tag.TAG_COMPOUND)) {
+        if (!tag.contains(key)) {
             return EMPTY;
         }
 
-        var colorTag = tag.getCompound(key);
-        return new ColorHelper(
-                colorTag.contains(INT_COLOR_TAG, Tag.TAG_ANY_NUMERIC) ? colorTag.getInt(INT_COLOR_TAG) : -1,
-                colorTag.contains(JEB_NAME)
-        );
+        return tag.getCompound(key).map(t ->
+            new ColorHelper(
+                    t.getIntOr(INT_COLOR_TAG, -1),
+                    t.getBooleanOr(JEB_NAME, false))
+        ).orElse(EMPTY);
     }
 
     /**
@@ -119,24 +119,18 @@ public class ColorHelper {
      * Returns the dynamic color. This includes all color changing effects.
      */
     public int getColor(int offset, float ageInTicks) {
-        return getColor(offset, (int) ageInTicks, ageInTicks - ((int) ageInTicks));
+        if (jeb) {
+            return ColorLerper.getLerpedColor(ColorLerper.Type.SHEEP, offset + ageInTicks);
+        }
+        return color;
     }
 
     /**
      * Returns the dynamic color. This includes all color changing effects.
      */
     public int getColor(int offset, int tickCount, float pPartialTicks) {
-        if (jeb) {
-            int k = tickCount / MAGIC_NUMBER + offset;
-            int colorValues = DyeColor.values().length;
-            int colorIdMin = k % colorValues;
-            int colorIdMax = (k + 1) % colorValues;
-            float lerp = ((float) (tickCount % MAGIC_NUMBER) + pPartialTicks) / MAGIC_NUMBER;
-            int min = Sheep.getColor(DyeColor.byId(colorIdMin));
-            int max = Sheep.getColor(DyeColor.byId(colorIdMax));
-            return ARGB.lerp(lerp, min, max);
-        }
-        return color;
+        return getColor(offset, tickCount + pPartialTicks);
+
     }
     public boolean isEmpty() {
         return !jeb && color <= -1;

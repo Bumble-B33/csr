@@ -1,24 +1,21 @@
 package net.bumblebee.claysoldiers.entity.client.wraith;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.entity.ClayWraithEntity;
 import net.bumblebee.claysoldiers.entity.client.ClayMobStatusRenderlayer;
+import net.bumblebee.claysoldiers.entity.client.util.ColoringSubmitNodeCollector;
 import net.bumblebee.claysoldiers.entity.client.renderstates.ClayMobRenderState;
 import net.bumblebee.claysoldiers.entity.client.renderstates.ClayWraithRenderState;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
 import net.minecraft.client.renderer.entity.layers.ItemInHandLayer;
-import net.minecraft.client.renderer.entity.layers.RenderLayer;
+import net.minecraft.client.renderer.state.CameraRenderState;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.ARGB;
 import net.minecraft.world.entity.EntityAttachment;
-import net.minecraft.world.entity.Pose;
 
 public class WraithRenderer extends MobRenderer<ClayWraithEntity, ClayWraithRenderState, WraithModel> {
     private static final ResourceLocation WRAITH_LOCATION = ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "textures/entity/clay_wraith/wraith.png");
@@ -66,7 +63,13 @@ public class WraithRenderer extends MobRenderer<ClayWraithEntity, ClayWraithRend
     }
 
     @Override
-    public void render(ClayWraithRenderState wraith, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
+    public void submit(ClayWraithRenderState wraith, PoseStack poseStack, SubmitNodeCollector nodeCollector, CameraRenderState cameraRenderState) {
+        var coloringNodeCollector = new ColoringSubmitNodeCollector(nodeCollector, ARGB.color(getAlpha(wraith), wraith.clayTeamColor));
+        super.submit(wraith, poseStack, coloringNodeCollector, cameraRenderState);
+    }
+
+    /*@Override
+    public void submit(ClayWraithRenderState wraith, PoseStack poseStack, SubmitNodeCollector buffer, CameraRenderState cameraRenderState) {
         poseStack.pushPose();
         if (wraith.hasPose(Pose.SLEEPING)) {
             Direction direction = wraith.bedOrientation;
@@ -101,7 +104,9 @@ public class WraithRenderer extends MobRenderer<ClayWraithEntity, ClayWraithRend
         }
 
         poseStack.popPose();
-    }
+    }*/
+
+
     private int getAlpha(ClayWraithRenderState wraith) {
         if (wraith.hasLimitedLife) {
             return Math.max(0, (wraith.lifePoint * 3) - 10);

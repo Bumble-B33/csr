@@ -1,16 +1,18 @@
 package net.bumblebee.claysoldiers.entity.horse;
 
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
+import net.bumblebee.claysoldiers.datamap.horse.ClayHorseSlot;
 import net.bumblebee.claysoldiers.entity.ClayMobRideableEntity;
 import net.bumblebee.claysoldiers.entity.goal.horse.ClayHorseRandomStandGoal;
+import net.bumblebee.claysoldiers.entity.inventory.ClayMobInventory;
 import net.bumblebee.claysoldiers.entity.variant.ClayHorseVariants;
+import net.bumblebee.claysoldiers.entity.variant.VariantHolder;
+import net.bumblebee.claysoldiers.init.ModParticles;
 import net.bumblebee.claysoldiers.init.ModTags;
 import net.bumblebee.claysoldiers.item.itemeffectholder.HorseWearableItemStack;
 import net.bumblebee.claysoldiers.menu.horse.ClayHorseMenu;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.NonNullList;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -30,6 +32,8 @@ import net.minecraft.world.entity.vehicle.DismountHelper;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
@@ -50,8 +54,6 @@ public abstract class AbstractClayHorse extends ClayMobRideableEntity implements
     private static final int FLAG_STANDING = 32;
     private static final int FLAG_OPEN_MOUTH = 64;
 
-    private static final int ARMOR_INDEX = 0;
-
     private int eatingCounter;
     private int standCounter;
     public int tailCounter;
@@ -63,11 +65,23 @@ public abstract class AbstractClayHorse extends ClayMobRideableEntity implements
     private float mouthAnimO;
     protected boolean canGallop = true;
     protected int gallopSoundCounter;
-    private final NonNullList<HorseWearableItemStack> armorList = NonNullList.withSize(1, HorseWearableItemStack.EMPTY);
+    private final ClayMobInventory<ClayHorseSlot, HorseWearableItemStack> inventory;
 
+    @SuppressWarnings("unchecked")
     protected AbstractClayHorse(EntityType<? extends ClayMobRideableEntity> pEntityType, Level pLevel) {
         super(pEntityType, pLevel);
         this.setCanPickUpLoot(true);
+        this.inventory = (ClayMobInventory<ClayHorseSlot, HorseWearableItemStack>) equipment;
+
+    }
+
+    @Override
+    protected EntityEquipment createEquipment() {
+        return new ClayMobInventory<>(
+                ClayHorseSlot::asEquipmentSlot,
+                HorseWearableItemStack::new,
+                HorseWearableItemStack.EMPTY
+        );
     }
 
     protected void addBehaviourGoals() {
@@ -88,7 +102,7 @@ public abstract class AbstractClayHorse extends ClayMobRideableEntity implements
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag pCompound) {
+    public void addAdditionalSaveData(ValueOutput pCompound) {
         super.addAdditionalSaveData(pCompound);
         pCompound.putBoolean("EatingHaystack", this.isEating());
         pCompound.putBoolean("Bred", this.isBred());
@@ -96,12 +110,11 @@ public abstract class AbstractClayHorse extends ClayMobRideableEntity implements
     }
 
     @Override
-    public void readAdditionalSaveData(CompoundTag pCompound) {
+    public void readAdditionalSaveData(ValueInput pCompound) {
         super.readAdditionalSaveData(pCompound);
-        this.setEating(pCompound.getBoolean("EatingHaystack"));
-        this.setBred(pCompound.getBoolean("Bred"));
-        this.setVariant(ClayHorseVariants.getById(pCompound.getInt("Variant")));
-        setArmor(getItemBySlot(EquipmentSlot.BODY));
+        this.setEating(pCompound.getBooleanOr("EatingHaystack", false));
+        this.setBred(pCompound.getBooleanOr("Bred", false));
+        this.setVariant(ClayHorseVariants.getById(pCompound.getIntOr("Variant", ClayHorseVariants.CAKE.getId())));
     }
 
     @Override
@@ -162,7 +175,7 @@ public abstract class AbstractClayHorse extends ClayMobRideableEntity implements
     }
 
     @Override
-    public boolean causeFallDamage(float pFallDistance, float pMultiplier, DamageSource pSource) {
+    public boolean causeFallDamage(double pFallDistance, float pMultiplier, DamageSource pSource) {
         if (pFallDistance > 1.0F) {
             this.playSound(SoundEvents.HORSE_LAND, 0.4F, 1.0F);
         }
@@ -184,7 +197,7 @@ public abstract class AbstractClayHorse extends ClayMobRideableEntity implements
     }
 
     @Override
-    protected int calculateFallDamage(float pDistance, float pDamageMultiplier) {
+    protected int calculateFallDamage(double pDistance, float pDamageMultiplier) {
         return Mth.ceil((pDistance * 0.5F - 3.0F) * pDamageMultiplier);
     }
 
@@ -214,7 +227,7 @@ public abstract class AbstractClayHorse extends ClayMobRideableEntity implements
         }
 
         super.aiStep();
-        if (!this.level().isClientSide && this.isAlive()) {
+        if (!this.level().isClientSide() && this.isAlive()) {
             if (this.random.nextInt(900) == 0 && this.deathTime == 0) {
                 this.heal(1.0F);
             }
@@ -315,6 +328,8 @@ public abstract class AbstractClayHorse extends ClayMobRideableEntity implements
     public @NotNull ClayHorseVariants getVariant() {
         return ClayHorseVariants.getById(entityData.get(VARIANT_ID_SYNC));
     }
+
+
     @Override
     public void setVariant(ClayHorseVariants pVariant) {
         this.entityData.set(VARIANT_ID_SYNC, pVariant.getId());
@@ -322,22 +337,24 @@ public abstract class AbstractClayHorse extends ClayMobRideableEntity implements
 
     // Set Inventory
     public HorseWearableItemStack getArmor() {
-        return armorList.get(ARMOR_INDEX);
+        return inventory.getWithEffect(ClayHorseSlot.ARMOR);
+    }
+
+    public HorseWearableItemStack getHorn() {
+        return inventory.getWithEffect(ClayHorseSlot.HORN);
     }
 
     public void setArmor(ItemStack stack) {
-        setItemSlot(EquipmentSlot.BODY, stack);
+        setItemSlot(ClayHorseSlot.ARMOR.asEquipmentSlot(), stack);
     }
 
-    @Override
-    public void setItemSlot(EquipmentSlot pSlot, ItemStack pStack) {
-        super.setItemSlot(pSlot, pStack);
-        if (pSlot == EquipmentSlot.BODY) {
-            armorList.set(ARMOR_INDEX, new HorseWearableItemStack(pStack));
-        }
+    public void setHorn(ItemStack stack) {
+        setItemSlot(ClayHorseSlot.HORN.asEquipmentSlot(), stack);
     }
 
-
+    public float getSpecialSlotProtection() {
+        return getArmor().protection() + getHorn().protection();
+    }
 
     @Override
     public boolean wantsToPickUp(ServerLevel level, ItemStack pStack) {
@@ -352,6 +369,9 @@ public abstract class AbstractClayHorse extends ClayMobRideableEntity implements
             return ItemStack.EMPTY;
         }
         EquipmentSlot slot = horseWearableItemStack.getEquipmentSlot();
+        if (slot == null) {
+            return ItemStack.EMPTY;
+        }
         if (!getItemBySlot(slot).isEmpty()) {
             return ItemStack.EMPTY;
         }
@@ -369,7 +389,7 @@ public abstract class AbstractClayHorse extends ClayMobRideableEntity implements
     protected float getDamageAfterArmorAbsorb(DamageSource pDamageSource, float pDamageAmount) {
         if (!pDamageSource.is(DamageTypeTags.BYPASSES_ARMOR)) {
             this.hurtArmor(pDamageSource, pDamageAmount);
-            pDamageAmount = CombatRules.getDamageAfterAbsorb(this, pDamageAmount, pDamageSource, this.getArmorValue() + getArmor().protection(), (float)this.getAttributeValue(Attributes.ARMOR_TOUGHNESS));
+            pDamageAmount = CombatRules.getDamageAfterAbsorb(this, pDamageAmount, pDamageSource, this.getArmorValue() + getSpecialSlotProtection(), (float)this.getAttributeValue(Attributes.ARMOR_TOUGHNESS));
         }
 
         return pDamageAmount;
@@ -430,5 +450,13 @@ public abstract class AbstractClayHorse extends ClayMobRideableEntity implements
         }
 
         return super.getDefaultDimensions(pPose);
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+        if (level().isClientSide() && tickCount % 20 == 0 && !getHorn().isEmpty()) {
+            spawnParticleAround(ModParticles.SMALL_HAPPY_PARTICLE.get());
+        }
     }
 }

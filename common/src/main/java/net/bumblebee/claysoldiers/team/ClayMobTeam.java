@@ -19,6 +19,8 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnmodifiableView;
@@ -221,13 +223,21 @@ public class ClayMobTeam {
         tag.putString(TEAM_ID_TAG, key.toString());
     }
 
+    public static void save(ResourceLocation key, ValueOutput tag) {
+        tag.putString(TEAM_ID_TAG, key.toString());
+    }
+
     /**
      * Reads the {@code ClayMobTeamId} from the given {@code CompoundTag}
      *
      * @param tag the tag to read from
      */
-    public static ResourceLocation read(CompoundTag tag) {
-        return ResourceLocation.parse(tag.getString(TEAM_ID_TAG));
+    public static Optional<ResourceLocation> read(CompoundTag tag) {
+        return tag.getString(TEAM_ID_TAG).map(ResourceLocation::parse);
+    }
+
+    public static Optional<ResourceLocation> read(ValueInput tag) {
+        return tag.getString(TEAM_ID_TAG).map(ResourceLocation::parse);
     }
 
     /**
@@ -237,7 +247,7 @@ public class ClayMobTeam {
      * @param tag    tag the tag to save to
      * @param prefix the prefix to distinguish this team from the normal team
      */
-    public static void save(ResourceLocation key, CompoundTag tag, String prefix) {
+    public static void save(ResourceLocation key, ValueOutput tag, String prefix) {
         tag.putString(FORMATTED_TEAM_ID_TAG.formatted(prefix), key.toString());
     }
 
@@ -247,8 +257,8 @@ public class ClayMobTeam {
      * @param tag    the tag to read from
      * @param prefix the prefix to distinguish this team from the normal team
      */
-    public static ResourceLocation read(CompoundTag tag, String prefix) {
-        return ResourceLocation.parse(tag.getString(FORMATTED_TEAM_ID_TAG.formatted(prefix)));
+    public static ResourceLocation read(ValueInput tag, String prefix) {
+        return ResourceLocation.parse(tag.getString(FORMATTED_TEAM_ID_TAG.formatted(prefix)).orElseThrow());
     }
 
     public static Builder of(String name, ColorHelper color) {
@@ -266,7 +276,7 @@ public class ClayMobTeam {
         );
 
         private PlayerUUIDAndName(GameProfile profile) {
-            this(profile.getId(), profile.getName());
+            this(profile.id(), profile.name());
         }
 
         @Override

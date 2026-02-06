@@ -19,9 +19,12 @@ import net.minecraft.util.StringRepresentable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiPredicate;
+import java.util.function.Function;
 
 public enum ReviveType implements StringRepresentable, KeyableTranslatableProperty {
     NONE("none", (level, toRevive, reviver) -> ReviveResult.FAIL, (toRevive, reviver) -> false, null),
@@ -38,6 +41,7 @@ public enum ReviveType implements StringRepresentable, KeyableTranslatableProper
 
 
     public static final Codec<ReviveType> CODEC = StringRepresentable.fromEnum(ReviveType::values);
+    public static final Codec<Map<ReviveType, Long>> COOLDOWN_MAP_CODEC = Codec.unboundedMap(CODEC, Codec.LONG);
     public static final StreamCodec<FriendlyByteBuf, ReviveType> STREAM_CODEC = CodecUtils.createEnumStreamCodec(ReviveType.class);
 
     public static final StreamCodec<ByteBuf, List<Integer>> INT_LIST_STREAM_CODEC = ByteBufCodecs.INT.apply(ByteBufCodecs.list(ReviveType.values().length));

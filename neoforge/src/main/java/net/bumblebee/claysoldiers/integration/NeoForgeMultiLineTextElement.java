@@ -6,21 +6,22 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.world.phys.Vec2;
+import org.jetbrains.annotations.Nullable;
 import snownee.jade.api.theme.IThemeHelper;
 import snownee.jade.api.ui.Element;
 import snownee.jade.overlay.DisplayHelper;
 
 public class NeoForgeMultiLineTextElement extends Element {
     private final FormattedText[] lines;
-    private final int maxWidth;
     private final String text;
+    private final Font font;
 
     public NeoForgeMultiLineTextElement(Component[] line) {
         this.lines = line;
         if (line.length == 0) {
             throw new IllegalArgumentException("Cannot create a MultiLineElement with 0 lines");
         }
-        Font font = Minecraft.getInstance().font;
+        this.font = Minecraft.getInstance().font;
         int maxWidth = 0;
         StringBuilder builder = new StringBuilder();
         for (FormattedText text : lines) {
@@ -28,29 +29,20 @@ public class NeoForgeMultiLineTextElement extends Element {
             builder.append(text.getString());
             builder.append(" ");
         }
-        this.maxWidth = maxWidth;
+        this.width = maxWidth;
+        this.height = (font.lineHeight + 1) * lines.length - 1;
         this.text = builder.toString();
     }
 
-
     @Override
-    public Vec2 getSize() {
-        Font font = Minecraft.getInstance().font;
-        return new Vec2(maxWidth, (font.lineHeight + 1) * lines.length - 1);
-    }
-
-    @Override
-    public void render(GuiGraphics guiGraphics, float x, float y, float maxX, float maxY) {
-        Font font = Minecraft.getInstance().font;
-
+    public void render(GuiGraphics guiGraphics, int mouseX, int mousey, float partialTick) {
         for (int i = 0; i < lines.length; i++) {
-            DisplayHelper.INSTANCE.drawText(guiGraphics, lines[i], x, y + ((1 + font.lineHeight) * i), IThemeHelper.get().getNormalColor());
-
+            DisplayHelper.INSTANCE.drawText(guiGraphics, lines[i], this.getX(), this.getY() + ((1 + font.lineHeight) * i), IThemeHelper.get().getNormalColor());
         }
     }
 
     @Override
-    public String getMessage() {
-        return text;
+    public @Nullable Component getNarration() {
+        return Component.literal(text);
     }
 }

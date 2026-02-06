@@ -25,7 +25,6 @@ import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerType;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.advancements.CriterionTrigger;
 import net.minecraft.advancements.critereon.EntitySubPredicate;
-import net.minecraft.advancements.critereon.ItemSubPredicate;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
@@ -197,11 +196,6 @@ public class FabricPlatformHelper implements IPlatformHelper {
     }
 
     @Override
-    public <T extends ItemSubPredicate.Type<?>> Supplier<T> registerItemSubPredicate(String name, Supplier<T> itemSubPredicate) {
-        return defaultRegistration(BuiltInRegistries.ITEM_SUB_PREDICATE_TYPE, name, itemSubPredicate);
-    }
-
-    @Override
     public <T extends EntitySubPredicate> Supplier<MapCodec<T>> registerEntitySubPredicate(String name, Supplier<MapCodec<T>> subPredicate) {
         return defaultRegistration(BuiltInRegistries.ENTITY_SUB_PREDICATE_TYPE, name, subPredicate);
     }
@@ -264,7 +258,7 @@ public class FabricPlatformHelper implements IPlatformHelper {
         return new ClayDamageSources(registryAccess);
     }
 
-    private  <B, T extends B> Supplier<T> defaultRegistration(Registry<B> registry, String id, Supplier<T> value) {
+    private <B, T extends B> Supplier<T> defaultRegistration(Registry<B> registry, String id, Supplier<T> value) {
         var unpacked = value.get();
         Registry.register(registry, ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, id), unpacked);
         return () -> unpacked;

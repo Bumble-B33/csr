@@ -22,10 +22,12 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.ItemUtils;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.component.BundleContents;
+import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.item.context.UseOnContext;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 public class ClayPouchItem extends Item {
     public static final String FULLNESS_LANG = "item.csr.clay_pouch.fullness";
@@ -111,19 +113,21 @@ public class ClayPouchItem extends Item {
         }
     }
 
-    @Override
-    public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltipComponents, TooltipFlag tooltipFlag) {
-        var content = stack.get(ModDataComponents.CLAY_POUCH_CONTENT.get());
-        if (content != null && tooltipFlag.isAdvanced()) {
-            tooltipComponents.add(Component.translatable(FULLNESS_LANG, content.getCount(), content.getMaxCapacity()).withStyle(ChatFormatting.GRAY));
-            tooltipComponents.add(Component.translatable(FULLNESS_LANG, content.getCount(), getMaxCapacity(stack, context.registries())).withStyle(ChatFormatting.GRAY));
 
+    @Override
+    public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay tooltipDisplay, Consumer<Component> tooltipAdder, TooltipFlag flag) {
+        var content = stack.get(ModDataComponents.CLAY_POUCH_CONTENT.get());
+        if (content != null && flag.isAdvanced()) {
+            tooltipAdder.accept(Component.translatable(FULLNESS_LANG, content.getCount(), content.getMaxCapacity()).withStyle(ChatFormatting.GRAY));
+            tooltipAdder.accept(Component.translatable(FULLNESS_LANG, content.getCount(), getMaxCapacity(stack, context.registries())).withStyle(ChatFormatting.GRAY));
         }
     }
 
     @Override
     public Optional<TooltipComponent> getTooltipImage(ItemStack stack) {
-        return !stack.has(DataComponents.HIDE_TOOLTIP) && !stack.has(DataComponents.HIDE_ADDITIONAL_TOOLTIP)
+        TooltipDisplay tooltipDisplay = stack.getOrDefault(DataComponents.TOOLTIP_DISPLAY, TooltipDisplay.DEFAULT);
+
+        return tooltipDisplay.shows(ModDataComponents.CLAY_POUCH_CONTENT.get())
                 ? Optional.ofNullable(stack.get(ModDataComponents.CLAY_POUCH_CONTENT.get()))
                 : Optional.empty();
     }

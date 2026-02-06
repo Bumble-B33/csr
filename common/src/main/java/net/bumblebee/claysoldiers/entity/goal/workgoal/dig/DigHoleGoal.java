@@ -34,7 +34,7 @@ public class DigHoleGoal extends AbstractWorkGoal {
     public DigHoleGoal(AbstractClaySoldierEntity soldier, Supplier<WorkSelectorGoal> workSelector) {
         super(soldier, workSelector, List.of(BREAK_LANG, SEARCHING_LANG, BREAKING_LANG, REQUIRES_POI_LANG, UNBREAKABLE_BLOCK));
         this.level = soldier.level();
-        if (!level.isClientSide) {
+        if (!level.isClientSide()) {
             this.digBreakManger = DigBreakManger.get();
         } else {
             this.digBreakManger = null;

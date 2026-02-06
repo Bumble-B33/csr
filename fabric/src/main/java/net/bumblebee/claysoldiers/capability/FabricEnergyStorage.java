@@ -93,7 +93,7 @@ public class FabricEnergyStorage extends SimpleEnergyStorage implements IHamster
 
     @Override
     public void load(CompoundTag tag) {
-        amount = Math.min(ClaySoldierFabric.hamsterWheelCapacity, tag.getLong(TAG_KEY));
+        amount = Math.min(ClaySoldierFabric.hamsterWheelCapacity, tag.getLongOr(TAG_KEY, 0));
     }
 
     @Override

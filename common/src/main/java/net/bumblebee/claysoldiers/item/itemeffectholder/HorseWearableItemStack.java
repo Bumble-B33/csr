@@ -4,6 +4,7 @@ import net.bumblebee.claysoldiers.datamap.horse.ClayHorseItemMap;
 import net.bumblebee.claysoldiers.datamap.horse.ClayHorseWearableProperties;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ItemStack;
+import org.jetbrains.annotations.Nullable;
 
 public class HorseWearableItemStack extends ItemStackEffectHolder<ClayHorseWearableProperties> {
     public static final HorseWearableItemStack EMPTY = new HorseWearableItemStack();
@@ -25,7 +26,8 @@ public class HorseWearableItemStack extends ItemStackEffectHolder<ClayHorseWeara
         return ClayHorseItemMap.get(stack);
     }
 
+    @Nullable
     public EquipmentSlot getEquipmentSlot() {
-        return EquipmentSlot.CHEST;
+        return effect != null ? effect.getSlot().asEquipmentSlot() : null;
     }
 }

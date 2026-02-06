@@ -20,6 +20,7 @@ import net.bumblebee.claysoldiers.soldierproperties.combined.SoldierPropertyComb
 import net.bumblebee.claysoldiers.soldierproperties.customproperties.AttackTypeProperty;
 import net.minecraft.advancements.CriteriaTriggers;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.nbt.*;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -45,6 +46,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.LootTable;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
@@ -124,67 +127,51 @@ public class BossClaySoldierEntity extends AbstractClaySoldierEntity {
 
 
     @Override
-    public void addAdditionalSaveData(CompoundTag pCompound) {
-        super.addAdditionalSaveData(pCompound);
+    public void addAdditionalSaveData(ValueOutput output) {
+        super.addAdditionalSaveData(output);
 
         if (!baseProperties.isEmpty()) {
-            writeBasePropertiesToTag(baseProperties, pCompound);
+            writeBasePropertiesToTag(baseProperties, output);
         }
+        output.store(TYPE_TAG, BossTypes.CODEC, getBossType());
 
-        BossTypes.CODEC.encodeStart(NbtOps.INSTANCE, getBossType())
-                .ifSuccess(tag -> pCompound.put(TYPE_TAG, tag))
-                .ifError(err -> LOGGER.error("Error saving Boss Type: {}", err.message()));
-        writeBossAIToTag(getBossAI(), pCompound);
+        writeBossAIToTag(getBossAI(), output);
 
         if (minionOwner != null) {
-            pCompound.putUUID(MINION_OWNER_TAG, minionOwner.getUUID());
+            output.store(MINION_OWNER_TAG, UUIDUtil.CODEC, minionOwner.getUUID());
         }
         if (minions != null) {
-            var listTag = new ListTag();
-            minions.forEach(minion -> listTag.add(NbtUtils.createUUID(minion.getUUID())));
-            pCompound.put(MINIONS_TAG, listTag);
+            output.store(MINIONS_TAG, UUIDUtil.CODEC.listOf(), minions.stream().map(Entity::getUUID).toList());
         }
 
         if (phaseCompleted > 0) {
-            pCompound.putInt(PHASE_COMPLETED_TAG, phaseCompleted);
+            output.putInt(PHASE_COMPLETED_TAG, phaseCompleted);
         }
     }
 
 
     @Override
-    public void readAdditionalSaveData(CompoundTag pCompound) {
-        super.readAdditionalSaveData(pCompound);
+    public void readAdditionalSaveData(ValueInput input) {
+        super.readAdditionalSaveData(input);
 
-        readAndSetBasePropertiesFromTag(pCompound);
-
-        if (readAndSetBossAI(pCompound) && pCompound.contains(TYPE_TAG)) {
-            BossTypes.CODEC.parse(NbtOps.INSTANCE, pCompound.get(TYPE_TAG))
-                    .ifSuccess(this::setBossType)
-                    .ifError(err -> LOGGER.error("Error parsing Boss Type: {}", err.message()));
+        readAndSetBasePropertiesFromTag(input);
+        var bossType = input.read(TYPE_TAG, BossTypes.CODEC);
+        if (readAndSetBossAI(input) && bossType.isPresent()) {
+            setBossType(bossType.orElseThrow());
         }
 
         if (this.hasCustomName()) {
             this.bossEvent.setName(this.getDisplayName());
         }
-        if (pCompound.contains(MINION_OWNER_TAG)) {
-            minionOwnerUUID = pCompound.getUUID(MINION_OWNER_TAG);
-        }
-        if (pCompound.contains(MINIONS_TAG, Tag.TAG_LIST)) {
-            ListTag listTag = pCompound.getList(MINIONS_TAG, Tag.TAG_INT_ARRAY);
-            minionUUIDs = new ArrayList<>(listTag.size());
-            for (Tag tag : listTag) {
-                minionUUIDs.add(NbtUtils.loadUUID(tag));
-            }
-        }
+        minionOwnerUUID = input.read(MINION_OWNER_TAG, UUIDUtil.CODEC).orElse(null);
 
+        minionUUIDs = input.read(MINIONS_TAG, UUIDUtil.CODEC.listOf()).orElse(null);
 
-        if (pCompound.contains(PHASE_COMPLETED_TAG)) {
-            phaseCompleted = pCompound.getInt(PHASE_COMPLETED_TAG);
-        }
+        phaseCompleted = input.getIntOr(PHASE_COMPLETED_TAG, 0);
     }
 
     @Override
-    public void readItemPersistentData(CompoundTag tag) {
+    public void readItemPersistentData(ValueInput tag) {
         if (!readAndSetBossAI(tag)) {
             setBossAI(ModBossBehaviours.DEFAULT.get());
         }
@@ -192,36 +179,26 @@ public class BossClaySoldierEntity extends AbstractClaySoldierEntity {
 
     }
 
-    private boolean readAndSetBossAI(CompoundTag pCompound) {
-        if (pCompound.contains(BOSS_AI_TAG)) {
-            return BossClaySoldierBehaviour.CODEC.parse(NbtOps.INSTANCE, pCompound.get(BOSS_AI_TAG))
-                    .ifSuccess(this::setBossAI)
-                    .ifError(err -> LOGGER.error("Error parsing Boss AI: {}", err.message()))
-                    .isSuccess();
+    private boolean readAndSetBossAI(ValueInput pCompound) {
+        var ai = pCompound.read(BOSS_AI_TAG, BossClaySoldierBehaviour.CODEC);
+        if (ai.isPresent()) {
+            setBossAI(ai.orElseThrow());
+            return true;
         } else {
             return false;
         }
     }
 
-    public static void writeBossAIToTag(BossClaySoldierBehaviour ai, CompoundTag pCompound) {
-        BossClaySoldierBehaviour.CODEC.encodeStart(NbtOps.INSTANCE, ai)
-                .ifSuccess(tag -> pCompound.put(BOSS_AI_TAG, tag))
-                .ifError(err -> LOGGER.error("Error saving Boss AI: {}", err.message()));
-
+    public static void writeBossAIToTag(BossClaySoldierBehaviour ai, ValueOutput pCompound) {
+        pCompound.store(BOSS_AI_TAG, BossClaySoldierBehaviour.CODEC, ai);
     }
 
-    public static void writeBasePropertiesToTag(SoldierPropertyMap properties, CompoundTag compound) {
-        SoldierPropertyMap.CODEC_FOR_NON_ITEM.encodeStart(NbtOps.INSTANCE, properties)
-                .ifSuccess(tag -> compound.put(BASE_PROPERTIES_TAG, tag))
-                .ifError(err -> LOGGER.error("Error saving Base Properties: {}", err.message()));
+    public static void writeBasePropertiesToTag(SoldierPropertyMap properties, ValueOutput compound) {
+        compound.store(BASE_PROPERTIES_TAG, SoldierPropertyMap.CODEC_FOR_NON_ITEM, properties);
     }
 
-    private void readAndSetBasePropertiesFromTag(CompoundTag compound) {
-        if (compound.contains(BASE_PROPERTIES_TAG)) {
-            SoldierPropertyMap.CODEC_FOR_NON_ITEM.parse(NbtOps.INSTANCE, compound.get(BASE_PROPERTIES_TAG))
-                    .ifSuccess(this::setBaseProperties)
-                    .ifError(err -> LOGGER.error("Error parsing Base Properties: {}", err.message()));
-        }
+    private void readAndSetBasePropertiesFromTag(ValueInput compound) {
+        compound.read(BASE_PROPERTIES_TAG, SoldierPropertyMap.CODEC_FOR_NON_ITEM).ifPresent(this::setBaseProperties);
     }
 
     @Override
@@ -358,7 +335,7 @@ public class BossClaySoldierEntity extends AbstractClaySoldierEntity {
         if (allProperties() == null) {
             return 1f;
         }
-        return Math.max(0.2f, allProperties().getSoldierSize());
+        return Math.clamp(allProperties().getSoldierSize(), 0.2f, 10f);
     }
 
     @Override
@@ -385,6 +362,11 @@ public class BossClaySoldierEntity extends AbstractClaySoldierEntity {
     @Override
     public boolean canRevive() {
         return false;
+    }
+
+    @Override
+    protected boolean canPushPlayer() {
+        return true;
     }
 
     @Override
@@ -565,10 +547,9 @@ public class BossClaySoldierEntity extends AbstractClaySoldierEntity {
     }
 
     @Override
-    public void onConversion(ClayMobEntity oldSoldier, CompoundTag tag, @Nullable Player player) {
+    public void onConversion(ClayMobEntity oldSoldier, ValueInput tag, @Nullable Player player) {
         if (player instanceof ServerPlayer serverPlayer) {
             CriteriaTriggers.SUMMONED_ENTITY.trigger(serverPlayer, this);
-
         }
     }
 
@@ -600,10 +581,11 @@ public class BossClaySoldierEntity extends AbstractClaySoldierEntity {
                     .withParameter(LootContextParams.DAMAGE_SOURCE, damageSource)
                     .withOptionalParameter(LootContextParams.ATTACKING_ENTITY, damageSource.getEntity())
                     .withOptionalParameter(LootContextParams.DIRECT_ATTACKING_ENTITY, damageSource.getDirectEntity());
-            if (this.lastHurtByPlayerTime > 0 && this.lastHurtByPlayer != null) {
+            Player player = this.getLastHurtByPlayer();
+            if (this.lastHurtByPlayerMemoryTime > 0 && player != null) {
                 paramBuilder = paramBuilder
-                        .withParameter(LootContextParams.LAST_DAMAGE_PLAYER, this.lastHurtByPlayer)
-                        .withLuck(this.lastHurtByPlayer.getLuck());
+                        .withParameter(LootContextParams.LAST_DAMAGE_PLAYER, player)
+                        .withLuck(player.getLuck());
             }
             return lootTable.getRandomItems(paramBuilder.create(LootContextParamSets.ENTITY), this.getLootTableSeed());
         }

@@ -19,9 +19,11 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.ItemUseAnimation;
 import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.level.Level;
 
 import java.util.List;
+import java.util.function.Consumer;
 
 public class ClayMobKillItem extends Item {
     public static final String RANGE_LANG = "item." + ClaySoldiersCommon.MOD_ID + ".disruptor.range";
@@ -29,15 +31,17 @@ public class ClayMobKillItem extends Item {
     public static final String RANGE_ERROR_LANG = "item." + ClaySoldiersCommon.MOD_ID + ".disruptor.range.error";
 
 
-    public ClayMobKillItem(Properties pProperties, DisruptorKillRange range) {
-        super(pProperties.component(ModDataComponents.DISRUPTOR_KILL_RANGE.get(), range));
+    public ClayMobKillItem(Properties pProperties) {
+        super(pProperties);
     }
 
     @Override
-    public InteractionResult use(Level pLevel, Player pPlayer, InteractionHand pUsedHand) {
-        if (pLevel instanceof ServerLevel serverLevel && pPlayer instanceof ServerPlayer serverPlayer && pUsedHand == InteractionHand.MAIN_HAND) {
-            int amountKilled = killSoldiers(pPlayer.getItemInHand(pUsedHand), serverLevel, pPlayer.getOnPos(), serverPlayer);
+    public InteractionResult use(Level pLevel, Player player, InteractionHand usedHand) {
+        if (pLevel instanceof ServerLevel serverLevel && player instanceof ServerPlayer serverPlayer && usedHand == InteractionHand.MAIN_HAND) {
+            ItemStack itemInHand = player.getItemInHand(usedHand);
+            int amountKilled = killSoldiers(itemInHand, serverLevel, player.getOnPos(), serverPlayer);
             ModCriterions.DISRUPTOR_KILL_TRIGGER.get().trigger(serverPlayer, amountKilled);
+            itemInHand.hurtAndBreak(1, player, usedHand);
 
             return InteractionResult.SUCCESS;
         }
@@ -45,12 +49,12 @@ public class ClayMobKillItem extends Item {
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltipComponents, TooltipFlag tooltipFlag) {
+    public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay tooltipDisplay, Consumer<Component> tooltipAdder, TooltipFlag flag) {
         var range = stack.get(ModDataComponents.DISRUPTOR_KILL_RANGE.get());
         if (range == null) {
-            tooltipComponents.add(Component.translatable(RANGE_ERROR_LANG).withStyle(ChatFormatting.RED));
-        } else if (tooltipFlag.isAdvanced()) {
-            tooltipComponents.add(CommonComponents.space().append(range.appendRangeToComponent(RANGE_LANG, RANGE_UNLIMITED_LANG)).withStyle(ChatFormatting.GRAY));
+            tooltipAdder.accept(Component.translatable(RANGE_ERROR_LANG).withStyle(ChatFormatting.RED));
+        } else if (flag.isAdvanced()) {
+            tooltipAdder.accept(CommonComponents.space().append(range.appendRangeToComponent(RANGE_LANG, RANGE_UNLIMITED_LANG)).withStyle(ChatFormatting.GRAY));
         }
     }
 

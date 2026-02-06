@@ -6,12 +6,16 @@ import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.entity.boss.ClayBlockProjectileEntity;
 import net.bumblebee.claysoldiers.entity.client.renderstates.ClayBlockProjectileRenderState;
 import net.minecraft.client.model.SkullModel;
+import net.minecraft.client.model.SkullModelBase;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.client.model.geom.builders.*;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.client.renderer.state.CameraRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
@@ -41,28 +45,29 @@ public class ClayBlockProjectileRenderer extends EntityRenderer<ClayBlockProject
     }
 
     @Override
-    public void render(ClayBlockProjectileRenderState renderState, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
+    public void submit(ClayBlockProjectileRenderState renderState, PoseStack poseStack, SubmitNodeCollector nodeCollector, CameraRenderState cameraRenderState) {
         var clientSoldier = renderState.clientClaySoldierEntity;
         if (clientSoldier != null) {
-            clientSoldier.render(renderState.partialRot, poseStack, buffer, packedLight);
+            clientSoldier.render(renderState.partialRot, poseStack, nodeCollector, cameraRenderState);
         } else {
-            renderBlock(renderState, poseStack, buffer, packedLight);
+            renderBlock(renderState, poseStack, nodeCollector);
         }
-        super.render(renderState, poseStack, buffer, packedLight);
+        super.submit(renderState, poseStack, nodeCollector, cameraRenderState);
     }
 
-
-
-    private void renderBlock(ClayBlockProjectileRenderState entity, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
+    private void renderBlock(ClayBlockProjectileRenderState entity, PoseStack poseStack, SubmitNodeCollector nodeCollector) {
         poseStack.pushPose();
 
         float blockSize = entity.size;
         poseStack.scale(-blockSize, -blockSize, blockSize);
-        VertexConsumer vertexconsumer = buffer.getBuffer(this.model.renderType(TEXTURE_LOCATION));
-        this.model.setupAnim(0.0F, entity.rot + entity.partialRot, entity.rot + entity.partialRot);
-        this.model.renderToBuffer(poseStack, vertexconsumer, packedLight, OverlayTexture.NO_OVERLAY);
-        poseStack.popPose();
+        RenderType renderType = this.model.renderType(TEXTURE_LOCATION);
 
+        var state = new SkullModelBase.State();
+        state.animationPos = 0f;
+        state.yRot = entity.rot + entity.partialRot;
+        state.xRot = entity.rot + entity.partialRot;
+        nodeCollector.submitModel(this.model, state, poseStack, renderType, entity.lightCoords, OverlayTexture.NO_OVERLAY, entity.outlineColor, null);
+        poseStack.popPose();
 
         entity.rot += 1;
     }

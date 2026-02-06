@@ -1,6 +1,5 @@
 package net.bumblebee.claysoldiers.datamap.armor.accessories.custom;
 
-import com.mojang.authlib.properties.PropertyMap;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import com.mojang.serialization.Codec;
@@ -10,8 +9,8 @@ import net.bumblebee.claysoldiers.datamap.armor.accessories.IAccessoryRenderLaye
 import net.bumblebee.claysoldiers.datamap.armor.accessories.RenderableAccessory;
 import net.bumblebee.claysoldiers.entity.client.ClaySoldierModel;
 import net.minecraft.client.model.SkullModelBase;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.SkullBlockRenderer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -51,13 +50,10 @@ public class SkullRenderable implements RenderableAccessory {
 
 
     public SkullRenderable(Item headStack) {
-        this(headStack, (ResolvableProfile) null);
+        this(headStack, null);
     }
 
-    public SkullRenderable(Item headStack, String playerName) {
-        this(headStack, new ResolvableProfile(Optional.of(playerName), Optional.empty(), new PropertyMap()));
-    }
-    public SkullRenderable(Item headStack, ResolvableProfile profile) {
+    public SkullRenderable(Item headStack, @Nullable ResolvableProfile profile) {
         this.headItem = headStack;
         this.profile = profile;
         this.headItemStack = headItem.getDefaultInstance();
@@ -70,7 +66,7 @@ public class SkullRenderable implements RenderableAccessory {
     }
 
     @Override
-    public void render(IAccessoryRenderLayer renderedFrom, PoseStack pPoseStack, MultiBufferSource pBuffer, int pPackedLight, AccessoryRenderState claySoldier) {
+    public void submit(IAccessoryRenderLayer renderedFrom, PoseStack pPoseStack, SubmitNodeCollector nodeCollector, int pPackedLight, AccessoryRenderState claySoldier) {
         if (!claySoldier.skullAccessory.isEmpty()) {
             pPoseStack.pushPose();
             ClaySoldierModel model = renderedFrom.getSoldierModel();
@@ -83,12 +79,19 @@ public class SkullRenderable implements RenderableAccessory {
                 if (skullmodelbase == null) {
                     return;
                 }
+                RenderType rendertype;
+                if (profile != null) {
+                    rendertype = renderedFrom.getPlayerSkinRenderCache().getOrDefault(profile).renderType();
+                } else if (claySoldier.wornHeadProfile != null) {
+                    rendertype = renderedFrom.getPlayerSkinRenderCache().getOrDefault(claySoldier.wornHeadProfile).renderType();
+                } else {
+                    rendertype = SkullBlockRenderer.getSkullRenderType(type, null);
+                }
 
-                RenderType rendertype = SkullBlockRenderer.getRenderType(type, claySoldier.wornHeadProfile);
-                SkullBlockRenderer.renderSkull(null, 180.0F, claySoldier.wornHeadAnimationPos, pPoseStack, pBuffer, pPackedLight, skullmodelbase, rendertype);
+                SkullBlockRenderer.submitSkull(null, 180.0F, claySoldier.wornHeadAnimationPos, pPoseStack, nodeCollector, pPackedLight, skullmodelbase, rendertype, claySoldier.outlineColor, null);
             } else {
                 translateToHead(pPoseStack);
-                claySoldier.skullAccessory.render(pPoseStack, pBuffer, pPackedLight, OverlayTexture.NO_OVERLAY);
+                claySoldier.skullAccessory.submit(pPoseStack, nodeCollector, pPackedLight, OverlayTexture.NO_OVERLAY, claySoldier.outlineColor);
             }
 
             pPoseStack.popPose();

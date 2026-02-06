@@ -98,7 +98,7 @@ public final class SpecialAttacks {
             if (attacker.level() instanceof ServerLevel serverLevel) {
                 LightningBolt lightningbolt = EntityType.LIGHTNING_BOLT.create(serverLevel, EntitySpawnReason.TRIGGERED);
                 if (lightningbolt != null) {
-                    lightningbolt.moveTo(Vec3.atBottomCenterOf(target.blockPosition()));
+                    lightningbolt.snapTo(Vec3.atBottomCenterOf(target.blockPosition()));
                     lightningbolt.setVisualOnly(true);
                     serverLevel.addFreshEntity(lightningbolt);
                     attacker.playSound(SoundEvents.TRIDENT_THUNDER.value(), 0.5f, 1f);

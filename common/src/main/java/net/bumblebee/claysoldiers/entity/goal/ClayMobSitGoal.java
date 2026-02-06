@@ -46,9 +46,9 @@ public class ClayMobSitGoal extends Goal {
 
         Entity vehicle = clayMobEntity.getVehicle();
         if (vehicle != null) {
-            return !vehicle.isInWaterOrBubble();
+            return !vehicle.isInWater();
         } else {
-            if (this.clayMobEntity.isInWaterOrBubble()) {
+            if (this.clayMobEntity.isInWater()) {
                 return false;
             } else {
                 return this.clayMobEntity.onGround();

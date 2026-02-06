@@ -51,8 +51,11 @@ public class ClayStaffItem extends Item {
     }
 
     @Override
-    public boolean canAttackBlock(BlockState state, Level level, BlockPos pos, Player player) {
-        return !player.isCreative();
+    public boolean canDestroyBlock(ItemStack stack, BlockState state, Level level, BlockPos pos, LivingEntity entity) {
+        if (entity instanceof Player player) {
+            return !player.isCreative();
+        }
+        return false;
     }
 
     @Override
@@ -62,7 +65,7 @@ public class ClayStaffItem extends Item {
 
     @Override
     public boolean releaseUsing(ItemStack stack, Level level, LivingEntity livingEntity, int timeRemaining) {
-        if (!(livingEntity instanceof Player player) || level.isClientSide) {
+        if (!(livingEntity instanceof Player player) || level.isClientSide()) {
             return false;
         }
         boolean infiniteMaterials = livingEntity.hasInfiniteMaterials();

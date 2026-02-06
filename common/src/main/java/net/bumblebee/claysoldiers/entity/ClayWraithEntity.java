@@ -33,6 +33,8 @@ import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.gameevent.GameEvent;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -133,7 +135,7 @@ public class ClayWraithEntity extends ClayMobTeamOwnerEntity implements ClaySold
             }
 
         }
-        if (!level().isClientSide && hasLimitedLife() && limitedLifeTicks % 5 == 0) {
+        if (!level().isClientSide() && hasLimitedLife() && limitedLifeTicks % 5 == 0) {
             updateLifePercent();
         }
     }
@@ -145,13 +147,9 @@ public class ClayWraithEntity extends ClayMobTeamOwnerEntity implements ClaySold
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag pCompound) {
+    public void addAdditionalSaveData(ValueOutput pCompound) {
         super.addAdditionalSaveData(pCompound);
-        if (this.boundOrigin != null) {
-            pCompound.putInt("BoundX", this.boundOrigin.getX());
-            pCompound.putInt("BoundY", this.boundOrigin.getY());
-            pCompound.putInt("BoundZ", this.boundOrigin.getZ());
-        }
+        pCompound.storeNullable("bound_pos", BlockPos.CODEC, boundOrigin);
         if (hasLimitedLife()) {
             pCompound.putInt(MAX_LIFE_TICKS_TAG, this.maxLimitedLifeTicks);
             pCompound.putInt(LIFE_TICKS_TAG, this.limitedLifeTicks);
@@ -162,23 +160,27 @@ public class ClayWraithEntity extends ClayMobTeamOwnerEntity implements ClaySold
 
     }
 
-    public static void writeSpecialAttackToTag(CompoundTag tag, List<SpecialAttack<?>> attacks) {
-        SpecialAttack.LIST_CODEC
-                .encodeStart(NbtOps.INSTANCE, attacks)
-                .resultOrPartial(LOGGER::error)
-                .ifPresent(wraithAttack -> {
-                    tag.put(WRAITH_ATTACK_TAG, wraithAttack);
-                });
+    public static void writeSpecialAttackToTag(ValueOutput tag, List<SpecialAttack<?>> attacks) {
+        tag.store(WRAITH_ATTACK_TAG, SpecialAttack.LIST_CODEC, attacks);
     }
 
     @Override
-    public void readAdditionalSaveData(CompoundTag pCompound) {
+    public void readAdditionalSaveData(ValueInput pCompound) {
         super.readAdditionalSaveData(pCompound);
-        if (pCompound.contains("BoundX")) {
-            this.boundOrigin = new BlockPos(pCompound.getInt("BoundX"), pCompound.getInt("BoundY"), pCompound.getInt("BoundZ"));
-        }
+        this.boundOrigin = pCompound.read("bound_pos", BlockPos.CODEC).orElse(null);
 
         readItemPersistentData(pCompound);
+    }
+
+    @Override
+    public void readItemPersistentData(ValueInput tag) {
+        tag.read(LIFE_TICKS_TAG, CodecUtils.TIME_CODEC).ifPresent(i -> {
+            limitedLifeTicks = tag.getIntOr(LIFE_TICKS_TAG, i);
+            maxLimitedLifeTicks = Math.max(tag.getIntOr(MAX_LIFE_TICKS_TAG, 0), limitedLifeTicks);
+        });
+        tag.read(WRAITH_ATTACK_TAG, SpecialAttack.LIST_CODEC).ifPresent(s -> {
+            this.attackFunctions = s;
+        });
     }
 
     @Nullable
@@ -284,26 +286,7 @@ public class ClayWraithEntity extends ClayMobTeamOwnerEntity implements ClaySold
     public <T extends ClaySoldierInventoryHandler> void copyInventory(T toCopyTo) {
     }
 
-    @Override
-    public void readItemPersistentData(CompoundTag tag) {
-        if (tag.contains(LIFE_TICKS_TAG, Tag.TAG_INT)) {
-            limitedLifeTicks = tag.getInt(LIFE_TICKS_TAG);
-            maxLimitedLifeTicks = Math.max(tag.getInt(MAX_LIFE_TICKS_TAG), limitedLifeTicks);
-        } else if (tag.contains(LIFE_TICKS_TAG, Tag.TAG_STRING)) {
-            CodecUtils.getTimeFromEither(Either.right(tag.getString(LIFE_TICKS_TAG)))
-                    .ifSuccess(ticks -> {
-                        limitedLifeTicks = ticks;
-                        maxLimitedLifeTicks = Math.max(tag.getInt(MAX_LIFE_TICKS_TAG), limitedLifeTicks);
-                    })
-                    .ifError(err -> LOGGER.error("Error Reading {} for Wraith as Seconds: {}", LIFE_TICKS_TAG, err.message()));
-        }
-        if (tag.contains(WRAITH_ATTACK_TAG, Tag.TAG_COMPOUND)) {
-            SpecialAttack.LIST_CODEC
-                    .parse(NbtOps.INSTANCE, tag.get(WRAITH_ATTACK_TAG))
-                    .resultOrPartial(LOGGER::error)
-                    .ifPresent(specialAttack -> this.attackFunctions = specialAttack);
-        }
-    }
+
 
     @Override
     public float getNightPower() {
@@ -313,11 +296,6 @@ public class ClayWraithEntity extends ClayMobTeamOwnerEntity implements ClaySold
     @Override
     public float getSpeed() {
         return super.getSpeed() * getPowerMultiplier();
-    }
-
-    @Override
-    public boolean canBeNameTagged() {
-        return false;
     }
 
     @Override
@@ -345,7 +323,7 @@ public class ClayWraithEntity extends ClayMobTeamOwnerEntity implements ClaySold
         BlockPos bound = caster.blockPosition();
         ClayWraithEntity wraith = ModEntityTypes.CLAY_WRAITH.get().create(caster.level(), summoned ? EntitySpawnReason.MOB_SUMMONED : EntitySpawnReason.CONVERSION);
         if (wraith != null) {
-            wraith.moveTo(caster.position(), caster.getYRot(), caster.getXRot());
+            wraith.snapTo(caster.position(), caster.getYRot(), caster.getXRot());
             wraith.finalizeSpawn(level, level.getCurrentDifficultyAt(bound), summoned ? EntitySpawnReason.MOB_SUMMONED : EntitySpawnReason.CONVERSION, null);
             wraith.setBoundOrigin(bound);
             wraith.setLimitedLife(20 * (duration + caster.getRandom().nextInt(duration)));
@@ -503,7 +481,7 @@ public class ClayWraithEntity extends ClayMobTeamOwnerEntity implements ClaySold
                 return false;
             } else if (clayMobEntity.isPassenger()) {
                 return false;
-            } else if (this.clayMobEntity.isInWaterOrBubble()) {
+            } else if (this.clayMobEntity.isInWater()) {
                 return false;
             } else {
                 LivingEntity owner = this.clayMobEntity.getClayTeamOwner();

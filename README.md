@@ -1,4 +1,5 @@
-# Clay Soldier Remake
+# Clay Soldier Remake [![Versions](http://cf.way2muchnoise.eu/versions/1346487_latest.svg)](https://www.curseforge.com/minecraft/mc-mods/clay-soldier-remake)
+
 
 Clay Soldiers Remake is a data driven remake of the classic Clay Soldiers mod,
 bringing the miniature army-building experience to newer Minecraft versions.

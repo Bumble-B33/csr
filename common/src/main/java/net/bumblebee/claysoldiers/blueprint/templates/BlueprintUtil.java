@@ -17,6 +17,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
+import net.minecraft.world.level.storage.ValueInput;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
@@ -47,12 +48,12 @@ public final class BlueprintUtil {
         }
     }
 
+    public static Vec3i getSizeFromTag(ValueInput tag) {
+        return tag.read(StructureTemplate.SIZE_TAG, Vec3i.CODEC).orElse(Vec3i.ZERO);
+    }
+
     public static Vec3i getSizeFromTag(CompoundTag tag) {
-        if (!tag.contains(StructureTemplate.SIZE_TAG)) {
-            return Vec3i.ZERO;
-        }
-        ListTag sizeVec = tag.getList(StructureTemplate.SIZE_TAG, Tag.TAG_INT);
-        return new Vec3i(sizeVec.getInt(0), sizeVec.getInt(1), sizeVec.getInt(2));
+        return tag.read(StructureTemplate.SIZE_TAG, Vec3i.CODEC).orElse(Vec3i.ZERO);
     }
 
     public static <T> Map<Item, Integer> getNeededItemsFromInfo(List<T> blockInfoList, Function<T, BlockState> stateGetter) {

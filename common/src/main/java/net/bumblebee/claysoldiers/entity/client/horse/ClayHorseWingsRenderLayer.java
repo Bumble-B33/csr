@@ -7,6 +7,7 @@ import net.bumblebee.claysoldiers.entity.client.renderstates.ClayHorseRenderStat
 import net.minecraft.client.model.geom.EntityModelSet;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.RenderLayerParent;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
@@ -24,9 +25,7 @@ public class ClayHorseWingsRenderLayer extends RenderLayer<ClayHorseRenderState,
     }
 
     @Override
-    public void render(PoseStack pPoseStack, MultiBufferSource pBuffer, int pPackedLight, ClayHorseRenderState pLivingEntity, float v, float v1) {
-        VertexConsumer vertexconsumer = pBuffer.getBuffer(RenderType.entityCutoutNoCull(WINGS_LOCATION));
-        model.setUpWingAnim(pLivingEntity, pLivingEntity.ageInTicks);
-        model.renderToBuffer(pPoseStack, vertexconsumer, pPackedLight, OverlayTexture.NO_OVERLAY);
+    public void submit(PoseStack poseStack, SubmitNodeCollector nodeCollector, int packedLight, ClayHorseRenderState clayHorseRenderState, float v, float v1) {
+        nodeCollector.submitModel(model, clayHorseRenderState, poseStack, RenderType.entityCutoutNoCull(WINGS_LOCATION), packedLight, OverlayTexture.NO_OVERLAY, clayHorseRenderState.outlineColor, null);
     }
 }

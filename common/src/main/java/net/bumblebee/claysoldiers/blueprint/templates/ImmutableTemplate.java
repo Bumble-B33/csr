@@ -63,16 +63,17 @@ public class ImmutableTemplate extends BaseImmutableTemplate {
     }
 
     public static ImmutableTemplate create(HolderLookup<Block> pBlockGetter, CompoundTag pTag, Collection<Holder<Block>> blackListedBlocks) {
-        ListTag blockListTag = pTag.getList(StructureTemplate.BLOCKS_TAG, 10);
+        ListTag blockListTag = pTag.getListOrEmpty(StructureTemplate.BLOCKS_TAG);
         List<StructureTemplate.StructureBlockInfo> blockInfoList;
-        if (pTag.contains("palettes", 9)) {
-            ListTag palettesListTag = pTag.getList("palettes", 9);
 
-            blockInfoList = loadPallet(pBlockGetter, palettesListTag.getList(0), blockListTag, blackListedBlocks);
+        Optional<ListTag> pallets = pTag.getList(StructureTemplate.PALETTE_LIST_TAG);
+        if (pallets.isPresent()) {
+
+            blockInfoList = loadPallet(pBlockGetter, pallets.orElseThrow().getListOrEmpty(0), blockListTag, blackListedBlocks);
 
             LOGGER.warn("Clay Soldiers: Structure containing more than one Pallet. Using the first one");
         } else {
-            blockInfoList = loadPallet(pBlockGetter, pTag.getList("palette", 10), blockListTag, blackListedBlocks);
+            blockInfoList = loadPallet(pBlockGetter, pTag.getListOrEmpty(StructureTemplate.PALETTE_TAG), blockListTag, blackListedBlocks);
         }
 
 
@@ -84,24 +85,21 @@ public class ImmutableTemplate extends BaseImmutableTemplate {
         BlueprintUtil.SimplePalette structuretemplate$simplepalette = new BlueprintUtil.SimplePalette();
 
         for (int i = 0; i < pPaletteTag.size(); i++) {
-            structuretemplate$simplepalette.addMapping(NbtUtils.readBlockState(pBlockGetter, pPaletteTag.getCompound(i)), i);
+            structuretemplate$simplepalette.addMapping(NbtUtils.readBlockState(pBlockGetter, pPaletteTag.getCompoundOrEmpty(i)), i);
         }
 
         List<StructureTemplate.StructureBlockInfo> normalBlocks = Lists.newArrayList();
         List<StructureTemplate.StructureBlockInfo> blockWithNbt = Lists.newArrayList();
         List<StructureTemplate.StructureBlockInfo> blockWithSpecialShape = Lists.newArrayList();
 
-        for (int j = 0; j < pBlocksTag.size(); j++) {
-            CompoundTag compoundtag = pBlocksTag.getCompound(j);
-            ListTag listtag = compoundtag.getList("pos", 3);
-            BlockPos blockpos = new BlockPos(listtag.getInt(0), listtag.getInt(1), listtag.getInt(2));
-            BlockState blockState = structuretemplate$simplepalette.stateFor(compoundtag.getInt("state"));
-            CompoundTag nbt = null;
-
-            if (compoundtag.contains("nbt")) {
-                nbt = compoundtag.getCompound("nbt");
+        pBlocksTag.compoundStream().forEach(tag -> {
+            ListTag listtag = tag.getListOrEmpty("pos");
+            BlockPos blockpos = new BlockPos(listtag.getIntOr(0, 0), listtag.getIntOr(1, 0), listtag.getIntOr(2, 0));
+            BlockState blockState = structuretemplate$simplepalette.stateFor(tag.getIntOr("state", 0));
+            CompoundTag nbt = tag.getCompound("nbt").orElse(null);
+            if (nbt != null) {
                 if (nbt.contains(JigsawBlockEntity.FINAL_STATE)) {
-                    String finalState = nbt.getString(JigsawBlockEntity.FINAL_STATE);
+                    String finalState = nbt.getStringOr(JigsawBlockEntity.FINAL_STATE, "");
                     try {
                         blockState = BlockStateParser.parseForBlock(pBlockGetter, finalState, true).blockState();
                     } catch (CommandSyntaxException e) {
@@ -115,15 +113,14 @@ public class ImmutableTemplate extends BaseImmutableTemplate {
             }
 
             if (blockState == null) {
-                LOGGER.error("Error while parsing BlockState in Blueprint");
-                continue;
+                throw new IllegalStateException("Error while parsing BlockState in Blueprint");
             }
-
             StructureTemplate.StructureBlockInfo blockInfo = new StructureTemplate.StructureBlockInfo(
                     blockpos, blockState, nbt
             );
             addToLists(blockInfo, normalBlocks, blockWithNbt, blockWithSpecialShape, pBlockGetter, blackListedBlocks);
-        }
+
+        });
 
         return buildInfoList(normalBlocks, blockWithNbt, blockWithSpecialShape);
     }
@@ -163,7 +160,7 @@ public class ImmutableTemplate extends BaseImmutableTemplate {
             return info;
         }
 
-        String finalState = info.nbt().getString("final_state");
+        String finalState = info.nbt().getStringOr("final_state", "");
         if (finalState.isEmpty()) {
             return info;
         }

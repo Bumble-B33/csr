@@ -16,6 +16,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedList;
@@ -32,16 +34,25 @@ public class ServerBlueprintPlan extends BlueprintPlan {
         this.blockInfoList = fromBlockInfoList(blockInfoList);
     }
 
-    public static ServerBlueprintPlan load(CompoundTag tag, HolderLookup.Provider registries) {
-        ServerBlueprintPlan serverBlueprintPlan = new ServerBlueprintPlan(BlueprintUtil.getSizeFromTag(tag), ImmutableTemplate.loadPallet(registries.lookupOrThrow(Registries.BLOCK), tag.getList("palette", 10), tag.getList(StructureTemplate.BLOCKS_TAG, 10), List.of()));
+    public static ServerBlueprintPlan load(ValueInput tag, HolderLookup.Provider registries) {
+        CompoundTag global = tag.read("template", CompoundTag.CODEC).orElse(new CompoundTag());
+
+        ServerBlueprintPlan serverBlueprintPlan = new ServerBlueprintPlan(
+                BlueprintUtil.getSizeFromTag(tag),
+                ImmutableTemplate.loadPallet(registries.lookupOrThrow(Registries.BLOCK),
+                        global.getListOrEmpty(StructureTemplate.PALETTE_TAG),
+                        global.getListOrEmpty(StructureTemplate.BLOCKS_TAG),
+                        List.of()));
         serverBlueprintPlan.loadHasStarted(tag);
+
         return serverBlueprintPlan;
     }
 
-    public CompoundTag save(CompoundTag pTag) {
+    public void save(ValueOutput output) {
+        CompoundTag globalTag = new CompoundTag();
         if (this.blockInfoList.isEmpty()) {
-            pTag.put("blocks", new ListTag());
-            pTag.put("palette", new ListTag());
+            globalTag.put("blocks", new ListTag());
+            globalTag.put("palette", new ListTag());
         } else {
             BlueprintUtil.SimplePalette simplePalette = new BlueprintUtil.SimplePalette();
             ListTag blockInfoAsPallet = new ListTag();
@@ -65,19 +76,19 @@ public class ServerBlueprintPlan extends BlueprintPlan {
                 blockInfoAsPallet.add(compoundtag);
             });
 
-            pTag.put("blocks", blockInfoAsPallet);
+            globalTag.put("blocks", blockInfoAsPallet);
             ListTag palletTag = new ListTag();
 
             for (BlockState blockstate : simplePalette) {
                 palletTag.add(NbtUtils.writeBlockState(blockstate));
             }
 
-            pTag.put("palette", palletTag);
+            globalTag.put("palette", palletTag);
         }
+        output.store("template", CompoundTag.CODEC, globalTag);
 
-        saveSize(pTag);
-        saveHasStarted(pTag);
-        return pTag;
+        saveSize(output);
+        saveHasStarted(output);
     }
 
     @Override

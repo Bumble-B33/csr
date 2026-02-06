@@ -10,16 +10,23 @@ import net.bumblebee.claysoldiers.team.ClayMobTeamManger;
 import net.bumblebee.claysoldiers.util.color.ColorHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.state.CameraRenderState;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.WalkAnimationState;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.entity.EntityInLevelCallback;
+import net.minecraft.world.level.storage.TagValueInput;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -49,11 +56,15 @@ public class ClientClaySoldierEntity extends AbstractClaySoldierEntity {
         setPosRaw(pos.getX(), pos.getY(), pos.getZ());
     }
 
-    public static ClientClaySoldierEntity create(EntityType<? extends AbstractClaySoldierEntity> type, CompoundTag tag, BlockPos pos, WalkAnimationState state, Holder.Reference<ClayMobTeam> id, float size) {
-        ClientClaySoldierEntity soldier = new ClientClaySoldierEntity(type, pos, state, id);
-        soldier.waxed = tag.getBoolean(WAXED_TAG);
-        soldier.readArmorSaveData(tag);
-        soldier.offsetColor = ColorHelper.getFromTag(AbstractClaySoldierEntity.OFFSET_COLOR_TAG, tag);
+    public static ClientClaySoldierEntity create(EntityType<? extends AbstractClaySoldierEntity> type, CompoundTag tag, BlockPos pos, WalkAnimationState state, ResourceLocation id, float size) {
+        RegistryAccess registryAccess = Minecraft.getInstance().level.registryAccess();
+        ValueInput input = TagValueInput.create(ProblemReporter.DISCARDING, registryAccess, tag);
+
+        var ref = ClayMobTeamManger.getHolder(id, registryAccess).orElse(ClayMobTeamManger.getDefault(registryAccess));
+        ClientClaySoldierEntity soldier = new ClientClaySoldierEntity(type, pos, state, ref);
+        soldier.waxed = input.getBooleanOr(WAXED_TAG, false);
+        soldier.getInventory().load(input);
+        soldier.offsetColor = input.read(OFFSET_COLOR_TAG, ColorHelper.CODEC).orElse(ColorHelper.EMPTY);
         soldier.scale = size;
         return soldier;
     }
@@ -75,7 +86,7 @@ public class ClientClaySoldierEntity extends AbstractClaySoldierEntity {
         }
     }
 
-    public void render(float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
+    public void render(float partialTicks, PoseStack poseStack, SubmitNodeCollector buffer, CameraRenderState cameraRenderState) {
         if (renderer != null) {
             yBodyRotO = 0;
             yBodyRot = 0;
@@ -90,7 +101,7 @@ public class ClientClaySoldierEntity extends AbstractClaySoldierEntity {
             renderState.walkAnimationSpeed = fakeWalkState.speed();
 
 
-            renderer.render(renderState, poseStack, buffer, packedLight);
+            renderer.submit(renderState, poseStack, buffer, cameraRenderState);
         }
     }
 
@@ -157,11 +168,11 @@ public class ClientClaySoldierEntity extends AbstractClaySoldierEntity {
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag pCompound) {
+    public void addAdditionalSaveData(ValueOutput output) {
     }
 
     @Override
-    public void readAdditionalSaveData(CompoundTag pCompound) {
+    public void readAdditionalSaveData(ValueInput input) {
     }
 
     @Override

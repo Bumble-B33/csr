@@ -17,6 +17,8 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,9 +38,9 @@ public class ZombieClaySoldierEntity extends UndeadClaySoldier {
     }
 
     @Override
-    public void readAdditionalSaveData(CompoundTag pCompound) {
-        super.readAdditionalSaveData(pCompound);
-        final ResourceLocation prevTeamId = ClayMobTeam.read(pCompound, "zombie");
+    public void readAdditionalSaveData(ValueInput input) {
+        super.readAdditionalSaveData(input);
+        final ResourceLocation prevTeamId = ClayMobTeam.read(input, "zombie");
 
 
         if (ClayMobTeamManger.isValidTeam(prevTeamId, registryAccess())) {
@@ -48,16 +50,16 @@ public class ZombieClaySoldierEntity extends UndeadClaySoldier {
         }
 
 
-        setCurable(pCompound.getBoolean(CURABLE_TAG));
-        setCanPickItems(pCompound.getBoolean(PICK_ITEMS_TAG));
+        setCurable(input.getBooleanOr(CURABLE_TAG, false));
+        setCanPickItems(input.getBooleanOr(PICK_ITEMS_TAG, false));
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag pCompound) {
-        super.addAdditionalSaveData(pCompound);
-        ClayMobTeam.save(getPreviousTeamId(), pCompound, "zombie");
-        pCompound.putBoolean(CURABLE_TAG, isCurable());
-        pCompound.putBoolean(PICK_ITEMS_TAG, canPickItems());
+    public void addAdditionalSaveData(ValueOutput output) {
+        super.addAdditionalSaveData(output);
+        ClayMobTeam.save(getPreviousTeamId(), output, "zombie");
+        output.putBoolean(CURABLE_TAG, isCurable());
+        output.putBoolean(PICK_ITEMS_TAG, canPickItems());
     }
 
     @Override
@@ -142,13 +144,9 @@ public class ZombieClaySoldierEntity extends UndeadClaySoldier {
     }
 
     @Override
-    public void readItemPersistentData(CompoundTag tag) {
-        if (tag.contains(CURABLE_TAG)) {
-            setCurable(tag.getBoolean(CURABLE_TAG));
-        }
-        if (tag.contains(PICK_ITEMS_TAG)) {
-            setCanPickItems(tag.getBoolean(PICK_ITEMS_TAG));
-        }
+    public void readItemPersistentData(ValueInput tag) {
+        setCurable(tag.getBooleanOr(CURABLE_TAG, false));
+        setCanPickItems(tag.getBooleanOr(PICK_ITEMS_TAG, false));
     }
 
     public boolean canPickItems() {
@@ -160,8 +158,8 @@ public class ZombieClaySoldierEntity extends UndeadClaySoldier {
     }
 
     @Override
-    public void onConversion(ClayMobEntity oldSoldier, CompoundTag tag, @Nullable Player player) {
-        if (tag.contains(MATCH_TEAMS) && tag.getBoolean(MATCH_TEAMS)) {
+    public void onConversion(ClayMobEntity oldSoldier, ValueInput tag, @Nullable Player player) {
+        if (tag.getBooleanOr(MATCH_TEAMS, false)) {
             setPreviousTeam(oldSoldier.getClayTeamType());
         }
     }

@@ -5,8 +5,6 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import net.bumblebee.claysoldiers.ClaySoldiersClient;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
-import net.bumblebee.claysoldiers.blueprint.BlueprintData;
-import net.bumblebee.claysoldiers.blueprint.BlueprintTemplateSettings;
 import net.minecraft.client.model.geom.EntityModelSet;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
@@ -15,43 +13,126 @@ import net.minecraft.client.model.geom.builders.CubeListBuilder;
 import net.minecraft.client.model.geom.builders.LayerDefinition;
 import net.minecraft.client.model.geom.builders.MeshDefinition;
 import net.minecraft.client.model.geom.builders.PartDefinition;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
+import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
+import net.minecraft.client.renderer.state.CameraRenderState;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.client.renderer.texture.TextureAtlas;
+import net.minecraft.client.resources.model.Material;
+import net.minecraft.client.resources.model.MaterialSet;
 import net.minecraft.core.Vec3i;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.Mirror;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import org.jetbrains.annotations.Nullable;
+import org.joml.Vector3f;
 
-public class EaselBlockEntityRenderer implements BlockEntityRenderer<EaselBlockEntity> {
+import java.util.Set;
+
+public class EaselBlockEntityRenderer implements BlockEntityRenderer<EaselBlockEntity, EaselBlockEntityRenderState> {
     public static final ResourceLocation STAND_TEXTURE = ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "textures/block/easel.png");
     private static final ResourceLocation BLUEPRINT_TEXTURE = ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "textures/block/easel_blueprint.png");
     private static final RenderType RENDER_TYPE_STAND = RenderType.entityCutoutNoCull(STAND_TEXTURE);
     private static final RenderType RENDER_TYPE_BLUEPRINT = RenderType.entityCutoutNoCull(BLUEPRINT_TEXTURE);
+
+    public static final Material MATERIAL_STAND = new Material(TextureAtlas.LOCATION_BLOCKS, STAND_TEXTURE);
+    public static final Material MATERIAL_BLUEPRINT = new Material(TextureAtlas.LOCATION_BLOCKS, BLUEPRINT_TEXTURE);
+
 
     public static final ModelLayerLocation STAND_LAYER_LOCATION = new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "easel_stand"), "main");
     public static final ModelLayerLocation BLUEPRINT_LAYER_LOCATION = new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "easel_blueprint"), "main");
 
     private final ModelPart stand;
     private final ModelPart blueprint;
+    private final MaterialSet materials;
 
     public EaselBlockEntityRenderer(BlockEntityRendererProvider.Context pContext) {
         this.stand = pContext.bakeLayer(STAND_LAYER_LOCATION);
         this.blueprint = pContext.bakeLayer(BLUEPRINT_LAYER_LOCATION);
+        this.materials = pContext.materials();
     }
 
-    public EaselBlockEntityRenderer(EntityModelSet set) {
+    public EaselBlockEntityRenderer(EntityModelSet set, MaterialSet materials) {
         this.stand = set.bakeLayer(STAND_LAYER_LOCATION);
         this.blueprint = set.bakeLayer(BLUEPRINT_LAYER_LOCATION);
+        this.materials = materials;
     }
 
     @Override
-    public void render(EaselBlockEntity pBlockEntity, float pPartialTick, PoseStack pPoseStack, MultiBufferSource pBuffer, int pPackedLight, int pPackedOverlay) {
-        BlueprintTemplateSettings settings = pBlockEntity.getTemplateSettings();
-        BlueprintData data = pBlockEntity.getBlueprintData();
-        float yRot = pBlockEntity.getFacing().getOpposite().toYRot();
+    public EaselBlockEntityRenderState createRenderState() {
+        return new EaselBlockEntityRenderState();
+    }
+
+    @Override
+    public void submit(EaselBlockEntityRenderState easelBlockEntityRenderState, PoseStack poseStack, SubmitNodeCollector nodeCollector, CameraRenderState cameraRenderState) {
+        poseStack.pushPose();
+        poseStack.translate(0.5F, 0.5F, 0.5F);
+        poseStack.mulPose(Axis.YP.rotationDegrees(-easelBlockEntityRenderState.yRot));
+        poseStack.translate(-0.5F, -0.5F, -0.5F);
+
+        nodeCollector.submitModelPart(stand, poseStack, RENDER_TYPE_STAND, easelBlockEntityRenderState.lightCoords, OverlayTexture.NO_OVERLAY, materials.get(MATERIAL_STAND), -1, easelBlockEntityRenderState.breakProgress);
+
+        if (!easelBlockEntityRenderState.hasBlueprintData) {
+            poseStack.popPose();
+            return;
+        }
+
+        if (easelBlockEntityRenderState.mirrored) {
+            poseStack.scale(-1, 1, 1);
+            poseStack.translate(-1, 0, 0);
+        }
+        nodeCollector.submitModelPart(blueprint, poseStack, RENDER_TYPE_BLUEPRINT, easelBlockEntityRenderState.lightCoords, OverlayTexture.NO_OVERLAY, materials.get(MATERIAL_BLUEPRINT), -1, easelBlockEntityRenderState.breakProgress);
+
+        poseStack.popPose();
+        var settings = easelBlockEntityRenderState.settings;
+
+        if (settings == null || !shouldShowOutline()) {
+            return;
+        }
+
+        Vec3i offset = settings.getOutlineOffset();
+
+        poseStack.translate(0.5F, 0.5F, 0.5F);
+        poseStack.mulPose(Axis.YP.rotation(settings.getOutlineRotation()));
+        poseStack.translate(-0.5F, -0.5F, -0.5F);
+
+        if (easelBlockEntityRenderState.mirrored) {
+            poseStack.scale(-1, 1, 1);
+            poseStack.translate(-1, 0, 0);
+        }
+
+        if (!easelBlockEntityRenderState.isFinished) {
+            renderStructureOutline(poseStack, nodeCollector, easelBlockEntityRenderState.shape,
+                    offset.getX(), offset.getY(), offset.getZ(),
+                    easelBlockEntityRenderState.hasStarted ? 0 : 1, 1, 0,
+                    0.4f);
+
+        }
+
+    }
+
+    @Override
+    public void extractRenderState(EaselBlockEntity blockEntity, EaselBlockEntityRenderState renderState, float partialTick, Vec3 cameraPosition, @Nullable ModelFeatureRenderer.CrumblingOverlay breakProgress) {
+        BlockEntityRenderer.super.extractRenderState(blockEntity, renderState, partialTick, cameraPosition, breakProgress);
+        renderState.yRot = blockEntity.getFacing().getOpposite().toYRot();
+        var blueprintData = blockEntity.getBlueprintData();
+        renderState.hasBlueprintData = blueprintData != null;
+        renderState.mirrored = blockEntity.getMirror() != Mirror.NONE;
+        renderState.settings = blockEntity.getTemplateSettings();
+        renderState.isFinished = blockEntity.isFinished();
+        renderState.shape = blueprintData != null ? blueprintData.getShape() : null;
+        renderState.hasStarted = blockEntity.hasStarted();
+    }
+
+    /*public void render(EaselBlockEntity entity, float pPartialTick, PoseStack pPoseStack, MultiBufferSource pBuffer, int pPackedLight, int pPackedOverlay, Vec3 cameraPos) {
+        BlueprintTemplateSettings settings = entity.getTemplateSettings();
+        BlueprintData data = entity.getBlueprintData();
+        float yRot = entity.getFacing().getOpposite().toYRot();
 
 
         pPoseStack.pushPose();
@@ -64,7 +145,7 @@ public class EaselBlockEntityRenderer implements BlockEntityRenderer<EaselBlockE
             pPoseStack.popPose();
             return;
         }
-        if (pBlockEntity.getMirror() != Mirror.NONE) {
+        if (entity.getMirror() != Mirror.NONE) {
             pPoseStack.scale(-1, 1, 1);
             pPoseStack.translate(-1, 0, 0);
         }
@@ -81,25 +162,25 @@ public class EaselBlockEntityRenderer implements BlockEntityRenderer<EaselBlockE
         pPoseStack.mulPose(Axis.YP.rotation(settings.getOutlineRotation()));
         pPoseStack.translate(-0.5F, -0.5F, -0.5F);
 
-        if (pBlockEntity.getMirror() != Mirror.NONE) {
+        if (entity.getMirror() != Mirror.NONE) {
             pPoseStack.scale(-1, 1, 1);
             pPoseStack.translate(-1, 0, 0);
         }
-        if (!pBlockEntity.isFinished()) {
+        if (!entity.isFinished()) {
             renderStructureOutline(pPoseStack, pBuffer.getBuffer(RenderType.lines()), data.getShape(),
                     offset.getX(), offset.getY(), offset.getZ(),
-                    pBlockEntity.hasStarted() ? 0 : 1, 1, 0,
+                    entity.hasStarted() ? 0 : 1, 1, 0,
                     0.4f);
 
         }
-    }
+    }*/
 
-    public void render(PoseStack pPoseStack, MultiBufferSource pBuffer, int pPackedLight, int pPackedOverlay) {
+    public void submitItem(PoseStack pPoseStack, SubmitNodeCollector nodeCollector, int pPackedLight, int pPackedOverlay) {
 
         pPoseStack.pushPose();
         pPoseStack.translate(0.5F, 0.5F, 0.5F);
         pPoseStack.translate(-0.5F, -0.5F, -0.5F);
-        stand.render(pPoseStack, pBuffer.getBuffer(RENDER_TYPE_STAND), pPackedLight, pPackedOverlay, -1);
+        nodeCollector.submitModelPart(stand, pPoseStack, RENDER_TYPE_STAND, pPackedLight, pPackedOverlay, null);
 
         pPoseStack.popPose();
 
@@ -111,33 +192,43 @@ public class EaselBlockEntityRenderer implements BlockEntityRenderer<EaselBlockE
     }
 
     @Override
-    public boolean shouldRenderOffScreen(EaselBlockEntity pBlockEntity) {
+    public boolean shouldRenderOffScreen() {
         return true;
     }
 
-    private static void renderStructureOutline(PoseStack pPoseStack, VertexConsumer pConsumer, VoxelShape pShape, double pX, double pY, double pZ, float pRed, float pGreen, float pBlue, float pAlpha) {
-        PoseStack.Pose posestack$pose = pPoseStack.last();
-        pShape.forAllEdges(
-                (x1, y1, z1, x2, y2, z2) -> {
-                    float xLength = (float) (x2 - x1);
-                    float yLength = (float) (y2 - y1);
-                    float zLength = (float) (z2 - z1);
-                    float f3 = Mth.sqrt(xLength * xLength + yLength * yLength + zLength * zLength);
-                    xLength /= f3;
-                    yLength /= f3;
-                    zLength /= f3;
-                    pConsumer.addVertex(posestack$pose, (float) (x1 + pX), (float) (y1 + pY), (float) (z1 + pZ))
-                            .setColor(pRed, pGreen, pBlue, pAlpha)
-                            .setNormal(posestack$pose, xLength, yLength, zLength);
-                    pConsumer.addVertex(posestack$pose, (float) (x2 + pX), (float) (y2 + pY), (float) (z2 + pZ))
-                            .setColor(pRed, pGreen, pBlue, pAlpha)
-                            .setNormal(posestack$pose, xLength, yLength, zLength);
-                }
-        );
+    private static void renderStructureOutline(PoseStack pPoseStack, SubmitNodeCollector nodeCollector, VoxelShape pShape, double pX, double pY, double pZ, float pRed, float pGreen, float pBlue, float pAlpha) {
+        nodeCollector.submitCustomGeometry(pPoseStack, RenderType.lines(), new SubmitNodeCollector.CustomGeometryRenderer() {
+            @Override
+            public void render(PoseStack.Pose pose, VertexConsumer vertexConsumer) {
+                pShape.forAllEdges(
+                        (x1, y1, z1, x2, y2, z2) -> {
+                            float xLength = (float) (x2 - x1);
+                            float yLength = (float) (y2 - y1);
+                            float zLength = (float) (z2 - z1);
+                            float f3 = Mth.sqrt(xLength * xLength + yLength * yLength + zLength * zLength);
+                            xLength /= f3;
+                            yLength /= f3;
+                            zLength /= f3;
+                            vertexConsumer.addVertex(pose, (float) (x1 + pX), (float) (y1 + pY), (float) (z1 + pZ))
+                                    .setColor(pRed, pGreen, pBlue, pAlpha)
+                                    .setNormal(pose, xLength, yLength, zLength);
+                            vertexConsumer.addVertex(pose, (float) (x2 + pX), (float) (y2 + pY), (float) (z2 + pZ))
+                                    .setColor(pRed, pGreen, pBlue, pAlpha)
+                                    .setNormal(pose, xLength, yLength, zLength);
+                        }
+                );
+            }
+        });
+
+
     }
 
     private static boolean shouldShowOutline() {
         return ClaySoldiersClient.hasPlayerClayGogglesEquipped();
+    }
+
+    public void getExtents(Set<Vector3f> output) {
+        this.stand.getExtentsForGui(new PoseStack(), output);
     }
 
     public static LayerDefinition createStandLayer() {

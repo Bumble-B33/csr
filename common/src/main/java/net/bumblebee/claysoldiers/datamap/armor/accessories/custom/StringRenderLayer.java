@@ -8,8 +8,10 @@ import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.datamap.armor.accessories.AccessoryRenderState;
 import net.bumblebee.claysoldiers.datamap.armor.accessories.IAccessoryRenderLayer;
 import net.bumblebee.claysoldiers.datamap.armor.accessories.RenderableAccessory;
+import net.bumblebee.claysoldiers.entity.client.renderstates.AbstractClaySoldierRenderState;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
 
@@ -28,11 +30,19 @@ public class StringRenderLayer implements RenderableAccessory {
     }
 
     @Override
-    public void render(IAccessoryRenderLayer renderedFrom, PoseStack pPoseStack, MultiBufferSource pBuffer, int pPackedLight, AccessoryRenderState claySoldier) {
+    public void submit(IAccessoryRenderLayer renderedFrom, PoseStack pPoseStack, SubmitNodeCollector nodeCollector, int pPackedLight, AccessoryRenderState claySoldier) {
         if (renderType == null) {
             renderType = RenderType.entityTranslucent(textureLocation);
         }
-        VertexConsumer stringBuffer = pBuffer.getBuffer(renderType);
-        renderedFrom.getSoldierModel().renderToBuffer(pPoseStack, stringBuffer, pPackedLight, claySoldier.overlayCords0);
+        nodeCollector.submitModel(
+                renderedFrom.getSoldierModel(),
+                (AbstractClaySoldierRenderState) claySoldier.renderStateFrom,
+                pPoseStack,
+                renderType,
+                pPackedLight,
+                claySoldier.overlayCords0,
+                claySoldier.outlineColor,
+                null
+        );
     }
 }

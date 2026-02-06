@@ -10,19 +10,36 @@ import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.client.model.geom.builders.*;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
+import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
+import net.minecraft.client.renderer.state.CameraRenderState;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.resources.model.Material;
+import net.minecraft.client.resources.model.MaterialSet;
+import net.minecraft.data.AtlasIds;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.util.profiling.Profiler;
+import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
+import org.joml.Vector3f;
 
-public class HamsterWheelBlockEntityRenderer implements BlockEntityRenderer<HamsterWheelBlockEntity> {
+import java.util.Set;
+
+public class HamsterWheelBlockEntityRenderer implements BlockEntityRenderer<HamsterWheelBlockEntity, HamsterWheelRenderState> {
+
+
     private static final ResourceLocation HAMSTER_WHEEL_TEXTURE = ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "textures/block/hamster_wheel.png");
     private static final ResourceLocation BATTERY_CONTENT_TEXTURE = ResourceLocation.fromNamespaceAndPath("minecraft", "block/water_still");
+
+    public static final Material MATERIAL = new Material(TextureAtlas.LOCATION_BLOCKS, HAMSTER_WHEEL_TEXTURE);
+    public static final Material WATER = new Material(TextureAtlas.LOCATION_BLOCKS, BATTERY_CONTENT_TEXTURE);
+
 
     private static final RenderType RENDER_TYPE_BLOCK = RenderType.entityCutoutNoCull(HAMSTER_WHEEL_TEXTURE);
     private static final float DEG_90 = Mth.PI / 2;
@@ -38,25 +55,101 @@ public class HamsterWheelBlockEntityRenderer implements BlockEntityRenderer<Hams
     private final ModelPart batteryRight;
 
     private final HamsterWheelModel wheelModel;
+    private final MaterialSet materials;
+
 
     public HamsterWheelBlockEntityRenderer(BlockEntityRendererProvider.Context pContext) {
         this.stand = pContext.bakeLayer(STAND_LAYER_LOCATION);
+        this.materials = pContext.materials();
         this.powerConnection = pContext.bakeLayer(POWER_LAYER_LOCATION);
         this.wheelModel = new HamsterWheelModel(pContext.bakeLayer(HamsterWheelModel.LAYER_LOCATION));
         this.batteryLeft = pContext.bakeLayer(BatteryType.LEFT.getLayerLocation());
         this.batteryRight = pContext.bakeLayer(BatteryType.RIGHT.getLayerLocation());
     }
 
-    public HamsterWheelBlockEntityRenderer(EntityModelSet modelSet) {
+    public HamsterWheelBlockEntityRenderer(EntityModelSet modelSet, MaterialSet materials) {
         this.stand = modelSet.bakeLayer(STAND_LAYER_LOCATION);
         this.powerConnection = modelSet.bakeLayer(POWER_LAYER_LOCATION);
         this.wheelModel = new HamsterWheelModel(modelSet.bakeLayer(HamsterWheelModel.LAYER_LOCATION));
         this.batteryLeft = modelSet.bakeLayer(BatteryType.LEFT.getLayerLocation());
         this.batteryRight = modelSet.bakeLayer(BatteryType.RIGHT.getLayerLocation());
+        this.materials = materials;
     }
 
     @Override
-    public void render(HamsterWheelBlockEntity hamsterWheelBlock, float pPartialTick, PoseStack pPoseStack, MultiBufferSource pBuffer, int pPackedLight, int pPackedOverlay) {
+    public HamsterWheelRenderState createRenderState() {
+        return new HamsterWheelRenderState();
+    }
+
+    @Override
+    public void extractRenderState(HamsterWheelBlockEntity blockEntity, HamsterWheelRenderState renderState, float partialTick, Vec3 cameraPosition, @Nullable ModelFeatureRenderer.CrumblingOverlay breakProgress) {
+        BlockEntityRenderer.super.extractRenderState(blockEntity, renderState, partialTick, cameraPosition, breakProgress);
+        renderState.rotation = (blockEntity.getRotationTick(partialTick) % 251) * WHEEL_SPEED;
+        renderState.yRot = blockEntity.getBlockState().getValue(HamsterWheelBlock.FACING).getOpposite().toYRot();
+        renderState.hasEnergyStorage = blockEntity.hasEnergyStorage();
+        renderState.hasSecondBattery = blockEntity.hasSecondBattery();
+        renderState.partialTicks = partialTick;
+        var data = blockEntity.getSoldierData();
+
+        renderState.clientClaySoldierEntity = data != null ? data.getClientSoldier() : null;
+
+        IHamsterWheelEnergyStorage energy = blockEntity.getEnergyStorage(null);
+        renderState.hasEnergyStorage = energy != null;
+        if (energy != null) {
+            renderState.energyStored = energy.energyStored();
+            renderState.maxEnergyStored = energy.maxEnergyStored();
+        }
+    }
+
+    @Override
+    public void submit(HamsterWheelRenderState hamsterWheelRenderState, PoseStack poseStack, SubmitNodeCollector nodeCollector, CameraRenderState cameraRenderState) {
+        var profiler = Profiler.get();
+        profiler.push("hamsterWheelRender");
+        float yRot = hamsterWheelRenderState.yRot;
+
+        poseStack.translate(0.5F, 0.5F, 0.5F);
+        poseStack.mulPose(Axis.YP.rotationDegrees(-yRot));
+        poseStack.translate(-0.5F, -0.5F, -0.5F);
+
+        nodeCollector.submitModel(wheelModel, hamsterWheelRenderState, poseStack, RENDER_TYPE_BLOCK, hamsterWheelRenderState.lightCoords, OverlayTexture.NO_OVERLAY, 0, hamsterWheelRenderState.breakProgress);
+
+        nodeCollector.submitModelPart(stand, poseStack, RENDER_TYPE_BLOCK, hamsterWheelRenderState.lightCoords, OverlayTexture.NO_OVERLAY, null, -1, hamsterWheelRenderState.breakProgress);
+
+        if (hamsterWheelRenderState.hasEnergyStorage) {
+            profiler.push("batteryRender");
+
+            nodeCollector.submitModelPart(powerConnection, poseStack, RENDER_TYPE_BLOCK, hamsterWheelRenderState.lightCoords, OverlayTexture.NO_OVERLAY, null, -1, hamsterWheelRenderState.breakProgress);
+            nodeCollector.submitModelPart(batteryLeft, poseStack, RENDER_TYPE_BLOCK, hamsterWheelRenderState.lightCoords, OverlayTexture.NO_OVERLAY, null, -1, hamsterWheelRenderState.breakProgress);
+            renderBatterContent(hamsterWheelRenderState, nodeCollector, poseStack, hamsterWheelRenderState.lightCoords);
+
+
+            if (hamsterWheelRenderState.hasSecondBattery) {
+                nodeCollector.submitModelPart(batteryRight, poseStack, RENDER_TYPE_BLOCK, hamsterWheelRenderState.lightCoords, OverlayTexture.NO_OVERLAY, null, -1, hamsterWheelRenderState.breakProgress);
+
+                poseStack.pushPose();
+                poseStack.translate(0.5625f, 0, 0);
+                renderBatterContent(hamsterWheelRenderState, nodeCollector, poseStack, hamsterWheelRenderState.lightCoords);
+                poseStack.popPose();
+            }
+            profiler.pop();
+        }
+
+        if (hamsterWheelRenderState.clientClaySoldierEntity != null) {
+            profiler.push("soldierRender");
+
+            poseStack.translate(0.5f, 0.1f, 0.5f);
+            poseStack.mulPose(Axis.YP.rotation(DEG_90));
+            hamsterWheelRenderState.clientClaySoldierEntity.render(hamsterWheelRenderState.partialTicks, poseStack, nodeCollector, cameraRenderState);
+            //data.getClientSoldier().render(pPartialTick, pPoseStack, pBuffer, pPackedLight);
+
+            profiler.pop();
+        }
+
+
+        profiler.pop();
+    }
+
+    /*public void render(HamsterWheelBlockEntity hamsterWheelBlock, float pPartialTick, PoseStack pPoseStack, MultiBufferSource pBuffer, int pPackedLight, int pPackedOverlay, Vec3 cameraPos) {
         var profiler = Profiler.get();
         profiler.push("hamsterWheelRender");
         float yRot = hamsterWheelBlock.getBlockState().getValue(HamsterWheelBlock.FACING).getOpposite().toYRot();
@@ -65,7 +158,7 @@ public class HamsterWheelBlockEntityRenderer implements BlockEntityRenderer<Hams
         pPoseStack.mulPose(Axis.YP.rotationDegrees(-yRot));
         pPoseStack.translate(-0.5F, -0.5F, -0.5F);
         VertexConsumer wheelBuilder = pBuffer.getBuffer(RENDER_TYPE_BLOCK);
-        hamsterWheelBlock.clientTick(pPartialTick);
+        //hamsterWheelBlock.clientTick(pPartialTick);
 
         stand.render(pPoseStack, wheelBuilder, pPackedLight, pPackedOverlay, -1);
 
@@ -102,38 +195,36 @@ public class HamsterWheelBlockEntityRenderer implements BlockEntityRenderer<Hams
 
             pPoseStack.translate(0.5f, 0.1f, 0.5f);
             pPoseStack.mulPose(Axis.YP.rotation(DEG_90));
-            data.getClientSoldier().render(pPartialTick, pPoseStack, pBuffer, pPackedLight);
+            //data.getClientSoldier().render(pPartialTick, pPoseStack, pBuffer, pPackedLight);
 
             profiler.pop();
         }
 
         profiler.pop();
 
-    }
+    }*/
 
-    public void render(PoseStack pPoseStack, MultiBufferSource pBuffer, int pPackedLight, int pPackedOverlay) {
+    public void submitItem(PoseStack pPoseStack, SubmitNodeCollector nodeCollector, int pPackedLight, int pPackedOverlay) {
         float yRot = 0;
         pPoseStack.translate(0.5F, 0.5F, 0.5F);
         pPoseStack.mulPose(Axis.YP.rotationDegrees(-yRot));
         pPoseStack.translate(-0.5F, -0.5F, -0.5F);
-        VertexConsumer wheelBuilder = pBuffer.getBuffer(RENDER_TYPE_BLOCK);
 
-        stand.render(pPoseStack, wheelBuilder, pPackedLight, pPackedOverlay, -1);
-
-
-        wheelModel.renderToBuffer(pPoseStack, wheelBuilder, pPackedLight, pPackedOverlay, -1);
+        nodeCollector.submitModelPart(stand, pPoseStack, RENDER_TYPE_BLOCK, pPackedLight, pPackedOverlay,null);
+        nodeCollector.submitModel(wheelModel, HamsterWheelRenderState.EMPTY, pPoseStack, RENDER_TYPE_BLOCK, pPackedLight, pPackedOverlay, 0, null);
     }
 
-    private static void renderBatterContent(HamsterWheelBlockEntity entity, MultiBufferSource buffer, PoseStack pPoseStack, int pPackedLight) {
-        IHamsterWheelEnergyStorage energy = entity.getEnergyStorage(null);
-        if (energy == null || energy.energyStored() == 0) {
+    private static void renderBatterContent(HamsterWheelRenderState entity, SubmitNodeCollector nodeCollector, PoseStack pPoseStack, int pPackedLight) {
+        if (entity.hasEnergy || entity.energyStored == 0) {
             return;
         }
-        float height = Math.max(0.1f, 6f * energy.energyStored() / energy.maxEnergyStored());
+        float height = Math.max(0.1f, 6f * entity.energyStored / entity.maxEnergyStored);
 
 
-        TextureAtlasSprite sprite = Minecraft.getInstance().getTextureAtlas(TextureAtlas.LOCATION_BLOCKS).apply(BATTERY_CONTENT_TEXTURE);
-        VertexConsumer builder = buffer.getBuffer(Minecraft.useShaderTransparency() ? RenderType.solid() : RenderType.translucent());
+        TextureAtlasSprite sprite = Minecraft.getInstance().getAtlasManager().getAtlasOrThrow(AtlasIds.BLOCKS).getSprite(BATTERY_CONTENT_TEXTURE);
+        //Todo
+        // RenderType Translucent
+        //VertexConsumer builder = buffer.getBuffer(Minecraft.useShaderTransparency() ? RenderType.solid() : RenderType.translucentMovingBlock());
 
 
         float textureScale = height / 6f;
@@ -147,7 +238,7 @@ public class HamsterWheelBlockEntityRenderer implements BlockEntityRenderer<Hams
 
         //Top
         if (height <= 5) {
-            drawQuad(builder, pPoseStack, 2, height, 12, 5, height, 15, u0, v0, u1, ((v1 - v0) * 0.5f + v0), pPackedLight);
+            drawQuad(nodeCollector, pPoseStack, 2, height, 12, 5, height, 15, u0, v0, u1, ((v1 - v0) * 0.5f + v0), pPackedLight);
         }
         if (height <= 1) {
             return;
@@ -157,51 +248,59 @@ public class HamsterWheelBlockEntityRenderer implements BlockEntityRenderer<Hams
         v1 = (v1 - v0) * textureScale + v0;
 
         //Front
-        drawQuad(builder, pPoseStack, 2, 0, 12, 5, height, 12, u0, v0, u1, v1, pPackedLight);
+        drawQuad(nodeCollector, pPoseStack, 2, 0, 12, 5, height, 12, u0, v0, u1, v1, pPackedLight);
 
 
         // Back
         pPoseStack.pushPose();
         pPoseStack.mulPose(Axis.YP.rotationDegrees(180));
         pPoseStack.translate(-0.4375f, 0, -1.875f);
-        drawQuad(builder, pPoseStack, 2, 0, 15, 5, height, 15, u0, v0, u1, v1, pPackedLight);
+        drawQuad(nodeCollector, pPoseStack, 2, 0, 15, 5, height, 15, u0, v0, u1, v1, pPackedLight);
         pPoseStack.popPose();
 
         //Side
         pPoseStack.pushPose();
         pPoseStack.mulPose(Axis.YP.rotationDegrees(90));
         pPoseStack.translate(-1.6875f, 0, 0);
-        drawQuad(builder, pPoseStack, 12, 0, 2, 15, height, 2, u0, v0, u1, v1, pPackedLight);
+        drawQuad(nodeCollector, pPoseStack, 12, 0, 2, 15, height, 2, u0, v0, u1, v1, pPackedLight);
         pPoseStack.popPose();
 
         //Side other
         pPoseStack.pushPose();
         pPoseStack.mulPose(Axis.YN.rotationDegrees(90));
         pPoseStack.translate(0, 0, -0.625f);
-        drawQuad(builder, pPoseStack, 12, 0, 5, 15, height, 5, u0, v0, u1, v1, pPackedLight);
+        drawQuad(nodeCollector, pPoseStack, 12, 0, 5, 15, height, 5, u0, v0, u1, v1, pPackedLight);
         pPoseStack.popPose();
 
     }
 
-    private static void drawQuad(VertexConsumer builder, PoseStack poseStack,
+    private static void drawQuad(SubmitNodeCollector nodeCollector, PoseStack poseStack,
                                  int x0, float y0, int z0,
                                  int x1, float y1, int z1,
                                  float u0, float v0, float u1,
                                  float v1, int packedLight) {
 
-        drawVertex(builder, poseStack, x0/16f, y0/16f, z0/16f, u0, v0, 0, 1, 0, packedLight);
-        drawVertex(builder, poseStack, x0/16f, y1/16f, z1/16f, u0, v1, 0, 1, 0, packedLight);
-        drawVertex(builder, poseStack, x1/16f, y1/16f, z1/16f, u1, v1, 0, 1, 0, packedLight);
-        drawVertex(builder, poseStack, x1/16f, y0/16f, z0/16f, u1, v0, 0, 1, 0, packedLight);
-
+        nodeCollector.submitCustomGeometry(poseStack, Minecraft.useShaderTransparency() ? RenderType.solid() : RenderType.translucentMovingBlock(), (pose, vertexConsumer) -> {
+            drawVertex(vertexConsumer, pose, x0/16f, y0/16f, z0/16f, u0, v0, 0, 1, 0, packedLight);
+            drawVertex(vertexConsumer, pose, x0/16f, y1/16f, z1/16f, u0, v1, 0, 1, 0, packedLight);
+            drawVertex(vertexConsumer, pose, x1/16f, y1/16f, z1/16f, u1, v1, 0, 1, 0, packedLight);
+            drawVertex(vertexConsumer, pose, x1/16f, y0/16f, z0/16f, u1, v0, 0, 1, 0, packedLight);
+        });
     }
 
-    private static void drawVertex(VertexConsumer builder, PoseStack poseStack, float x, float y, float z, float u, float v, float n0, float n1, float n2, int packedLight) {
-        builder.addVertex(poseStack.last().pose(), x, y, z)
+    private static void drawVertex(VertexConsumer builder, PoseStack.Pose pose, float x, float y, float z, float u, float v, float n0, float n1, float n2, int packedLight) {
+        builder.addVertex(pose, x, y, z)
                 .setColor(0xF73FFFE4)
                 .setUv(u, v)
                 .setLight(packedLight)
                 .setNormal(n0, n1, n2);
+
+    }
+
+    public void getExtents(Set<Vector3f> set) {
+        PoseStack poseStack = new PoseStack();
+        stand.getExtentsForGui(poseStack, set);
+        wheelModel.getExtents(set);
     }
 
     public static LayerDefinition createStandLayer() {

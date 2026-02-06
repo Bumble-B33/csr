@@ -38,16 +38,17 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.tags.ItemTags;
+import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.DyedItemColor;
 import net.minecraft.world.item.equipment.trim.TrimMaterials;
 import net.minecraft.world.item.equipment.trim.TrimPatterns;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.storage.TagValueOutput;
 
 import java.util.List;
 import java.util.Set;
@@ -56,10 +57,10 @@ import java.util.concurrent.CompletableFuture;
 public class ModDataMapAndTagProvider extends ClaySoldiersItemProvider {
     private static final CompoundTag VAMPIRE_TAG = new CompoundTag();
     private static final CompoundTag ZOMBIE_TAG = new CompoundTag();
-    private static final CompoundTag CLAY_WRAITH_TAG = new CompoundTag();
-    private static final CompoundTag DEFAULT_BOSS_TAG = new CompoundTag();
-    private static final CompoundTag VAMPIRE_BOSS_TAG = new CompoundTag();
-    private static final CompoundTag ZOMBIE_BOSS_TAG = new CompoundTag();
+    private static final TagValueOutput CLAY_WRAITH_TAG = TagValueOutput.createWithoutContext(ProblemReporter.DISCARDING);;
+    private static final TagValueOutput DEFAULT_BOSS_TAG = TagValueOutput.createWithoutContext(ProblemReporter.DISCARDING);
+    private static final TagValueOutput VAMPIRE_BOSS_TAG = TagValueOutput.createWithoutContext(ProblemReporter.DISCARDING);
+    private static final TagValueOutput ZOMBIE_BOSS_TAG = TagValueOutput.createWithoutContext(ProblemReporter.DISCARDING);
 
     static {
         VAMPIRE_TAG.putBoolean(VampireClaySoldierEntity.ALPHA_TAG, true);
@@ -96,8 +97,8 @@ public class ModDataMapAndTagProvider extends ClaySoldiersItemProvider {
 
     @Override
     protected void gather() {
-        this.tag(ModTags.Items.CLAY_HORSE_ARMOR).add(Items.DIAMOND, Items.GOLD_INGOT, Items.IRON_INGOT, Items.LEATHER);
-        this.tag(ModTags.Items.SOLDIER_THROWABLE).add(Items.SNOWBALL, Items.GRAVEL, Items.SLIME_BALL, Items.FIRE_CHARGE);
+        this.tag(ModTags.Items.CLAY_HORSE_ARMOR).add(Items.DIAMOND, Items.GOLD_INGOT, Items.IRON_INGOT, Items.LEATHER, Items.COPPER_INGOT, Items.GOAT_HORN);
+        this.tag(ModTags.Items.SOLDIER_THROWABLE_HARMFUL).add(Items.SNOWBALL, Items.GRAVEL, Items.SLIME_BALL, Items.FIRE_CHARGE);
 
         addHoldable(Items.STICK, SoldierHoldableEffect.of(SoldierPropertyMap.builder().setDamage(2f)).setSlot(SoldierEquipmentSlot.MAINHAND).build(), TagType.WEAPON, DefaultSoldierItemTypes.BASIC);
         addHoldable(ModItems.SHARPENED_STICK.get(), SoldierHoldableEffect.of(SoldierPropertyMap.builder().setDamage(3f)).setSlot(SoldierEquipmentSlot.MAINHAND).build(), TagType.WEAPON, DefaultSoldierItemTypes.BASIC);
@@ -111,7 +112,7 @@ public class ModDataMapAndTagProvider extends ClaySoldiersItemProvider {
         addHoldable(ModItems.SHEAR_BLADE.get(), SoldierHoldableEffect.of(SoldierPropertyMap.builder().setDamage(1.25f).addSpecialAttack(new SpecialAttacks.SneakAttack(SpecialAttackType.MELEE, 0.5f))).setSlots(SoldierEquipmentSlot.HANDS).setPickUpPriority(SoldierPickUpPriority.LOW).build(), TagType.WEAPON);
 
         addHoldable(Items.SNOWBALL, SoldierHoldableEffect.of(
-                        SoldierPropertyMap.builder().throwable(RangedAttackType.HARM, 2f).addSpecialAttack(new SpecialAttacks.EffectAttack(SpecialAttackType.RANGED, 0f, MobEffects.MOVEMENT_SLOWDOWN, 400, 0)))
+                        SoldierPropertyMap.builder().throwable(RangedAttackType.HARM, 2f).addSpecialAttack(new SpecialAttacks.EffectAttack(SpecialAttackType.RANGED, 0f, MobEffects.SLOWNESS, 400, 0)))
                 .setSlot(SoldierEquipmentSlot.BACKPACK).setPickUpPriority(SoldierPickUpPriority.LOW).setMaxStackSize(8)
                 .removalCondition(RemovalConditionType.ON_USE_RANGED, OnUseCondition.ranged(1f)).build(), DefaultSoldierItemTypes.BASIC, DefaultSoldierItemTypes.RANGED);
         addHoldable(Items.FIRE_CHARGE, SoldierHoldableEffect.of(SoldierPropertyMap.builder().throwable(RangedAttackType.HARM, 2f).setSetOnFire(45)).setSlot(SoldierEquipmentSlot.BACKPACK).setPickUpPriority(SoldierPickUpPriority.HIGH).removalCondition(RemovalConditionType.ON_USE_RANGED, OnUseCondition.ranged(1f)).setMaxStackSize(6).build(), DefaultSoldierItemTypes.RANGED, DefaultSoldierItemTypes.ARSONIST);
@@ -162,12 +163,12 @@ public class ModDataMapAndTagProvider extends ClaySoldiersItemProvider {
         addHoldable(Items.FIREWORK_STAR, SoldierHoldableEffect.of(SoldierPropertyMap.builder()).setSlots(SoldierEquipmentSlot.BACKPACK_SLOTS).setPickUpPriority(SoldierPickUpPriority.LOW).setDropRate(DropRateProperty.NEVER).build());
         addWearable(Items.LILY_PAD,
                 SoldierHoldableEffect.of(SoldierPropertyMap.builder().setProtection(2f).setCanSwim()).setSlot(SoldierEquipmentSlot.LEGS).setPredicate(ClayPredicates.LogicPredicate.not(new ClayPredicates.SoldierPropertyPredicate(ClayPredicates.PropertyTestType.INCREASE, SoldierPropertyTypes.HEAVY.get()))).build(),
-                SoldierWearableBuilder.armor((ArmorItem) Items.IRON_LEGGINGS).color(0x208030).build(), DefaultSoldierItemTypes.ARMORED, DefaultSoldierItemTypes.DIVER);
+                SoldierWearableBuilder.armor(Items.IRON_LEGGINGS).color(0x208030).build(), DefaultSoldierItemTypes.ARMORED, DefaultSoldierItemTypes.DIVER);
 
         addWearable(Items.RED_MUSHROOM, SoldierHoldableEffect.of(SoldierPropertyMap.builder().setProtection(1f).immunity(MobEffects.POISON, EffectImmunityType.IMMUNE)).setSlot(SoldierEquipmentSlot.HEAD).build(),
                 SoldierMultiWearable.accessory(SoldierAccessorySlot.HEAD_ITEM, new SkullRenderable(Items.RED_MUSHROOM_BLOCK)), DefaultSoldierItemTypes.ARMORED, DefaultSoldierItemTypes.SPECIALIST);
         addWearable(Items.LEATHER, SoldierHoldableEffect.of(SoldierPropertyMap.builder().setProtection(3f)).setSlot(SoldierEquipmentSlot.CHEST).setPickUpPriority(SoldierPickUpPriority.LOW).build(),
-                SoldierWearableBuilder.armor((ArmorItem) Items.LEATHER_CHESTPLATE).color(DyedItemColor.LEATHER_COLOR).affectedOffsetColor().build(), DefaultSoldierItemTypes.ARMORED);
+                SoldierWearableBuilder.armor(Items.LEATHER_CHESTPLATE).color(DyedItemColor.LEATHER_COLOR).affectedOffsetColor().build(), DefaultSoldierItemTypes.ARMORED);
         addWearable(Items.GLASS_PANE, SoldierHoldableEffect.of(SoldierPropertyMap.builder().setProtection(1f).setSeeInvis()).setSlot(SoldierEquipmentSlot.HEAD).build(),
                 SoldierWearableBuilder.empty()
                         .addTrim(TrimPatterns.EYE, TrimMaterials.QUARTZ)
@@ -185,19 +186,19 @@ public class ModDataMapAndTagProvider extends ClaySoldiersItemProvider {
                         .build(), DefaultSoldierItemTypes.FASHION, DefaultSoldierItemTypes.ARMORED);
         addWearable(Items.BAMBOO, SoldierHoldableEffect.of(SoldierPropertyMap.builder().infiniteBreathHold()).setSlot(SoldierEquipmentSlot.HEAD).build(), SoldierMultiWearable.of().put(SoldierAccessorySlot.SNORKEL, new SnorkelRenderable(SnorkelRenderable.BAMBOO_STICK_TEXTURE)).build(), DefaultSoldierItemTypes.DIVER);
         addWearable(Items.BRICK, SoldierHoldableEffect.of(SoldierPropertyMap.builder().noBreathHold().setProtection(10f).heavy(5f).addAttribute(Attributes.MOVEMENT_SPEED, new AttributeModifier(ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "brick_armor_slow"), -0.2f, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL))).setSlot(SoldierEquipmentSlot.CHEST).setPickUpPriority(SoldierPickUpPriority.HIGH).build(),
-                SoldierWearableBuilder.armor((ArmorItem) Items.NETHERITE_CHESTPLATE).color(0xA8533B).build(), DefaultSoldierItemTypes.ARMORED, DefaultSoldierItemTypes.TANK);
+                SoldierWearableBuilder.armor(Items.NETHERITE_CHESTPLATE).color(0xA8533B).build(), DefaultSoldierItemTypes.ARMORED, DefaultSoldierItemTypes.TANK);
         addWearable(Items.TURTLE_SCUTE, SoldierHoldableEffect.of(SoldierPropertyMap.builder().setBreathHold(30).setProtection(2f)).setSlot(SoldierEquipmentSlot.HEAD).build(),
-                SoldierWearableBuilder.armor(((ArmorItem) Items.TURTLE_HELMET)).build(), DefaultSoldierItemTypes.ARMORED, DefaultSoldierItemTypes.DIVER);
+                SoldierWearableBuilder.armor((Items.TURTLE_HELMET)).build(), DefaultSoldierItemTypes.ARMORED, DefaultSoldierItemTypes.DIVER);
         addWearable(Items.SLIME_BLOCK,
                 SoldierHoldableEffect.of(SoldierPropertyMap.builder().canBounce()).setSlot(SoldierEquipmentSlot.FEET).build(),
-                SoldierWearableBuilder.armor((ArmorItem) Items.IRON_BOOTS).color(0x77b568).build(), DefaultSoldierItemTypes.ARMORED, DefaultSoldierItemTypes.SPECIALIST);
+                SoldierWearableBuilder.armor(Items.IRON_BOOTS).color(0x77b568).build(), DefaultSoldierItemTypes.ARMORED, DefaultSoldierItemTypes.SPECIALIST);
 
         addWearable(Items.GOLD_INGOT, SoldierHoldableEffect.of(SoldierPropertyMap.builder().setProtection(1.5f).size(1.25f).attackType(AttackTypeProperty.KING)).setSlot(SoldierEquipmentSlot.HEAD).setPickUpPriority(SoldierPickUpPriority.VERY_HIGH)
                         .setDropRate(DropRateProperty.NEVER).build(),
-                SoldierWearableBuilder.armor((ArmorItem) Items.GOLDEN_HELMET).addTrim(TrimPatterns.SHAPER, TrimMaterials.LAPIS).build(), DefaultSoldierItemTypes.ROYALTY);
+                SoldierWearableBuilder.armor(Items.GOLDEN_HELMET).addTrim(TrimPatterns.SHAPER, TrimMaterials.LAPIS).build(), DefaultSoldierItemTypes.ROYALTY);
         addWearable(Items.GOLD_BLOCK, SoldierHoldableEffect.of(SoldierPropertyMap.builder().setProtection(2f).addSpecialAttack(new SpecialAttacks.CritAttack(SpecialAttackType.MELEE, 1f, 0.75f)).size(1.1f)).setSlots(SoldierEquipmentSlot.CUSTOM_EQUIP).setPickUpPriority(SoldierPickUpPriority.VERY_HIGH)
                         .setDropRate(DropRateProperty.NEVER).build(),
-                SoldierMultiWearable.single(SoldierEquipmentSlot.CHEST, SoldierWearableBuilder.armor((ArmorItem) Items.CHAINMAIL_CHESTPLATE).addTrim(TrimPatterns.SHAPER, TrimMaterials.GOLD).addTrim(TrimPatterns.VEX, TrimMaterials.GOLD).build()));
+                SoldierMultiWearable.single(SoldierEquipmentSlot.CHEST, SoldierWearableBuilder.armor(Items.CHAINMAIL_CHESTPLATE).addTrim(TrimPatterns.SHAPER, TrimMaterials.GOLD).addTrim(TrimPatterns.VEX, TrimMaterials.GOLD).build()));
         addWearable(Items.DIAMOND, SoldierHoldableEffect.of(SoldierPropertyMap.builder().setProtection(1.5f).size(1.1f).attackType(AttackTypeProperty.QUEEN)).setSlot(SoldierEquipmentSlot.HEAD).setPickUpPriority(SoldierPickUpPriority.VERY_HIGH)
                         .setDropRate(DropRateProperty.NEVER).build(),
                 SoldierWearableBuilder.empty().addTrim(TrimPatterns.HOST, TrimMaterials.EMERALD).addTrim(TrimPatterns.WAYFINDER, TrimMaterials.DIAMOND).build(), DefaultSoldierItemTypes.ROYALTY);
@@ -206,7 +207,7 @@ public class ModDataMapAndTagProvider extends ClaySoldiersItemProvider {
                 .addTrim(TrimPatterns.SHAPER, TrimMaterials.EMERALD).addTrim(TrimPatterns.VEX, TrimMaterials.DIAMOND).build()
         ));
         addWearable(Items.CACTUS, SoldierHoldableEffect.of(SoldierPropertyMap.builder().addCounterAttack(new SpecialAttacks.Thorns(SpecialAttackType.MELEE_AND_RANGED, 1f)).setProtection(1f)).setSlot(SoldierEquipmentSlot.CHEST).build(),
-                SoldierWearableBuilder.armor((ArmorItem) Items.NETHERITE_CHESTPLATE).color(0x649832).addTrim(TrimPatterns.RIB, TrimMaterials.NETHERITE).build(), DefaultSoldierItemTypes.ARMORED, DefaultSoldierItemTypes.TANK);
+                SoldierWearableBuilder.armor(Items.NETHERITE_CHESTPLATE).color(0x649832).addTrim(TrimPatterns.RIB, TrimMaterials.NETHERITE).build(), DefaultSoldierItemTypes.ARMORED, DefaultSoldierItemTypes.TANK);
 
         addWearable(Items.STRING, SoldierHoldableEffect.of(SoldierPropertyMap.builder().setExplosionResistance(24)).setMaxStackSize(2).removalCondition(RemovalConditionType.ON_HURT, new OnHurtCondition(DamageSourcePredicate.Builder.damageType().tag(TagPredicate.is(DamageTypeTags.IS_EXPLOSION)), 0.5f)).setSlots(SoldierEquipmentSlot.BACKPACK_SLOTS).build(),
                 SoldierMultiWearable.of().put(SoldierAccessorySlot.STRING, new StringRenderLayer()).build(), DefaultSoldierItemTypes.ARMORED, DefaultSoldierItemTypes.SPECIALIST);
@@ -231,9 +232,9 @@ public class ModDataMapAndTagProvider extends ClaySoldiersItemProvider {
                         .setSlots(SoldierEquipmentSlot.NO_SLOT).setPickUpPriority(SoldierPickUpPriority.VERY_HIGH)
                         .setDropRate(DropRateProperty.NEVER).build(),
                 SoldierMultiWearable.of()
-                        .put(SoldierEquipmentSlot.CHEST, SoldierWearableBuilder.armor((ArmorItem) Items.LEATHER_CHESTPLATE).color(0x1D1D21).build())
-                        .put(SoldierEquipmentSlot.LEGS, SoldierWearableBuilder.armor((ArmorItem) Items.LEATHER_LEGGINGS).color(0x1D1D21).build())
-                        .put(SoldierEquipmentSlot.FEET, SoldierWearableBuilder.armor((ArmorItem) Items.LEATHER_BOOTS).color(0x1D1D21).build()
+                        .put(SoldierEquipmentSlot.CHEST, SoldierWearableBuilder.armor(Items.LEATHER_CHESTPLATE).color(0x1D1D21).build())
+                        .put(SoldierEquipmentSlot.LEGS, SoldierWearableBuilder.armor(Items.LEATHER_LEGGINGS).color(0x1D1D21).build())
+                        .put(SoldierEquipmentSlot.FEET, SoldierWearableBuilder.armor(Items.LEATHER_BOOTS).color(0x1D1D21).build()
                         ).build()
         );
 
@@ -250,7 +251,7 @@ public class ModDataMapAndTagProvider extends ClaySoldiersItemProvider {
         addWearable(Items.COMMAND_BLOCK, SoldierHoldableEffect.of(SoldierPropertyMap.builder()
                                 .heavy(5).size(1.4f).setDamage(10f).glowing().glowOutline()
                                 .setProtection(25f).explosion(2).attackType(AttackTypeProperty.AGGRESSIVE)
-                                .addDeathCloudEffect(new DeathCloudProperty(MobEffects.HARM, 5, 1))
+                                .addDeathCloudEffect(new DeathCloudProperty(MobEffects.INSTANT_DAMAGE, 5, 1))
                                 .infiniteBreathHold().setCanSwim().setSetOnFire(20)
                                 .addSpecialAttack(new SpecialAttacks.SneakAttack(SpecialAttackType.MELEE_AND_RANGED, 2f))
                                 .addSpecialAttack(new SpecialAttacks.LightningAttack(SpecialAttackType.MELEE_AND_RANGED, 1f))

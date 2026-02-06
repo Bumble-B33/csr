@@ -8,6 +8,8 @@ import net.bumblebee.claysoldiers.entity.horse.AbstractClayHorse;
 import net.bumblebee.claysoldiers.entity.horse.ClayHorseEntity;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
+import net.minecraft.client.renderer.entity.layers.SimpleEquipmentLayer;
+import net.minecraft.client.resources.model.EquipmentClientInfo;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityAttachment;
 
@@ -17,6 +19,7 @@ public class ClayHorseRenderer extends MobRenderer<AbstractClayHorse, ClayHorseR
         super(pContext, new ClayHorseModel(pContext.bakeLayer(ClayHorseModel.LAYER_LOCATION)), 0.75F * SCALE);
         this.addLayer(new ClayHorseArmorLayer(this, pContext.getModelSet(), pContext.getEquipmentAssets()));
         this.addLayer(new ClayMobStatusRenderlayer<>(this, pContext.getEntityRenderDispatcher(), h -> h.isInSittingPose, h -> h.shouldShowWorkStatus, h -> h.workStatus, h -> h.statusAttachmentPoint));
+        this.addLayer(new ClayHorseHornRenderLayer(this, pContext.getModelSet()));
     }
 
     @Override
@@ -32,7 +35,6 @@ public class ClayHorseRenderer extends MobRenderer<AbstractClayHorse, ClayHorseR
     @Override
     public void extractRenderState(AbstractClayHorse clayHorse, ClayHorseRenderState clayHorseRenderState, float partialTick) {
         super.extractRenderState(clayHorse, clayHorseRenderState, partialTick);
-        clayHorseRenderState.isSaddled = clayHorse.isSaddled();
         clayHorseRenderState.isRidden = clayHorse.isVehicle();
         clayHorseRenderState.eatAnimation = clayHorse.getEatAnim(partialTick);
         clayHorseRenderState.standAnimation = clayHorse.getStandAnim(partialTick);

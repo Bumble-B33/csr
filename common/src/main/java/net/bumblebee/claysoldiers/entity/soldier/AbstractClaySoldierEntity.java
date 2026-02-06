@@ -1,7 +1,7 @@
 package net.bumblebee.claysoldiers.entity.soldier;
 
-import com.google.common.collect.Iterables;
 import com.mojang.logging.LogUtils;
+import com.mojang.serialization.Codec;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.capability.AssignableWorksiteCapability;
 import net.bumblebee.claysoldiers.capability.ThrowableItemCapability;
@@ -18,6 +18,7 @@ import net.bumblebee.claysoldiers.entity.goal.*;
 import net.bumblebee.claysoldiers.entity.goal.target.*;
 import net.bumblebee.claysoldiers.entity.goal.workgoal.*;
 import net.bumblebee.claysoldiers.entity.goal.workgoal.dig.DigHoleGoal;
+import net.bumblebee.claysoldiers.entity.inventory.ClaySoldierInventory;
 import net.bumblebee.claysoldiers.entity.soldier.status.SoldierStatusHolder;
 import net.bumblebee.claysoldiers.entity.soldier.status.SoldierStatusManager;
 import net.bumblebee.claysoldiers.init.ModCriterions;
@@ -51,12 +52,8 @@ import net.bumblebee.claysoldiers.team.ClayMobTeamManger;
 import net.bumblebee.claysoldiers.util.color.ColorHelper;
 import net.bumblebee.claysoldiers.util.color.EntityDataColorWrapper;
 import net.minecraft.core.Holder;
-import net.minecraft.core.NonNullList;
-import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -96,11 +93,12 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.FireworkExplosion;
-import net.minecraft.world.item.enchantment.EnchantmentEffectComponents;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.level.pathfinder.PathType;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
@@ -117,9 +115,6 @@ public class AbstractClaySoldierEntity extends ClayMobTeamOwnerEntity implements
     public static final String DEFENDING_AREA_LANG = IWorkGoal.JOB_LANG_KEY.formatted(ClaySoldiersCommon.MOD_ID, "defending_area");
     public static final String PROTECTING_OWNER_LANG = IWorkGoal.JOB_LANG_KEY.formatted(ClaySoldiersCommon.MOD_ID, "protecting_owner");
 
-    public static final String BACKPACK_ITEMS_TAG = "SoldierBackpackItems";
-    public static final String HAND_ITEMS_TAG = "SoldierHandItems";
-    public static final String ARMOR_ITEMS_TAG = "SoldierArmorItems";
     public static final String OFFSET_COLOR_TAG = "OffsetColor";
     public static final String REVIVE_TYPE_COOLDOWN_TAG = "revive_type_cooldown";
     public static final String SKIN_VARIANT_ID_TAG = "SkinVariantId";
@@ -146,6 +141,9 @@ public class AbstractClaySoldierEntity extends ClayMobTeamOwnerEntity implements
 
     private static final int MIN_POWER_FOR_SPECIAL_ATTACKS = 1;
 
+    private static final Codec<List<ItemStackWithEffect>> ARMOR_ITEMS_LIST_CODEC = ItemStack.OPTIONAL_CODEC.xmap(ItemStackWithEffect::new, ItemStackWithEffect::stack).sizeLimitedListOf(SoldierEquipmentSlot.values().length);
+
+
     protected final AttackTypeProperty defaultAttackType;
     private static final byte NO_GLIDE = -1;
     private static final byte GLIDE_UNCHECKED = -2;
@@ -156,10 +154,8 @@ public class AbstractClaySoldierEntity extends ClayMobTeamOwnerEntity implements
      */
     private byte lastGliderSlot = GLIDE_UNCHECKED;
 
-    private final NonNullList<ItemStackWithEffect> soldierHandItems = NonNullList.withSize(2, ItemStackWithEffect.EMPTY);
-    private final NonNullList<ItemStackWithEffect> soldierArmorItems = NonNullList.withSize(5, ItemStackWithEffect.EMPTY);
-    private final NonNullList<ItemStackWithEffect> soldierBackpackItems = NonNullList.withSize(2, ItemStackWithEffect.EMPTY);
     protected final SoldierHoldablePropertiesCombiner propertyCombiner;
+    private final ClaySoldierInventory inventory;
     public float oBob;
     public float bob;
     private static final double MAGIC_CAPE_NUMBER = 10.0;
@@ -216,6 +212,7 @@ public class AbstractClaySoldierEntity extends ClayMobTeamOwnerEntity implements
         this.moveControl = new ClaySoldierMoveControl(this, this::canSwim, 85, 10, false);
 
         this.workSelector = getOrCreateWorkSelectorGoal();
+        this.inventory = new ClaySoldierInventory();
     }
 
     public static AttributeSupplier setSoldierAttributes() {
@@ -286,94 +283,60 @@ public class AbstractClaySoldierEntity extends ClayMobTeamOwnerEntity implements
 
 
     @Override
-    public void addAdditionalSaveData(CompoundTag pCompound) {
-        super.addAdditionalSaveData(pCompound);
-        addArmorSaveData(pCompound);
+    public void addAdditionalSaveData(ValueOutput output) {
+        super.addAdditionalSaveData(output);
+        inventory.save(output);
 
-        pCompound.putShort(FUSE_TAG, (short) this.maxSwell);
-        pCompound.putByte(EXPLOSION_RADIUS_TAG, (byte) this.explosionRadius);
-        pCompound.putBoolean(IGNITED_TAG, this.isIgnited());
-        pCompound.putBoolean(VERY_ANGRY_TAG, this.isVeryAngry());
-        getOffsetColor().writeToTag(OFFSET_COLOR_TAG, pCompound);
+        output.putShort(FUSE_TAG, (short) this.maxSwell);
+        output.putByte(EXPLOSION_RADIUS_TAG, (byte) this.explosionRadius);
+        output.putBoolean(IGNITED_TAG, this.isIgnited());
+        output.putBoolean(VERY_ANGRY_TAG, this.isVeryAngry());
+        output.store(OFFSET_COLOR_TAG, ColorHelper.CODEC, getOffsetColor());
 
-        CompoundTag reviveCooldownMapNBT = new CompoundTag();
-        for (var entry : reviveTypeCooldown.entrySet()) {
-            var value = entry.getValue();
-            if (value != null) {
-                reviveCooldownMapNBT.putLong(entry.getKey().getSerializedName(), value);
-            }
+        if (!reviveTypeCooldown.isEmpty()) {
+            output.store(REVIVE_TYPE_COOLDOWN_TAG, ReviveType.COOLDOWN_MAP_CODEC, reviveTypeCooldown);
         }
-        if (!reviveCooldownMapNBT.isEmpty()) {
-            pCompound.put(REVIVE_TYPE_COOLDOWN_TAG, reviveCooldownMapNBT);
-        }
-        pCompound.putInt(SKIN_VARIANT_ID_TAG, skinVariantId);
-        workSelector.saveToTag(pCompound);
+
+        output.putInt(SKIN_VARIANT_ID_TAG, skinVariantId);
+        workSelector.saveToTag(output);
         workSelector.resetGoal();
+
+
         if (!carriedStack.isEmpty()) {
-            pCompound.put(CARRIED_ITEM_TAG, carriedStack.save(registryAccess()));
+            output.store(CARRIED_ITEM_TAG, ItemStack.CODEC, carriedStack);
         }
     }
-
-    protected void addArmorSaveData(CompoundTag tag) {
-        tag.put(HAND_ITEMS_TAG, createItemListTag(soldierHandItems));
-        tag.put(ARMOR_ITEMS_TAG, createItemListTag(soldierArmorItems));
-        tag.put(BACKPACK_ITEMS_TAG, createItemListTag(soldierBackpackItems));
-    }
-
-    private ListTag createItemListTag(List<ItemStackWithEffect> itemStacks) {
-        ListTag listTag = new ListTag();
-        for (ItemStackWithEffect stackWithEffect : itemStacks) {
-            if (!stackWithEffect.isEmpty()) {
-                listTag.add(stackWithEffect.save(this.registryAccess()));
-            } else {
-                listTag.add(new CompoundTag());
-            }
-        }
-        return listTag;
-    }
-
 
     @Override
-    public void readAdditionalSaveData(CompoundTag pCompound) {
-        super.readAdditionalSaveData(pCompound);
-        readArmorSaveData(pCompound);
+    public void readAdditionalSaveData(ValueInput input) {
+        super.readAdditionalSaveData(input);
+        inventory.load(input);
 
-        if (pCompound.contains(FUSE_TAG, Tag.TAG_ANY_NUMERIC)) {
-            this.maxSwell = pCompound.getShort(FUSE_TAG);
-        }
+        this.maxSwell = input.getShortOr(FUSE_TAG, (short) 30);
+        this.maxSwell = input.getShortOr(FUSE_TAG, (short) 30);
+        this.explosionRadius = input.getByteOr(EXPLOSION_RADIUS_TAG, (byte) 3);
 
-        if (pCompound.contains(EXPLOSION_RADIUS_TAG, 99)) {
-            this.explosionRadius = pCompound.getByte(EXPLOSION_RADIUS_TAG);
-        }
 
-        if (pCompound.getBoolean(IGNITED_TAG)) {
+        if (input.getBooleanOr(IGNITED_TAG, false)) {
             this.ignite();
         }
-        this.setVeryAngry(pCompound.getBoolean(VERY_ANGRY_TAG));
-        this.setOffsetColor(ColorHelper.getFromTag(OFFSET_COLOR_TAG, pCompound));
+        this.setVeryAngry(input.getBooleanOr(VERY_ANGRY_TAG, false));
+        this.setOffsetColor(input.read(OFFSET_COLOR_TAG, ColorHelper.CODEC).orElse(ColorHelper.EMPTY));
 
 
         querySpecialProperties();
 
         initCombinedProperties();
         updateOtherProperties();
-        if (pCompound.contains(REVIVE_TYPE_COOLDOWN_TAG, Tag.TAG_COMPOUND)) {
-            CompoundTag reviveTypeNbt = pCompound.getCompound(REVIVE_TYPE_COOLDOWN_TAG);
-            for (String key : reviveTypeNbt.getAllKeys()) {
-                ReviveType.getFromString(key).ifPresent(type -> reviveTypeCooldown.put(type, reviveTypeNbt.getLong(key)));
-            }
-        }
-        skinVariantId = pCompound.getInt(SKIN_VARIANT_ID_TAG);
-        workSelector.readFromTag(pCompound);
-        if (pCompound.contains(CARRIED_ITEM_TAG)) {
-            carriedStack = ItemStack.parseOptional(registryAccess(), pCompound.getCompound(CARRIED_ITEM_TAG));
-        }
-    }
 
-    protected void readArmorSaveData(CompoundTag tag) {
-        getFromTag(tag, HAND_ITEMS_TAG, soldierHandItems::set, this.registryAccess());
-        getFromTag(tag, ARMOR_ITEMS_TAG, soldierArmorItems::set, this.registryAccess());
-        getFromTag(tag, BACKPACK_ITEMS_TAG, soldierBackpackItems::set, this.registryAccess());
+        delayedScale = getScale();
+
+        input.read(REVIVE_TYPE_COOLDOWN_TAG, ReviveType.COOLDOWN_MAP_CODEC).ifPresent(reviveTypeCooldown::putAll);
+
+        skinVariantId = input.getIntOr(SKIN_VARIANT_ID_TAG, 0);
+        workSelector.readFromTag(input);
+
+        carriedStack = input.read(CARRIED_ITEM_TAG, ItemStack.CODEC).orElse(ItemStack.EMPTY);
     }
 
     /**
@@ -387,14 +350,12 @@ public class AbstractClaySoldierEntity extends ClayMobTeamOwnerEntity implements
      * @param key        The key under which the item stack data is stored.
      * @param listSetter Called for each parsed {@code ItemStackWithEffect} and its index.
      */
-    public static void getFromTag(CompoundTag tag, String key, BiConsumer<Integer, ItemStackWithEffect> listSetter, RegistryAccess registryAccess) {
-        if (tag.contains(key, Tag.TAG_LIST)) {
-            ListTag listTag = tag.getList(key, Tag.TAG_COMPOUND);
-
-            for (int index = 0; index < listTag.size(); ++index) {
-                listSetter.accept(index, ItemStackWithEffect.parseOptional(registryAccess, listTag.getCompound(index)));
+    public static void getFromTag(ValueInput tag, String key, BiConsumer<Integer, ItemStackWithEffect> listSetter) {
+        tag.read(key, ARMOR_ITEMS_LIST_CODEC).ifPresent(l -> {
+            for (int index = 0; index < l.size(); ++index) {
+                listSetter.accept(index, l.get(index));
             }
-        }
+        });
     }
 
     @Override
@@ -408,6 +369,15 @@ public class AbstractClaySoldierEntity extends ClayMobTeamOwnerEntity implements
         builder.define(DATA_WORK_STATUS, WorkSelectorGoal.encodeWorkStatusToByte(WorkSelectorGoal.RESTING_INDEX, 0));
 
         EntityDataColorWrapper.define(builder, DATA_OFFSET_COLOR, DATA_IS_JEB);
+    }
+
+    public ClaySoldierInventory getInventory() {
+        return inventory;
+    }
+
+    @Override
+    protected EntityEquipment createEquipment() {
+        return ClaySoldierInventory.EMPTY_ENTITY_EQUIPMENT;
     }
 
     // Team
@@ -513,7 +483,7 @@ public class AbstractClaySoldierEntity extends ClayMobTeamOwnerEntity implements
     protected InteractionResult mobInteract(Player pPlayer, InteractionHand pHand) {
         ItemStack itemInHand = pPlayer.getItemInHand(pHand);
         if (getAttackType().isRoyalty() && isClayFood(itemInHand) && !pPlayer.equals(getClayTeamOwner())) {
-            if (!level().isClientSide) {
+            if (!level().isClientSide()) {
                 if (tryClaimingTeam(pPlayer)) {
                     level().broadcastEntityEvent(this, SPAWN_HAPPY_EVENT);
                     if (pPlayer instanceof ServerPlayer serverPlayer) {
@@ -537,7 +507,7 @@ public class AbstractClaySoldierEntity extends ClayMobTeamOwnerEntity implements
         }
 
         if (mode == ClayBrushItem.Mode.WORK) {
-            if (!level().isClientSide && player instanceof ServerPlayer serverPlayer) {
+            if (!level().isClientSide() && player instanceof ServerPlayer serverPlayer) {
                 if (this.getAttackType().canWork()) {
                     workSelector.cycleWorkMode();
                     ModCriterions.CLAY_BRUSH_COMMAND_TRIGGER.get().trigger(serverPlayer, mode);
@@ -553,7 +523,7 @@ public class AbstractClaySoldierEntity extends ClayMobTeamOwnerEntity implements
     // Pick Up
     @Override
     public boolean canHoldItem(ItemStack pStack) {
-        if (!level().isClientSide && workSelector.workRequiresItemPickUp()) {
+        if (!level().isClientSide() && workSelector.workRequiresItemPickUp()) {
             return true;
         }
         return pStack.is(ModTags.Items.SOLDIER_HOLDABLE);
@@ -680,12 +650,9 @@ public class AbstractClaySoldierEntity extends ClayMobTeamOwnerEntity implements
 
 
     // Items
-    public ItemStackWithEffect getItemBySlot(SoldierEquipmentSlot pSlot) {
-        return switch (pSlot.getType()) {
-            case HAND -> this.soldierHandItems.get(pSlot.getIndex());
-            case ARMOR -> this.soldierArmorItems.get(pSlot.getIndex());
-            case BACKPACK -> this.soldierBackpackItems.get(pSlot.getIndex());
-        };
+    @Override
+    public ItemStackWithEffect getItemBySlot(SoldierEquipmentSlot slot) {
+        return inventory.getItemBySlot(slot);
     }
 
     @Override
@@ -694,14 +661,9 @@ public class AbstractClaySoldierEntity extends ClayMobTeamOwnerEntity implements
     }
 
     @Override
-    public void setItemSlot(SoldierEquipmentSlot pSlot, ItemStackWithEffect pStack) {
-        verifyEquippedItem(pStack.stack());
-        switch (pSlot.getType()) {
-            case HAND -> this.soldierHandItems.set(pSlot.getIndex(), pStack);
-            case ARMOR -> this.soldierArmorItems.set(pSlot.getIndex(), pStack);
-            case BACKPACK -> this.soldierBackpackItems.set(pSlot.getIndex(), pStack);
-        }
-        handleSlotChange(pSlot, pStack);
+    public void setItemSlot(SoldierEquipmentSlot slot, ItemStackWithEffect pStack) {
+        inventory.setItemSlot(slot, pStack);
+        handleSlotChange(slot, pStack);
     }
 
     private void handleSlotChange(SoldierEquipmentSlot slot, ItemStackWithEffect stackWithEffect) {
@@ -758,26 +720,12 @@ public class AbstractClaySoldierEntity extends ClayMobTeamOwnerEntity implements
     }
 
     @Override
-    public Iterable<ItemStack> getHandSlots() {
-        return convertToStack(soldierHandItems);
-    }
-
-    @Override
-    public Iterable<ItemStack> getArmorSlots() {
-        return convertToStack(soldierArmorItems);
-    }
-
-    public Iterable<ItemStack> getBackpackSlots() {
-        return convertToStack(soldierBackpackItems);
-    }
-
-    @Override
     public Iterable<ItemStack> getAllSlots() {
-        return Iterables.concat(this.getHandSlots(), this.getArmorSlots(), this.getBackpackSlots());
+        return inventory.getAllSlotsAsStacks();
     }
 
     public Iterable<ItemStackWithEffect> getAllSlotsWithEffect() {
-        return Iterables.concat(soldierHandItems, soldierArmorItems, soldierBackpackItems);
+        return inventory.getAllSlots();
     }
 
     @Override
@@ -1062,14 +1010,14 @@ public class AbstractClaySoldierEntity extends ClayMobTeamOwnerEntity implements
                 this.stopSleeping();
             }
 
-            if (!this.level().isClientSide && this.hasCustomName()) {
+            if (!this.level().isClientSide() && this.hasCustomName()) {
                 LOGGER.info("Named entity {} died: {}", this, this.getCombatTracker().getDeathMessage().getString());
             }
             this.dead = true;
 
             this.getCombatTracker().recheckStatus();
             if (level() instanceof ServerLevel serverlevel) {
-                if (entity == null || entity.killedEntity(serverlevel, this)) {
+                if (entity == null || entity.killedEntity(serverlevel, this, damageSource)) {
                     ReviveResult reviveResult = reviveSelf(serverlevel);
                     if (reviveResult.dropInventory()) {
                         this.dropAllDeathLoot(serverlevel, damageSource);
@@ -1106,33 +1054,13 @@ public class AbstractClaySoldierEntity extends ClayMobTeamOwnerEntity implements
     protected void dropCustomDeathLoot(ServerLevel level, DamageSource pSource, boolean pRecentlyHit) {
         super.dropCustomDeathLoot(level, pSource, pRecentlyHit);
         if (dropInventoryOnDeath()) {
-            /*for (SoldierEquipmentSlot slots : SoldierEquipmentSlot.values()) {
-                ItemStackWithEffect stackWithEffect = this.getItemBySlot(slots);
-                if (!stackWithEffect.isEmpty() && !EnchantmentHelper.has(stackWithEffect.stack(), EnchantmentEffectComponents.PREVENT_EQUIPMENT_DROP)) {
-                    if (this.dropItemStackWithChance(stackWithEffect) != null) {
-                        this.setItemSlot(slots, ItemStackWithEffect.EMPTY);
-                    }
-                }
-            }*/
-            dropInventory(level, this::getItemBySlot, (slot, stack) -> {
+            inventory.dropInventory(level, (slot, stack) -> {
                 this.spawnAtLocation(level, stack);
                 this.setItemSlot(slot, ItemStackWithEffect.EMPTY);
             });
+
             if (!getCarriedStack().isEmpty()) {
                 this.dropItemStack(getCarriedStack());
-            }
-        }
-    }
-
-    public static void dropInventory(ServerLevel level, Function<SoldierEquipmentSlot, ItemStackWithEffect> equipment, BiConsumer<SoldierEquipmentSlot, ItemStack> dropInWorld) {
-        if (!level.getGameRules().getBoolean(ClaySoldiersCommon.CLAY_SOLDIER_INVENTORY_DROP_RULE)) {
-            return;
-        }
-
-        for (SoldierEquipmentSlot slot : SoldierEquipmentSlot.values()) {
-            var stack = equipment.apply(slot);
-            if (!stack.isEmpty() && !EnchantmentHelper.has(stack.stack(), EnchantmentEffectComponents.PREVENT_EQUIPMENT_DROP) && level.getRandom().nextFloat() < stack.dropRate()) {
-                dropInWorld.accept(slot, stack.stack());
             }
         }
     }
@@ -1174,7 +1102,7 @@ public class AbstractClaySoldierEntity extends ClayMobTeamOwnerEntity implements
     }
 
     private void explodeSoldier() {
-        if (!this.level().isClientSide) {
+        if (!this.level().isClientSide()) {
             level().broadcastEntityEvent(this, EXPLODE_FIREWORK_EVENT);
             float explosionPower = allProperties().getValueOrDfault(SoldierPropertyTypes.DEATH_EXPLOSION);
             this.dead = true;
@@ -1262,6 +1190,8 @@ public class AbstractClaySoldierEntity extends ClayMobTeamOwnerEntity implements
     }
 
 
+
+
     /**
      * Returns the visual scale of this {@code ClaySoldier}.
      * This includes the {@link Attributes#SCALE} and {@link #getSoldierSize() SoldierSize}.
@@ -1328,11 +1258,15 @@ public class AbstractClaySoldierEntity extends ClayMobTeamOwnerEntity implements
             delayedScale += 0.1f;
             if (delayedScale > actualSize) {
                 delayedScale = actualSize;
+                refreshDimensions();
+
             }
         } else {
             delayedScale -= 0.1f;
             if (delayedScale < actualSize) {
                 delayedScale = actualSize;
+                refreshDimensions();
+
             }
         }
     }
@@ -1437,9 +1371,7 @@ public class AbstractClaySoldierEntity extends ClayMobTeamOwnerEntity implements
 
     // Sync to client on spawn
     public void handleSpawnPayload(ClaySoldierSpawnPayload payload) {
-        setItemSlot(SoldierEquipmentSlot.CAPE, payload.getCape());
-        setItemSlot(SoldierEquipmentSlot.BACKPACK, payload.getBackpack1());
-        setItemSlot(SoldierEquipmentSlot.BACKPACK_PASSIVE, payload.getBackpack2());
+        payload.getInventory().forEach(this::setItemSlot);
 
         for (ReviveType type : ReviveType.values()) {
             setReviveOnCooldown(type, payload.getReviveCooldowns().get(type.ordinal()));
@@ -1519,11 +1451,6 @@ public class AbstractClaySoldierEntity extends ClayMobTeamOwnerEntity implements
         } else {
             return getItemBySlot(SoldierEquipmentSlot.OFFHAND).isShield();
         }
-    }
-
-    @Override
-    public int getTeamColor() {
-        return getClayTeam().getColor(this, 0);
     }
 
     @Override
@@ -1607,7 +1534,7 @@ public class AbstractClaySoldierEntity extends ClayMobTeamOwnerEntity implements
         if (cooldown <= 0) {
             return;
         }
-        if (!level().isClientSide) {
+        if (!level().isClientSide()) {
             ClaySoldiersCommon.NETWORK_MANGER.sendToPlayersTrackingEntity(this, new ClaySoldierReviveCooldownPayload(this.getId(), type, cooldown));
         }
         reviveTypeCooldown.put(type, level().getGameTime() + cooldown);
@@ -1698,7 +1625,7 @@ public class AbstractClaySoldierEntity extends ClayMobTeamOwnerEntity implements
     // Gliding
 
     @Override
-    public boolean causeFallDamage(float pFallDistance, float pMultiplier, DamageSource pSource) {
+    public boolean causeFallDamage(double pFallDistance, float pMultiplier, DamageSource pSource) {
         if (allProperties().canGlide()) {
             return false;
         }
@@ -1826,7 +1753,7 @@ public class AbstractClaySoldierEntity extends ClayMobTeamOwnerEntity implements
      * Reads data from the given {@code Tag} when spawned by an {@code Item}.
      */
     @Override
-    public void readItemPersistentData(CompoundTag tag) {
+    public void readItemPersistentData(ValueInput tag) {
     }
 
     @Override
@@ -1871,6 +1798,7 @@ public class AbstractClaySoldierEntity extends ClayMobTeamOwnerEntity implements
 
         return super.getDefaultDimensions(pPose);
     }
+
 
 
     public enum RidingPose {
@@ -2037,12 +1965,14 @@ public class AbstractClaySoldierEntity extends ClayMobTeamOwnerEntity implements
     }
 
     @Override
-    public boolean startRiding(Entity entity, boolean force) {
-        var result = super.startRiding(entity, force);
+    public boolean startRiding(Entity entity, boolean force, boolean sendGameEvent) {
+        var result = super.startRiding(entity, force, sendGameEvent);
         updateRidingProperties();
         ClaySoldierRideableMap.onRide(entity, this);
         return result;
     }
+
+
 
     @Override
     public void stopRiding() {

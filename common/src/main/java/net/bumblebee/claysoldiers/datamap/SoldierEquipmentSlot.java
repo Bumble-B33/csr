@@ -107,7 +107,7 @@ public enum SoldierEquipmentSlot implements StringRepresentable, KeyableTranslat
             case FEET -> Optional.of(FEET);
             case MAINHAND -> Optional.of(MAINHAND);
             case OFFHAND -> Optional.of(OFFHAND);
-            case BODY -> Optional.empty();
+            case BODY, SADDLE -> Optional.empty();
         };
     }
     @Nullable

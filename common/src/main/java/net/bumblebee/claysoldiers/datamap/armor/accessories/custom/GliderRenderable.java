@@ -7,6 +7,7 @@ import net.bumblebee.claysoldiers.datamap.armor.accessories.AccessoryRenderState
 import net.bumblebee.claysoldiers.datamap.armor.accessories.IAccessoryRenderLayer;
 import net.bumblebee.claysoldiers.datamap.armor.accessories.RenderableAccessory;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
@@ -29,8 +30,8 @@ public static final StreamCodec<RegistryFriendlyByteBuf, GliderRenderable> STREA
     }
 
     @Override
-    public void render(IAccessoryRenderLayer renderedFrom, PoseStack pPoseStack, MultiBufferSource pBuffer, int pPackedLight, AccessoryRenderState claySoldier) {
-        if (claySoldier.isFalling) {
+    public void submit(IAccessoryRenderLayer renderedFrom, PoseStack pPoseStack, SubmitNodeCollector pBuffer, int pPackedLight, AccessoryRenderState claySoldier) {
+        if (claySoldier.isFalling && !claySoldier.isInWater) {
             pPoseStack.pushPose();
             pPoseStack.translate(-1.2, 0.12, 0);
 
@@ -38,7 +39,7 @@ public static final StreamCodec<RegistryFriendlyByteBuf, GliderRenderable> STREA
             pPoseStack.mulPose(Axis.XP.rotationDegrees(90F));
 
             pPoseStack.scale(1.5f, 1.5f, 1.5f);
-            claySoldier.gliderAccessory.render(pPoseStack, pBuffer, pPackedLight, OverlayTexture.NO_OVERLAY);
+            claySoldier.gliderAccessory.submit(pPoseStack, pBuffer, pPackedLight, OverlayTexture.NO_OVERLAY, claySoldier.outlineColor);
             pPoseStack.popPose();
         }
     }

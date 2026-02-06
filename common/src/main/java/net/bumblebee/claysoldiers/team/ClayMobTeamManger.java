@@ -21,10 +21,8 @@ import org.jetbrains.annotations.UnmodifiableView;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 public class ClayMobTeamManger {
@@ -76,7 +74,7 @@ public class ClayMobTeamManger {
 
     @NotNull
     public static ClayMobTeam getFromKeyAssumeValid(ResourceLocation key, RegistryAccess access) {
-        return Objects.requireNonNull(access.lookupOrThrow(ModRegistries.CLAY_MOB_TEAMS).getValue(key), "Tried accessing in valid team");
+        return Objects.requireNonNull(access.lookupOrThrow(ModRegistries.CLAY_MOB_TEAMS).getValue(key), "Tried accessing invalid team");
     }
 
     /**
@@ -93,7 +91,10 @@ public class ClayMobTeamManger {
         return registryAccess.lookupOrThrow(ModRegistries.CLAY_MOB_TEAMS).get(create(key)).map(Holder::value);
     }
 
-    public static Optional<Holder.Reference<ClayMobTeam>> getHolder(ResourceLocation key, HolderLookup.Provider registryAccess) {
+    public static Optional<Holder.Reference<ClayMobTeam>> getHolder(@Nullable ResourceLocation key, HolderLookup.Provider registryAccess) {
+        if (key == null) {
+            return Optional.empty();
+        }
         return registryAccess.lookupOrThrow(ModRegistries.CLAY_MOB_TEAMS).get(ResourceKey.create(ModRegistries.CLAY_MOB_TEAMS, key));
     }
 
@@ -101,7 +102,7 @@ public class ClayMobTeamManger {
     /**
      * Returns whether this key is for a valid team.
      */
-    public static boolean isValidTeam(ResourceLocation key, RegistryAccess access) {
+    public static boolean isValidTeam(@NotNull ResourceLocation key, RegistryAccess access) {
         return access.lookupOrThrow(ModRegistries.CLAY_MOB_TEAMS).containsKey(key);
     }
 
@@ -190,5 +191,23 @@ public class ClayMobTeamManger {
         } else if (noTeamType || defaultType) {
             LOGGER.info("Registered {} as it was not present", noTeamType ? NO_TEAM_TYPE : DEFAULT_TYPE);
         }
+    }
+
+    @Nullable
+    private static Registry<ClayMobTeam> registry = null;
+    private static final List<Consumer<Registry<ClayMobTeam>>> loadCallbacks = new ArrayList<>();
+
+    public static void setLoadCallback(Consumer<Registry<ClayMobTeam>> callback) {
+        if (registry != null) {
+            callback.accept(registry);
+        } else {
+            loadCallbacks.add(callback);
+        }
+    }
+
+    public static void onRegistryLoad(Registry<ClayMobTeam> newRegistry) {
+        registry = newRegistry;
+        loadCallbacks.forEach(c -> c.accept(registry));
+        loadCallbacks.clear();
     }
 }

@@ -26,8 +26,8 @@ public enum ClayWraithProvider implements CommonEntityProvider<ClayWraithEntity>
         if (serverData.isEmpty()) {
             return;
         }
-        if (serverData.getBoolean(SERVER_DATA_LIMITED_LIFE_TAG)) {
-            tooltip.append(Component.translatable(LIMITED_LIFE_TIME, serverData.getInt(SERVER_DATA_LIMITED_LIFE_TIME_TAG)).withStyle(ChatFormatting.RED));
+        if (serverData.getBooleanOr(SERVER_DATA_LIMITED_LIFE_TAG, false)) {
+            tooltip.append(Component.translatable(LIMITED_LIFE_TIME, serverData.getIntOr(SERVER_DATA_LIMITED_LIFE_TIME_TAG, 0)).withStyle(ChatFormatting.RED));
         } else {
             tooltip.append(Component.translatable(LIMITED_LIFE_FALSE).withStyle(ChatFormatting.GREEN));
         }

@@ -8,7 +8,9 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 
 public abstract class ClayHorseSlot extends AbstractClayMenuSlot {
-    public static final String ARMOR_SLOT_NAME = SoldierEquipmentSlot.SOLDIER_SLOT_PREFIX + "armor";
+    public static final String ARMOR_SLOT_NAME = SoldierEquipmentSlot.SOLDIER_SLOT_PREFIX + "horse.armor";
+    public static final String HORN_SLOT_NAME = SoldierEquipmentSlot.SOLDIER_SLOT_PREFIX + "horse.horn";
+
 
     private ClayHorseSlot(int pSlot, int pX, int pY) {
         super(pSlot, pX, pY);
@@ -29,6 +31,25 @@ public abstract class ClayHorseSlot extends AbstractClayMenuSlot {
             @Override
             public Component getDisplayName() {
                 return Component.translatable(ARMOR_SLOT_NAME);
+            }
+        };
+    }
+
+    public static ClayHorseSlot createHornSlot(AbstractClayHorse horse, int pX, int pY) {
+        return new ClayHorseSlot(1, pX, pY) {
+            @Override
+            public ItemStack getItem() {
+                return horse.getHorn().stack();
+            }
+
+            @Override
+            public void set(ItemStack pStack) {
+                horse.setHorn(pStack);
+            }
+
+            @Override
+            public Component getDisplayName() {
+                return Component.translatable(HORN_SLOT_NAME);
             }
         };
     }

@@ -10,15 +10,15 @@ import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.client.model.geom.builders.*;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.entity.state.HumanoidRenderState;
 import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
-import net.minecraft.client.renderer.entity.state.PlayerRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 
 import java.util.function.Function;
 
-public class ClaySoldierOnHeadModel<T extends PlayerRenderState> extends HumanoidModel<T> {
+public class ClaySoldierOnHeadModel<T extends HumanoidRenderState> extends HumanoidModel<T> {
     public static final ModelLayerLocation LAYER_LOCATION =
             new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_soldier_on_head"), "main");
     private static final String SOLDIER_NAME = "soldier";
@@ -48,7 +48,6 @@ public class ClaySoldierOnHeadModel<T extends PlayerRenderState> extends Humanoi
         float f2 = p_361833_.walkAnimationSpeed;
         this.rightArm.xRot = Mth.cos(f1 * 0.6662F + (float) Math.PI) * 2.0F * f2 * 0.5F;
         this.leftArm.xRot = Mth.cos(f1 * 0.6662F) * 2.0F * f2 * 0.5F;
-
     }
 
     public void copyHeadRotation(HumanoidModel<?> toCopyFrom) {
@@ -57,11 +56,11 @@ public class ClaySoldierOnHeadModel<T extends PlayerRenderState> extends Humanoi
         this.head.zRot = toCopyFrom.head.zRot;
     }
 
-    public static ClaySoldierOnHeadModel<?> createModel() {
+    public static ClaySoldierOnHeadModel<HumanoidRenderState> createModel() {
         return createModel(Minecraft.getInstance().getEntityModels()::bakeLayer);
     }
 
-    public static ClaySoldierOnHeadModel<?> createModel(Function<ModelLayerLocation, ModelPart> bakery) {
+    public static ClaySoldierOnHeadModel<HumanoidRenderState> createModel(Function<ModelLayerLocation, ModelPart> bakery) {
         return new ClaySoldierOnHeadModel<>(bakery.apply(ClaySoldierOnHeadModel.LAYER_LOCATION));
     }
 

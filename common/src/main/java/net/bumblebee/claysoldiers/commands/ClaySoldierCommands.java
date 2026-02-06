@@ -288,7 +288,7 @@ public final class ClaySoldierCommands {
         if (boss == null) {
             return -1;
         }
-        boss.moveTo(command.getSource().getPosition());
+        boss.snapTo(command.getSource().getPosition());
         equipment.setUp(boss, weight, team, waxed);
         command.getSource().getLevel().addFreshEntity(boss);
         return 1;

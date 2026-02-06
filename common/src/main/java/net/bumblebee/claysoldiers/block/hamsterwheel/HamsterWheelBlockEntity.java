@@ -19,11 +19,18 @@ import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.ProblemReporter;
+import net.minecraft.world.Containers;
 import net.minecraft.world.entity.WalkAnimationState;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.TagValueOutput;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class HamsterWheelBlockEntity extends BlockEntity implements ClayMobContainer {
@@ -62,15 +69,13 @@ public class HamsterWheelBlockEntity extends BlockEntity implements ClayMobConta
     }
 
 
-    public void clientTick(float partialTick) {
+    public void clientTick() {
         if (hasSoldier()) {
             rotationTick += (int) Math.clamp(soldierData.getSpeed(), 1, 3);
 
             soldierData.getClientSoldier().tickCount++;
 
-            float f = Math.min(partialTick * 4.0F, 1.0F);
-            walkAnimation.update(f, 0.4F, 1f);
-
+            walkAnimation.update(0.75f, 0.4F, 1f);
         }
     }
 
@@ -135,7 +140,7 @@ public class HamsterWheelBlockEntity extends BlockEntity implements ClayMobConta
         if (hasSoldier()) {
             if ((getLevel() instanceof ServerLevel serverLevel)) {
                 AbstractClaySoldierEntity soldier = soldierData.createSoldier(serverLevel);
-                soldier.moveTo(getExitPosition());
+                soldier.snapTo(getExitPosition());
                 soldier.setHealth(soldier.getMaxHealth());
 
 
@@ -215,28 +220,30 @@ public class HamsterWheelBlockEntity extends BlockEntity implements ClayMobConta
     }
 
     @Override
-    protected void saveAdditional(CompoundTag pTag, HolderLookup.Provider pRegistries) {
-        super.saveAdditional(pTag, pRegistries);
+    protected void saveAdditional(@NotNull ValueOutput pTag) {
+        super.saveAdditional(pTag);
         if (soldierData != null) {
-            soldierData.save(pTag);
+            soldierData.save(pTag, hasLevel() && getLevel().isClientSide());
         }
         energyStorage.save(pTag);
     }
 
     @Override
-    protected void loadAdditional(CompoundTag pTag, HolderLookup.Provider pRegistries) {
-        super.loadAdditional(pTag, pRegistries);
-        setSoldierData(HamsterWheelSoldierData.load(pTag, getBlockPos(), walkAnimation, pRegistries), 0);
+    protected void loadAdditional(@NotNull ValueInput pTag) {
+        super.loadAdditional(pTag);
+        setSoldierData(HamsterWheelSoldierData.load(pTag, getBlockPos(), walkAnimation), 0);
         energyStorage.load(pTag);
     }
 
     @Override
     public CompoundTag getUpdateTag(HolderLookup.Provider pRegistries) {
-        var tag = super.getUpdateTag(pRegistries);
-        HamsterWheelSoldierData.markTagAsClient(tag);
-        saveAdditional(tag, pRegistries);
-        return tag;
+        var output = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, pRegistries);
+        HamsterWheelSoldierData.markTagAsClient(output);
+        saveAdditional(output);
+        return output.buildResult();
     }
+
+
 
     @Override
     public @Nullable Packet<ClientGamePacketListener> getUpdatePacket() {
@@ -269,5 +276,15 @@ public class HamsterWheelBlockEntity extends BlockEntity implements ClayMobConta
     @Override
     public int hashCode() {
         return worldPosition.hashCode();
+    }
+
+    @Override
+    public void preRemoveSideEffects(BlockPos pos, BlockState state) {
+        if (level.getBlockEntity(pos) instanceof HamsterWheelBlockEntity hamsterWheelBlockEntity) {
+            hamsterWheelBlockEntity.spawnSoldier(0);
+        }
+        if (HamsterWheelBlock.hasPowerConnection(state)) {
+            Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), Items.REDSTONE.getDefaultInstance());
+        }
     }
 }

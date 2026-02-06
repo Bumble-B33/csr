@@ -156,7 +156,7 @@ public final class ModBossBehaviours {
             minion.setMinionOwner(boss);
 
 
-            minion.moveTo(
+            minion.snapTo(
                     boss.position().x + (level.random.nextFloat()),
                     boss.position().y,
                     boss.position().z + (level.random.nextFloat()),

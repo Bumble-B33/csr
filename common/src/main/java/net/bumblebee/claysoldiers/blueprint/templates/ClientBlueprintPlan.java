@@ -8,6 +8,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.storage.ValueInput;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -17,7 +18,7 @@ public class ClientBlueprintPlan extends BlueprintPlan {
         super(itemCountMap, size);
     }
 
-    public ClientBlueprintPlan(CompoundTag tag) {
+    public ClientBlueprintPlan(ValueInput tag) {
         super(new HashMap<>(), BlueprintUtil.getSizeFromTag(tag));
         loadItemCount(tag);
         loadHasStarted(tag);

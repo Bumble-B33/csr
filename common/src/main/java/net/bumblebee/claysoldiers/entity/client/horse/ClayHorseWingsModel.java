@@ -42,6 +42,11 @@ public class ClayHorseWingsModel extends EntityModel<ClayHorseRenderState> {
         return LayerDefinition.create(meshdefinition, 32, 32);
     }
 
+    @Override
+    public void setupAnim(ClayHorseRenderState renderState) {
+        super.setupAnim(renderState);
+        setUpWingAnim(renderState, renderState.ageInTicks);
+    }
 
     public void setUpWingAnim(ClayHorseRenderState pEntity, float pAgeInTicks) {
         this.leftWing.z = 5;

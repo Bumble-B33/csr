@@ -106,7 +106,7 @@ public class FindNearestPoiGoal extends Goal {
                     for (int j1 = i1 < l && i1 > -l ? l : 0; j1 <= l; j1 = j1 > 0 ? -j1 : 1 - j1) {
                         blockpos$mutableblockpos.setWithOffset(blockpos, i1, ySearch - 1, j1);
                         var state = clayMob.level().getBlockState(blockpos$mutableblockpos);
-                        if (!state.isAir() && this.clayMob.isWithinRestriction(blockpos$mutableblockpos)) {
+                        if (!state.isAir() && this.clayMob.isWithinHome(blockpos$mutableblockpos)) {
                             var poi = new SoldierPoiWithBlock(state.getBlock(), blockpos$mutableblockpos);
                             if (canUsePoi(poi)) {
                                 return poi;

@@ -4,7 +4,7 @@ import net.bumblebee.claysoldiers.util.ErrorHandler;
 import net.bumblebee.claysoldiers.util.color.ColorHelper;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponents;
-import net.minecraft.world.item.ArmorItem;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.equipment.Equippable;
 import net.minecraft.world.item.equipment.trim.ArmorTrim;
 import org.jetbrains.annotations.Nullable;
@@ -21,12 +21,12 @@ public class ClientSoldierWearableEffect extends SoldierWearableEffect {
     private List<TrimHolder> finishedArmorTrims;
 
 
-    public ClientSoldierWearableEffect(@Nullable ArmorItem item, ColorHelper color, Set<SoldierArmorTrim> trims, boolean offsetColor) {
+    public ClientSoldierWearableEffect(@Nullable Item item, ColorHelper color, Set<SoldierArmorTrim> trims, boolean offsetColor) {
         super(item, color, trims, offsetColor);
         this.shouldRenderArmor = item != null;
     }
 
-    public static SoldierWearableEffect create(ArmorItem item, ColorHelper color, Set<SoldierArmorTrim> trims, boolean offsetColor) {
+    public static SoldierWearableEffect create(Item item, ColorHelper color, Set<SoldierArmorTrim> trims, boolean offsetColor) {
         return new ClientSoldierWearableEffect(item, color, trims, offsetColor);
     }
 
@@ -39,7 +39,7 @@ public class ClientSoldierWearableEffect extends SoldierWearableEffect {
         if (createdEquippable || equippable != null) {
             return equippable;
         }
-        ArmorItem copyModel = copyModel();
+        Item copyModel = copyModel();
         createdEquippable = true;
         if (copyModel == null) {
             return null;

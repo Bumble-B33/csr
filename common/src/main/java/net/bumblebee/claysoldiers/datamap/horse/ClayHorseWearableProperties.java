@@ -5,8 +5,10 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.bumblebee.claysoldiers.util.color.ColorHelper;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.equipment.Equippable;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,7 +18,8 @@ public final class ClayHorseWearableProperties {
     public static final Codec<ClayHorseWearableProperties> CODEC = RecordCodecBuilder.create(in -> in.group(
             Codec.FLOAT.optionalFieldOf("protection", 0f).forGetter(ClayHorseWearableProperties::protection),
             BuiltInRegistries.ITEM.byNameCodec().fieldOf("armor_item").forGetter(ClayHorseWearableProperties::armorItem),
-            ColorHelper.CODEC.optionalFieldOf("color", ColorHelper.EMPTY).forGetter(ClayHorseWearableProperties::color)
+            ColorHelper.CODEC.optionalFieldOf("color", ColorHelper.EMPTY).forGetter(ClayHorseWearableProperties::color),
+            ClayHorseSlot.CODEC.optionalFieldOf("slot", ClayHorseSlot.ARMOR).forGetter(ClayHorseWearableProperties::getSlot)
     ).apply(in, ClayHorseWearableProperties::new));
     private final float protection;
     private final Item armorItem;
@@ -24,12 +27,18 @@ public final class ClayHorseWearableProperties {
     @Nullable
     private Equippable equippable;
     private final ItemStack stack;
+    private final ClayHorseSlot slot;
 
-    public ClayHorseWearableProperties(float protection, Item armorItem, ColorHelper color) {
+    public ClayHorseWearableProperties(float protection, Item armorItem, ColorHelper color, ClayHorseSlot slot) {
         this.protection = protection;
         this.armorItem = armorItem;
         this.color = color;
         this.stack = armorItem.getDefaultInstance();
+        this.slot = slot;
+    }
+
+    public static Builder of(ClayHorseSlot slot) {
+        return new Builder(slot);
     }
 
     public float protection() {
@@ -55,6 +64,10 @@ public final class ClayHorseWearableProperties {
         return equippable;
     }
 
+    public ClayHorseSlot getSlot() {
+        return slot;
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (obj == this) return true;
@@ -77,5 +90,41 @@ public final class ClayHorseWearableProperties {
                 "armorItem=" + armorItem + ", " +
                 "color=" + color + ']';
     }
+
+    public static class Builder {
+        private float protection = 0f;
+        private Item armorItem = Items.AIR;
+        private ColorHelper color = ColorHelper.EMPTY;
+        private final ClayHorseSlot slot;
+
+        public Builder(ClayHorseSlot slot) {
+            this.slot = slot;
+        }
+
+        public Builder protection(float protection) {
+            this.protection = protection;
+            return this;
+        }
+
+        public Builder armorItem(Item armorItem) {
+            this.armorItem = armorItem != null ? armorItem : Items.AIR;
+            return this;
+        }
+
+        public Builder color(ColorHelper color) {
+            this.color = color != null ? color : ColorHelper.EMPTY;
+            return this;
+        }
+
+        public ClayHorseWearableProperties build() {
+            return new ClayHorseWearableProperties(
+                    protection,
+                    armorItem,
+                    color,
+                    slot
+            );
+        }
+    }
+
 
 }

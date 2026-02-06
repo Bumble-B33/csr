@@ -87,7 +87,7 @@ public class FabricDataMapLoader extends SimpleJsonResourceReloadListener<JsonEl
         if (!removed.isEmpty()) {
             ErrorHandler.INSTANCE.error("Removed %s Wearable Properties, because they where empty.".formatted(removed));
         }
-        SoldierItemType.setTagLoadCallback(() -> {
+        SoldierItemType.onDataMapLoad(() -> {
             provider.lookupOrThrow(ModRegistries.SOLDIER_ITEM_TYPES).listElements().forEach(h -> h.value().afterDataMapLoad());
         });
 

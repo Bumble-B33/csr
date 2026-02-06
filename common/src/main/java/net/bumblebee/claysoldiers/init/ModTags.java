@@ -21,7 +21,7 @@ public final class ModTags {
 
         public static final TagKey<Item> SOLDIER_ARMOR = create("clay_soldier_armor");
         public static final TagKey<Item> SOLDIER_BOSS_EQUIPABLE = create("clay_boss_equiable");
-        public static final TagKey<Item> SOLDIER_THROWABLE = create("clay_soldier_head_throwable");
+        public static final TagKey<Item> SOLDIER_THROWABLE_HARMFUL = create("clay_soldier_head_throwable");
 
 
         public static final TagKey<Item> BASIC = create("clay_soldier_items/basic");

@@ -368,6 +368,8 @@ public class ModLangProvider extends LanguageProvider {
         addKeyableProperty(SoldierEquipmentSlot.MAINHAND, "Mainhand");
 
         add(ClayHorseSlot.ARMOR_SLOT_NAME, "Armor");
+        add(ClayHorseSlot.HORN_SLOT_NAME, "Horn");
+
 
         add(ClayPredicates.LogicComparator.ALL.getDisplayName().getString(), "When all:");
         add(ClayPredicates.LogicComparator.ANY.getDisplayName().getString(), "When any:");
@@ -417,7 +419,7 @@ public class ModLangProvider extends LanguageProvider {
 
         add(ModTags.Items.GAME_MASTER_ITEM, "Game Master Items");
         add(ModTags.Items.SOLDIER_WEAPON, "Clay Soldier Weapon");
-        add(ModTags.Items.SOLDIER_THROWABLE, "Clay Soldier Throwable");
+        add(ModTags.Items.SOLDIER_THROWABLE_HARMFUL, "Clay Soldier Throwable");
 
         add(ModTags.Items.SOLDIER_HOLDABLE, "Clay Soldier Item");
         add(ModTags.Items.SOLDIER_ARMOR, "Clay Soldier Armor");

@@ -7,8 +7,10 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.TooltipDisplay;
 
 import java.util.List;
+import java.util.function.Consumer;
 
 public abstract class BrickedItem extends Item {
     public BrickedItem(Properties pProperties) {
@@ -28,7 +30,7 @@ public abstract class BrickedItem extends Item {
     public abstract Component getOriginalDisplayName(ItemStack bricked, HolderLookup.Provider registries);
 
     @Override
-    public void appendHoverText(ItemStack pStack, TooltipContext pContext, List<Component> pTooltipComponents, TooltipFlag pTooltipFlag) {
-        pTooltipComponents.add(CommonComponents.space().append(getOriginalDisplayName(pStack, pContext.registries())).withStyle(ChatFormatting.DARK_GRAY));
+    public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay tooltipDisplay, Consumer<Component> tooltipAdder, TooltipFlag flag) {
+        tooltipAdder.accept(CommonComponents.space().append(getOriginalDisplayName(stack, context.registries())).withStyle(ChatFormatting.DARK_GRAY));
     }
 }

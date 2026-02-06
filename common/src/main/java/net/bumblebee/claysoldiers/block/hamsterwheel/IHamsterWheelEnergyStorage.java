@@ -1,6 +1,8 @@
 package net.bumblebee.claysoldiers.block.hamsterwheel;
 
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 
 public interface IHamsterWheelEnergyStorage {
     String TAG_KEY = "wheel_energy";
@@ -20,9 +22,9 @@ public interface IHamsterWheelEnergyStorage {
      */
     void generate(float speed);
 
-    void save(CompoundTag tag);
+    void save(ValueOutput tag);
 
-    void load(CompoundTag tag);
+    void load(ValueInput tag);
 
     /**
      * Sets the energy of this storage to the given energy

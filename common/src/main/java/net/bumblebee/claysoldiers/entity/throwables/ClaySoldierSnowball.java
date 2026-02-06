@@ -14,6 +14,8 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.projectile.Snowball;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.EntityHitResult;
 
 public class ClaySoldierSnowball extends Snowball {
@@ -38,21 +40,17 @@ public class ClaySoldierSnowball extends Snowball {
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag compound) {
+    public void addAdditionalSaveData(ValueOutput compound) {
         super.addAdditionalSaveData(compound);
-        SoldierPropertyMap.CODEC.encodeStart(NbtOps.INSTANCE, soldierProperties)
-                .ifSuccess(tag -> compound.put(PROPERTIES_TAG, tag))
-                .ifError(err -> ClaySoldiersCommon.LOGGER.error("Error Saving Properties for Clay Soldier Snowball {}", soldierProperties));
+        compound.store(PROPERTIES_TAG, SoldierPropertyMap.CODEC, soldierProperties);
     }
 
     @Override
-    public void readAdditionalSaveData(CompoundTag compound) {
+    public void readAdditionalSaveData(ValueInput compound) {
         super.readAdditionalSaveData(compound);
-        if (compound.contains(PROPERTIES_TAG)) {
-            SoldierPropertyMap.CODEC.parse(NbtOps.INSTANCE, compound)
-                    .ifSuccess(s -> soldierProperties = s)
-                    .ifError(err -> ClaySoldiersCommon.LOGGER.error("Error reading Properties for Clay Soldier Snowball"));
-        }
+        compound.read(PROPERTIES_TAG, SoldierPropertyMap.CODEC).ifPresent(p -> {
+            soldierProperties = p;
+        });
     }
 
     @Override

@@ -29,6 +29,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -38,6 +39,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class TestItem extends Item {
     public static final Logger LOGGER = LoggerFactory.getLogger(ClaySoldiersCommon.MOD_NAME + " Debug");
@@ -53,7 +55,7 @@ public class TestItem extends Item {
         if (context.getLevel() instanceof ServerLevel serverLevel) {
             log(serverLevel.getBlockState(context.getClickedPos()), List.of(
                     "PoiType: " + serverLevel.getPoiManager().getType(context.getClickedPos()),
-                    "Occupants: " + (serverLevel.getPoiManager().getType(context.getClickedPos()).map(h -> h.value().maxTickets()).orElse(0) - serverLevel.getPoiManager().getFreeTickets(context.getClickedPos()))
+                    "MaxOccupants: " + (serverLevel.getPoiManager().getType(context.getClickedPos()).map(h -> h.value().maxTickets()).orElse(0))
                     )
             );
         }
@@ -79,7 +81,7 @@ public class TestItem extends Item {
             var offHand = pPlayer.getItemInHand(InteractionHand.OFF_HAND);
 
             if (pUsedHand == InteractionHand.MAIN_HAND && !offHand.isEmpty()) {
-                LOGGER.info("{}---: {}", level.isClientSide ? "Client" : "Server", offHand.getItem());
+                LOGGER.info("{}---: {}", level.isClientSide() ? "Client" : "Server", offHand.getItem());
                 LOGGER.info("Holdable: {}", ClaySoldiersCommon.DATA_MAP.getEffect(offHand));
                 LOGGER.info("Wearable: {}", ClaySoldiersCommon.DATA_MAP.getArmor(offHand));
                 LOGGER.info("Item Poi: {}", ClaySoldiersCommon.DATA_MAP.getItemPoi(offHand));
@@ -183,7 +185,7 @@ public class TestItem extends Item {
                 info.add("Error creating Boss");
                 return;
             }
-            boss.moveTo(p.position());
+            boss.snapTo(p.position());
             ClaySoldierBossEquipment.RANDOM.setUp(boss, 8, null, false);
             if (serverLevel.addFreshEntity(boss)) {
                 info.add("Successfully spawned Boss");
@@ -240,14 +242,14 @@ public class TestItem extends Item {
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltipComponents, TooltipFlag tooltipFlag) {
-        tooltipComponents.add(Component.literal("Right-Click Logs Useful Information to the console").withStyle(ChatFormatting.GOLD));
-        tooltipComponents.add(Component.literal("Sneak-Right-Click to change modes").withStyle(ChatFormatting.GOLD));
+    public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay tooltipDisplay, Consumer<Component> tooltipAdder, TooltipFlag flag) {
+        tooltipAdder.accept(Component.literal("Right-Click Logs Useful Information to the console").withStyle(ChatFormatting.GOLD));
+        tooltipAdder.accept(Component.literal("Sneak-Right-Click to change modes").withStyle(ChatFormatting.GOLD));
         var mode = stack.get(ModDataComponents.DEBUG_ITEM_MODE.get());
         if (mode != null) {
-            tooltipComponents.add(Component.literal("Mode: ").withStyle(ChatFormatting.DARK_GRAY).append(mode.getDisplayName()));
+            tooltipAdder.accept(Component.literal("Mode: ").withStyle(ChatFormatting.DARK_GRAY).append(mode.getDisplayName()));
         } else {
-            tooltipComponents.add(Component.literal("Mode: Unselected").withStyle(ChatFormatting.DARK_GRAY));
+            tooltipAdder.accept(Component.literal("Mode: Unselected").withStyle(ChatFormatting.DARK_GRAY));
         }
     }
 

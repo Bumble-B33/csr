@@ -1,16 +1,16 @@
 package net.bumblebee.claysoldiers.entity.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import net.bumblebee.claysoldiers.datamap.SoldierEquipmentSlot;
 import net.bumblebee.claysoldiers.entity.client.accesories.AccessoryRenderLayer;
 import net.bumblebee.claysoldiers.entity.client.renderstates.AbstractClaySoldierRenderState;
 import net.bumblebee.claysoldiers.entity.client.renderstates.ClayMobRenderState;
+import net.bumblebee.claysoldiers.entity.client.util.ColoringSubmitNodeCollector;
 import net.bumblebee.claysoldiers.entity.soldier.AbstractClaySoldierEntity;
-import net.minecraft.client.model.geom.ModelLayers;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.entity.ArmorModelSet;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.HumanoidMobRenderer;
 import net.minecraft.client.renderer.entity.RenderLayerParent;
@@ -18,9 +18,11 @@ import net.minecraft.client.renderer.entity.layers.CustomHeadLayer;
 import net.minecraft.client.renderer.entity.layers.ItemInHandLayer;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
+import net.minecraft.client.renderer.state.CameraRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.data.AtlasIds;
 import net.minecraft.util.ARGB;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
@@ -35,14 +37,17 @@ public abstract class AbstractClaySoldierRenderer extends HumanoidMobRenderer<Ab
         super(pContext, model, model, 0.5f * SCALE, new CustomHeadLayer.Transforms(SCALE, SCALE, SCALE));
         this.layers.removeIf(layer -> layer.getClass() == CustomHeadLayer.class || layer.getClass() == ItemInHandLayer.class);
 
-
         this.addLayer(new ClaySoldierArmorLayer(this,
-                new ClaySoldierModel(pContext.bakeLayer(ModelLayers.ZOMBIE_INNER_ARMOR)),
-                new ClaySoldierModel(pContext.bakeLayer(ModelLayers.ZOMBIE_OUTER_ARMOR)),
-                pContext.getModelManager(),
+                ArmorModelSet.bake(new ArmorModelSet<>(
+                        ClaySoldierModel.HELMET_LAYER_LOCATION,
+                        ClaySoldierModel.CHESTPLATE_LAYER_LOCATION,
+                        ClaySoldierModel.LEGGINGS_LAYER_LOCATION,
+                        ClaySoldierModel.BOOTS_LAYER_LOCATION
+                ), pContext.getModelSet(), ClaySoldierModel::new),
+                pContext.getAtlas(AtlasIds.ARMOR_TRIMS),
                 pContext.getEquipmentAssets()
         ));
-        this.addLayer(new AccessoryRenderLayer(this, pContext.getModelSet(), pContext.getEquipmentAssets()));
+        this.addLayer(new AccessoryRenderLayer(this, pContext.getModelSet(), pContext.getEquipmentAssets(), pContext.getPlayerSkinRenderCache()));
         this.addLayer(new ClayMobStatusRenderlayer<>(this, pContext.getEntityRenderDispatcher(), e -> e.isInSittingPose, s -> s.shouldShowStatus, s -> s.workStatus, s -> s.statusAttachmentPoint));
         this.addLayer(new WaxedRenderLayer<>(this));
         this.addLayer(new ClaySoldierItemInHandLayer(this));
@@ -55,7 +60,11 @@ public abstract class AbstractClaySoldierRenderer extends HumanoidMobRenderer<Ab
     }
 
     @Override
-    public void render(AbstractClaySoldierRenderState claySoldier, PoseStack pPoseStack, MultiBufferSource pBuffer, int pPackedLight) {
+    public void submit(AbstractClaySoldierRenderState claySoldier, PoseStack pPoseStack, SubmitNodeCollector nodeCollector, CameraRenderState cameraRenderState) {
+        pPoseStack.pushPose();
+        if (claySoldier.ridingPose == AbstractClaySoldierEntity.RidingPose.FIREWORK) {
+            pPoseStack.translate(0, -0.33, 0);
+        }
         pPoseStack.pushPose();
         if (claySoldier.hasPose(Pose.SLEEPING)) {
             Direction direction = claySoldier.bedOrientation;
@@ -71,39 +80,37 @@ public abstract class AbstractClaySoldierRenderer extends HumanoidMobRenderer<Ab
         pPoseStack.scale(-1.0F, -1.0F, 1.0F);
         this.scale(claySoldier, pPoseStack);
         pPoseStack.translate(0.0F, -1.501F, 0.0F);
-        this.model.setupAnim(claySoldier);
 
-        if (claySoldier.ridingPose == AbstractClaySoldierEntity.RidingPose.FIREWORK) {
-            pPoseStack.translate(0, 0.5, 0);
-        }
+
 
         boolean bodyVisible = this.isBodyVisible(claySoldier);
         boolean isInvisible = !bodyVisible;
-        RenderType rendertype = this.getRenderType(claySoldier, bodyVisible, isInvisible, claySoldier.appearsGlowing);
+        RenderType rendertype = this.getRenderType(claySoldier, bodyVisible, isInvisible, claySoldier.appearsGlowing());
 
         if (rendertype != null) {
-            VertexConsumer vertexconsumer = pBuffer.getBuffer(rendertype);
             int overlay = getOverlayCoords(claySoldier, this.getWhiteOverlayProgress(claySoldier));
-            int color = getVariantForColor(claySoldier);
-            if (claySoldier.veryAngry) {
-                color = shiftColorAngry(color);
-            }
-            renderModel(claySoldier, pPoseStack, vertexconsumer, pPackedLight, overlay, color, isInvisible ? 0x26 : 0xFF);
+            int color = getColor(claySoldier);
+            nodeCollector.submitModel(this.model, claySoldier, pPoseStack, rendertype, claySoldier.lightCoords, overlay, ARGB.color(isInvisible ? 0x26 : 0xFF, color), null, claySoldier.outlineColor, null);
         }
 
-        if (shouldRenderLayers(claySoldier)) {
+        if (shouldRenderLayers(claySoldier) && !this.layers.isEmpty()) {
+            this.model.setupAnim(claySoldier);
+
             for (RenderLayer<AbstractClaySoldierRenderState, ClaySoldierModel> renderlayer : this.layers) {
-                renderlayer.render(pPoseStack, pBuffer, pPackedLight, claySoldier, claySoldier.yRot, claySoldier.xRot);
+                renderlayer.submit(pPoseStack, nodeCollector, claySoldier.lightCoords, claySoldier, claySoldier.yRot, claySoldier.xRot);
             }
         }
 
-        renderCarried(claySoldier, pPoseStack, pBuffer, pPackedLight, OverlayTexture.NO_OVERLAY);
+        submitCarried(claySoldier, pPoseStack, nodeCollector, claySoldier.lightLevel, OverlayTexture.NO_OVERLAY);
 
+        pPoseStack.popPose();
         pPoseStack.popPose();
 
         if (claySoldier.nameTag != null) {
-            this.renderNameTag(claySoldier, claySoldier.nameTag, pPoseStack, pBuffer, pPackedLight);
+            submitNameTag(claySoldier, pPoseStack, nodeCollector, cameraRenderState);
         }
+
+
     }
 
     @Override
@@ -122,7 +129,7 @@ public abstract class AbstractClaySoldierRenderer extends HumanoidMobRenderer<Ab
         claySoldierRenderState.hasShieldInMainHand = claySoldierEntity.hasShieldInHand(InteractionHand.MAIN_HAND);
 
         claySoldierRenderState.carriedItemStack = claySoldierEntity.getCarriedStack();
-        this.itemModelResolver.updateForLiving(claySoldierRenderState.carriedItemRenderState, claySoldierRenderState.carriedItemStack, ItemDisplayContext.FIXED, false, claySoldierEntity);
+        this.itemModelResolver.updateForLiving(claySoldierRenderState.carriedItemRenderState, claySoldierRenderState.carriedItemStack, ItemDisplayContext.FIXED, claySoldierEntity);
 
         claySoldierRenderState.ridingPose = claySoldierEntity.getRidingPose();
         claySoldierRenderState.id = claySoldierEntity.getId();
@@ -151,10 +158,14 @@ public abstract class AbstractClaySoldierRenderer extends HumanoidMobRenderer<Ab
     }
 
     /**
-     * Renders the ClaySoldierModel
+     * Returns the Color of the Clay Soldier. Alpha will be overwritten.
      */
-    protected void renderModel(AbstractClaySoldierRenderState soldier, PoseStack pPoseStack, VertexConsumer vertexConsumer, int pPackedLight, int overlayCords, int color, int alpha) {
-        this.model.renderToBuffer(pPoseStack, vertexConsumer, pPackedLight, overlayCords, ARGB.color(alpha, color));
+    protected int getColor(AbstractClaySoldierRenderState soldier) {
+        int color = getVariantForColor(soldier);
+        if (soldier.veryAngry) {
+            color = shiftColorAngry(color);
+        }
+        return color;
     }
 
     /**
@@ -164,7 +175,7 @@ public abstract class AbstractClaySoldierRenderer extends HumanoidMobRenderer<Ab
         return claySoldier.clayTeamColor;
     }
 
-    private void renderCarried(AbstractClaySoldierRenderState soldier, PoseStack pPoseStack, MultiBufferSource pBuffer, int pPackedLight, int pPackedOverleay) {
+    private void submitCarried(AbstractClaySoldierRenderState soldier, PoseStack pPoseStack, SubmitNodeCollector nodeCollector, int pPackedLight, int pPackedOverleay) {
         if (!soldier.carriedItemRenderState.isEmpty()) {
             pPoseStack.pushPose();
             pPoseStack.translate(0, -0.55, 0);
@@ -173,7 +184,8 @@ public abstract class AbstractClaySoldierRenderer extends HumanoidMobRenderer<Ab
             pPoseStack.mulPose(Axis.XP.rotationDegrees(90F));
 
             pPoseStack.scale(1.5f, 1.5f, 1.5f);
-            soldier.carriedItemRenderState.render(pPoseStack, pBuffer, pPackedLight, pPackedOverleay);
+
+            soldier.carriedItemRenderState.submit(pPoseStack, nodeCollector, pPackedLight, pPackedOverleay, 0);
             pPoseStack.popPose();
 
         }
@@ -225,16 +237,14 @@ public abstract class AbstractClaySoldierRenderer extends HumanoidMobRenderer<Ab
         }
 
         @Override
-        protected void renderArmWithItem(AbstractClaySoldierRenderState renderState, ItemStackRenderState itemStackRenderState, HumanoidArm arm, PoseStack poseStack, MultiBufferSource bufferSource, int packedLight) {
+        protected void submitArmWithItem(AbstractClaySoldierRenderState renderState, ItemStackRenderState stackRenderState, HumanoidArm arm, PoseStack poseStack, SubmitNodeCollector nodeCollector, int packedLight) {
             if (arm == HumanoidArm.LEFT && renderState.offhandOccupied) {
                 return;
             }
             if (arm == HumanoidArm.RIGHT && renderState.mainhandOccupied) {
                 return;
             }
-            super.renderArmWithItem(renderState, itemStackRenderState, arm, poseStack, bufferSource, packedLight);
+            super.submitArmWithItem(renderState, stackRenderState, arm, poseStack, nodeCollector, packedLight);
         }
-
-
     }
 }

@@ -114,9 +114,9 @@ public class AbstractClaySoldierRenderState extends ClayMobRenderState {
         acc.renderableAccessories = map.values();
         for (RenderableAccessory accessory : acc.renderableAccessories) {
             if (accessory instanceof SkullRenderable skullRenderable) {
-                itemModelResolver.updateForLiving(acc.skullAccessory, skullRenderable.getHeadStack(), ItemDisplayContext.HEAD, false, claySoldierEntity);
+                itemModelResolver.updateForLiving(acc.skullAccessory, skullRenderable.getHeadStack(), ItemDisplayContext.HEAD, claySoldierEntity);
             } else if (accessory instanceof GliderRenderable gliderRenderable) {
-                itemModelResolver.updateForLiving(acc.gliderAccessory, gliderRenderable.getGliderStack(), ItemDisplayContext.HEAD, false, claySoldierEntity);
+                itemModelResolver.updateForLiving(acc.gliderAccessory, gliderRenderable.getGliderStack(), ItemDisplayContext.HEAD, claySoldierEntity);
             }
         }
 
@@ -134,6 +134,8 @@ public class AbstractClaySoldierRenderState extends ClayMobRenderState {
         acc.wornHeadProfile = renderState.wornHeadProfile;
         acc.wornHeadAnimationPos = renderState.wornHeadAnimationPos;
         acc.overlayCords0 = LivingEntityRenderer.getOverlayCoords(renderState, 0.0F);
+        acc.outlineColor = renderState.outlineColor;
+        acc.isInWater = renderState.isInWater;
     }
 
     @Nullable

@@ -1,5 +1,7 @@
 package net.bumblebee.claysoldiers.blueprint.templates;
 
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.bumblebee.claysoldiers.blueprint.BlueprintRequest;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;

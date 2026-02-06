@@ -29,7 +29,7 @@ public class NeoForgeCapabilityManager extends AbstractCapabilityManger {
 
     @Override
     public IBlockCache<IBlockStorageAccess> create(ServerLevel level, BlockPos pos) {
-        return new NeoForgeBlockStorageCapability(BlockCapabilityCache.create(Capabilities.ItemHandler.BLOCK, level, pos, null));
+        return new NeoForgeBlockStorageCapability(BlockCapabilityCache.create(Capabilities.Item.BLOCK, level, pos, null));
     }
 
     @Override

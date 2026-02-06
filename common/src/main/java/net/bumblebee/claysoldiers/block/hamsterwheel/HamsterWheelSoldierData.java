@@ -2,34 +2,33 @@ package net.bumblebee.claysoldiers.block.hamsterwheel;
 
 import com.mojang.logging.LogUtils;
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.bumblebee.claysoldiers.entity.ClayMobEntity;
 import net.bumblebee.claysoldiers.entity.client.ClientClaySoldierEntity;
+import net.bumblebee.claysoldiers.entity.inventory.ClaySoldierInventory;
 import net.bumblebee.claysoldiers.entity.soldier.AbstractClaySoldierEntity;
 import net.bumblebee.claysoldiers.item.itemeffectholder.ItemStackWithEffect;
 import net.bumblebee.claysoldiers.team.ClayMobTeam;
-import net.bumblebee.claysoldiers.team.ClayMobTeamManger;
 import net.bumblebee.claysoldiers.util.ErrorHandler;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Holder;
-import net.minecraft.core.HolderLookup;
+import net.minecraft.core.*;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
-import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.resources.RegistryOps;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.component.CustomData;
+import net.minecraft.world.level.storage.TagValueInput;
+import net.minecraft.world.level.storage.TagValueOutput;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -37,6 +36,7 @@ import org.slf4j.Logger;
 import java.util.*;
 
 public class HamsterWheelSoldierData {
+    private static final Logger LOGGER = LogUtils.getLogger();
     private static final Codec<EntityType<?>> ENTITY_TYPE_CODEC = BuiltInRegistries.ENTITY_TYPE.byNameCodec();
     private static final List<String> IGNORED_TAGS = Arrays.asList(
             "Air",
@@ -62,8 +62,8 @@ public class HamsterWheelSoldierData {
             "SleepingX",
             "SleepingY",
             "SleepingZ",
-            Entity.ID_TAG,
-            Entity.PASSENGERS_TAG,
+            Entity.TAG_ID,
+            Entity.TAG_PASSENGERS,
             Leashable.LEASH_TAG,
             ClayMobEntity.SITTING_TAG,
             AbstractClaySoldierEntity.FUSE_TAG,
@@ -74,40 +74,12 @@ public class HamsterWheelSoldierData {
             ClayMobTeam.TEAM_ID_TAG
     );
     private static final List<String> CLIENT_NEEDED_TAGS = Arrays.asList(
-            AbstractClaySoldierEntity.BACKPACK_ITEMS_TAG,
-            AbstractClaySoldierEntity.HAND_ITEMS_TAG,
-            AbstractClaySoldierEntity.ARMOR_ITEMS_TAG,
+            ClaySoldierInventory.INVENTORY_TAG,
             AbstractClaySoldierEntity.OFFSET_COLOR_TAG,
             AbstractClaySoldierEntity.SKIN_VARIANT_ID_TAG,
             ClayMobEntity.WAXED_TAG
     );
     private static final String ACTIVE_EFFECTS_TAG = "active_effects";
-
-    private static final StreamCodec<RegistryFriendlyByteBuf, EntityType<?>> STREAM_CODEC_ENTITY_TYPE = ByteBufCodecs.registry(Registries.ENTITY_TYPE);
-    public static final StreamCodec<RegistryFriendlyByteBuf, HamsterWheelSoldierData> STREAM_CODEC_CLIENT = new StreamCodec<RegistryFriendlyByteBuf, HamsterWheelSoldierData>() {
-        @Override
-        public HamsterWheelSoldierData decode(RegistryFriendlyByteBuf registryFriendlyByteBuf) {
-            return createUnsafe(
-                    STREAM_CODEC_ENTITY_TYPE.decode(registryFriendlyByteBuf),
-                    ResourceLocation.STREAM_CODEC.decode(registryFriendlyByteBuf),
-                    ByteBufCodecs.COMPOUND_TAG.decode(registryFriendlyByteBuf),
-                    ByteBufCodecs.FLOAT.decode(registryFriendlyByteBuf),
-                    ByteBufCodecs.FLOAT.decode(registryFriendlyByteBuf),
-                    ByteBufCodecs.VAR_LONG.decode(registryFriendlyByteBuf),
-                    registryFriendlyByteBuf.registryAccess()
-            );
-        }
-
-        @Override
-        public void encode(RegistryFriendlyByteBuf o, HamsterWheelSoldierData hamsterWheelSoldierData) {
-            STREAM_CODEC_ENTITY_TYPE.encode(o, hamsterWheelSoldierData.type);
-            ResourceLocation.STREAM_CODEC.encode(o, hamsterWheelSoldierData.getTeamId());
-            ByteBufCodecs.FLOAT.encode(o, hamsterWheelSoldierData.soldierScale);
-            ByteBufCodecs.FLOAT.encode(o, hamsterWheelSoldierData.speed);
-            ByteBufCodecs.VAR_LONG.encode(o, hamsterWheelSoldierData.enterTime);
-
-        }
-    };
 
     public static final String CLIENT_TAG = "client";
 
@@ -117,11 +89,20 @@ public class HamsterWheelSoldierData {
     private static final String SOLDIER_SPEED_TAG = "SoldierSpeed";
     private static final String SOLDIER_ENTER_TAG = "SoldierEnterTime";
 
+    private static final Codec<HamsterWheelSoldierData> CODEC = RecordCodecBuilder.create(in -> in.group(
+            ENTITY_TYPE_CODEC.fieldOf(ENTITY_TYPE_TAG).forGetter(d -> d.type),
+            CompoundTag.CODEC.fieldOf(DATA_TAG).forGetter(d -> d.data),
+            ResourceLocation.CODEC.fieldOf(ClayMobTeam.TEAM_ID_TAG).forGetter(d -> d.teamReference),
+            Codec.FLOAT.optionalFieldOf(SOLDIER_SIZE_TAG, 1f).forGetter(d -> d.soldierScale),
+            Codec.FLOAT.optionalFieldOf(SOLDIER_SPEED_TAG, 0.3f).forGetter(d -> d.speed),
+            Codec.LONG.optionalFieldOf(SOLDIER_ENTER_TAG, 0L).forGetter(d -> d.enterTime)
+    ).apply(in, HamsterWheelSoldierData::createUnsafe));
+
     private final EntityType<? extends AbstractClaySoldierEntity> type;
-    private static final Logger LOGGER = LogUtils.getLogger();
     private final CompoundTag data;
     @NotNull
-    private final Holder.Reference<ClayMobTeam> teamReference;
+    //Todo validate
+    private final ResourceLocation teamReference;
     private final float soldierScale;
     private final float speed;
     private final float roundedSpeed;
@@ -130,49 +111,50 @@ public class HamsterWheelSoldierData {
     @Nullable
     private ClientClaySoldierEntity clientSoldier;
 
-    private HamsterWheelSoldierData(EntityType<? extends AbstractClaySoldierEntity> type, CompoundTag data, ResourceLocation teamId, float soldierScale, float speed, long enterTime, HolderLookup.Provider registries) {
+    private HamsterWheelSoldierData(EntityType<? extends AbstractClaySoldierEntity> type, CompoundTag data, ResourceLocation teamId, float soldierScale, float speed, long enterTime) {
         this.type = type;
         this.data = data;
         this.speed = speed;
         this.roundedSpeed = Math.round(speed * 3.4 * 10) / 10f;
         this.soldierScale = soldierScale;
         this.enterTime = enterTime;
-        this.teamReference = ClayMobTeamManger.getHolder(teamId, registries).orElse(ClayMobTeamManger.getDefault(registries));
+        this.teamReference = teamId;
     }
 
+
     public ResourceLocation getTeamId() {
-        return teamReference.key().location();
+        return teamReference;
     }
 
     @SuppressWarnings("unchecked")
-    private static HamsterWheelSoldierData createUnsafe(EntityType<?> type, ResourceLocation id, CompoundTag tag, float size, float speed, long enterTime, HolderLookup.Provider registries) {
+    private static HamsterWheelSoldierData createUnsafe(EntityType<?> type, CompoundTag tag, ResourceLocation id, float size, float speed, long enterTime) {
         try {
-            return new HamsterWheelSoldierData((EntityType<? extends AbstractClaySoldierEntity>) type, tag, id, size, speed, enterTime, registries);
+            return new HamsterWheelSoldierData((EntityType<? extends AbstractClaySoldierEntity>) type, tag, id, size, speed, enterTime);
         } catch (ClassCastException e) {
             throw new IllegalArgumentException("Type " + type + " does not extend AbstractClaySoldierEntity");
         }
     }
 
     public static HamsterWheelSoldierData of(AbstractClaySoldierEntity soldier) {
-        CompoundTag compoundtag = new CompoundTag();
+        TagValueOutput compoundtag = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, soldier.registryAccess());
         soldier.save(compoundtag);
-        IGNORED_TAGS.forEach(compoundtag::remove);
-        return HamsterWheelSoldierData.createUnsafe(soldier.getType(), soldier.getClayTeamType(), compoundtag, soldier.getScale(), (float) soldier.getAttribute(Attributes.MOVEMENT_SPEED).getValue(), soldier.level().getGameTime(), soldier.registryAccess());
+        IGNORED_TAGS.forEach(compoundtag::discard);
+        return HamsterWheelSoldierData.createUnsafe(soldier.getType(), compoundtag.buildResult(), soldier.getClayTeamType(), soldier.getScale(), (float) soldier.getAttribute(Attributes.MOVEMENT_SPEED).getValue(), soldier.level().getGameTime());
     }
 
     /**
      * Saves this {@code ClaySoldierBlockData} to the give {@code CompoundTag}.
      */
-    public void save(CompoundTag tag) {
-        ENTITY_TYPE_CODEC.encodeStart(NbtOps.INSTANCE, type)
-                .ifSuccess(typeTag -> tag.put(ENTITY_TYPE_TAG, typeTag))
-                .ifError(err -> LOGGER.error(err.message()));
-        ClayMobTeam.save(getTeamId(), tag);
+    public void save(ValueOutput tag, boolean client) {
+        tag.store(ENTITY_TYPE_TAG, ENTITY_TYPE_CODEC, type);
+        tag.store(ClayMobTeam.TEAM_ID_TAG, ResourceLocation.CODEC, teamReference);
 
-        if (tag.contains(CLIENT_TAG)) {
-            tag.put(DATA_TAG, getForClient());
+
+        if (client) {
+            tag.store(DATA_TAG, CompoundTag.CODEC, getForClient());
+            tag.putBoolean(CLIENT_TAG, true);
         } else {
-            tag.put(DATA_TAG, getForServer());
+            tag.store(DATA_TAG, CompoundTag.CODEC, getForServer());
             tag.putLong(SOLDIER_ENTER_TAG, enterTime);
         }
         if (soldierScale != 1) {
@@ -198,27 +180,26 @@ public class HamsterWheelSoldierData {
      * @return A {@link HamsterWheelSoldierData} instance if the entity type exists in the tag, otherwise {@code null}.
      * @throws IllegalStateException If the entity type parameter does not extend the AbstractSoldierEntity.
      */
-    public static @Nullable HamsterWheelSoldierData load(CompoundTag tag, BlockPos pos, WalkAnimationState state, HolderLookup.Provider registries) {
-        if (!tag.contains(ENTITY_TYPE_TAG)) {
+    public static @Nullable HamsterWheelSoldierData load(ValueInput tag, BlockPos pos, WalkAnimationState state) {
+        EntityType<?> type = tag.read(ENTITY_TYPE_TAG, ENTITY_TYPE_CODEC).orElse(null);
+        if (type == null) {
             return null;
         }
-        EntityType<?> type = ENTITY_TYPE_CODEC.parse(NbtOps.INSTANCE, tag.get(ENTITY_TYPE_TAG)).getOrThrow(err -> new IllegalStateException("Cannot load SoldierBlockData without EntityType: " + err));
-        ResourceLocation id = ClayMobTeam.read(tag);
 
-        CompoundTag data = tag.getCompound(DATA_TAG);
-        float size = 1;
-        if (tag.contains(SOLDIER_SIZE_TAG, Tag.TAG_ANY_NUMERIC)) {
-            size = tag.getFloat(SOLDIER_SIZE_TAG);
+        ResourceLocation id = ClayMobTeam.read(tag).orElse(null);
+
+        CompoundTag data = tag.read(DATA_TAG, CompoundTag.CODEC).orElse(null);
+        if (data == null) {
+            return null;
         }
-        float speed = 0.3f;
-        if (tag.contains(SOLDIER_SPEED_TAG, Tag.TAG_ANY_NUMERIC)) {
-            speed = tag.getFloat(SOLDIER_SPEED_TAG);
-        }
+        float size = tag.getFloatOr(SOLDIER_SIZE_TAG, 1f);
+        float speed = tag.getFloatOr(SOLDIER_SPEED_TAG, 3f);
+        long enterTime = tag.getLongOr(SOLDIER_ENTER_TAG, 0);
 
         HamsterWheelSoldierData blockData = HamsterWheelSoldierData.createUnsafe(
-                type, id, data, size, speed, tag.getLong(SOLDIER_ENTER_TAG), registries
+                type, data, id, size, speed, enterTime
         );
-        if (tag.contains(CLIENT_TAG)) {
+        if (tag.getBooleanOr(CLIENT_TAG, false)) {
             blockData.setUpClient(pos, state);
         }
 
@@ -226,7 +207,7 @@ public class HamsterWheelSoldierData {
         return blockData;
     }
 
-    public static void markTagAsClient(CompoundTag tag) {
+    public static void markTagAsClient(ValueOutput tag) {
         tag.putBoolean(CLIENT_TAG, true);
     }
 
@@ -255,15 +236,11 @@ public class HamsterWheelSoldierData {
         ClayMobTeam.save(getTeamId(), newEntityData);
 
         if (entity != null) {
-            CustomData.of(newEntityData).loadInto(entity);
-            if (data.hasUUID(Entity.UUID_TAG)) {
-                entity.setUUID(data.getUUID(Entity.UUID_TAG));
-            } else {
-                ErrorHandler.INSTANCE.debug("Loaded a ClaySoldier without its UUID");
-            }
+            entity.load(TagValueInput.create(ProblemReporter.DISCARDING, level.registryAccess(), newEntityData));
+            data.read(Entity.TAG_UUID, UUIDUtil.CODEC).ifPresentOrElse(entity::setUUID, () -> ErrorHandler.INSTANCE.debug("Loaded a ClaySoldier without its UUID"));
 
             entity.getActiveEffectsMap().clear();
-            entity.getActiveEffectsMap().putAll(loadEffects(data, (int) (level.getGameTime() - enterTime)));
+            entity.getActiveEffectsMap().putAll(loadEffects(data, (int) (level.getGameTime() - enterTime), level.registryAccess()));
 
             return entity;
         } else {
@@ -271,22 +248,23 @@ public class HamsterWheelSoldierData {
         }
     }
 
-    private static Map<Holder<MobEffect>, MobEffectInstance> loadEffects(CompoundTag tag, int elapsedTime) {
-        Map<Holder<MobEffect>, MobEffectInstance> map = new HashMap<>();
-        if (tag.contains(ACTIVE_EFFECTS_TAG, Tag.TAG_LIST)) {
-            ListTag listtag = tag.getList(ACTIVE_EFFECTS_TAG, Tag.TAG_COMPOUND);
 
-            for (int i = 0; i < listtag.size(); i++) {
-                CompoundTag compoundtag = listtag.getCompound(i);
-                MobEffectInstance oldEff = MobEffectInstance.load(compoundtag);
-                if (oldEff != null) {
-                    if (!oldEff.endsWithin(elapsedTime)) {
-                        var newInstance = new MobEffectInstance(oldEff.getEffect(), Math.max(1, oldEff.getDuration() - elapsedTime),  oldEff.getAmplifier(), oldEff.isAmbient(), oldEff.isVisible(), oldEff.showIcon());
-                        map.put(oldEff.getEffect(), newInstance);
-                    }
+    private static Map<Holder<MobEffect>, MobEffectInstance> loadEffects(CompoundTag tag, int elapsedTime, RegistryAccess registryAccess) {
+
+        RegistryOps<Tag> registryops = registryAccess.createSerializationContext(NbtOps.INSTANCE);
+        List<MobEffectInstance> list = tag.read("active_effects", MobEffectInstance.CODEC.listOf(), registryops).orElse(List.of());
+
+        Map<Holder<MobEffect>, MobEffectInstance> map = new HashMap<>();
+
+        for (var oldEff : list) {
+            if (oldEff != null) {
+                if (!oldEff.endsWithin(elapsedTime)) {
+                    var newInstance = new MobEffectInstance(oldEff.getEffect(), Math.max(1, oldEff.getDuration() - elapsedTime), oldEff.getAmplifier(), oldEff.isAmbient(), oldEff.isVisible(), oldEff.showIcon());
+                    map.put(oldEff.getEffect(), newInstance);
                 }
             }
         }
+
         return map;
     }
 
@@ -325,16 +303,16 @@ public class HamsterWheelSoldierData {
 
     public void dropItems(ServerLevel level, double x, double y, double z) {
         List<ItemStackWithEffect> stackWithEffects = new ArrayList<>();
-        AbstractClaySoldierEntity.getFromTag(data, AbstractClaySoldierEntity.HAND_ITEMS_TAG, (i, s) -> stackWithEffects.add(s), level.registryAccess());
-        AbstractClaySoldierEntity.getFromTag(data, AbstractClaySoldierEntity.ARMOR_ITEMS_TAG, (i, s) -> stackWithEffects.add(s), level.registryAccess());
-        AbstractClaySoldierEntity.getFromTag(data, AbstractClaySoldierEntity.BACKPACK_ITEMS_TAG, (i, s) -> stackWithEffects.add(s), level.registryAccess());
+        ValueInput input = TagValueInput.create(ProblemReporter.DISCARDING, level.registryAccess(), data);
+        ClaySoldierInventory inventory = new ClaySoldierInventory();
+        inventory.load(input);
+        inventory.dropInventory(level, (slot, stack) -> spawnItemInWorld(level, stack, x, y, z));
 
-        AbstractClaySoldierEntity.dropInventory(level, slot -> stackWithEffects.get(slot.ordinal()), (slot, stack) -> spawnItemInWorld(level, stack, x, y, z));
-
-        if (data.contains(ClayMobEntity.DROP_SPAWNED_FROM_TAG) && data.getBoolean(ClayMobEntity.DROP_SPAWNED_FROM_TAG)) {
-            ClayMobEntity.dropSpawnedFrom(level, ClayMobEntity.getSpawnedFromFromTag(data, level.registryAccess()), (stack) -> spawnItemInWorld(level, stack, x, y, z), false, false);
+        if (input.getBooleanOr(ClayMobEntity.DROP_SPAWNED_FROM_TAG, false)) {
+            ClayMobEntity.getSpawnedFromFromTag(input).ifPresent(s -> {
+                ClayMobEntity.dropSpawnedFrom(level, s, (stack) -> spawnItemInWorld(level, stack, x, y, z), false, false);
+            });
         }
-
     }
 
     private static void spawnItemInWorld(ServerLevel level, ItemStack stack, double x, double y, double z) {

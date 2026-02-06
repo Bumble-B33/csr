@@ -1,5 +1,6 @@
 package net.bumblebee.claysoldiers.item.itemeffectholder;
 
+import com.mojang.serialization.Codec;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.capability.ThrowableItemCapability;
 import net.bumblebee.claysoldiers.datamap.SoldierHoldableEffect;
@@ -13,9 +14,12 @@ import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 
 public class ItemStackWithEffect extends ItemStackEffectHolder<SoldierHoldableEffect> {
     public static final ItemStackWithEffect EMPTY = new ItemStackWithEffect(ItemStack.EMPTY, null, null);
+    public static final Codec<ItemStackWithEffect> CODEC = ItemStack.CODEC.xmap(ItemStackWithEffect::new, ItemStackEffectHolder::stack);
 
     @NotNull
     private final SoldierMultiWearable wearableEffect;
@@ -32,10 +36,6 @@ public class ItemStackWithEffect extends ItemStackEffectHolder<SoldierHoldableEf
     @Override
     protected SoldierHoldableEffect createEffectOnInitialisation(ItemStack stack) {
         return ClaySoldiersCommon.DATA_MAP.getEffect(stack);
-    }
-
-    public static ItemStackWithEffect parseOptional(HolderLookup.Provider provider, CompoundTag pCompoundTag) {
-        return new ItemStackWithEffect(ItemStack.parseOptional(provider, pCompoundTag));
     }
 
     public boolean isThrowable() {

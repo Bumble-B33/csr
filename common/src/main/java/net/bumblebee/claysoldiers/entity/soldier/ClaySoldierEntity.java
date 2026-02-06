@@ -5,6 +5,7 @@ import net.bumblebee.claysoldiers.entity.VampireSubjugate;
 import net.bumblebee.claysoldiers.init.ModEffects;
 import net.bumblebee.claysoldiers.init.ModEntityTypes;
 import net.bumblebee.claysoldiers.soldierproperties.customproperties.AttackTypeProperty;
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -12,6 +13,8 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
@@ -27,15 +30,15 @@ public class ClaySoldierEntity extends AbstractClaySoldierEntity implements Vamp
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag pCompound) {
-        super.addAdditionalSaveData(pCompound);
-        addVampOwner(pCompound);
+    public void addAdditionalSaveData(ValueOutput output) {
+        super.addAdditionalSaveData(output);
+        addVampOwner(output);
     }
 
     @Override
-    public void readAdditionalSaveData(CompoundTag pCompound) {
-        super.readAdditionalSaveData(pCompound);
-        readVampOwner(pCompound);
+    public void readAdditionalSaveData(ValueInput input) {
+        super.readAdditionalSaveData(input);
+        readVampOwner(input);
     }
 
     @Override
@@ -78,24 +81,22 @@ public class ClaySoldierEntity extends AbstractClaySoldierEntity implements Vamp
         setVampOwner(source);
     }
 
-    private void addVampOwner(CompoundTag compound) {
+    private void addVampOwner(ValueOutput compound) {
         if (this.vampOwnerUUID != null || hasVampiricConversionEffect()) {
-            compound.putUUID(VAMPIRIC_OWNER_TAG, vampOwnerUUID);
+            compound.store(VAMPIRIC_OWNER_TAG, UUIDUtil.CODEC, vampOwnerUUID);
         }
     }
 
-    private void readVampOwner(CompoundTag compound) {
-        if (compound.hasUUID(VAMPIRIC_OWNER_TAG)) {
-            vampOwnerUUID = compound.getUUID(VAMPIRIC_OWNER_TAG);
-            this.cachedVampOwner = null;
-        }
+    private void readVampOwner(ValueInput compound) {
+        vampOwnerUUID = compound.read(VAMPIRIC_OWNER_TAG, UUIDUtil.CODEC).orElse(null);
+        this.cachedVampOwner = null;
     }
 
     @Override
     public void convertToVampire() {
         VampireClaySoldierEntity vampire = ModEntityTypes.VAMPIRE_CLAY_SOLDIER_ENTITY.get().create(level(), EntitySpawnReason.CONVERSION);
         if (vampire != null) {
-            vampire.moveTo(getX(), getY(), getZ(), getYRot(), getXRot());
+            vampire.snapTo(getX(), getY(), getZ(), getYRot(), getXRot());
             vampire.setIsAlpha(false);
             copyBasePropertiesTo(vampire, false);
             if (getVampOwner() != null) {

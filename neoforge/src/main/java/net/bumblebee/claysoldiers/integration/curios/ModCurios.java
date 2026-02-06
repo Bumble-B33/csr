@@ -14,20 +14,16 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import org.jetbrains.annotations.Nullable;
-import top.theillusivec4.curios.api.CuriosCapability;
-import top.theillusivec4.curios.api.SlotContext;
-import top.theillusivec4.curios.api.type.capability.ICurio;
-import top.theillusivec4.curios.api.type.inventory.ICurioStacksHandler;
 
 import java.util.List;
 
 public class ModCurios {
     public ModCurios(IEventBus modEventBus) {
-        modEventBus.addListener(this::registerCapabilities);
-        modEventBus.addListener(this::commonSetup);
+        //modEventBus.addListener(this::registerCapabilities);
+        //modEventBus.addListener(this::commonSetup);
     }
 
-    private void commonSetup(final FMLCommonSetupEvent event) {
+    /*private void commonSetup(final FMLCommonSetupEvent event) {
         ClaySoldiersCommon.IS_WEARING_GOGGLES = ClaySoldiersCommon.IS_WEARING_GOGGLES.or(p -> hasItem(p, ModItems.CLAY_GOGGLES.get()));
         ClaySoldiersCommon.IS_WEARING_CLAY_SOLDIER.add(p -> hasItem(p, ModItems.CLAY_SOLDIER.get()));
     }
@@ -72,8 +68,8 @@ public class ModCurios {
         }
 
         @Override
-        public List<Component> getSlotsTooltip(List<Component> tooltips, Item.TooltipContext context) {
-            return List.of();
+        public List<Component> getSlotsTooltip(List<Component> tooltips) {
+            return ICurio.super.getSlotsTooltip(tooltips);
         }
 
         @Override
@@ -90,5 +86,5 @@ public class ModCurios {
                 ModCriterions.CLAY_SOLDIER_ON_HEAD_TRIGGER.get().trigger(serverPlayer);
             }
         }
-    }
+    }*/
 }

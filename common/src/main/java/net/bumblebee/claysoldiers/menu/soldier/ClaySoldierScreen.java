@@ -1,5 +1,6 @@
 package net.bumblebee.claysoldiers.menu.soldier;
 
+import com.mojang.blaze3d.pipeline.RenderPipeline;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.entity.soldier.AbstractClaySoldierEntity;
 import net.bumblebee.claysoldiers.entity.soldier.ZombieClaySoldierEntity;
@@ -9,6 +10,7 @@ import net.bumblebee.claysoldiers.soldierproperties.SoldierPropertyTypes;
 import net.bumblebee.claysoldiers.util.ComponentFormating;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -17,6 +19,7 @@ import net.minecraft.world.item.ItemStack;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class ClaySoldierScreen extends AbstractClayMobScreen<AbstractClaySoldierEntity, ClaySoldierMenu> {
     public static final String PREVIOUS_CLAY_TEAM_LABEL = "gui.label." + ClaySoldiersCommon.MOD_ID + ".previous_clay_team";
@@ -39,7 +42,7 @@ public class ClaySoldierScreen extends AbstractClayMobScreen<AbstractClaySoldier
     protected void renderBg(GuiGraphics guiGraphics, float pPartialTick, int pMouseX, int pMouseY) {
         final int x = (width - imageWidth) / 2;
         final int y = (height - imageHeight) / 2;
-        guiGraphics.blit(RenderType::guiTextured, TEXTURE, x, y, 0, 0, imageWidth, imageHeight+2, 256, 256);
+        guiGraphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, x, y, 0, 0, imageWidth, imageHeight+2, 256, 256);
         renderSource(guiGraphics, x + 26, y + 18, x + 75, y + 78, 60, 0.0625F, pMouseX, pMouseY);
     }
 
@@ -69,7 +72,7 @@ public class ClaySoldierScreen extends AbstractClayMobScreen<AbstractClaySoldier
                     if (predicateDisplayName != null) {
                         tooltip.add(predicateDisplayName);
                     }
-                    pGuiGraphics.renderTooltip(this.font, tooltip, stack.getTooltipImage(), mouseX, mouseY);
+                    pGuiGraphics.setTooltipForNextFrame(this.font, tooltip, stack.getTooltipImage(), mouseX, mouseY);
                 }
         );
     }
@@ -78,7 +81,7 @@ public class ClaySoldierScreen extends AbstractClayMobScreen<AbstractClaySoldier
         List<Component> tooltip = new ArrayList<>();
         tooltip.add(Component.translatable(SOLDIER_PROPERTIES).withStyle(ChatFormatting.DARK_GRAY));
         ComponentFormating.formatProperties(tooltip, properties, List.of(SoldierPropertyTypes.ATTACK_TYPE.get()), menu.getSource().orElse(null));
-        guiGraphics.renderComponentTooltip(font, tooltip, pX, pY);
+        guiGraphics.setTooltipForNextFrame(font, tooltip, Optional.empty(), pX, pY);
     }
 
     @Override

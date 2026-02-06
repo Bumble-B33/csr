@@ -1,6 +1,6 @@
 package net.bumblebee.claysoldiers.datamap.horse;
 
-import net.bumblebee.claysoldiers.util.color.ColorHelper;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -13,10 +13,12 @@ public final class ClayHorseItemMap {
     private static final Map<Item, ClayHorseWearableProperties> MAP = new HashMap<>();
 
     static {
-        MAP.put(Items.LEATHER, new ClayHorseWearableProperties(3, Items.LEATHER_HORSE_ARMOR, ColorHelper.EMPTY));
-        MAP.put(Items.GOLD_INGOT, new ClayHorseWearableProperties(7, Items.GOLDEN_HORSE_ARMOR, ColorHelper.EMPTY));
-        MAP.put(Items.IRON_INGOT, new ClayHorseWearableProperties(10, Items.IRON_HORSE_ARMOR, ColorHelper.EMPTY));
-        MAP.put(Items.DIAMOND, new ClayHorseWearableProperties(20, Items.DIAMOND_HORSE_ARMOR, ColorHelper.EMPTY));
+        MAP.put(Items.LEATHER, ClayHorseWearableProperties.of(ClayHorseSlot.ARMOR).protection(3).armorItem(Items.LEATHER_HORSE_ARMOR).build());
+        MAP.put(Items.IRON_INGOT, ClayHorseWearableProperties.of(ClayHorseSlot.ARMOR).protection(7).armorItem(Items.IRON_HORSE_ARMOR).build());
+        MAP.put(Items.COPPER_INGOT, ClayHorseWearableProperties.of(ClayHorseSlot.ARMOR).protection(10).armorItem(Items.COPPER_HORSE_ARMOR).build());
+        MAP.put(Items.GOLD_INGOT, ClayHorseWearableProperties.of(ClayHorseSlot.ARMOR).protection(15).armorItem(Items.GOLDEN_HORSE_ARMOR).build());
+        MAP.put(Items.DIAMOND, ClayHorseWearableProperties.of(ClayHorseSlot.ARMOR).protection(20).armorItem(Items.DIAMOND_HORSE_ARMOR).build());
+        MAP.put(Items.GOAT_HORN, ClayHorseWearableProperties.of(ClayHorseSlot.HORN).build());
     }
 
     @Nullable

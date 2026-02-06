@@ -78,7 +78,7 @@ public abstract class ClaySoldierMeleeGoal extends Goal {
             return false;
         } else if (!this.followingTargetEvenIfNotSeen) {
             return !this.claySoldier.getNavigation().isDone();
-        } else return this.claySoldier.isWithinRestriction(target.blockPosition());
+        } else return this.claySoldier.isWithinHome(target.blockPosition());
     }
 
     @Override

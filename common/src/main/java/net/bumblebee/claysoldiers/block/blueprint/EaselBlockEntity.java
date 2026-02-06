@@ -23,12 +23,17 @@ import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Mirror;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.TagValueInput;
+import net.minecraft.world.level.storage.TagValueOutput;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -108,64 +113,66 @@ public class EaselBlockEntity extends BlockEntity {
     }
 
     @Override
-    protected void saveAdditional(CompoundTag pTag, HolderLookup.Provider pRegistries) {
-        super.saveAdditional(pTag, pRegistries);
+    protected void saveAdditional(ValueOutput tag) {
+        if (!hasLevel()) {
+            throw new IllegalStateException("Saving with out level");
+        }
+
         if (data != null) {
-            data.save(pTag, pRegistries);
-        }
-        if (pTag.contains(INDICATE_TAG_ON_CLIENT)) {
-            if (template != null) {
-                template.saveItems(pTag);
-                template.saveSize(pTag);
-                template.saveHasStarted(pTag);
-            } else {
-                pTag.remove(INDICATE_TAG_ON_CLIENT);
-            }
+            data.save(tag, level.registryAccess());
         } else if (template instanceof ServerBlueprintPlan serverTemplate) {
-            CompoundTag templateTag = new CompoundTag();
-            pTag.put(TEMPLATE_TAG, serverTemplate.save(templateTag));
+            serverTemplate.save(tag);
         }
-        saveMirror(pTag);
-    }
-
-
-    @Override
-    protected void loadAdditional(CompoundTag pTag, HolderLookup.Provider pRegistries) {
-        super.loadAdditional(pTag, pRegistries);
-        data = BlueprintData.load(pTag, pRegistries);
-        if (pTag.contains(INDICATE_TAG_ON_CLIENT)) {
-            template = new ClientBlueprintPlan(pTag);
-        } else {
-            if (pTag.contains(TEMPLATE_TAG)) {
-                template = ServerBlueprintPlan.load(pTag.getCompound(TEMPLATE_TAG), pRegistries);
-            }
-        }
-        loadMirror(pTag);
+        saveMirror(tag);
     }
 
     @Override
     public CompoundTag getUpdateTag(HolderLookup.Provider pRegistries) {
-        CompoundTag tag = new CompoundTag();
+        TagValueOutput tag = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, pRegistries);
+        if (data != null) {
+            data.save(tag, pRegistries);
+        }
+        if (template != null) {
+            template.saveItems(tag);
+            template.saveSize(tag);
+            template.saveHasStarted(tag);
+        }
         tag.putBoolean(INDICATE_TAG_ON_CLIENT, true);
-        saveAdditional(tag, pRegistries);
-        return tag;
+        return tag.buildResult();
     }
+
+
+    @Override
+    protected void loadAdditional(ValueInput tag) {
+        super.loadAdditional(tag);
+        loadMirror(tag);
+        boolean client = tag.getBooleanOr(INDICATE_TAG_ON_CLIENT, false);
+
+        if (level == null) {
+            System.out.println("Loading with out level: " + (client ? "Client" : "Server") + " data: " + tag);
+            return;
+        }
+        data = BlueprintData.load(tag, level.registryAccess());
+        if (client) {
+            template = new ClientBlueprintPlan(tag);
+        } else {
+            ServerBlueprintPlan.load(tag, level.registryAccess());
+        }
+    }
+
+
 
     @Override
     public @Nullable Packet<ClientGamePacketListener> getUpdatePacket() {
         return ClientboundBlockEntityDataPacket.create(this);
     }
 
-    private void saveMirror(CompoundTag tag) {
-        tag.putString(MIRROR_TAG, this.mirror.toString());
+    private void saveMirror(ValueOutput tag) {
+        tag.store(MIRROR_TAG, Mirror.CODEC, mirror);
     }
 
-    private void loadMirror(CompoundTag tag) {
-        try {
-            this.mirror = Mirror.valueOf(tag.getString(MIRROR_TAG));
-        } catch (IllegalArgumentException ignored) {
-            this.mirror = Mirror.NONE;
-        }
+    private void loadMirror(ValueInput tag) {
+        this.mirror = tag.read(MIRROR_TAG, Mirror.CODEC).orElse(Mirror.NONE);
     }
 
     public boolean cycleMirror() {

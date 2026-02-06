@@ -10,7 +10,9 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.projectile.ThrownPotion;
+import net.minecraft.world.entity.projectile.AbstractThrownPotion;
+import net.minecraft.world.entity.projectile.ThrownSplashPotion;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
@@ -20,14 +22,14 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class ClaySoldierThrownPotion extends ThrownPotion {
+public class ClaySoldierThrownPotion extends ThrownSplashPotion {
     public ClaySoldierThrownPotion(Level pLevel, LivingEntity shooter) {
         this(ModEntityTypes.CLAY_SOLDIER_POTION.get(), pLevel);
         this.setPos(shooter.getX(), shooter.getEyeY() - 0.1F, shooter.getZ());
         this.setOwner(shooter);
     }
 
-    public ClaySoldierThrownPotion(EntityType<? extends ThrownPotion> entityType, Level level) {
+    public ClaySoldierThrownPotion(EntityType<? extends ThrownSplashPotion> entityType, Level level) {
         super(entityType, level);
     }
 
@@ -45,6 +47,7 @@ public class ClaySoldierThrownPotion extends ThrownPotion {
             this.discard();
         }
     }
+
 
     private void applySplash(ServerLevel level, Iterable<MobEffectInstance> pEffectInstances, @Nullable Entity pTarget) {
         AABB aabb = this.getBoundingBox().inflate(4.0, 2.0, 4.0);
@@ -82,4 +85,5 @@ public class ClaySoldierThrownPotion extends ThrownPotion {
             }
         }
     }
+
 }

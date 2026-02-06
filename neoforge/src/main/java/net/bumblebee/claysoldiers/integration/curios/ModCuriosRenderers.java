@@ -9,7 +9,6 @@ import net.bumblebee.claysoldiers.team.ClayMobTeamManger;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.EntityModel;
-import net.minecraft.client.model.HumanoidArmorModel;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.ModelLayers;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -23,6 +22,7 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.equipment.Equippable;
@@ -32,29 +32,25 @@ import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
 import org.jetbrains.annotations.NotNull;
-import top.theillusivec4.curios.api.CuriosSlotTypes;
-import top.theillusivec4.curios.api.SlotContext;
-import top.theillusivec4.curios.api.client.ICurioRenderer;
-import top.theillusivec4.curios.api.type.ISlotType;
 
 import java.util.List;
 import java.util.Map;
 
 public final class ModCuriosRenderers {
     public ModCuriosRenderers(IEventBus modEventBus) {
-        modEventBus.addListener(this::addLayerEvent);
-        modEventBus.addListener(this::init);
+        //modEventBus.addListener(this::addLayerEvent);
+        //modEventBus.addListener(this::init);
 
-        NeoForge.EVENT_BUS.addListener(this::tooltipEvent);
+        //NeoForge.EVENT_BUS.addListener(this::tooltipEvent);
     }
 
-    public void addLayerEvent(final EntityRenderersEvent.AddLayers event) {
-        CuriosHeadLayer.equipmentRenderer = event.getContext().getEquipmentRenderer();
+    /*public void addLayerEvent(final EntityRenderersEvent.AddLayers event) {
+        //CuriosHeadLayer.equipmentRenderer = event.getContext().getEquipmentRenderer();
     }
 
     public void init(final FMLClientSetupEvent event) {
-        ICurioRenderer.register(ModItems.CLAY_GOGGLES.get(), CuriosHeadLayer::clayGoggles);
-        ICurioRenderer.register(ModItems.CLAY_SOLDIER.get(), SoldierOnHeadLayer::claySoldier);
+        //CuriosRendererRegistry.register(ModItems.CLAY_GOGGLES.get(), CuriosHeadLayer::clayGoggles);
+        //CuriosRendererRegistry.register(ModItems.CLAY_SOLDIER.get(), SoldierOnHeadLayer::claySoldier);
     }
 
     public void tooltipEvent(final ItemTooltipEvent event) {
@@ -79,7 +75,7 @@ public final class ModCuriosRenderers {
         if (stack.isEmpty()) {
             return null;
         }
-        Map<String, ISlotType> slots = CuriosSlotTypes.getItemSlotTypes(stack, player);
+        Map<String, ISlotType> slots = CuriosApi.getItemStackSlots(stack, player);
         slots.remove("curio");
 
         if (slots.isEmpty()) {
@@ -103,9 +99,9 @@ public final class ModCuriosRenderers {
             slotsTooltip.append(type);
         }
         return slotsTooltip;
-    }
+    }*/
 
-    private static class CuriosHeadLayer implements ICurioRenderer {
+    /*private static class CuriosHeadLayer implements ICurioRenderer {
         private final HumanoidModel<? extends HumanoidRenderState> model;
         private static EquipmentLayerRenderer equipmentRenderer;
 
@@ -129,6 +125,11 @@ public final class ModCuriosRenderers {
             ICurioRenderer.setupHumanoidAnimations(model, renderState);
 
             equipmentRenderer.renderLayers(EquipmentClientInfo.LayerType.HUMANOID, equippable.assetId().orElseThrow(), model, stack, poseStack, renderTypeBuffer, packedLight);
+        }
+
+        @Override
+        public <T extends LivingEntity, M extends EntityModel<T>> void render(ItemStack stack, SlotContext slotContext, PoseStack matrixStack, RenderLayerParent<T, M> renderLayerParent, MultiBufferSource renderTypeBuffer, int light, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch) {
+
         }
     }
 
@@ -154,5 +155,5 @@ public final class ModCuriosRenderers {
                 model.render(poseStack, renderTypeBuffer, packedLight, t.getColor(0, renderState.ageInTicks));
             });
         }
-    }
+    }*/
 }

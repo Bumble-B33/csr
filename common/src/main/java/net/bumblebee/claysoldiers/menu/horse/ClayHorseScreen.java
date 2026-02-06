@@ -1,5 +1,6 @@
 package net.bumblebee.claysoldiers.menu.horse;
 
+import com.mojang.blaze3d.pipeline.RenderPipeline;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.datamap.horse.ClayHorseItemMap;
 import net.bumblebee.claysoldiers.entity.ClayMobEntity;
@@ -7,6 +8,7 @@ import net.bumblebee.claysoldiers.entity.horse.AbstractClayHorse;
 import net.bumblebee.claysoldiers.menu.AbstractClayMobScreen;
 import net.bumblebee.claysoldiers.util.ComponentFormating;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -31,7 +33,7 @@ public class ClayHorseScreen extends AbstractClayMobScreen<AbstractClayHorse, Cl
         int x = (this.width - this.imageWidth) / 2;
         int y = (this.height - this.imageHeight) / 2;
 
-        pGuiGraphics.blit(RenderType::guiTextured, HORSE_INVENTORY_LOCATION, x, y, 0, 0, this.imageWidth, this.imageHeight, 256, 256);
+        pGuiGraphics.blit(RenderPipelines.GUI_TEXTURED, HORSE_INVENTORY_LOCATION, x, y, 0, 0, this.imageWidth, this.imageHeight, 256, 256);
 
         renderSource(pGuiGraphics, x + 26, y + 18, x + 78, y + 70, 51, 0.25F, pMouseX, pMouseY);
     }
@@ -61,6 +63,6 @@ public class ClayHorseScreen extends AbstractClayMobScreen<AbstractClayHorse, Cl
         addItemName(tooltip, stack);
         addSlotName(tooltip);
         ComponentFormating.formatClayHorseProperties(clayHorseProperties, tooltip);
-        pGuiGraphics.renderTooltip(this.font, tooltip, stack.getTooltipImage(), mouseX, mouseY);
+        pGuiGraphics.setTooltipForNextFrame(this.font, tooltip, stack.getTooltipImage(), mouseX, mouseY);
     }
 }

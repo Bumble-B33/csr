@@ -18,7 +18,6 @@ import net.bumblebee.claysoldiers.soldierproperties.customproperties.specialatta
 import net.bumblebee.claysoldiers.soldierproperties.customproperties.specialattack.SpecialAttackSerializer;
 import net.minecraft.advancements.CriterionTrigger;
 import net.minecraft.advancements.critereon.EntitySubPredicate;
-import net.minecraft.advancements.critereon.ItemSubPredicate;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
@@ -47,11 +46,11 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.neoforged.fml.ModList;
+import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.fml.loading.FMLLoader;
 import net.neoforged.neoforge.common.extensions.IMenuTypeExtension;
 import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.RegistryBuilder;
-import net.neoforged.neoforgespi.Environment;
 
 import java.util.List;
 import java.util.function.BiFunction;
@@ -61,7 +60,7 @@ import java.util.function.Supplier;
 public class NeoForgePlatformHelper implements IPlatformHelper {
     @Override
     public boolean isClient() {
-        return Environment.get().getDist().isClient();
+        return FMLEnvironment.getDist().isClient();
     }
 
     @Override
@@ -76,7 +75,7 @@ public class NeoForgePlatformHelper implements IPlatformHelper {
 
     @Override
     public boolean isDevEnv() {
-        return !FMLLoader.isProduction();
+        return !FMLEnvironment.isProduction();
     }
 
     @Override
@@ -86,19 +85,19 @@ public class NeoForgePlatformHelper implements IPlatformHelper {
 
     @Override
     public <T extends Item> ItemLikeSupplier<T> registerItem(String id, Function<Item.Properties, T> item, Item.Properties properties) {
-        return ItemLikeSupplier.create(ClaySoldiersNeoForge.ITEMS.registerItem(id, item, properties));
+        return ItemLikeSupplier.create(ClaySoldiersNeoForge.ITEMS.registerItem(id, item, () -> properties));
     }
 
     @Override
     public <T extends Block> ItemLikeSupplier<T> registerBlockWithItem(String id, Function<BlockBehaviour.Properties, T> block, BlockBehaviour.Properties properties) {
-        DeferredBlock<T> blockHolder = ClaySoldiersNeoForge.BLOCKS.registerBlock(id, block, properties);
+        DeferredBlock<T> blockHolder = ClaySoldiersNeoForge.BLOCKS.registerBlock(id, block, () -> properties);
         ClaySoldiersNeoForge.ITEMS.registerSimpleBlockItem(id, blockHolder);
         return ItemLikeSupplier.create(blockHolder);
     }
 
     @Override
     public <T extends Block> ItemLikeSupplier<T> registerBlockWithItem(String id, Function<BlockBehaviour.Properties, T> block, BlockBehaviour.Properties properties, BiFunction<Block, Item.Properties, BlockItem> createBlockItem) {
-        DeferredBlock<T> blockHolder = ClaySoldiersNeoForge.BLOCKS.registerBlock(id, block, properties);
+        DeferredBlock<T> blockHolder = ClaySoldiersNeoForge.BLOCKS.registerBlock(id, block, () -> properties);
         ClaySoldiersNeoForge.ITEMS.registerItem(id, itemProp -> createBlockItem.apply(blockHolder.get(), itemProp));
         return ItemLikeSupplier.create(blockHolder);
     }
@@ -186,11 +185,6 @@ public class NeoForgePlatformHelper implements IPlatformHelper {
     @Override
     public <T extends EntitySubPredicate> Supplier<MapCodec<T>> registerEntitySubPredicate(String name, Supplier<MapCodec<T>> subPredicate) {
         return ClaySoldiersNeoForge.ENTITY_SUB_PREDICATE.register(name, subPredicate);
-    }
-
-    @Override
-    public <T extends ItemSubPredicate.Type<?>> Supplier<T> registerItemSubPredicate(String name, Supplier<T> itemSubPredicate) {
-        return ClaySoldiersNeoForge.ITEM_SUB_PREDICATES.register(name, itemSubPredicate);
     }
 
     @Override

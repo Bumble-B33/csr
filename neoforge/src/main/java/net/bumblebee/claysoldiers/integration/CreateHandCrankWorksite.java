@@ -10,7 +10,6 @@ import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import java.util.HashMap;
 
 public class CreateHandCrankWorksite implements AssignableWorksiteCapability {
-    // Todo
     public static final ResourceLocation WORKSITE_ID = ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "hand_crank");
     /*private final HandCrankBlockEntity entity;*/
     private static int handIndex = 0;

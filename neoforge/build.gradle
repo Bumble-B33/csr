@@ -90,7 +90,7 @@ dependencies {
     implementation("curse.maven:jade-324717:${jade_id_neo}")
     compileOnly("io.wispforest:accessories-neoforge:${accessories_version}")
 
-    implementation "net.tslat.smartbrainlib:SmartBrainLib-neoforge-${minecraft_version}:${sbl_version}"
+    implementation "net.tslat.smartbrainlib:SmartBrainLib-neoforge-${sbl_version}"
 
     // Todo
     // compileOnly("com.simibubi.create:create-${minecraft_version}:${create_version}:slim") { transitive = false }
@@ -100,8 +100,8 @@ dependencies {
     // compileOnly("com.tterrag.registrate:Registrate:${registrate_version}")
 
     // Needed for DataGen or Create Crashes
-    runtimeOnly("top.theillusivec4.curios:curios-neoforge:${curios_version}")
-    compileOnly("top.theillusivec4.curios:curios-neoforge:${curios_version}:api")
+    //runtimeOnly("top.theillusivec4.curios:curios-neoforge:${curios_version}")
+    //compileOnly("top.theillusivec4.curios:curios-neoforge:${curios_version}:api")
 
     //implementation "curse.maven:just-enough-resources-jer-240630:${jer_id_neo}"
 }

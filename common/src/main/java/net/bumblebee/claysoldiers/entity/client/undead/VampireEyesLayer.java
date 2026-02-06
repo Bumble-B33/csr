@@ -7,9 +7,12 @@ import net.bumblebee.claysoldiers.entity.client.ClaySoldierModel;
 import net.bumblebee.claysoldiers.entity.client.renderstates.AbstractClaySoldierRenderState;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.RenderLayerParent;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
+import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.ARGB;
 
@@ -32,14 +35,12 @@ public class VampireEyesLayer extends RenderLayer<AbstractClaySoldierRenderState
     }
 
     @Override
-    public void render(PoseStack pPoseStack, MultiBufferSource pBuffer, int pPackedLight, AbstractClaySoldierRenderState claySoldier, float v1, float v2) {
+    public void submit(PoseStack poseStack, SubmitNodeCollector nodeCollector, int packedLight, AbstractClaySoldierRenderState claySoldier, float v, float v1) {
         if (shouldEyesGlow.test(claySoldier)) {
-            VertexConsumer vertexconsumer = pBuffer.getBuffer(VAMPIRE_EYES_ACTIVE);
-            this.getParentModel().renderToBuffer(pPoseStack, vertexconsumer, 0xF00000, OverlayTexture.NO_OVERLAY);
+            nodeCollector.order(1).submitModel(this.getParentModel(), claySoldier, poseStack, VAMPIRE_EYES_ACTIVE, 0xF00000, OverlayTexture.NO_OVERLAY, -1, null, claySoldier.outlineColor, null);
         } else {
-            VertexConsumer vertexconsumer = pBuffer.getBuffer(VAMPIRE_EYES);
-            this.getParentModel().renderToBuffer(pPoseStack, vertexconsumer, 0xF00000, OverlayTexture.NO_OVERLAY,
-                    ARGB.color(0x7F, 0xFFFFFF));
+            nodeCollector.order(1).submitModel(this.getParentModel(), claySoldier, poseStack, VAMPIRE_EYES, 0xF00000, OverlayTexture.NO_OVERLAY, ARGB.color(0x7F, 0xFFFFFF), null, claySoldier.outlineColor, null);
         }
+
     }
 }

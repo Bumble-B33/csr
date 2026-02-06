@@ -8,6 +8,8 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
+import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
+import net.minecraft.client.gui.screens.inventory.tooltip.DefaultTooltipPositioner;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -22,7 +24,7 @@ public abstract class AbstractClayMobScreen<C extends ClayMobEntity, T extends A
     public static final String CLAY_TEAM_LOYAL_LABEL = "gui.label." + ClaySoldiersCommon.MOD_ID + ".clay_team_loyalty";
     public static final String SLOT_LABEL = "gui.label." + ClaySoldiersCommon.MOD_ID + ".slot";
 
-    protected static final int GRAY_COLOR = 0x404040;
+    protected static final int GRAY_COLOR = 0xFF404040;
     protected int teamPropertiesY = 6;
     protected int teamPropertiesX = 104;
 
@@ -49,7 +51,7 @@ public abstract class AbstractClayMobScreen<C extends ClayMobEntity, T extends A
     protected void queLabels(List<Label> labels) {
         menu.forSourceIfPresent(clayMob -> {
             if (!clayMob.getType().is(ModTags.EntityTypes.CLAY_BOSS)) {
-                labels.add(new Label(getTeamLabel(clayMob), clayMob.getTeamColor()));
+                labels.add(new Label(getTeamLabel(clayMob), 0xFF000000 | clayMob.getTeamColor()));
             }
             if (clayMob.hasClayTeamOwner()) {
                 labels.add(new Label(Component.translatable(CLAY_TEAM_LOYAL_LABEL, clayMob.getOwnerDisplayName()), GRAY_COLOR, 0.75f, 1));
@@ -80,7 +82,7 @@ public abstract class AbstractClayMobScreen<C extends ClayMobEntity, T extends A
             ItemStack itemstack = this.hoveredSlot.getItem();
             renderSpecialTooltip(guiGraphics, itemstack, mouseX, mouseY);
         } else if (hoveredSlot instanceof AbstractClayMenuSlot clayMenuSlot) {
-            guiGraphics.renderTooltip(this.font, Component.translatable(SLOT_LABEL, clayMenuSlot.getDisplayName()).withStyle(ChatFormatting.GRAY), mouseX, mouseY);
+            guiGraphics.setTooltipForNextFrame(this.font, Component.translatable(SLOT_LABEL, clayMenuSlot.getDisplayName()).withStyle(ChatFormatting.GRAY), mouseX, mouseY);
         }
 
     }
@@ -112,16 +114,16 @@ public abstract class AbstractClayMobScreen<C extends ClayMobEntity, T extends A
 
     public record Label(Component text, int color, float scale, int height) {
         public Label(Component text, int color) {
-            this(text,  color, 1f, 10);
+            this(text, color, 1f, 10);
         }
 
         public void render(GuiGraphics guiGraphics, Font font, int x, int y) {
             if (scale != 1f) {
                 var pose = guiGraphics.pose();
-                pose.pushPose();
-                pose.scale(scale, scale, 1);
+
+                pose.pushMatrix().scale(scale, scale);
                 guiGraphics.drawString(font, text, (int) (x / scale), (int) (y / scale), color, false);
-                pose.popPose();
+                pose.popMatrix();
             } else {
                 guiGraphics.drawString(font, text, x, y, color, false);
             }

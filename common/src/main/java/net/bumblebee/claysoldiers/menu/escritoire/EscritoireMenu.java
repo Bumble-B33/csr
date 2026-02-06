@@ -59,15 +59,15 @@ public class EscritoireMenu extends AbstractContainerMenu {
             }
 
             @Override
-            public void onTake(Player p_150672_, ItemStack p_150673_) {
-                p_150673_.onCraftedBy(p_150672_.level(), p_150672_, p_150673_.getCount());
-                EscritoireMenu.this.resultContainer.awardUsedRecipes(p_150672_, this.getRelevantItems());
+            public void onTake(Player player, ItemStack p_150673_) {
+                p_150673_.onCraftedBy(player, p_150673_.getCount());
+                EscritoireMenu.this.resultContainer.awardUsedRecipes(player, this.getRelevantItems());
                 ItemStack itemstack = EscritoireMenu.this.inputSlot.remove(1);
                 if (!itemstack.isEmpty()) {
                     EscritoireMenu.this.setupResultSlot();
                 }
 
-                super.onTake(p_150672_, p_150673_);
+                super.onTake(player, p_150673_);
             }
 
             private List<ItemStack> getRelevantItems() {
@@ -110,7 +110,7 @@ public class EscritoireMenu extends AbstractContainerMenu {
             Item item = itemstack1.getItem();
             itemstack = itemstack1.copy();
             if (index == 1) {
-                item.onCraftedBy(itemstack1, player.level(), player);
+                item.onCraftedBy(itemstack1, player);
                 if (!this.moveItemStackTo(itemstack1, 2, 38, true)) {
                     return ItemStack.EMPTY;
                 }

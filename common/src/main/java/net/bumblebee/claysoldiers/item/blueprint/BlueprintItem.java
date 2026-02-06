@@ -17,9 +17,11 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.TooltipDisplay;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 public class BlueprintItem extends BlueprintPageItem {
     public static final String DESCRIPTION_ID = "item." + ClaySoldiersCommon.MOD_ID + ".blueprint";
@@ -32,23 +34,27 @@ public class BlueprintItem extends BlueprintPageItem {
         super(pProperties);
     }
 
+
+
     @Override
-    public void appendHoverText(ItemStack pStack, TooltipContext pContext, List<Component> pTooltipComponents, TooltipFlag pTooltipFlag) {
-        if (!pTooltipFlag.isAdvanced()) {
+    public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay tooltipDisplay, Consumer<Component> tooltipAdder, TooltipFlag flag) {
+        if (!flag.isAdvanced()) {
             return;
         }
-        var dataLoc = pStack.get(ModDataComponents.BLUEPRINT_DATA.get());
+        var dataLoc = stack.get(ModDataComponents.BLUEPRINT_DATA.get());
         if (dataLoc != null) {
-            pTooltipComponents.add(Component.translatable(STRUCTURE_NAME_LANG, dataLoc.toString()).withStyle(ChatFormatting.DARK_GRAY));
+            tooltipAdder.accept(Component.translatable(STRUCTURE_NAME_LANG, dataLoc.toString()).withStyle(ChatFormatting.DARK_GRAY));
         } else {
-            pTooltipComponents.add(Component.translatable(BLUEPRINT_INVALID_LANG).withStyle(ChatFormatting.RED));
+            tooltipAdder.accept(Component.translatable(BLUEPRINT_INVALID_LANG).withStyle(ChatFormatting.RED));
         }
     }
 
     @Override
-    public Optional<TooltipComponent> getTooltipImage(ItemStack pStack) {
-        return !pStack.has(DataComponents.HIDE_TOOLTIP) && !pStack.has(DataComponents.HIDE_ADDITIONAL_TOOLTIP)
-                ? Optional.ofNullable(pStack.get(ModDataComponents.BLUEPRINT_DATA.get())).map(BlueprintTooltip::new)
+    public Optional<TooltipComponent> getTooltipImage(ItemStack stack) {
+        TooltipDisplay tooltipDisplay = stack.getOrDefault(DataComponents.TOOLTIP_DISPLAY, TooltipDisplay.DEFAULT);
+
+        return tooltipDisplay.shows(ModDataComponents.BLUEPRINT_DATA.get())
+                ? Optional.ofNullable(stack.get(ModDataComponents.BLUEPRINT_DATA.get())).map(BlueprintTooltip::new)
                 : Optional.empty();
     }
 

@@ -1,5 +1,6 @@
 package net.bumblebee.claysoldiers.cap;
 
+import com.google.common.primitives.Ints;
 import net.bumblebee.claysoldiers.ConfigNeoForge;
 import net.bumblebee.claysoldiers.block.hamsterwheel.HamsterWheelBlock;
 import net.bumblebee.claysoldiers.block.hamsterwheel.HamsterWheelBlockEntity;
@@ -7,73 +8,86 @@ import net.bumblebee.claysoldiers.block.hamsterwheel.IHamsterWheelEnergyStorage;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.neoforged.neoforge.capabilities.BlockCapabilityCache;
 import net.neoforged.neoforge.capabilities.Capabilities;
-import net.neoforged.neoforge.energy.EnergyStorage;
-import net.neoforged.neoforge.energy.IEnergyStorage;
+import net.neoforged.neoforge.transfer.TransferPreconditions;
+import net.neoforged.neoforge.transfer.energy.EnergyHandler;
+import net.neoforged.neoforge.transfer.energy.SimpleEnergyHandler;
+import net.neoforged.neoforge.transfer.transaction.SnapshotJournal;
+import net.neoforged.neoforge.transfer.transaction.Transaction;
+import net.neoforged.neoforge.transfer.transaction.TransactionContext;
 import org.jetbrains.annotations.Nullable;
 
-public class NeoForgeEnergy extends EnergyStorage implements IHamsterWheelEnergyStorage  {
+public class NeoForgeEnergy implements EnergyHandler, IHamsterWheelEnergyStorage  {
     private final HamsterWheelBlockEntity blockEntity;
     private final NeoForgeViewOnly viewOnly;
+    private final EnergyJournal journal;
+    private long energy;
     @Nullable
-    private BlockCapabilityCache<IEnergyStorage ,Direction> cached;
+    private BlockCapabilityCache<EnergyHandler,Direction> cached;
 
     public NeoForgeEnergy(HamsterWheelBlockEntity entity) {
-        super(ConfigNeoForge.HAMSTER_WHEEL_CAPACITY.getAsInt(), 0, ConfigNeoForge.HAMSTER_WHEEL_CAPACITY.getAsInt(), 0);
         this.blockEntity = entity;
+        this.journal = new EnergyJournal();
         this.viewOnly = new NeoForgeViewOnly(this);
     }
 
     @Override
     public void setEnergy(long energy) {
-        this.energy =  Math.min((int) energy, getMaxEnergyStored());
+        this.energy = Math.min(energy, maxEnergyStored());
     }
 
     @Override
     public long energyStored() {
-        return getEnergyStored();
+        return getAmountAsLong();
     }
 
     @Override
     public long maxEnergyStored() {
-        return getMaxEnergyStored();
+        return ConfigNeoForge.HAMSTER_WHEEL_CAPACITY.getAsLong() * blockEntity.getEnergyCapacityMultiplier();
     }
 
     @Override
     public void generate(float speed) {
-        int generate = energy + (int) Math.max(1, ConfigNeoForge.HAMSTER_WHEEL_SPEED.get() * speed);
+        long generate = energy + (int) Math.max(1, ConfigNeoForge.HAMSTER_WHEEL_SPEED.get() * speed);
         if (generate < 0) {
             generate = Integer.MAX_VALUE;
         }
-        energy = Math.min(generate, getMaxEnergyStored());
+        energy = Math.min(generate, maxEnergyStored());
         if (!(blockEntity.getLevel() instanceof ServerLevel serverLevel)) {
             return;
         }
         Direction direction = blockEntity.getBlockState().getValue(HamsterWheelBlock.FACING);
         if (cached == null) {
-            cached = BlockCapabilityCache.create(Capabilities.EnergyStorage.BLOCK, serverLevel, blockEntity.getBlockPos().relative(direction), direction.getOpposite());
+            cached = BlockCapabilityCache.create(Capabilities.Energy.BLOCK, serverLevel, blockEntity.getBlockPos().relative(direction), direction.getOpposite());
         }
-        IEnergyStorage storage = cached.getCapability();
-        if (storage != null && storage.canReceive()) {
-            int amount = extractEnergy(maxExtract, true);
-            extractEnergy(storage.receiveEnergy(amount, false), false);
+        EnergyHandler storage = cached.getCapability();
+        if (storage != null) {
+            try (Transaction tx = Transaction.openRoot()) {
+                int extracted = extract(getMaxExtract(), tx);
+                tx.close();
+                try (Transaction tx2 = Transaction.openRoot()) {
+                    int inserted = storage.insert(extracted, tx2);
+                    tx2.commit();
+                    try (Transaction tx3 = Transaction.openRoot()) {
+                        extract(inserted, tx3);
+                        tx3.commit();
+                    }
+                }
+            }
         }
     }
 
     @Override
-    public void save(CompoundTag tag) {
-        tag.putInt(TAG_KEY, energy);
+    public void save(ValueOutput tag) {
+        tag.putLong(TAG_KEY, energy);
     }
 
     @Override
-    public void load(CompoundTag tag) {
-        energy = Math.min(tag.getInt(TAG_KEY), getMaxEnergyStored());
-    }
-
-    @Override
-    public boolean canExtract() {
-        return super.canExtract() && blockEntity.hasEnergyStorage();
+    public void load(ValueInput tag) {
+        energy = Math.min(tag.getLongOr(TAG_KEY, 0), maxEnergyStored());
     }
 
     @Override
@@ -81,12 +95,7 @@ public class NeoForgeEnergy extends EnergyStorage implements IHamsterWheelEnergy
         return viewOnly;
     }
 
-    @Override
-    public int getMaxEnergyStored() {
-        return ConfigNeoForge.HAMSTER_WHEEL_CAPACITY.getAsInt() * blockEntity.getEnergyCapacityMultiplier();
-    }
-
-    @Override
+    /*@Override
     public int extractEnergy(int toExtract, boolean simulate) {
         if (!canExtract() || toExtract <= 0) {
             return 0;
@@ -96,61 +105,91 @@ public class NeoForgeEnergy extends EnergyStorage implements IHamsterWheelEnergy
         if (!simulate)
             this.energy -= energyExtracted;
         return energyExtracted;
-    }
+    }*/
 
     private int getMaxExtract() {
-        return ConfigNeoForge.HAMSTER_WHEEL_CAPACITY.getAsInt();
+        return Math.min(Ints.saturatedCast(ConfigNeoForge.HAMSTER_WHEEL_CAPACITY.getAsLong()), Integer.MAX_VALUE);
     }
 
-    private record NeoForgeViewOnly(NeoForgeEnergy energyStorage) implements IEnergyStorage, IHamsterWheelEnergyStorage {
+    @Override
+    public long getAmountAsLong() {
+        return energy;
+    }
+
+    @Override
+    public long getCapacityAsLong() {
+        return maxEnergyStored();
+    }
+
+    @Override
+    public int insert(int amount, TransactionContext transactionContext) {
+        TransferPreconditions.checkNonNegative(amount);
+        return 0;
+    }
+
+    @Override
+    public int extract(int amount, TransactionContext transactionContext) {
+        TransferPreconditions.checkNonNegative(amount);
+        int extracted = Math.min(getAmountAsInt(), Math.min(amount, getMaxExtract()));
+        if (extracted > 0) {
+            this.journal.updateSnapshots(transactionContext);
+            this.energy -= extracted;
+            return extracted;
+        }
+        return 0;
+    }
+
+    private class EnergyJournal extends SnapshotJournal<Long> {
         @Override
-        public int receiveEnergy(int maxReceive, boolean simulate) {
+        protected Long createSnapshot() {
+            return energy;
+        }
+
+        @Override
+        protected void revertToSnapshot(Long snapshot) {
+            energy = snapshot;
+        }
+    }
+
+    private record NeoForgeViewOnly(NeoForgeEnergy energyStorage) implements EnergyHandler, IHamsterWheelEnergyStorage {
+        @Override
+        public long getAmountAsLong() {
+            return energyStorage.getAmountAsLong();
+        }
+
+        @Override
+        public long getCapacityAsLong() {
+            return energyStorage.getCapacityAsLong();
+        }
+
+        @Override
+        public int insert(int i, TransactionContext transactionContext) {
             return 0;
         }
 
         @Override
-        public int extractEnergy(int maxExtract, boolean simulate) {
+        public int extract(int i, TransactionContext transactionContext) {
             return 0;
-        }
-
-        @Override
-        public int getEnergyStored() {
-            return energyStorage.getEnergyStored();
-        }
-
-        @Override
-        public int getMaxEnergyStored() {
-            return energyStorage.getMaxEnergyStored();
-        }
-
-        @Override
-        public boolean canExtract() {
-            return false;
-        }
-
-        @Override
-        public boolean canReceive() {
-            return false;
         }
 
         @Override
         public long energyStored() {
-            return getEnergyStored();
+            return getAmountAsLong();
         }
 
         @Override
         public long maxEnergyStored() {
-            return getMaxEnergyStored();
+            return getCapacityAsLong();
         }
 
         @Override
         public void generate(float speed) {}
 
         @Override
-        public void save(CompoundTag tag) {}
+        public void save(ValueOutput tag) {}
 
         @Override
-        public void load(CompoundTag tag) {}
+        public void load(ValueInput tag) {}
 
         @Override
         public void setEnergy(long energy) {

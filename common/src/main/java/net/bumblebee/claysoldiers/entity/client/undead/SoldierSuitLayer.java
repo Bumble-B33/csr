@@ -7,10 +7,13 @@ import net.bumblebee.claysoldiers.entity.client.ClaySoldierModel;
 import net.bumblebee.claysoldiers.entity.client.renderstates.AbstractClaySoldierRenderState;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.RenderLayerParent;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.ARGB;
 
 public class SoldierSuitLayer extends RenderLayer<AbstractClaySoldierRenderState, ClaySoldierModel> {
     private static final RenderType ZOMBIE_SUIT = RenderType.entityTranslucent(ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "textures/entity/clay_soldier/zombie.png"));
@@ -32,9 +35,8 @@ public class SoldierSuitLayer extends RenderLayer<AbstractClaySoldierRenderState
     }
 
     @Override
-    public void render(PoseStack poseStack, MultiBufferSource buffer, int packedLight, AbstractClaySoldierRenderState claySoldierRenderState, float v, float v1) {
-        VertexConsumer vertexconsumer = buffer.getBuffer(suit);
-        this.getParentModel().renderToBuffer(poseStack, vertexconsumer, packedLight, LivingEntityRenderer.getOverlayCoords(claySoldierRenderState, 0.0F));
+    public void submit(PoseStack poseStack, SubmitNodeCollector nodeCollector, int packedLight, AbstractClaySoldierRenderState claySoldier, float v, float v1) {
+        nodeCollector.order(1).submitModel(this.getParentModel(), claySoldier, poseStack, suit, 0xF00000, LivingEntityRenderer.getOverlayCoords(claySoldier, 0.0F), ARGB.color(0x7F, 0xFFFFFF), null, claySoldier.outlineColor, null);
 
     }
 }

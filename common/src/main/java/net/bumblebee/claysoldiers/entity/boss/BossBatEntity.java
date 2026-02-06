@@ -12,6 +12,8 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ambient.Bat;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 
 import java.util.List;
 
@@ -32,18 +34,17 @@ public class BossBatEntity extends Bat {
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag compound) {
+    public void addAdditionalSaveData(ValueOutput compound) {
         super.addAdditionalSaveData(compound);
-        ContainerHelper.saveAllItems(compound, inventory, false, registryAccess());
+        ContainerHelper.saveAllItems(compound, inventory, false);
     }
 
     @Override
-    public void readAdditionalSaveData(CompoundTag compound) {
+    public void readAdditionalSaveData(ValueInput compound) {
         super.readAdditionalSaveData(compound);
-        if (compound.contains(ContainerHelper.TAG_ITEMS)) {
-            inventory = NonNullList.create();
-            ContainerHelper.loadAllItems(compound, inventory, registryAccess());
-        }
+        inventory = NonNullList.create();
+        ContainerHelper.loadAllItems(compound, inventory);
+
     }
 
     @Override

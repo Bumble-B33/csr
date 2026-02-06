@@ -30,6 +30,8 @@ import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
@@ -91,7 +93,7 @@ public class ClayBlockProjectileEntity extends AbstractHurtingProjectile {
 
 
     @Override
-    public void addAdditionalSaveData(CompoundTag compound) {
+    public void addAdditionalSaveData(ValueOutput compound) {
         super.addAdditionalSaveData(compound);
         if (getBlockSize() != 1) {
             compound.putFloat(BLOCK_SIZE_TAG, getBlockSize());
@@ -100,39 +102,24 @@ public class ClayBlockProjectileEntity extends AbstractHurtingProjectile {
             compound.putInt(PIERCE_TAG, pierceCount);
         }
         if (hasClayTeam()) {
-            ResourceLocation.CODEC.encodeStart(NbtOps.INSTANCE, getClayTeam().key().location())
-                    .ifSuccess(tag -> compound.put(SOLDIER_TEAM_ID_TAG, tag))
-                    .ifError(err -> LOGGER.error("Error saving Clay Team to Tag: {}", err.message()))
-            ;
+            compound.store(SOLDIER_TEAM_ID_TAG, ResourceLocation.CODEC, getClayTeam().key().location());
         }
         compound.putInt(LIFETIME_TAG, lifeTime);
         if (this.firedFromWeapon != null) {
-            compound.put(WEAPON_TAG, this.firedFromWeapon.save(this.registryAccess(), new CompoundTag()));
+            compound.store(WEAPON_TAG, ItemStack.CODEC, firedFromWeapon);
         }
     }
 
     @Override
-    public void readAdditionalSaveData(CompoundTag compound) {
+    public void readAdditionalSaveData(ValueInput compound) {
         super.readAdditionalSaveData(compound);
-        if (compound.contains(BLOCK_SIZE_TAG, Tag.TAG_ANY_NUMERIC)) {
-            setBlockSize(Math.max(0.2f, compound.getFloat(BLOCK_SIZE_TAG)));
-        }
-        if (compound.contains(PIERCE_TAG, Tag.TAG_INT)) {
-            setPierceCount(compound.getInt(PIERCE_TAG));
-        }
-        if (compound.contains(SOLDIER_TEAM_ID_TAG)) {
-            ResourceLocation.CODEC.parse(NbtOps.INSTANCE, compound.get(SOLDIER_TEAM_ID_TAG))
-                    .ifSuccess(this::setClayTeam)
-                    .ifError(err -> LOGGER.error("Error reading Clay Team: {}", err.message()));
-        }
-        if (compound.contains(LIFETIME_TAG, Tag.TAG_INT)) {
-            lifeTime = compound.getInt(LIFETIME_TAG);
-        }
-        if (compound.contains(WEAPON_TAG, Tag.TAG_COMPOUND)) {
-            this.firedFromWeapon = ItemStack.parse(this.registryAccess(), compound.getCompound("weapon")).orElse(null);
-        } else {
-            this.firedFromWeapon = null;
-        }
+        setBlockSize(Math.max(0.2f, compound.getFloatOr(BLOCK_SIZE_TAG, 1f)));
+        setPierceCount(compound.getIntOr(PIERCE_TAG, 0));
+
+        compound.read(SOLDIER_TEAM_ID_TAG, ResourceLocation.CODEC).ifPresent(this::setClayTeam);
+        lifeTime = compound.getIntOr(LIFETIME_TAG, 20*7);
+
+        firedFromWeapon = compound.read(WEAPON_TAG, ItemStack.CODEC).orElse(null);
     }
 
     @Override
@@ -212,7 +199,7 @@ public class ClayBlockProjectileEntity extends AbstractHurtingProjectile {
             soldier.setClayTeamType(team);
             soldier.setPos(pos);
             soldier.setSpawnedFrom(ClayMobTeamManger.createStackForTeam(team, level.registryAccess()), false);
-            soldier.moveTo(pos, this.getYRot(), this.getXRot());
+            soldier.snapTo(pos, this.getYRot(), this.getXRot());
             soldier.yHeadRot = soldier.getYRot();
             soldier.yBodyRot = soldier.getYRot();
             soldier.finalizeSpawn(level, level.getCurrentDifficultyAt(soldier.blockPosition()), EntitySpawnReason.MOB_SUMMONED, null);

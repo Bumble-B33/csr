@@ -66,20 +66,6 @@ public abstract class ItemStackEffectHolder<P> {
     }
 
     /**
-     * Save this {@code ItemStackEffectHolder} to a {@code Tag}.
-     * @return the {@code Tag} this is saved to
-     */
-    public Tag save(HolderLookup.Provider provider) {
-        return stack.save(provider);
-    }
-
-    /**
-     * Creates a new {@code ItemStack} from the given {@code CompoundTag}
-     */
-    public static<S extends ItemStackEffectHolder<?>> S parseOptional(Function<ItemStack, S> builder, HolderLookup.Provider provider, CompoundTag pCompoundTag) {
-        return builder.apply(ItemStack.parseOptional(provider, pCompoundTag));
-    }
-    /**
      * Compares both {@code ItemStacks}, returns {@code true} if both {@code ItemStacks} are equal.
      * Does not check whether the effect ist the same
      */

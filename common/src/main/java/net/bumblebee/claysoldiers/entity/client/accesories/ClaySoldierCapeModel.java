@@ -12,7 +12,7 @@ import net.minecraft.resources.ResourceLocation;
 import org.joml.Quaternionf;
 
 public class ClaySoldierCapeModel extends ClaySoldierModel {
-    public static final ModelLayerLocation LAYER_LOCATION = new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_soldier_cape"), "cloak");
+    public static final ModelLayerLocation LAYER_LOCATION = new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_soldier"), "cloak");
 
     private static final float SCALE = AbstractClaySoldierEntity.DEFAULT_SCALE;
     private static final CubeDeformation SHRINK_DEFORMATION = new CubeDeformation(SCALE, SCALE, SCALE);
@@ -24,25 +24,11 @@ public class ClaySoldierCapeModel extends ClaySoldierModel {
         super(root);
     }
 
-    public static LayerDefinition createSoldierMesh() {
-        /*MeshDefinition meshDefinition = ClaySoldierModel.createMesh();
-        PartDefinition partdefinition = meshDefinition.getRoot();
-        partdefinition.addOrReplaceChild(
-                "cloak",
-                CubeListBuilder.create().texOffs(0, 0).addBox(-5.0F, 0.0F, -1.0F, 10.0F, 16.0F, 1.0F, SHRINK_DEFORMATION),
-                PartPose.offset(0.0F, 0.0F, 2.0F)
-        );
-        return LayerDefinition.create(meshDefinition, 32, 32);*/
+    public static LayerDefinition createSoldierCapeLayer() {
         MeshDefinition meshDefinition = ClaySoldierModel.createSoldierMesh(SHRINK_DEFORMATION, 0);
-        PartDefinition partdefinition = meshDefinition.getRoot();
-        PartDefinition headPart = partdefinition.clearChild("head");
-        headPart.clearChild("hat");
-        partdefinition.clearChild(ClaySoldierModel.BAMBOO_STICK_NAME);
-        PartDefinition bodyPart = partdefinition.clearChild("body");
-        partdefinition.clearChild("left_arm");
-        partdefinition.clearChild("right_arm");
-        partdefinition.clearChild("left_leg");
-        partdefinition.clearChild("right_leg");
+        PartDefinition partdefinition = meshDefinition.getRoot().clearRecursively();
+        PartDefinition bodyPart = partdefinition.getChild("body");
+
         bodyPart.addOrReplaceChild(CLOAK, CubeListBuilder.create().texOffs(0, 0).addBox(-5.0F, 0.0F, -1.0F, 10.0F, 16.0F, 1.0F, CubeDeformation.NONE, 1.0F, 0.5F), PartPose.offsetAndRotation(0.0F, 0.0F, 2.0F, 0.0F, (float) Math.PI, 0.0F));
         return LayerDefinition.create(meshDefinition, 64, 64);
     }

@@ -27,6 +27,9 @@ public class AccessoryRenderState {
     public float wornHeadAnimationPos;
     public int overlayCords0;
 
+    public int outlineColor;
+    public boolean isInWater;
+
     public Collection<RenderableAccessory> renderableAccessories;
     public final ItemStackRenderState skullAccessory = new ItemStackRenderState();
     public final ItemStackRenderState gliderAccessory = new ItemStackRenderState();

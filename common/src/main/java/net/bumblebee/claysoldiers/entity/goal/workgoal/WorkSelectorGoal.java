@@ -8,6 +8,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -211,15 +213,15 @@ public class WorkSelectorGoal extends Goal implements SoldierStatusHolder {
     /**
      * Save this {@code WorkSelector} to the given {@code CompoundTag}
      */
-    public void saveToTag(CompoundTag tag) {
+    public void saveToTag(ValueOutput tag) {
         tag.putByte(WORK_MODE_TAG, (byte) workIndex);
     }
 
     /**
      * Initialise this {@code WorkSelector} from the given {@code CompoundTag}
      */
-    public void readFromTag(CompoundTag tag) {
-        setWorkMode(tag.getByte(WORK_MODE_TAG));
+    public void readFromTag(ValueInput tag) {
+        setWorkMode(tag.getByteOr(WORK_MODE_TAG, (byte) 0));
         onWorkStatusChange();
     }
 

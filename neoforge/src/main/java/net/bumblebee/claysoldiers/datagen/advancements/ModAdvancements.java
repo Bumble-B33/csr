@@ -10,6 +10,7 @@ import net.bumblebee.claysoldiers.entity.variant.ClayHorseVariants;
 import net.bumblebee.claysoldiers.init.*;
 import net.bumblebee.claysoldiers.item.ClayBrushItem;
 import net.bumblebee.claysoldiers.item.blueprint.BlueprintItem;
+import net.bumblebee.claysoldiers.soldierproperties.SoldierPropertyType;
 import net.bumblebee.claysoldiers.soldierproperties.SoldierPropertyTypes;
 import net.bumblebee.claysoldiers.soldierproperties.customproperties.AttackTypeProperty;
 import net.minecraft.advancements.*;
@@ -351,10 +352,11 @@ public class ModAdvancements implements AdvancementSubProvider {
             }
             makeAKingBuilder.addCriterion(attackTypeProperty.getSerializedName(), PickedUpItemTrigger.TriggerInstance.thrownItemPickedUpByEntity(
                     ContextAwarePredicate.create(),
-                    Optional.of(ItemPredicate.Builder.item()
-                            .withSubPredicate(ModCriterions.SOLDIER_PROPERTY_ITEM_PREDICATE.get(), SoldierPropertyItemPredicate.hasProperty(SoldierPropertyTypes.ATTACK_TYPE.get(), attackTypeProperty))
-                            .build()),
-                    Optional.of(EntityPredicate.wrap(EntityPredicate.Builder.entity().of(entityTypeHolderGetter, ModEntityTypes.CLAY_SOLDIER_ENTITY.get())))
+                    Optional.empty(),
+                    Optional.of(EntityPredicate.wrap(EntityPredicate.Builder.entity()
+                            .of(entityTypeHolderGetter, ModEntityTypes.CLAY_SOLDIER_ENTITY.get()).subPredicate(PropertyClaySoldierSubPredicate.hasProperty(SoldierPropertyTypes.ATTACK_TYPE.get().createProperty(attackTypeProperty)))
+                            )
+                    )
             ));
         }
         var makeAKing = makeAKingBuilder.save(saver, getSaveLocation("make_a_king"));
@@ -412,10 +414,8 @@ public class ModAdvancements implements AdvancementSubProvider {
             }
             workerBuilder.addCriterion(attackTypeProperty.getSerializedName(), PickedUpItemTrigger.TriggerInstance.thrownItemPickedUpByEntity(
                     ContextAwarePredicate.create(),
-                    Optional.of(ItemPredicate.Builder.item()
-                            .withSubPredicate(ModCriterions.SOLDIER_PROPERTY_ITEM_PREDICATE.get(), SoldierPropertyItemPredicate.hasProperty(SoldierPropertyTypes.ATTACK_TYPE.get(), attackTypeProperty))
-                            .build()),
-                    Optional.of(EntityPredicate.wrap(EntityPredicate.Builder.entity().of(entityTypeHolderGetter, ModEntityTypes.CLAY_SOLDIER_ENTITY.get())))
+                    Optional.empty(),
+                    Optional.of(EntityPredicate.wrap(EntityPredicate.Builder.entity().of(entityTypeHolderGetter, ModEntityTypes.CLAY_SOLDIER_ENTITY.get()).subPredicate(PropertyClaySoldierSubPredicate.hasProperty(SoldierPropertyTypes.ATTACK_TYPE.get().createProperty(attackTypeProperty)))))
             ));
         }
 

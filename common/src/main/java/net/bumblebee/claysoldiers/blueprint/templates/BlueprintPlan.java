@@ -14,6 +14,8 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 
 import java.util.List;
 import java.util.Map;
@@ -89,36 +91,29 @@ public abstract class BlueprintPlan {
         return hasStarted;
     }
 
-    public void saveHasStarted(CompoundTag tag) {
+    public void saveHasStarted(ValueOutput tag) {
         if (hasStarted()) {
             tag.putBoolean(HAS_STARTED_TAG, true);
         }
     }
 
-    public void saveSize(CompoundTag tag) {
-        tag.put(StructureTemplate.SIZE_TAG, this.newIntegerList(getSize().getX(), getSize().getY(), getSize().getZ()));
+    public void saveSize(ValueOutput tag) {
+        tag.store(StructureTemplate.SIZE_TAG, Vec3i.CODEC, getSize());
     }
 
-    public void saveItems(CompoundTag tag) {
+    public void saveItems(ValueOutput tag) {
         if (itemCountMap.isEmpty()) {
             return;
         }
-
-        ITEM_COUNT_MAP_CODEC.encodeStart(NbtOps.INSTANCE, itemCountMap)
-                .ifSuccess(itemCountTag -> tag.put(ITEMS_TAG, itemCountTag))
-                .ifError((tagError -> ClaySoldiersCommon.LOGGER.error(tagError.message())));
+        tag.store(ITEMS_TAG, ITEM_COUNT_MAP_CODEC, itemCountMap);
     }
 
-    protected void loadItemCount(CompoundTag tag) {
-        if (tag.contains(ITEMS_TAG)) {
-            ITEM_COUNT_MAP_CODEC.parse(NbtOps.INSTANCE, tag.get(ITEMS_TAG))
-                    .ifSuccess(itemCountMap::putAll)
-                    .ifError(mapError -> BlueprintUtil.LOGGER.error(mapError.message()));
-        }
+    protected void loadItemCount(ValueInput tag) {
+        tag.read(ITEMS_TAG, ITEM_COUNT_MAP_CODEC).ifPresent(itemCountMap::putAll);
     }
 
-    protected void loadHasStarted(CompoundTag tag) {
-        hasStarted = tag.contains(HAS_STARTED_TAG) && tag.getBoolean(HAS_STARTED_TAG);
+    protected void loadHasStarted(ValueInput tag) {
+        hasStarted = tag.getBooleanOr(HAS_STARTED_TAG, false);
     }
 
     protected ListTag newIntegerList(int... pValues) {

@@ -11,9 +11,12 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.EntityReference;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class ClayMobTeamOwnerEntity extends ClayMobEntity {
@@ -32,20 +35,22 @@ public abstract class ClayMobTeamOwnerEntity extends ClayMobEntity {
     }
 
     @Override
-    public void readAdditionalSaveData(CompoundTag pCompound) {
+    public void readAdditionalSaveData(ValueInput pCompound) {
         super.readAdditionalSaveData(pCompound);
         final var team = ClayMobTeam.read(pCompound);
-        if (!ClayMobTeamManger.isValidTeam(team, registryAccess())) {
+        if (team.isEmpty()) {
+            setClayTeamType(ClayMobTeamManger.DEFAULT_TYPE);
+        } else if (!ClayMobTeamManger.isValidTeam(team.orElseThrow(), registryAccess())) {
             ClayMobTeamManger.LOGGER.error("{} was saved with a Team ({}) that does not exist anymore", this.getClass().getSimpleName(), team);
             setClayTeamType(ClayMobTeamManger.DEFAULT_TYPE);
         } else {
-            setClayTeamType(team);
+            setClayTeamType(team.orElseThrow());
         }
     }
 
 
     @Override
-    public void addAdditionalSaveData(CompoundTag pCompound) {
+    public void addAdditionalSaveData(ValueOutput pCompound) {
         super.addAdditionalSaveData(pCompound);
         ClayMobTeam.save(getClayTeamType(), pCompound);
     }

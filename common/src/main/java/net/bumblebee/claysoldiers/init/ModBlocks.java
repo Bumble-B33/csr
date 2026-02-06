@@ -19,13 +19,12 @@ public class ModBlocks {
     );
 
     public static final ItemLikeSupplier<Block> EASEL_BLOCK = ClaySoldiersCommon.PLATFORM.registerBlockWithItem("easel",
-            EaselBlock::new, BlockBehaviour.Properties.of().noOcclusion().instabreak().noCollission(), BlueprintDependendBlockItem::new
+            EaselBlock::new, BlockBehaviour.Properties.of().noOcclusion().instabreak().noCollision(), BlueprintDependendBlockItem::new
     );
 
     public static final ItemLikeSupplier<Block> ESCRITOIRE_BLOCK = ClaySoldiersCommon.PLATFORM.registerBlockWithItem("escritoire",
             EscritoireBlock::new, BlockBehaviour.Properties.ofFullCopy(Blocks.LECTERN), BlueprintDependendBlockItem::new
     );
-
 
     public static void init() {
     }

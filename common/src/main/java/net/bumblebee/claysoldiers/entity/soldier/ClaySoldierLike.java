@@ -6,6 +6,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.storage.ValueInput;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,7 +39,7 @@ public interface ClaySoldierLike {
                 if (asClayMob().isPassenger()) {
                     Entity entity = asClayMob().getVehicle();
                     asClayMob().stopRiding();
-                    convertTo.startRiding(entity, true);
+                    convertTo.startRiding(entity, true, false);
                 }
 
                 asClayMob().discard();
@@ -75,7 +76,7 @@ public interface ClaySoldierLike {
         if (asClayMob().isPassenger()) {
             Entity entity = asClayMob().getVehicle();
             asClayMob().stopRiding();
-            toCopyTo.startRiding(entity, true);
+            toCopyTo.startRiding(entity, true, false);
         }
     }
 
@@ -89,7 +90,7 @@ public interface ClaySoldierLike {
     /**
      * Reads data from the given {@code Tag} when spawned by an {@code Item} or from a {@link AdditionalSoldierData#convert conversion}.
      */
-    void readItemPersistentData(CompoundTag tag);
+    void readItemPersistentData(ValueInput tag);
 
     /**
      * Called when a soldier {@link AdditionalSoldierData#convert conversion} happens.
@@ -98,6 +99,6 @@ public interface ClaySoldierLike {
      * @param tag        additional conversion data
      * @param cause The player how should get credit for this conversion
      */
-    default void onConversion(ClayMobEntity oldSoldier, CompoundTag tag, @Nullable Player cause) {
+    default void onConversion(ClayMobEntity oldSoldier, ValueInput tag, @Nullable Player cause) {
     }
 }

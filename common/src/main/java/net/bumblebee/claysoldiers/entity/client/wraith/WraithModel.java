@@ -11,6 +11,7 @@ import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.client.model.geom.builders.*;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.HumanoidArm;
@@ -124,15 +125,16 @@ public class WraithModel extends EntityModel<ClayWraithRenderState> implements A
         }
     }
 
+
     @Override
-    public void translateToHand(HumanoidArm p_259770_, PoseStack p_260351_) {
-        boolean flag = p_259770_ == HumanoidArm.RIGHT;
+    public void translateToHand(EntityRenderState entityRenderState, HumanoidArm humanoidArm, PoseStack poseStack) {
+        boolean flag = humanoidArm == HumanoidArm.RIGHT;
         ModelPart modelpart = flag ? this.rightArm : this.leftArm;
-        this.root.translateAndRotate(p_260351_);
-        this.body.translateAndRotate(p_260351_);
-        modelpart.translateAndRotate(p_260351_);
-        p_260351_.scale(0.55F, 0.55F, 0.55F);
-        this.offsetStackPosition(p_260351_, flag);
+        this.root.translateAndRotate(poseStack);
+        this.body.translateAndRotate(poseStack);
+        modelpart.translateAndRotate(poseStack);
+        poseStack.scale(0.55F, 0.55F, 0.55F);
+        this.offsetStackPosition(poseStack, flag);
     }
 
     private void offsetStackPosition(PoseStack poseStack, boolean rightSide) {

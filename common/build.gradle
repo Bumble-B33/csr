@@ -56,7 +56,7 @@ dependencies {
     runtimeOnly("mezz.jei:jei-${minecraft_version}-common:${jei_version}")
     compileOnly("io.wispforest:accessories-common:${accessories_version}-mojmap")
 
-    implementation "net.tslat.smartbrainlib:SmartBrainLib-common-${minecraft_version}:${sbl_version}"
+    implementation "net.tslat.smartbrainlib:SmartBrainLib-common-${sbl_version}"
 
 }
 

@@ -11,8 +11,11 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.storage.TagValueInput;
+import net.minecraft.world.level.storage.ValueInput;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
@@ -37,6 +40,7 @@ public final class AdditionalSoldierData {
     public <T extends ClayMobEntity & ClaySoldierLike> AdditionalSoldierData(EntityType<T> soldierType, CompoundTag tag) {
         this.soldierType = soldierType;
         this.tag = tag;
+
     }
 
     /**
@@ -44,10 +48,11 @@ public final class AdditionalSoldierData {
      * @param cause The player how should receive credit for this conversion.
      */
     public <T extends ClayMobEntity & ClaySoldierLike> void convert(T soldier, @Nullable Player cause) {
+        ValueInput input = TagValueInput.create(ProblemReporter.DISCARDING, soldier.registryAccess(), tag);
         soldier.convertToSoldier(soldierType(), (newSoldier) -> {
-            newSoldier.readItemPersistentData(tag);
+            newSoldier.readItemPersistentData(input);
             newSoldier.setClayTeamType(soldier.getClayTeamType());
-            newSoldier.onConversion(soldier, tag, cause);
+            newSoldier.onConversion(soldier, input, cause);
         });
     }
 

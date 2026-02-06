@@ -14,9 +14,9 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.SkullModelBase;
 import net.minecraft.client.model.geom.EntityModelSet;
 import net.minecraft.client.renderer.ItemInHandRenderer;
-import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.PlayerSkinRenderCache;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.SkullBlockRenderer;
-import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.client.renderer.entity.RenderLayerParent;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
 import net.minecraft.client.resources.model.EquipmentAssetManager;
@@ -33,15 +33,20 @@ public class AccessoryRenderLayer extends RenderLayer<AbstractClaySoldierRenderS
     public final ItemInHandRenderer itemInHandRenderer;
     private final Function<SkullBlock.Type, SkullModelBase> modelByType;
     private final EquipmentAssetManager equipmentAssetManager;
+    private final PlayerSkinRenderCache playerSkinRenderCache;
+    private final ClaySoldierModel snorkelModel;
 
 
-    public AccessoryRenderLayer(RenderLayerParent<AbstractClaySoldierRenderState, ClaySoldierModel> pRendererParent, EntityModelSet entityModelSet, EquipmentAssetManager equipmentAssetManager) {
+    public AccessoryRenderLayer(RenderLayerParent<AbstractClaySoldierRenderState, ClaySoldierModel> pRendererParent, EntityModelSet entityModelSet, EquipmentAssetManager equipmentAssetManager, PlayerSkinRenderCache renderCache) {
         super(pRendererParent);
-        this.capeModel = new ClaySoldierCapeModel(entityModelSet.bakeLayer(ClaySoldierCapeModel.LAYER_LOCATION));
         this.itemInHandRenderer = Minecraft.getInstance().gameRenderer.itemInHandRenderer;
         this.modelByType = Util.memoize(type -> SkullBlockRenderer.createModel(entityModelSet, type));
-        this.shieldModel = new ClaySoldierShieldModel(entityModelSet.bakeLayer(ClaySoldierShieldModel.LAYER_LOCATION));
         this.equipmentAssetManager = equipmentAssetManager;
+        this.playerSkinRenderCache = renderCache;
+
+        this.shieldModel = new ClaySoldierShieldModel(entityModelSet.bakeLayer(ClaySoldierShieldModel.LAYER_LOCATION));
+        this.capeModel = new ClaySoldierCapeModel(entityModelSet.bakeLayer(ClaySoldierCapeModel.LAYER_LOCATION));
+        this.snorkelModel = new ClaySoldierModel(entityModelSet.bakeLayer(ClaySoldierSnorkelModel.SNORKEL_LAYER_LOCATION));
     }
 
     @Override
@@ -50,7 +55,17 @@ public class AccessoryRenderLayer extends RenderLayer<AbstractClaySoldierRenderS
     }
 
     @Override
-    public void render(PoseStack pPoseStack, MultiBufferSource pBuffer, int pPackedLight, AbstractClaySoldierRenderState claySoldier, float v, float v1) {
+    public PlayerSkinRenderCache getPlayerSkinRenderCache() {
+        return playerSkinRenderCache;
+    }
+
+    @Override
+    public ClaySoldierModel getSnorkelModel() {
+        return snorkelModel;
+    }
+
+    @Override
+    public void submit(PoseStack poseStack, SubmitNodeCollector nodeCollector, int packedLight, AbstractClaySoldierRenderState claySoldier, float yRot, float xRot) {
         Map<SoldierAccessorySlot<?>, RenderableAccessory> map = new HashMap<>();
         for (SoldierEquipmentSlot slot : SoldierEquipmentSlot.values()) {
             var multi = getMulti(claySoldier, slot);
@@ -59,7 +74,7 @@ public class AccessoryRenderLayer extends RenderLayer<AbstractClaySoldierRenderS
             }
         }
         for (var acc : map.values()) {
-            acc.render(this, pPoseStack, pBuffer, pPackedLight, claySoldier.accessoryRenderState);
+            acc.submit(this, poseStack, nodeCollector, packedLight, claySoldier.accessoryRenderState);
         }
     }
 
@@ -92,4 +107,6 @@ public class AccessoryRenderLayer extends RenderLayer<AbstractClaySoldierRenderS
         }
         return stackWithEffect.wearableEffectMap();
     }
+
+
 }

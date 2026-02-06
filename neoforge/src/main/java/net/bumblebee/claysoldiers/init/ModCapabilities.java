@@ -15,7 +15,7 @@ import net.neoforged.neoforge.capabilities.BlockCapability;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.capabilities.IBlockCapabilityProvider;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
-import net.neoforged.neoforge.energy.IEnergyStorage;
+import net.neoforged.neoforge.transfer.energy.EnergyHandler;
 import org.jetbrains.annotations.Nullable;
 
 public class ModCapabilities {
@@ -33,12 +33,12 @@ public class ModCapabilities {
 
     public static void registerCapabilities(RegisterCapabilitiesEvent event) {
         event.registerBlock(
-                Capabilities.EnergyStorage.BLOCK,
+                Capabilities.Energy.BLOCK,
                 new IBlockCapabilityProvider<>() {
                     @Override
-                    public @Nullable IEnergyStorage getCapability(Level level, BlockPos pos, BlockState state, @Nullable BlockEntity blockEntity, Direction context) {
+                    public @Nullable EnergyHandler getCapability(Level level, BlockPos pos, BlockState state, @Nullable BlockEntity blockEntity, Direction context) {
                         var en = HamsterWheelBlockEntity.getEnergyStorage(blockEntity, context);
-                        return en == null ? null : (IEnergyStorage) en;
+                        return en == null ? null : (EnergyHandler) en;
                     }
                 },
                 ModBlocks.HAMSTER_WHEEL_BLOCK.get()
@@ -47,7 +47,5 @@ public class ModCapabilities {
                 (easel, unused) -> easel.getBlueprintRequestHandler());
         event.registerBlockEntity(ASSIGNABLE_POI_CAP, ModBlockEntities.HAMSTER_WHEEL_BLOCK_ENTITY.get(),
                 (wheel, unused) -> wheel.getPoiCap());
-
-        event.registerEntity(Capabilities.ItemHandler.ENTITY, ModEntityTypes.CLAY_SOLDIER_ENTITY.get(), (soldier, context) -> new ClaySoldierItemHandler(soldier));
     }
 }

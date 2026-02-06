@@ -44,9 +44,10 @@ public final class ModTagProvider {
             this.tag(ModTags.DamageTypes.CLAY_SOLDIER_DAMAGE)
                     .add(ForcedTagEntry.element(ModDamageTypes.CLAY_HURT))
                     .add(ForcedTagEntry.element(ModDamageTypes.CLAY_ON_FIRE))
-                    .add(DamageTypes.THROWN, DamageTypes.THORNS)
+                    .add(DamageTypes.THORNS)
+                    .add(DamageTypes.THROWN)
                     .addTag(DamageTypeTags.IS_EXPLOSION)
-                    .addOptional(NeoForgeMod.POISON_DAMAGE.location());
+                    .addOptional(NeoForgeMod.POISON_DAMAGE);
         }
     }
 

@@ -33,6 +33,9 @@ public interface ClaySoldierInventoryHandler extends ClaySoldierInventoryQuery, 
     @Override
     ItemStackWithEffect getItemBySlot(SoldierEquipmentSlot slot);
 
+    @Override
+    Iterable<ItemStack> getAllSlots();
+
     /**
      * Set the given ItemStack in the given slot if it is isEmpty
      *

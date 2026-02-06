@@ -14,6 +14,8 @@ import net.minecraft.nbt.NbtOps;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,6 +38,7 @@ public final class BlueprintData {
     @Nullable
     private VoxelShape voxelShape;
     private boolean valid = false;
+    private Holder.Reference<BlueprintData> reference;
 
     public BlueprintData(ResourceLocation location, String name, float marking) {
         this.location = location;
@@ -47,14 +50,7 @@ public final class BlueprintData {
         return Component.translatable(name());
     }
 
-    public void save(CompoundTag tag, HolderLookup.Provider registries) {
-        registries.lookupOrThrow(ModRegistries.BLUEPRINTS).listElements().filter(h -> h.value().equals(this)).findAny()
-                .ifPresentOrElse(
-                        holder -> ResourceLocation.CODEC.encodeStart(NbtOps.INSTANCE, holder.key().location())
-                                .ifSuccess(key -> tag.put(BLUEPRINT_DATA_TAG, key))
-                                .ifError(err -> ClaySoldiersCommon.LOGGER.error("Error Saving Key of {} to tag: {}", holder.key(), err.message())),
-                        () -> ClaySoldiersCommon.LOGGER.error("Error Loading Blueprint Data from Tag"));
-    }
+
 
     public void bindStructure(BaseImmutableTemplate template) {
         if (template == null) {
@@ -81,13 +77,20 @@ public final class BlueprintData {
         return valid ? template.createClient() : Optional.empty();
     }
 
+    public void save(ValueOutput tag, HolderLookup.Provider registries) {
+        registries.lookupOrThrow(ModRegistries.BLUEPRINTS).listElements().filter(h -> h.value().equals(this)).findAny()
+                .ifPresentOrElse(
+                        holder -> tag.store(BLUEPRINT_DATA_TAG, ResourceLocation.CODEC, holder.key().location()),
+                        () -> ClaySoldiersCommon.LOGGER.error("Error Loading Blueprint Data from Tag"));
+    }
+
     @Nullable
-    public static BlueprintData load(CompoundTag tag, HolderLookup.Provider pRegistries) {
-        if (!tag.contains(BLUEPRINT_DATA_TAG)) {
+    public static BlueprintData load(ValueInput tag, HolderLookup.Provider pRegistries) {
+        var key = tag.read(BLUEPRINT_DATA_TAG, ResourceLocation.CODEC);
+        if (key.isEmpty()) {
             return null;
         }
-        var key = ResourceLocation.CODEC.parse(NbtOps.INSTANCE, tag.get(BLUEPRINT_DATA_TAG)).getOrThrow();
-        var holder = pRegistries.lookupOrThrow(ModRegistries.BLUEPRINTS).get(ResourceKey.create(ModRegistries.BLUEPRINTS, key));
+        var holder = pRegistries.lookupOrThrow(ModRegistries.BLUEPRINTS).get(ResourceKey.create(ModRegistries.BLUEPRINTS, key.orElseThrow()));
         if (holder.isEmpty()) {
             ClaySoldiersCommon.LOGGER.error("Tried Loading Blueprint Data that does not exist {}", key);
         }

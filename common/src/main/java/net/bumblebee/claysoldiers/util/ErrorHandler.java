@@ -21,7 +21,7 @@ public interface ErrorHandler {
     void handle(String msg, RuntimeException e);
 
     private static ErrorHandler createLogging(Logger logger) {
-        return  new ErrorHandler() {
+        return new ErrorHandler() {
             @Override
             public void handle(String msg, RuntimeException e) {
                 logger.error(msg, e);

@@ -58,7 +58,7 @@ public class SoldierPoiWithItem extends SoldierPoiWithSource<ItemEntity> {
 
     private void take(ItemEntity pEntity, AbstractClaySoldierEntity soldier) {
         if (!pEntity.isRemoved() && (pEntity.level() instanceof ServerLevel level)) {
-            level.getChunkSource().broadcast(pEntity, new ClientboundTakeItemEntityPacket(pEntity.getId(), soldier.getId(), 1));
+            level.getChunkSource().sendToTrackingPlayers(pEntity, new ClientboundTakeItemEntityPacket(pEntity.getId(), soldier.getId(), 1));
         }
     }
 

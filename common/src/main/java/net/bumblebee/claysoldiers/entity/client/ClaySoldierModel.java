@@ -11,34 +11,32 @@ import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.client.model.geom.builders.*;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.HumanoidArm;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Set;
+
 public class ClaySoldierModel extends HumanoidModel<AbstractClaySoldierRenderState> {
     public static final ModelLayerLocation LAYER_LOCATION =
             new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_soldier"), "main");
+    public static final ModelLayerLocation HELMET_LAYER_LOCATION =
+            new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_soldier"), "helmet");
+    public static final ModelLayerLocation CHESTPLATE_LAYER_LOCATION =
+            new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_soldier"), "chestplate");
+    public static final ModelLayerLocation LEGGINGS_LAYER_LOCATION =
+            new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_soldier"), "leggings");
+    public static final ModelLayerLocation BOOTS_LAYER_LOCATION =
+            new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_soldier"), "boots");
+
     private static final float SCALE = AbstractClaySoldierEntity.DEFAULT_SCALE;
     protected static final CubeDeformation SHRINK_DEFORMATION = new CubeDeformation(SCALE, SCALE, SCALE);
-    public static final String BAMBOO_STICK_NAME = "bamboo_stick";
-    @Nullable
-    public final ModelPart bambooStick;
 
     public ClaySoldierModel(ModelPart pRoot) {
         super(pRoot);
-        if (pRoot.hasChild(BAMBOO_STICK_NAME)) {
-            this.bambooStick = pRoot.getChild(BAMBOO_STICK_NAME);
-        } else {
-            this.bambooStick = null;
-        }
-    }
-
-    public void hideBambooStick() {
-        if (bambooStick != null) {
-            bambooStick.visible = false;
-        }
     }
 
     public static LayerDefinition createSoldierLayer() {
@@ -46,15 +44,9 @@ public class ClaySoldierModel extends HumanoidModel<AbstractClaySoldierRenderSta
     }
 
     protected static MeshDefinition createSoldierMesh(CubeDeformation cubeDeformation, float pYOffset) {
-        MeshDefinition meshDefinition = createMesh(cubeDeformation, pYOffset);
-        PartDefinition partdefinition = meshDefinition.getRoot();
-        partdefinition.addOrReplaceChild(BAMBOO_STICK_NAME,
-                CubeListBuilder.create()
-                        .texOffs(0, 0).addBox(1.0F, -16.0F, -6.0F, 2.0F, 12.0F, 2.0F, cubeDeformation, 0.25f, 0.25f),
-                PartPose.offset(0.0F, pYOffset, 0.0F));
-
-        return meshDefinition;
+        return createMesh(cubeDeformation, pYOffset);
     }
+
 
     @Override
     public void setupAnim(AbstractClaySoldierRenderState claySoldier) {
@@ -67,11 +59,6 @@ public class ClaySoldierModel extends HumanoidModel<AbstractClaySoldierRenderSta
 
         setUpRidingPose(claySoldier);
         setSittingPose(claySoldier);
-
-        if (bambooStick != null) {
-            this.bambooStick.copyFrom(this.getHead());
-            bambooStick.visible = false;
-        }
     }
 
     private void animateArms(AbstractClaySoldierRenderState claySoldier) {
@@ -92,16 +79,6 @@ public class ClaySoldierModel extends HumanoidModel<AbstractClaySoldierRenderSta
             this.rightArm.yRot = 0;
             this.leftArm.yRot = 0;
         }
-    }
-
-    public void renderBambooStick(PoseStack pPoseStack, VertexConsumer pBuffer, int pPackedLight, int pPackedOverlay) {
-        if (bambooStick == null) {
-            return;
-        }
-        bambooStick.visible = true;
-        this.bambooStick.render(pPoseStack, pBuffer, pPackedLight, pPackedOverlay);
-        bambooStick.visible = false;
-
     }
 
     private void setUpRidingPose(AbstractClaySoldierRenderState claySoldier) {

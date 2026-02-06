@@ -155,7 +155,7 @@ public class BuildBlueprintGoal extends AbstractWorkGoal {
                 for (int i1 = 0; i1 <= rangeIndex; i1 = i1 > 0 ? -i1 : 1 - i1) {
                     for (int j1 = i1 < rangeIndex && i1 > -rangeIndex ? rangeIndex : 0; j1 <= rangeIndex; j1 = j1 > 0 ? -j1 : 1 - j1) {
                         blockpos$mutableblockpos.setWithOffset(center, i1, searchIndex - 1, j1);
-                        if (this.soldier.isWithinRestriction(blockpos$mutableblockpos) && this.isValidTarget(this.soldier.level(), blockpos$mutableblockpos)) {
+                        if (this.soldier.isWithinHome(blockpos$mutableblockpos) && this.isValidTarget(this.soldier.level(), blockpos$mutableblockpos)) {
                             return Optional.of(blockpos$mutableblockpos);
                         }
                     }

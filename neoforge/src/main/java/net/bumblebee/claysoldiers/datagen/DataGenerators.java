@@ -81,7 +81,7 @@ public class DataGenerators {
                 p, l, List.of(new ModAdvancements())
         ));
 
-        event.addProvider(new ModCuriosDataProvider(neoforge, lookupProvider));
+        //event.addProvider(new ModCuriosDataProvider(neoforge, lookupProvider));
 
         DataGenerator.PackGenerator featurePack = generator.getBuiltinDatapack(true, ClaySoldiersCommon.MOD_ID, ClaySoldiersCommon.BLUEPRINT_PACK_PATH);
 
@@ -97,7 +97,7 @@ public class DataGenerators {
         PackOutput fabricBluePrintPackOut = new PackOutput(fabric.getOutputFolder().resolve(ClaySoldiersCommon.CSR_DATA_PACK_LOCATION).resolve(ClaySoldiersCommon.BLUEPRINT_PACK_PATH));
         event.addProvider(new PackMetadataGenerator(
                 fabricBluePrintPackOut).add(
-                PackMetadataSection.TYPE, new PackMetadataSection(Component.translatable(ClaySoldiersCommon.BLUEPRINT_PACK_DESCRIPTION), DetectedVersion.BUILT_IN.getPackVersion(PackType.SERVER_DATA))
+                PackMetadataSection.SERVER_TYPE, new PackMetadataSection(Component.translatable(ClaySoldiersCommon.BLUEPRINT_PACK_DESCRIPTION), DetectedVersion.BUILT_IN.packVersion(PackType.SERVER_DATA).minorRange())
         ));
         event.addProvider(new ModBlueprintAdvancementProvider("Fabric", fabricBluePrintPackOut, lookupProvider));
 
@@ -111,7 +111,7 @@ public class DataGenerators {
 
         event.addProvider(new CustomPackMetadataProvider(path)
                 .add(
-                        PackMetadataSection.TYPE, new PackMetadataSection(Component.translatable(ClaySoldiersCommon.CSR_DEFAULT_PACK_DESCRIPTION), DetectedVersion.BUILT_IN.getPackVersion(PackType.SERVER_DATA))
+                        PackMetadataSection.SERVER_TYPE, new PackMetadataSection(Component.translatable(ClaySoldiersCommon.CSR_DEFAULT_PACK_DESCRIPTION), DetectedVersion.BUILT_IN.packVersion(PackType.SERVER_DATA).minorRange())
                 ));
 
         event.addProvider(ModDatapackProvider.datapack(path, lookupProvider));

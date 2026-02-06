@@ -39,7 +39,7 @@ public enum ZombieClaySoldierProvider implements CommonEntityProvider<ZombieClay
             return;
         }
 
-        if (serverData.getBoolean(SERVER_DATA_CURABLE_TAG)) {
+        if (serverData.getBooleanOr(SERVER_DATA_CURABLE_TAG, false)) {
             tooltip.append(Component.translatable(CURABLE_TRUE).withStyle(ChatFormatting.GREEN));
         } else {
             tooltip.append(Component.translatable(CURABLE_FALSE).withStyle(ChatFormatting.RED));

@@ -15,6 +15,7 @@ import net.minecraft.data.CachedOutput;
 import net.minecraft.data.DataProvider;
 import net.minecraft.data.PackOutput;
 import net.minecraft.data.tags.IntrinsicHolderTagsProvider;
+import net.minecraft.data.tags.TagAppender;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.ItemLike;
@@ -147,7 +148,7 @@ public abstract class ClaySoldiersItemProvider implements DataProvider {
         }
     }
 
-    protected IntrinsicHolderTagsProvider.IntrinsicTagAppender<Item> tag(TagKey<Item> tag) {
+    protected TagAppender<Item, Item> tag(TagKey<Item> tag) {
         return itemTagsProvider.getTag(tag);
     }
     protected <T, R> DataMapProvider.Builder<T, R> builder(DataMapType<R, T> type) {
@@ -176,11 +177,11 @@ public abstract class ClaySoldiersItemProvider implements DataProvider {
             this.lookupProviderCopy = lookUpProvider;
         }
 
-        private IntrinsicTagAppender<Item> getTag(TagType type) {
+        private TagAppender<Item, Item> getTag(TagType type) {
             return tag(type.tag);
         }
 
-        private IntrinsicTagAppender<Item> getTag(TagKey<Item> key) {
+        private TagAppender<Item, Item> getTag(TagKey<Item> key) {
             return tag(key);
         }
 

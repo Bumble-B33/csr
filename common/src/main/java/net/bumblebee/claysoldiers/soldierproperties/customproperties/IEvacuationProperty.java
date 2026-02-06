@@ -93,7 +93,7 @@ public interface IEvacuationProperty {
             FireworkRocketEntity fireworkrocketentity = new FireworkRocketEntity(level, shooter, shooter.getX(), shooter.getY(), shooter.getZ(), stack);
             level.addFreshEntity(fireworkrocketentity);
 
-            shooter.startRiding(fireworkrocketentity, true);
+            shooter.startRiding(fireworkrocketentity, true, false);
         }
 
         @Override

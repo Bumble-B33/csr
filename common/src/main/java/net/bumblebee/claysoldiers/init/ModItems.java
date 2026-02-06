@@ -4,6 +4,7 @@ import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.entity.ClayMobEntity;
 import net.bumblebee.claysoldiers.entity.variant.ClayHorseVariants;
 import net.bumblebee.claysoldiers.entity.variant.NameableVariant;
+import net.bumblebee.claysoldiers.entity.variant.VariantHolder;
 import net.bumblebee.claysoldiers.item.BrickedClaySoldierItem;
 import net.bumblebee.claysoldiers.item.ClayBrushItem;
 import net.bumblebee.claysoldiers.item.TestItem;
@@ -16,11 +17,12 @@ import net.bumblebee.claysoldiers.item.claystaff.ClayStaffItem;
 import net.bumblebee.claysoldiers.item.disruptor.ClayMobKillItem;
 import net.bumblebee.claysoldiers.item.disruptor.DisruptorKillRange;
 import net.bumblebee.claysoldiers.platform.ItemLikeSupplier;
+import net.bumblebee.claysoldiers.team.ClayMobTeamManger;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.tags.ItemTags;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.VariantHolder;
 import net.minecraft.world.item.*;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
@@ -32,29 +34,29 @@ import java.util.function.Supplier;
 
 public class ModItems {
     public static final Supplier<Item> SHEAR_BLADE = ClaySoldiersCommon.PLATFORM.registerItem("shear_blade",
-            properties -> new SwordItem(ToolMaterial.STONE, 3f, -2.4f, properties), new Item.Properties());
+            p -> new Item(p.sword(ToolMaterial.STONE, 3f, -2.4f)));
     public static final Supplier<Item> SHARPENED_STICK = ClaySoldiersCommon.PLATFORM.registerItem("sharpened_stick",
-            properties -> new SwordItem(ToolMaterial.WOOD, 3f, -2.4f, properties), new Item.Properties());
+            p -> new Item(p.sword(ToolMaterial.WOOD, 3f, -2.4f)));
 
     public static final Supplier<BrickedClaySoldierItem> BRICKED_CLAY_SOLDIER = ClaySoldiersCommon.PLATFORM.registerItem("bricked_clay_soldier",
-            BrickedClaySoldierItem::new, new Item.Properties());
+            BrickedClaySoldierItem::new);
     public static final ItemLikeSupplier<ClaySoldierSpawnItem> CLAY_SOLDIER = ClaySoldiersCommon.PLATFORM.registerItem("clay_soldier",
-            ClaySoldierSpawnItem::new, new Item.Properties());
+            p -> new ClaySoldierSpawnItem(p.component(ModDataComponents.CLAY_MOB_TEAM_COMPONENT.get(), ClayMobTeamManger.DEFAULT_TYPE)));
 
     public static final ItemLikeSupplier<Item> CLAY_DISRUPTOR = ClaySoldiersCommon.PLATFORM.registerItem("clay_disruptor",
-            properties -> new ClayMobKillItem(properties, DisruptorKillRange.range(16f)), new Item.Properties().stacksTo(1));
+            properties -> new ClayMobKillItem(properties.component(ModDataComponents.DISRUPTOR_KILL_RANGE.get(), DisruptorKillRange.range(16f)).durability(127).repairable(Items.IRON_INGOT).enchantable(1)));
     public static final Supplier<Item> TERRACOTTA_DISRUPTOR = ClaySoldiersCommon.PLATFORM.registerItem("terracotta_disruptor",
-            properties -> new ClayMobKillItem(properties, DisruptorKillRange.unlimited()), new Item.Properties().stacksTo(1));
+            properties -> new ClayMobKillItem(properties.component(ModDataComponents.DISRUPTOR_KILL_RANGE.get(), DisruptorKillRange.unlimited()).durability(255).repairable(Items.IRON_INGOT).enchantable(1)));
 
     public static final Supplier<Item> CLAY_COOKIE = ClaySoldiersCommon.PLATFORM.registerItem("clay_cookie",
             Item::new, new Item.Properties());
     public static final Supplier<ClayBrushItem> CLAY_BRUSH = ClaySoldiersCommon.PLATFORM.registerItem("clay_brush",
-            ClayBrushItem::new, new Item.Properties().stacksTo(1).rarity(Rarity.UNCOMMON));
-    public static final ItemLikeSupplier<ArmorItem> CLAY_GOGGLES = ClaySoldiersCommon.PLATFORM.registerItem("clay_goggles",
-            properties -> new ArmorItem(ModArmorMaterials.CLAY_ARMOR_MATERIAL, ArmorType.HELMET, properties), new Item.Properties().stacksTo(1).rarity(Rarity.UNCOMMON));
+            p -> new ClayBrushItem(p.stacksTo(1).rarity(Rarity.UNCOMMON)));
+    public static final ItemLikeSupplier<Item> CLAY_GOGGLES = ClaySoldiersCommon.PLATFORM.registerItem("clay_goggles",
+            p -> new Item(p.humanoidArmor(ModArmorMaterials.CLAY_ARMOR_MATERIAL, ArmorType.HELMET).rarity(Rarity.UNCOMMON)));
 
-    public static final ItemLikeSupplier<ArmorItem> SLIME_BOOTS = ClaySoldiersCommon.PLATFORM.registerItem("slime_boots",
-            properties -> new ArmorItem(ModArmorMaterials.CLAY_ARMOR_MATERIAL, ArmorType.BOOTS, properties), new Item.Properties().stacksTo(1).rarity(Rarity.UNCOMMON));
+    public static final ItemLikeSupplier<Item> SLIME_BOOTS = ClaySoldiersCommon.PLATFORM.registerItem("slime_boots",
+            p -> new Item(p.humanoidArmor(ModArmorMaterials.CLAY_ARMOR_MATERIAL, ArmorType.BOOTS).rarity(Rarity.UNCOMMON)));
 
 
     public static final ItemLikeSupplier<Item> TEST_ITEM = ClaySoldiersCommon.PLATFORM.ifDevEv(() -> ClaySoldiersCommon.PLATFORM.registerItem("debug_device",

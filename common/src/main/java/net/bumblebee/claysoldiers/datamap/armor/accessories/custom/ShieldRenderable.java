@@ -9,8 +9,10 @@ import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.datamap.armor.accessories.AccessoryRenderState;
 import net.bumblebee.claysoldiers.datamap.armor.accessories.IAccessoryRenderLayer;
 import net.bumblebee.claysoldiers.datamap.armor.accessories.RenderableAccessory;
+import net.bumblebee.claysoldiers.entity.client.renderstates.AbstractClaySoldierRenderState;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
@@ -30,7 +32,7 @@ public class ShieldRenderable implements RenderableAccessory {
     }
 
     @Override
-    public void render(IAccessoryRenderLayer renderedFrom, PoseStack pPoseStack, MultiBufferSource pBuffer, int pPackedLight, AccessoryRenderState claySoldier) {
+    public void submit(IAccessoryRenderLayer renderedFrom, PoseStack pPoseStack, SubmitNodeCollector pBuffer, int pPackedLight, AccessoryRenderState claySoldier) {
         if (claySoldier.isFalling || claySoldier.isInSittingPose) {
             return;
         }
@@ -41,18 +43,18 @@ public class ShieldRenderable implements RenderableAccessory {
 
         pPoseStack.pushPose();
         if (right) {
-            this.renderArmWithShield(renderedFrom, HumanoidArm.RIGHT, pPoseStack, pBuffer, pPackedLight);
+            this.renderArmWithShield(renderedFrom, (AbstractClaySoldierRenderState) claySoldier.renderStateFrom, HumanoidArm.RIGHT, pPoseStack, pBuffer, pPackedLight);
         }
         if (left) {
-            this.renderArmWithShield(renderedFrom, HumanoidArm.LEFT, pPoseStack, pBuffer, pPackedLight);
+            this.renderArmWithShield(renderedFrom, (AbstractClaySoldierRenderState) claySoldier.renderStateFrom, HumanoidArm.LEFT, pPoseStack, pBuffer, pPackedLight);
         }
         pPoseStack.popPose();
     }
 
 
-    private void renderArmWithShield(IAccessoryRenderLayer renderLayer, HumanoidArm pArm, PoseStack pPoseStack, MultiBufferSource pBuffer, int pPackedLight) {
+    private void renderArmWithShield(IAccessoryRenderLayer renderLayer, AbstractClaySoldierRenderState claySoldier, HumanoidArm pArm, PoseStack pPoseStack, SubmitNodeCollector pBuffer, int pPackedLight) {
         pPoseStack.pushPose();
-        renderLayer.getSoldierModel().translateToHand(pArm, pPoseStack);
+        renderLayer.getSoldierModel().translateToHand(claySoldier, pArm, pPoseStack);
         boolean leftHand = pArm == HumanoidArm.LEFT;
 
         pPoseStack.mulPose(Axis.XP.rotationDegrees(-90.0F));
@@ -65,18 +67,26 @@ public class ShieldRenderable implements RenderableAccessory {
         } else {
             pPoseStack.translate(-0.55f, 0, -0.3);
         }
-        renderShieldModel(renderLayer, pPoseStack, pBuffer, pPackedLight);
+        renderShieldModel(renderLayer, claySoldier, pPoseStack, pBuffer, pPackedLight);
         pPoseStack.popPose();
 
     }
 
-    private void renderShieldModel(IAccessoryRenderLayer renderLayer, PoseStack pPoseStack, MultiBufferSource pBuffer, int pPackedLight) {
+    private void renderShieldModel(IAccessoryRenderLayer renderLayer, AbstractClaySoldierRenderState claySoldier, PoseStack pPoseStack, SubmitNodeCollector pBuffer, int pPackedLight) {
         pPoseStack.pushPose();
         pPoseStack.scale(1.0F, -1.0F, -1.0F);
-        VertexConsumer vertexconsumer = pBuffer.getBuffer(RenderType.entitySolid(textureLocation));
-
-        renderLayer.getShieldModel().renderToBuffer(pPoseStack, vertexconsumer, pPackedLight, OverlayTexture.NO_OVERLAY);
-
+        pBuffer.submitModel(
+                renderLayer.getShieldModel(),
+                claySoldier,
+                pPoseStack,
+                RenderType.entitySolid(textureLocation),
+                pPackedLight,
+                OverlayTexture.NO_OVERLAY,
+                -1,
+                null,
+                claySoldier.outlineColor,
+                null
+                );
 
         pPoseStack.popPose();
     }

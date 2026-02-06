@@ -44,6 +44,8 @@ import net.minecraft.world.level.block.LeavesBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.pathfinder.PathType;
 import net.minecraft.world.level.pathfinder.WalkNodeEvaluator;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
@@ -167,44 +169,42 @@ public abstract class ClayMobEntity extends PathfinderMob implements TeamHolder 
         }
     }
 
+
     @Override
-    public void addAdditionalSaveData(CompoundTag pCompound) {
+    public void addAdditionalSaveData(ValueOutput pCompound) {
         super.addAdditionalSaveData(pCompound);
         if (!spawnedFrom.isEmpty()) {
-            pCompound.put(SPAWNED_FROM_TAG, spawnedFrom.save(this.registryAccess()));
+            pCompound.store(SPAWNED_FROM_TAG, ItemStack.CODEC, spawnedFrom);
             pCompound.putBoolean(DROP_SPAWNED_FROM_TAG, dropSpawnedFrom);
         }
         pCompound.putBoolean(SITTING_TAG, this.orderedToSit);
         pCompound.putBoolean(WAXED_TAG, this.isWaxed());
-        if (getPoiPos() != null) {
-            pCompound.put(POI_POS_TAG, NbtUtils.writeBlockPos(getPoiPos()));
-        }
+        pCompound.storeNullable(POI_POS_TAG, BlockPos.CODEC, getPoiPos());
     }
 
+
+
     @Override
-    public void readAdditionalSaveData(CompoundTag pCompound) {
+    public void readAdditionalSaveData(ValueInput pCompound) {
         super.readAdditionalSaveData(pCompound);
-        if (pCompound.contains(SPAWNED_FROM_TAG, Tag.TAG_COMPOUND)) {
-            spawnedFrom = getSpawnedFromFromTag(pCompound, this.registryAccess());
-            if (pCompound.contains(DROP_SPAWNED_FROM_TAG)) {
-                dropSpawnedFrom = pCompound.getBoolean(DROP_SPAWNED_FROM_TAG);
-            }
-        }
+        getSpawnedFromFromTag(pCompound).ifPresent(stack -> {
+            spawnedFrom = stack;
+            dropSpawnedFrom = pCompound.getBooleanOr(DROP_SPAWNED_FROM_TAG, false);
+        });
         if (hasEffect(ModEffects.SLIME_ROOT)) {
             setSlimeRooted(true);
         }
-        this.orderedToSit = pCompound.getBoolean(SITTING_TAG);
+        this.orderedToSit = pCompound.getBooleanOr(SITTING_TAG, false);
         this.setInSittingPose(this.orderedToSit);
         if (orderedToSit) {
             setPose(Pose.SITTING);
         }
-        this.setWaxed(pCompound.getBoolean(WAXED_TAG));
-
-        setPoiPos(NbtUtils.readBlockPos(pCompound, POI_POS_TAG).orElse(null));
+        this.setWaxed(pCompound.getBooleanOr(WAXED_TAG, false));
+        setPoiPos(pCompound.read(POI_POS_TAG, BlockPos.CODEC).orElse(null));
     }
 
-    public static ItemStack getSpawnedFromFromTag(CompoundTag tag, RegistryAccess registries) {
-        return ItemStack.parseOptional(registries, tag.getCompound(SPAWNED_FROM_TAG));
+    public static Optional<ItemStack> getSpawnedFromFromTag(ValueInput tag) {
+        return tag.read(SPAWNED_FROM_TAG, ItemStack.CODEC);
     }
 
     @Override
@@ -451,7 +451,7 @@ public abstract class ClayMobEntity extends PathfinderMob implements TeamHolder 
         }
 
         if (pPlayer.isShiftKeyDown()) {
-            if (!level().isClientSide) {
+            if (!level().isClientSide()) {
                 if (openMenuScreen(pPlayer).isPresent()) {
                     return InteractionResult.CONSUME;
                 }
@@ -518,7 +518,7 @@ public abstract class ClayMobEntity extends PathfinderMob implements TeamHolder 
             return true;
         }
         if (mode == ClayBrushItem.Mode.POI) {
-            if (!level().isClientSide && player instanceof ServerPlayer serverPlayer) {
+            if (!level().isClientSide() && player instanceof ServerPlayer serverPlayer) {
                 setPoiPos(ClayBrushItem.getPoiPos(itemInHand));
                 if (poiPos != null) {
                     ModCriterions.CLAY_BRUSH_COMMAND_TRIGGER.get().trigger(serverPlayer, mode);
@@ -830,10 +830,22 @@ public abstract class ClayMobEntity extends PathfinderMob implements TeamHolder 
 
     @Override
     protected void doPush(Entity entity) {
-        if (entity instanceof Player) {
+        if (!canPushPlayer() && entity instanceof Player) {
             return;
         }
         super.doPush(entity);
+    }
+
+    /**
+     * @return whether this {@code ClayMob} can push a Player
+     */
+    protected boolean canPushPlayer() {
+        return false;
+    }
+
+    @Override
+    public int getTeamColor() {
+        return getClayTeam().getColor(this, 0);
     }
 
     @Override

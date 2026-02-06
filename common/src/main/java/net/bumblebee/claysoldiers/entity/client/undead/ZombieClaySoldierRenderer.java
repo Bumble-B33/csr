@@ -6,6 +6,8 @@ import net.bumblebee.claysoldiers.entity.client.ClaySoldierRenderer;
 import net.bumblebee.claysoldiers.entity.client.renderstates.AbstractClaySoldierRenderState;
 import net.bumblebee.claysoldiers.entity.soldier.AbstractClaySoldierEntity;
 import net.bumblebee.claysoldiers.entity.soldier.ZombieClaySoldierEntity;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 
 public class ZombieClaySoldierRenderer extends ClaySoldierRenderer {
@@ -15,8 +17,8 @@ public class ZombieClaySoldierRenderer extends ClaySoldierRenderer {
     }
 
     @Override
-    protected void renderModel(AbstractClaySoldierRenderState soldier, PoseStack pPoseStack, VertexConsumer vertexConsumer, int pPackedLight, int overlayCords, int color, int alpha) {
-        super.renderModel(soldier, pPoseStack, vertexConsumer, pPackedLight, overlayCords, shiftColor(color), alpha);
+    protected int getColor(AbstractClaySoldierRenderState soldier) {
+        return shiftColor(super.getColor(soldier));
     }
 
     @Override

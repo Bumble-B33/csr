@@ -16,6 +16,7 @@ import net.minecraft.Util;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.CommonComponents;
@@ -28,6 +29,8 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.storage.TagValueOutput;
+import net.minecraft.world.level.storage.ValueOutput;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -344,6 +347,11 @@ public final class ClayPoiFunctions {
         public <T extends ClayMobEntity & ClaySoldierLike> ConvertTo(EntityType<T> soldier, CompoundTag tag) {
             super(CONVERSION_SERIALIZER);
             this.data = new AdditionalSoldierData(soldier, tag);
+        }
+
+        public <T extends ClayMobEntity & ClaySoldierLike> ConvertTo(EntityType<T> soldier, TagValueOutput tag) {
+            super(CONVERSION_SERIALIZER);
+            this.data = new AdditionalSoldierData(soldier, tag.buildResult());
         }
 
         @Override

@@ -8,9 +8,11 @@ import io.netty.buffer.ByteBuf;
 import net.bumblebee.claysoldiers.datamap.armor.accessories.AccessoryRenderState;
 import net.bumblebee.claysoldiers.datamap.armor.accessories.IAccessoryRenderLayer;
 import net.bumblebee.claysoldiers.datamap.armor.accessories.RenderableAccessory;
+import net.bumblebee.claysoldiers.entity.client.renderstates.AbstractClaySoldierRenderState;
 import net.bumblebee.claysoldiers.util.color.ColorHelper;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.resources.model.EquipmentClientInfo;
 import net.minecraft.core.component.DataComponents;
@@ -93,8 +95,33 @@ public class CapeRenderable implements RenderableAccessory {
         }
     }*/
 
-
     @Override
+    public void submit(IAccessoryRenderLayer renderedFrom, PoseStack pPoseStack, SubmitNodeCollector nodeCollector, int pPackedLight, AccessoryRenderState claySoldier) {
+        if (!claySoldier.isInvisible && textureLocation != null) {
+            if (!this.hasLayer(claySoldier.chestEquipment, EquipmentClientInfo.LayerType.WINGS, renderedFrom)) {
+                pPoseStack.pushPose();
+                if (this.hasLayer(claySoldier.chestEquipment, EquipmentClientInfo.LayerType.HUMANOID, renderedFrom)) {
+                    pPoseStack.translate(0.0F, -0.053125F, 0.06875F);
+                }
+
+                AbstractClaySoldierRenderState renderState = (AbstractClaySoldierRenderState) claySoldier.renderStateFrom;
+
+                nodeCollector.submitModel(
+                        renderedFrom.getCapeModel(),
+                        renderState,
+                        pPoseStack,
+                        RenderType.entitySolid(textureLocation),
+                        pPackedLight,
+                        OverlayTexture.NO_OVERLAY,
+                        getCapeColor(claySoldier),
+                        null, renderState.outlineColor, null
+                );
+                pPoseStack.popPose();
+            }
+
+        }
+    }
+
     public void render(IAccessoryRenderLayer renderedFrom, PoseStack pPoseStack, MultiBufferSource pBuffer, int pPackedLight, AccessoryRenderState claySoldier) {
         if (!claySoldier.isInvisible && textureLocation != null) {
                 if (!this.hasLayer(claySoldier.chestEquipment, EquipmentClientInfo.LayerType.WINGS, renderedFrom)) {

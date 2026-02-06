@@ -2,7 +2,7 @@ package net.bumblebee.claysoldiers.datamap.armor;
 
 import net.bumblebee.claysoldiers.util.color.ColorHelper;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.world.item.ArmorItem;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.equipment.trim.TrimMaterial;
 import net.minecraft.world.item.equipment.trim.TrimPattern;
 import org.jetbrains.annotations.Nullable;
@@ -14,14 +14,14 @@ public class SoldierWearableBuilder {
     private final Set<SoldierWearableEffect.SoldierArmorTrim> trims = new HashSet<>();
     private ColorHelper color = ColorHelper.EMPTY;
     @Nullable
-    private final ArmorItem armorCopy;
+    private final Item armorCopy;
     private boolean offsetColor = false;
 
-    private SoldierWearableBuilder(@Nullable ArmorItem armorCopy) {
+    private SoldierWearableBuilder(@Nullable Item armorCopy) {
         this.armorCopy = armorCopy;
     }
 
-    public static SoldierWearableBuilder armor(ArmorItem armorCopy) {
+    public static SoldierWearableBuilder armor(Item armorCopy) {
         return new SoldierWearableBuilder(armorCopy);
     }
     public static SoldierWearableBuilder empty() {
