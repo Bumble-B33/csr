@@ -5,16 +5,12 @@ import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.capability.ThrowableItemCapability;
 import net.bumblebee.claysoldiers.datamap.SoldierHoldableEffect;
 import net.bumblebee.claysoldiers.datamap.armor.SoldierMultiWearable;
-import net.bumblebee.claysoldiers.datamap.armor.accessories.SoldierAccessorySlot;
+import net.bumblebee.claysoldiers.datamap.armor.accessories.SoldierAccessoryKey;
 import net.bumblebee.claysoldiers.soldierproperties.customproperties.AttackTypeProperty;
 import net.bumblebee.claysoldiers.soldierproperties.customproperties.RangedAttackType;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 
 public class ItemStackWithEffect extends ItemStackEffectHolder<SoldierHoldableEffect> {
@@ -56,10 +52,10 @@ public class ItemStackWithEffect extends ItemStackEffectHolder<SoldierHoldableEf
         return true;
     }
     public boolean isShield() {
-        return wearableEffect.getAccessories().get(SoldierAccessorySlot.SHIELD) != null;
+        return wearableEffect.getAccessories().get(SoldierAccessoryKey.SHIELD) != null;
     }
     public boolean isGlider() {
-        return effect != null && effect.properties().canGlide() && wearableEffect.getAccessories().get(SoldierAccessorySlot.GLIDER) != null;
+        return effect != null && effect.properties().canGlide() && wearableEffect.getAccessories().get(SoldierAccessoryKey.GLIDER) != null;
     }
     public float dropRate() {
         return effect != null ? effect.dropRate() : 1f;

@@ -2,7 +2,7 @@ package net.bumblebee.claysoldiers.menu.soldier;
 
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.datamap.SoldierEquipmentSlot;
-import net.bumblebee.claysoldiers.entity.soldier.ClaySoldierInventoryHandler;
+import net.bumblebee.claysoldiers.entity.inventory.ClaySoldierInventoryHandler;
 import net.bumblebee.claysoldiers.item.itemeffectholder.ItemStackWithEffect;
 import net.bumblebee.claysoldiers.menu.AbstractClayMenuSlot;
 import net.minecraft.network.chat.Component;

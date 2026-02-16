@@ -1,7 +1,6 @@
 package net.bumblebee.claysoldiers.entity.boss;
 
 import net.minecraft.core.NonNullList;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.damagesource.DamageSource;

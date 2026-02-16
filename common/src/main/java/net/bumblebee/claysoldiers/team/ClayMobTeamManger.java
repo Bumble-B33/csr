@@ -21,8 +21,10 @@ import org.jetbrains.annotations.UnmodifiableView;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
-import java.util.function.Consumer;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 public class ClayMobTeamManger {
@@ -191,23 +193,5 @@ public class ClayMobTeamManger {
         } else if (noTeamType || defaultType) {
             LOGGER.info("Registered {} as it was not present", noTeamType ? NO_TEAM_TYPE : DEFAULT_TYPE);
         }
-    }
-
-    @Nullable
-    private static Registry<ClayMobTeam> registry = null;
-    private static final List<Consumer<Registry<ClayMobTeam>>> loadCallbacks = new ArrayList<>();
-
-    public static void setLoadCallback(Consumer<Registry<ClayMobTeam>> callback) {
-        if (registry != null) {
-            callback.accept(registry);
-        } else {
-            loadCallbacks.add(callback);
-        }
-    }
-
-    public static void onRegistryLoad(Registry<ClayMobTeam> newRegistry) {
-        registry = newRegistry;
-        loadCallbacks.forEach(c -> c.accept(registry));
-        loadCallbacks.clear();
     }
 }

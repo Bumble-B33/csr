@@ -1,14 +1,10 @@
 package net.bumblebee.claysoldiers.entity.client.accesories;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import net.bumblebee.claysoldiers.datamap.SoldierEquipmentSlot;
-import net.bumblebee.claysoldiers.datamap.armor.SoldierMultiWearable;
-import net.bumblebee.claysoldiers.datamap.armor.accessories.IAccessoryRenderLayer;
-import net.bumblebee.claysoldiers.datamap.armor.accessories.RenderableAccessory;
-import net.bumblebee.claysoldiers.datamap.armor.accessories.SoldierAccessorySlot;
+import net.bumblebee.claysoldiers.datamap.armor.accessories.client.IAccessoryRenderLayer;
+import net.bumblebee.claysoldiers.datamap.armor.accessories.client.RenderableAccessoryMap;
 import net.bumblebee.claysoldiers.entity.client.ClaySoldierModel;
 import net.bumblebee.claysoldiers.entity.client.renderstates.AbstractClaySoldierRenderState;
-import net.bumblebee.claysoldiers.item.itemeffectholder.ItemStackWithEffect;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.SkullModelBase;
@@ -23,8 +19,6 @@ import net.minecraft.client.resources.model.EquipmentAssetManager;
 import net.minecraft.world.level.block.SkullBlock;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.function.Function;
 
 public class AccessoryRenderLayer extends RenderLayer<AbstractClaySoldierRenderState, ClaySoldierModel> implements IAccessoryRenderLayer {
@@ -66,15 +60,8 @@ public class AccessoryRenderLayer extends RenderLayer<AbstractClaySoldierRenderS
 
     @Override
     public void submit(PoseStack poseStack, SubmitNodeCollector nodeCollector, int packedLight, AbstractClaySoldierRenderState claySoldier, float yRot, float xRot) {
-        Map<SoldierAccessorySlot<?>, RenderableAccessory> map = new HashMap<>();
-        for (SoldierEquipmentSlot slot : SoldierEquipmentSlot.values()) {
-            var multi = getMulti(claySoldier, slot);
-            if (multi != null) {
-                map.putAll(multi.getAccessories());
-            }
-        }
-        for (var acc : map.values()) {
-            acc.submit(this, poseStack, nodeCollector, packedLight, claySoldier.accessoryRenderState);
+        for (var acc : claySoldier.accessoryRenderState.renderableAccessories.entrySet()) {
+            RenderableAccessoryMap.submit(acc.getKey(), acc.getValue(), this, poseStack, nodeCollector, packedLight, claySoldier.accessoryRenderState);
         }
     }
 
@@ -97,16 +84,4 @@ public class AccessoryRenderLayer extends RenderLayer<AbstractClaySoldierRenderS
     public ClaySoldierShieldModel getShieldModel() {
         return shieldModel;
     }
-
-    @Nullable
-    private SoldierMultiWearable getMulti(AbstractClaySoldierRenderState claySoldier, SoldierEquipmentSlot slot) {
-        ItemStackWithEffect stackWithEffect = claySoldier.getItemBySlot(slot);
-
-        if (stackWithEffect == null || stackWithEffect.isEmpty()) {
-            return null;
-        }
-        return stackWithEffect.wearableEffectMap();
-    }
-
-
 }

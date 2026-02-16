@@ -2,15 +2,9 @@ package net.bumblebee.claysoldiers.team;
 
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
-import com.mojang.serialization.DataResult;
-import com.mojang.serialization.DynamicOps;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.networking.ClayTeamPlayerDataPayload;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.core.UUIDUtil;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtOps;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.ComponentSerialization;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -28,7 +22,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 
 public final class TeamLoyaltyManger {
     private static final Logger LOGGER = ClaySoldiersCommon.LOGGER;

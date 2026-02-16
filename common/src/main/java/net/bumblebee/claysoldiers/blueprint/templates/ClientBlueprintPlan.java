@@ -4,7 +4,6 @@ import net.bumblebee.claysoldiers.blueprint.BlueprintTemplateSettings;
 import net.bumblebee.claysoldiers.util.ErrorHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;

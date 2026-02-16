@@ -1,13 +1,8 @@
 package net.bumblebee.claysoldiers.item.itemeffectholder;
 
-import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.function.Function;
 
 /**
  * A container class of an ItemStack with an effect

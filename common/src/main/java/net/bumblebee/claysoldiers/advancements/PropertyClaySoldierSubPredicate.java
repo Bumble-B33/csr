@@ -1,19 +1,14 @@
 package net.bumblebee.claysoldiers.advancements;
 
-import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import net.bumblebee.claysoldiers.claysoldierpredicate.ClaySoldierInventoryQuery;
-import net.bumblebee.claysoldiers.entity.boss.BossClaySoldierBehaviour;
-import net.bumblebee.claysoldiers.entity.boss.BossClaySoldierEntity;
-import net.bumblebee.claysoldiers.init.ModRegistries;
-import net.bumblebee.claysoldiers.soldierproperties.*;
+import net.bumblebee.claysoldiers.soldierproperties.SoldierProperty;
+import net.bumblebee.claysoldiers.soldierproperties.SoldierPropertyMap;
 import net.minecraft.advancements.critereon.EntitySubPredicate;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Optional;
 
 public record PropertyClaySoldierSubPredicate(SoldierPropertyMap map) implements EntitySubPredicate {
     public static final MapCodec<PropertyClaySoldierSubPredicate> CODEC = SoldierPropertyMap.CODEC

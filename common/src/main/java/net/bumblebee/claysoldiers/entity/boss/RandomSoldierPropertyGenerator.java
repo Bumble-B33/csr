@@ -23,8 +23,8 @@ public interface RandomSoldierPropertyGenerator<T> {
     RandomSoldierPropertyGenerator<UnitProperty> BOUNCE_GENERATOR = createUnit(SoldierPropertyTypes.BOUNCE.get());
     RandomSoldierPropertyGenerator<UnitProperty> GLOW_GENERATOR = createUnit(SoldierPropertyTypes.GLOW_IN_THE_DARK.get());
     RandomSoldierPropertyGenerator<UnitProperty> GLOW_OUTLINE_GENERATOR = createUnit(SoldierPropertyTypes.GLOW_OUTLINE.get());
-    RandomSoldierPropertyGenerator<UnitProperty> CAN_SWIM = createConstant(SoldierPropertyTypes.BOUNCE.get());
-    RandomSoldierPropertyGenerator<UnitProperty> SEE_INVISIBILITY = createConstant(SoldierPropertyTypes.BOUNCE.get());
+    RandomSoldierPropertyGenerator<UnitProperty> CAN_SWIM = createConstant(SoldierPropertyTypes.CAN_SWIM.get());
+    RandomSoldierPropertyGenerator<UnitProperty> SEE_INVISIBILITY = createConstant(SoldierPropertyTypes.SEE_INVISIBILITY.get());
     RandomSoldierPropertyGenerator<Integer> OPTIONAL_BREATH_HOLD = createOptionalIntRange(SoldierPropertyTypes.BREATH_HOLD.get(), 0, BreathHoldPropertyType.MAX_BREATH_HOLD);
     RandomSoldierPropertyGenerator<Float> OPTIONAL_EXPLOSION_RESISTANCE = createOptionalFloatRange(SoldierPropertyTypes.EXPLOSION_RESISTANCE.get(), 0, 20f);
     RandomSoldierPropertyGenerator<DamageBlock> OPTIONAL_DAMAGE_BLOCK = random -> {

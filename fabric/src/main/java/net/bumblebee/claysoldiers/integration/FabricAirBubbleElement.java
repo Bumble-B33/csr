@@ -1,13 +1,10 @@
 package net.bumblebee.claysoldiers.integration;
 
-import com.mojang.blaze3d.pipeline.RenderPipeline;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.RenderPipelines;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
-import net.minecraft.world.phys.Vec2;
 import org.jetbrains.annotations.Nullable;
 import snownee.jade.api.ui.Element;
 import snownee.jade.api.ui.IDisplayHelper;

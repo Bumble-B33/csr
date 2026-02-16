@@ -46,13 +46,12 @@ dependencies {
 
     modImplementation "net.tslat.smartbrainlib:SmartBrainLib-fabric-${sbl_version}"
 
-    // Todo use Fabric JEI when available
-    modCompileOnlyApi("mezz.jei:jei-${minecraft_version}-common-api:${jei_version}")
-    modRuntimeOnly("mezz.jei:jei-${minecraft_version}-common:${jei_version}")
+    modCompileOnlyApi("mezz.jei:jei-${minecraft_version}-fabric-api:${jei_version}")
+    modRuntimeOnly("mezz.jei:jei-${minecraft_version}-fabric:${jei_version}")
 
     modImplementation "curse.maven:jade-324717:${jade_id_fabric}"
 
-    modImplementation("io.wispforest:accessories-fabric:${accessories_version}")
+    modCompileOnlyApi("io.wispforest:accessories-fabric:${accessories_version}+${minecraft_version}")
     include modApi("teamreborn:energy:${fabric_energy_version}")
 }
 

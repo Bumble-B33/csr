@@ -10,7 +10,6 @@ import net.bumblebee.claysoldiers.entity.variant.ClayHorseVariants;
 import net.bumblebee.claysoldiers.init.*;
 import net.bumblebee.claysoldiers.item.ClayBrushItem;
 import net.bumblebee.claysoldiers.item.blueprint.BlueprintItem;
-import net.bumblebee.claysoldiers.soldierproperties.SoldierPropertyType;
 import net.bumblebee.claysoldiers.soldierproperties.SoldierPropertyTypes;
 import net.bumblebee.claysoldiers.soldierproperties.customproperties.AttackTypeProperty;
 import net.minecraft.advancements.*;

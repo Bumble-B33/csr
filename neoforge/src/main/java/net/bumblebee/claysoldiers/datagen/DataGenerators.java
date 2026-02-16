@@ -11,7 +11,6 @@ import net.bumblebee.claysoldiers.datagen.tags.ModBlockTagsProvider;
 import net.bumblebee.claysoldiers.datagen.tags.ModItemTagProvider;
 import net.bumblebee.claysoldiers.datagen.tags.ModTagProvider;
 import net.bumblebee.claysoldiers.init.ModArmorMaterials;
-import net.bumblebee.claysoldiers.integration.curios.ModCuriosDataProvider;
 import net.minecraft.DetectedVersion;
 import net.minecraft.client.data.models.EquipmentAssetProvider;
 import net.minecraft.client.resources.model.EquipmentClientInfo;
@@ -62,7 +61,7 @@ public class DataGenerators {
         ModTagProvider.getTagProviders().forEach(event::createProvider);
         event.createBlockAndItemTags(ModBlockTagsProvider::new, ModItemTagProvider::new);
 
-        event.createProvider(ModLoottableProvider::new);
+        event.createProvider(ModLootTableProvider::new);
         event.createProvider(ModRecipeProvider.Runner::new);
         event.createProvider(ModModelProvider::new);
         event.createProvider(ModLangProvider::new);
@@ -73,6 +72,12 @@ public class DataGenerators {
             protected void registerModels(BiConsumer<ResourceKey<EquipmentAsset>, EquipmentClientInfo> output) {
                 output.accept(ModArmorMaterials.CLAY_GOGGLES_ID,
                         EquipmentClientInfo.builder().addMainHumanoidLayer(ModArmorMaterials.CLAY_GOGGLES_ID.location(), false).build()
+                );
+                output.accept(ModArmorMaterials.MUSHROOM_HELMET_ID,
+                        EquipmentClientInfo.builder().addMainHumanoidLayer(ModArmorMaterials.MUSHROOM_HELMET_ID.location(), false).build()
+                );
+                output.accept(ModArmorMaterials.SHULKER_HELMET_ID,
+                        EquipmentClientInfo.builder().addMainHumanoidLayer(ModArmorMaterials.SHULKER_HELMET_ID.location(), false).build()
                 );
             }
         });

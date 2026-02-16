@@ -12,8 +12,6 @@ import net.bumblebee.claysoldiers.commands.ColorHelperArgumentType;
 import net.bumblebee.claysoldiers.commands.DefaultedResourceLocationArgument;
 import net.bumblebee.claysoldiers.datamap.FabricDataMapLoader;
 import net.bumblebee.claysoldiers.init.ModBlockEntities;
-import net.bumblebee.claysoldiers.init.ModRegistries;
-import net.bumblebee.claysoldiers.init.ModTags;
 import net.bumblebee.claysoldiers.integration.ExternalMods;
 import net.bumblebee.claysoldiers.integration.accessories.ModAccessories;
 import net.bumblebee.claysoldiers.networking.ConfigSyncPayload;
@@ -32,21 +30,19 @@ import net.fabricmc.fabric.api.lookup.v1.block.BlockApiLookup;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry;
-import net.fabricmc.fabric.api.resource.IdentifiableResourceReloadListener;
-import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
 import net.fabricmc.fabric.api.resource.ResourcePackActivationType;
+import net.fabricmc.fabric.api.resource.v1.ResourceLoader;
 import net.fabricmc.fabric.impl.resource.loader.ResourceManagerHelperImpl;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.commands.synchronization.SingletonArgumentInfo;
 import net.minecraft.core.Direction;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.Registry;
-import net.minecraft.core.RegistryAccess;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.PackType;
-import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.server.packs.resources.PreparableReloadListener;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import org.jetbrains.annotations.Nullable;
@@ -55,7 +51,6 @@ import team.reborn.energy.api.EnergyStorage;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 
 public class ClaySoldierFabric implements ModInitializer {
     private static final ResourceLocation BLUEPRINT_ID = ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "csr_blueprint");
@@ -71,7 +66,7 @@ public class ClaySoldierFabric implements ModInitializer {
     public static long hamsterWheelCapacity = 3000;
     public static long hamsterWheelSpeed = 3;
 
-    private final BlueprintTagLoad blueprintTagLoad = new BlueprintTagLoad();
+    private final ClaySoldiersCommon.BlueprintTagLoad blueprintTagLoader = new ClaySoldiersCommon.BlueprintTagLoad();
 
     @Override
     public void onInitialize() {
@@ -84,16 +79,14 @@ public class ClaySoldierFabric implements ModInitializer {
         DataMapPayloadBuilder.registerAll();
         PayloadTypeRegistry.playS2C().register(ConfigSyncPayload.ID, ConfigSyncPayload.STREAM_CODEC);
 
+        ResourceLoader.get(PackType.SERVER_DATA).registerReloader(FabricCapabilityManger.ID, new FabricCapabilityManger());
+        ResourceLoader.get(PackType.SERVER_DATA).registerReloader(FabricDataMapLoader.ID, new ReloadListenerWithProvider<>(new FabricDataMapLoader(), FabricDataMapLoader::setProvider));
+        ResourceLoader.get(PackType.SERVER_DATA).registerReloader(BLUEPRINT_ID, new BlueprintManager(blueprintTagLoader));
 
-        ResourceManagerHelper.get(PackType.SERVER_DATA).registerReloadListener(FabricDataMapLoader.FABRIC_ITEM_ID, FabricDataMapLoader::new);
-        ResourceManagerHelper.get(PackType.SERVER_DATA).registerReloadListener(new FabricCapabilityManger());
-        ResourceManagerHelper.get(PackType.SERVER_DATA).registerReloadListener(BLUEPRINT_ID, provider ->
-                new IdentifiableResourceListenerWrapper(BLUEPRINT_ID, new BlueprintManager(
-                        provider.lookupOrThrow(Registries.BLOCK),
-                        provider.lookupOrThrow(ModRegistries.BLUEPRINTS),
-                        blueprintTagLoad
-                ))
-        );
+        //ResourceManagerHelper.get(PackType.SERVER_DATA).registerReloadListener(BLUEPRINT_ID, new BlueprintManager(blueprintTagLoad));
+        //ResourceManagerHelper.get(PackType.SERVER_DATA).registerReloadListener(new FabricCapabilityManger());
+        //ResourceManagerHelper.get(PackType.SERVER_DATA).registerReloadListener(BLUEPRINT_ID, provider ->
+        //);
 
         boolean blueprintPack = ResourceManagerHelperImpl.registerBuiltinResourcePack(
                 BLUEPRINT_PACK_ID,
@@ -139,7 +132,7 @@ public class ClaySoldierFabric implements ModInitializer {
 
         ClaySoldiersCommon.registerDynamicRegistry(new ClaySoldiersCommon.DynamicRegistryEvent() {
             @Override
-            public <T> void register(ResourceKey<Registry<T>> registry, Codec<T> codec, @Nullable Codec<T> synced, @Nullable ClaySoldiersCommon.RegistryRegisteredCallBack<T> callback, @Nullable Consumer<Registry<T>> onLoadCallback) {
+            public <T> void register(ResourceKey<Registry<T>> registry, Codec<T> codec, @Nullable Codec<T> synced, @Nullable ClaySoldiersCommon.RegistryRegisteredCallBack<T> callback) {
                 if (synced == null) {
                     DynamicRegistries.register(registry, codec);
                 } else {
@@ -148,17 +141,13 @@ public class ClaySoldierFabric implements ModInitializer {
                 if (callback != null) {
                     DynamicRegistrySetupCallback.EVENT.register(registryView -> registryView.registerEntryAdded(registry, (callback::onRegister)));
                 }
-                if (onLoadCallback != null) {
-                    // Todo
-                    DynamicRegistrySetupCallback.EVENT.register(registryView -> registryView.getOptional(registry).ifPresent(onLoadCallback));
-                }
             }
         });
 
         CommonLifecycleEvents.TAGS_LOADED.register((r, client) -> {
             ClaySoldiersCommon.onTagLoad(r, client);
             if (!client) {
-                blueprintTagLoad.onTagLoad(r);
+                blueprintTagLoader.onTagLoad(r);
             }
         });
 
@@ -224,36 +213,16 @@ public class ClaySoldierFabric implements ModInitializer {
             ClaySoldiersCommon.LOGGER.info("CSR Config: Successfully loaded on Server: {}", config.configValues());
         }
         ClaySoldiersCommon.claySolderMenuModify = config.getBoolean("claySoldierMenuModify", false);
-        hamsterWheelCapacity = config.getPositiveLong("hamsterWheelCapacity", 3000, BatteryProperty.getMaxSupportedEnergy(i -> Long.MAX_VALUE / i));
+        hamsterWheelCapacity = config.getPositiveLong("hamsterWheelCapacity", 3000, BatteryProperty.getMaxSupportedEnergy());
         hamsterWheelSpeed = config.getPositiveLong("hamsterWheelSpeed", 3, Long.MAX_VALUE);
     }
 
-    record IdentifiableResourceListenerWrapper(ResourceLocation location, SimpleJsonResourceReloadListener<?> resourceReloadListener) implements IdentifiableResourceReloadListener {
-        @Override
-        public ResourceLocation getFabricId() {
-            return location;
-        }
+    record ReloadListenerWithProvider<T extends SimpleJsonResourceReloadListener<?>>(T resourceReloadListener, BiConsumer<T, HolderLookup.Provider> providerSetter) implements PreparableReloadListener {
 
         @Override
         public CompletableFuture<Void> reload(SharedState sharedState, Executor exectutor, PreparationBarrier barrier, Executor applyExectutor) {
+            providerSetter.accept(resourceReloadListener, sharedState.get(ResourceLoader.RELOADER_REGISTRY_LOOKUP_KEY));
             return resourceReloadListener.reload(sharedState, exectutor, barrier, applyExectutor);
-        }
-    }
-
-    private static class BlueprintTagLoad implements BiConsumer<BlueprintManager, ResourceManager> {
-        private BlueprintManager manger;
-        private ResourceManager resourceManager;
-
-        @Override
-        public void accept(BlueprintManager manger, ResourceManager resourceManager) {
-            this.manger = manger;
-            this.resourceManager = resourceManager;
-        }
-
-        public void onTagLoad(RegistryAccess registries) {
-            manger.onTagLoad(resourceManager, registries.lookupOrThrow(Registries.BLOCK).get(ModTags.Blocks.BLUEPRINT_BLACK_LISTED).orElseThrow().stream().toList());
-            manger = null;
-            resourceManager = null;
         }
     }
 }

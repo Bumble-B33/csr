@@ -9,10 +9,10 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
 public abstract class AbstractClayMenuSlot extends Slot {
-    private static Container emptyInventory = new SimpleContainer(0);
+    private final static Container EMPTY_INVENTORY = new SimpleContainer(0);
 
     public AbstractClayMenuSlot(int pSlot, int pX, int pY) {
-        super(emptyInventory, pSlot, pX, pY);
+        super(EMPTY_INVENTORY, pSlot, pX, pY);
     }
 
     @Override

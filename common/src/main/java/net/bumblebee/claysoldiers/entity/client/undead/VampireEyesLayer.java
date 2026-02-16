@@ -1,18 +1,14 @@
 package net.bumblebee.claysoldiers.entity.client.undead;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.entity.client.ClaySoldierModel;
 import net.bumblebee.claysoldiers.entity.client.renderstates.AbstractClaySoldierRenderState;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.RenderLayerParent;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
-import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.ARGB;
 

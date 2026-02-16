@@ -12,6 +12,7 @@ import net.bumblebee.claysoldiers.commands.DefaultedResourceLocationArgument;
 import net.bumblebee.claysoldiers.datagen.advancements.ModAdvancements;
 import net.bumblebee.claysoldiers.datamap.SoldierEquipmentSlot;
 import net.bumblebee.claysoldiers.entity.ClayMobEntity;
+import net.bumblebee.claysoldiers.entity.StatInfoDisplay;
 import net.bumblebee.claysoldiers.entity.VampireSubjugate;
 import net.bumblebee.claysoldiers.entity.goal.workgoal.*;
 import net.bumblebee.claysoldiers.entity.goal.workgoal.dig.DigHoleGoal;
@@ -113,6 +114,9 @@ public class ModLangProvider extends LanguageProvider {
         addItem(ModItems.CLAY_STAFF, "Clay Staff");
         addItem(ModItems.CLAY_POUCH, "Clay Pouch");
         add(ClayPouchItem.FULLNESS_LANG, "%s/%s");
+
+        addItem(ModItems.STATOMETER, "Statometer");
+
 
         add(ModDatapackProvider.SMALL_HOUSE_LANG, "Small House");
         add(ModDatapackProvider.SMALL_FARM_LANG, "Farm");
@@ -428,7 +432,7 @@ public class ModLangProvider extends LanguageProvider {
         add(ModTags.Items.CLAY_FOOD, "Clay Soldier Food");
         add(ModTags.Items.SOLDIER_POI, "Clay Soldier POIs");
         add(ModTags.Items.CLAY_WAX, "Clay Soldier Wax");
-        add(ModTags.Items.SOLDIER_BOSS_EQUIPABLE, "Clay Soldier Boss Equipment");
+        add(ModTags.Items.SOLDIER_BOSS_EQUIPPABLE, "Clay Soldier Boss Equipment");
 
 
         add(ModTags.Items.ARMORED, "Clay Soldier Armored Items");
@@ -539,6 +543,20 @@ public class ModLangProvider extends LanguageProvider {
 
         add(ModAdvancements.SOLDIER_ON_HEAD_TITLE, "Get off there!");
         add(ModAdvancements.SOLDIER_ON_HEAD_DESCRIPTION, "Have a Clay Soldier sit on your head");
+
+        add(StatInfoDisplay.SPEED_LANG, "Speed: %s");
+        add(StatInfoDisplay.ENERGY_LANG, "Energy: (%s/%s)");
+        add(StatInfoDisplay.GENERATION_LANG, "Generating: %s/t");
+
+        add(StatInfoDisplay.HEALTH, "Health: (%s/%s)");
+        add(StatInfoDisplay.ARMOR, "Armor: %s");
+        add(StatInfoDisplay.TEAM, "Team: %s");
+        add(StatInfoDisplay.OWNER, "Owner: %s");
+
+        add(StatInfoDisplay.DAMAGE, "Damage: %s");
+        add(StatInfoDisplay.STATUS, "Status: %s");
+
+
     }
 
     private void addKeyableProperty(KeyableTranslatableProperty property, String name) {

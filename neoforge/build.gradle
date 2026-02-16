@@ -88,7 +88,9 @@ dependencies {
     runtimeOnly("mezz.jei:jei-${minecraft_version}-neoforge:${jei_version}")
 
     implementation("curse.maven:jade-324717:${jade_id_neo}")
-    compileOnly("io.wispforest:accessories-neoforge:${accessories_version}")
+    compileOnly("io.wispforest:accessories-neoforge:${accessories_version}+${minecraft_version}")
+    runtimeOnly("io.wispforest:accessories-neoforge:${accessories_version}+${minecraft_version}")
+
 
     implementation "net.tslat.smartbrainlib:SmartBrainLib-neoforge-${sbl_version}"
 

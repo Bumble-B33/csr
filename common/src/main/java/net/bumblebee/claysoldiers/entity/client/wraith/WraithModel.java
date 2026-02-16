@@ -2,7 +2,6 @@ package net.bumblebee.claysoldiers.entity.client.wraith;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
-import net.bumblebee.claysoldiers.entity.ClayWraithEntity;
 import net.bumblebee.claysoldiers.entity.client.renderstates.ClayWraithRenderState;
 import net.minecraft.client.model.ArmedModel;
 import net.minecraft.client.model.EntityModel;

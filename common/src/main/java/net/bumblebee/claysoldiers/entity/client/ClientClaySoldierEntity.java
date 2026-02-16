@@ -2,6 +2,7 @@ package net.bumblebee.claysoldiers.entity.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.logging.LogUtils;
+import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.entity.soldier.AbstractClaySoldierEntity;
 import net.bumblebee.claysoldiers.init.ModEntityTypes;
 import net.bumblebee.claysoldiers.soldierproperties.customproperties.AttackTypeProperty;
@@ -9,7 +10,6 @@ import net.bumblebee.claysoldiers.team.ClayMobTeam;
 import net.bumblebee.claysoldiers.team.ClayMobTeamManger;
 import net.bumblebee.claysoldiers.util.color.ColorHelper;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.state.CameraRenderState;
 import net.minecraft.core.BlockPos;
@@ -18,7 +18,6 @@ import net.minecraft.core.RegistryAccess;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.WalkAnimationState;
@@ -58,7 +57,7 @@ public class ClientClaySoldierEntity extends AbstractClaySoldierEntity {
 
     public static ClientClaySoldierEntity create(EntityType<? extends AbstractClaySoldierEntity> type, CompoundTag tag, BlockPos pos, WalkAnimationState state, ResourceLocation id, float size) {
         RegistryAccess registryAccess = Minecraft.getInstance().level.registryAccess();
-        ValueInput input = TagValueInput.create(ProblemReporter.DISCARDING, registryAccess, tag);
+        ValueInput input = TagValueInput.create(ClaySoldiersCommon.PROBLEM_REPORTER, registryAccess, tag);
 
         var ref = ClayMobTeamManger.getHolder(id, registryAccess).orElse(ClayMobTeamManger.getDefault(registryAccess));
         ClientClaySoldierEntity soldier = new ClientClaySoldierEntity(type, pos, state, ref);
@@ -193,7 +192,6 @@ public class ClientClaySoldierEntity extends AbstractClaySoldierEntity {
     @Override
     public void tick() {
     }
-
 
     @Override
     public float getYRot() {

@@ -118,7 +118,6 @@ public class BossClaySoldierBehaviour {
 
         public Builder setShouldDie(Predicate<BossClaySoldierEntity> shouldDie) {
             this.shouldDie = shouldDie;
-
             return this;
         }
 

@@ -2,8 +2,6 @@ package net.bumblebee.claysoldiers.block.hamsterwheel;
 
 import net.minecraft.util.StringRepresentable;
 
-import java.util.function.IntFunction;
-
 public enum BatteryProperty implements StringRepresentable {
     NONE("none", 0),
     SINGLE("single", 1),
@@ -27,11 +25,11 @@ public enum BatteryProperty implements StringRepresentable {
         return serializedName;
     }
 
-    public static <T> T getMaxSupportedEnergy(IntFunction<T> maxMultiplierToStorage) {
+    public static long getMaxSupportedEnergy() {
         int maxMultiplier = 0;
         for (BatteryProperty batteryProperty : values()) {
             maxMultiplier = Math.max(batteryProperty.getCapacityMultiplier(), maxMultiplier);
         }
-        return maxMultiplierToStorage.apply(maxMultiplier);
+        return Long.MAX_VALUE / maxMultiplier;
     }
 }

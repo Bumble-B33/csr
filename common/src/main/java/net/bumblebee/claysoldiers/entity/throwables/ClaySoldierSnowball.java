@@ -1,14 +1,11 @@
 package net.bumblebee.claysoldiers.entity.throwables;
 
-import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.entity.soldier.AbstractClaySoldierEntity;
 import net.bumblebee.claysoldiers.init.ModEntityTypes;
 import net.bumblebee.claysoldiers.item.itemeffectholder.ItemStackWithEffect;
 import net.bumblebee.claysoldiers.soldierproperties.SoldierPropertyMap;
 import net.bumblebee.claysoldiers.soldierproperties.customproperties.specialattack.SpecialAttackType;
 import net.bumblebee.claysoldiers.soldierproperties.customproperties.specialattack.SpecialEffectCategory;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtOps;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;

@@ -7,12 +7,14 @@ import net.bumblebee.claysoldiers.integration.accessories.ModAccessoryRenderers;
 import net.bumblebee.claysoldiers.integration.curios.ModCuriosRenderers;
 import net.bumblebee.claysoldiers.menu.escritoire.EscritoireScreen;
 import net.bumblebee.claysoldiers.menu.horse.ClayHorseScreen;
+import net.bumblebee.claysoldiers.menu.info.StatOverlay;
 import net.bumblebee.claysoldiers.menu.soldier.ClaySoldierScreen;
 import net.bumblebee.claysoldiers.particles.ScaledParticleProviderAdapter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.particle.GlowParticle;
 import net.minecraft.client.particle.HeartParticle;
 import net.minecraft.client.particle.SuspendedTownParticle;
+import net.minecraft.resources.ResourceLocation;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
@@ -21,6 +23,7 @@ import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.*;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
+import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
 
@@ -44,6 +47,7 @@ public class ClaySoldiersNeoForgeClient {
 
         modEventBus.addListener(this::registerSpecialModelRenderer);
         modEventBus.addListener(this::registerSpecialBlockRenderer);
+        modEventBus.addListener(this::registerGuiOverlay);
 
 
         NeoForge.EVENT_BUS.addListener(this::itemTooltipEvent);
@@ -102,5 +106,12 @@ public class ClaySoldiersNeoForgeClient {
 
     private void registerSpecialModelRenderer(final RegisterSpecialModelRendererEvent event) {
         ClaySoldiersClient.registerSpecialItemModelRenderer(event::register);
+    }
+
+    private void registerGuiOverlay(final RegisterGuiLayersEvent event) {
+        event.registerBelow(VanillaGuiLayers.CAMERA_OVERLAYS,
+                ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "stats_overlay"),
+                (guiGraphics, deltaTracker) -> StatOverlay.getInstance().render(guiGraphics, deltaTracker.getGameTimeDeltaTicks())
+        );
     }
 }

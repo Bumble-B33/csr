@@ -2,14 +2,8 @@ package net.bumblebee.claysoldiers.cap;
 
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.datamap.SoldierEquipmentSlot;
-import net.bumblebee.claysoldiers.entity.soldier.ClaySoldierInventoryHandler;
+import net.bumblebee.claysoldiers.entity.inventory.ClaySoldierInventoryHandler;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.items.IItemHandler;
-import net.neoforged.neoforge.transfer.ResourceHandler;
-import net.neoforged.neoforge.transfer.item.ItemResource;
-import net.neoforged.neoforge.transfer.item.ItemStackResourceHandler;
-import net.neoforged.neoforge.transfer.item.ItemStacksResourceHandler;
-import net.neoforged.neoforge.transfer.transaction.TransactionContext;
 
 public class ClaySoldierItemHandler {
     private final ClaySoldierInventoryHandler inventory;

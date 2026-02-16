@@ -1,6 +1,6 @@
 package net.bumblebee.claysoldiers.block.hamsterwheel;
 
-import net.minecraft.nbt.CompoundTag;
+import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 
@@ -36,4 +36,11 @@ public interface IHamsterWheelEnergyStorage {
      * Energy can still be set with {@link #setEnergy}.
      */
     IHamsterWheelEnergyStorage asViewOnly();
+
+    static long energyGeneratedPerTick(float speed) {
+        if (speed <= 0) {
+            return 0;
+        }
+        return (long) Math.max(1, ClaySoldiersCommon.COMMON_HOOKS.getHamsterWheelSpeed() * speed);
+    }
 }

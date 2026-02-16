@@ -16,7 +16,7 @@ import java.util.Map;
 import java.util.function.Function;
 
 /**
- * A capability for custom item throwing behaviour, where the default functionality is not enough
+ * A capability for custom item throwing behavior, where the default functionality is not enough
  */
 public interface ThrowableItemCapability {
     ThrowableItemCapability DEFAULT = (level, shooter, holdableEffect) -> {

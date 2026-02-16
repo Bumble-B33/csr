@@ -68,7 +68,7 @@ public enum ClaySoldierBossEquipment {
         ).orElse(ClayMobTeamManger.DEFAULT_TYPE);
 
 
-        boss.setBossAI(Util.getRandom(List.of(ModBossBehaviours.VAMPIRE, ModBossBehaviours.DEFAULT), random).get());
+        boss.setBossAI(Util.getRandom(List.of(ModBossBehaviours.VAMPIRE, ModBossBehaviours.DEFAULT, ModBossBehaviours.ZOMBIE), random).get());
         boss.setClayTeamType(team);
         if (weight <= 0) {
             return;
@@ -84,19 +84,17 @@ public enum ClaySoldierBossEquipment {
             }
             if (random.nextBoolean()) {
                 var opt = Util.getRandomSafe(ClaySoldiersCommon.DATA_MAP.getHoldableEffectForSlot(slot), random);
-                if (opt.isPresent() && opt.get().getDefaultInstance().is(ModTags.Items.SOLDIER_BOSS_EQUIPABLE)) {
+                if (opt.isPresent() && opt.get().getDefaultInstance().is(ModTags.Items.SOLDIER_BOSS_EQUIPPABLE)) {
                     boss.setItemSlot(slot, opt.orElseThrow().getDefaultInstance());
                     weight--;
                     continue;
                 }
 
                 var opt2 = Util.getRandomSafe(ClaySoldiersCommon.DATA_MAP.getHoldableEffectForSlot(slot), random);
-                if (opt2.isPresent() && opt2.get().getDefaultInstance().is(ModTags.Items.SOLDIER_BOSS_EQUIPABLE)) {
+                if (opt2.isPresent() && opt2.get().getDefaultInstance().is(ModTags.Items.SOLDIER_BOSS_EQUIPPABLE)) {
                     boss.setItemSlot(slot, opt2.orElseThrow().getDefaultInstance());
                     weight--;
                 }
-
-
             }
         }
 

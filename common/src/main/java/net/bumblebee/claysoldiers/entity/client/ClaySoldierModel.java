@@ -1,7 +1,5 @@
 package net.bumblebee.claysoldiers.entity.client;
 
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.entity.client.renderstates.AbstractClaySoldierRenderState;
 import net.bumblebee.claysoldiers.entity.soldier.AbstractClaySoldierEntity;
@@ -9,16 +7,13 @@ import net.minecraft.client.model.AnimationUtils;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
-import net.minecraft.client.model.geom.PartPose;
-import net.minecraft.client.model.geom.builders.*;
-import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.model.geom.builders.CubeDeformation;
+import net.minecraft.client.model.geom.builders.LayerDefinition;
+import net.minecraft.client.model.geom.builders.MeshDefinition;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.HumanoidArm;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.Set;
 
 public class ClaySoldierModel extends HumanoidModel<AbstractClaySoldierRenderState> {
     public static final ModelLayerLocation LAYER_LOCATION =

@@ -32,8 +32,6 @@ import org.joml.Vector3f;
 import java.util.Set;
 
 public class HamsterWheelBlockEntityRenderer implements BlockEntityRenderer<HamsterWheelBlockEntity, HamsterWheelRenderState> {
-
-
     private static final ResourceLocation HAMSTER_WHEEL_TEXTURE = ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "textures/block/hamster_wheel.png");
     private static final ResourceLocation BATTERY_CONTENT_TEXTURE = ResourceLocation.fromNamespaceAndPath("minecraft", "block/water_still");
 
@@ -43,7 +41,7 @@ public class HamsterWheelBlockEntityRenderer implements BlockEntityRenderer<Hams
 
     private static final RenderType RENDER_TYPE_BLOCK = RenderType.entityCutoutNoCull(HAMSTER_WHEEL_TEXTURE);
     private static final float DEG_90 = Mth.PI / 2;
-    private static final float WHEEL_SPEED = Mth.PI * 0.056f;
+    private static final float WHEEL_SPEED = Mth.PI * 0.065f;
 
     public static final ModelLayerLocation STAND_LAYER_LOCATION = new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "hamster_stand"), "main");
     public static final ModelLayerLocation POWER_LAYER_LOCATION = new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "hamster_power"), "main");
@@ -55,12 +53,10 @@ public class HamsterWheelBlockEntityRenderer implements BlockEntityRenderer<Hams
     private final ModelPart batteryRight;
 
     private final HamsterWheelModel wheelModel;
-    private final MaterialSet materials;
 
 
     public HamsterWheelBlockEntityRenderer(BlockEntityRendererProvider.Context pContext) {
         this.stand = pContext.bakeLayer(STAND_LAYER_LOCATION);
-        this.materials = pContext.materials();
         this.powerConnection = pContext.bakeLayer(POWER_LAYER_LOCATION);
         this.wheelModel = new HamsterWheelModel(pContext.bakeLayer(HamsterWheelModel.LAYER_LOCATION));
         this.batteryLeft = pContext.bakeLayer(BatteryType.LEFT.getLayerLocation());
@@ -73,7 +69,6 @@ public class HamsterWheelBlockEntityRenderer implements BlockEntityRenderer<Hams
         this.wheelModel = new HamsterWheelModel(modelSet.bakeLayer(HamsterWheelModel.LAYER_LOCATION));
         this.batteryLeft = modelSet.bakeLayer(BatteryType.LEFT.getLayerLocation());
         this.batteryRight = modelSet.bakeLayer(BatteryType.RIGHT.getLayerLocation());
-        this.materials = materials;
     }
 
     @Override

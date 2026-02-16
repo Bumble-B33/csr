@@ -6,7 +6,6 @@ import net.bumblebee.claysoldiers.datamap.SoldierEquipmentSlot;
 import net.bumblebee.claysoldiers.entity.client.accesories.AccessoryRenderLayer;
 import net.bumblebee.claysoldiers.entity.client.renderstates.AbstractClaySoldierRenderState;
 import net.bumblebee.claysoldiers.entity.client.renderstates.ClayMobRenderState;
-import net.bumblebee.claysoldiers.entity.client.util.ColoringSubmitNodeCollector;
 import net.bumblebee.claysoldiers.entity.soldier.AbstractClaySoldierEntity;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.SubmitNodeCollector;
@@ -33,8 +32,8 @@ import net.minecraft.world.item.ItemDisplayContext;
 public abstract class AbstractClaySoldierRenderer extends HumanoidMobRenderer<AbstractClaySoldierEntity, AbstractClaySoldierRenderState, ClaySoldierModel> {
     public static final float SCALE = AbstractClaySoldierEntity.DEFAULT_SCALE;
 
-    protected AbstractClaySoldierRenderer(EntityRendererProvider.Context pContext, ClaySoldierModel model) {
-        super(pContext, model, model, 0.5f * SCALE, new CustomHeadLayer.Transforms(SCALE, SCALE, SCALE));
+    protected AbstractClaySoldierRenderer(EntityRendererProvider.Context context, ClaySoldierModel model) {
+        super(context, model, model, 0.5f * SCALE, new CustomHeadLayer.Transforms(SCALE, SCALE, SCALE));
         this.layers.removeIf(layer -> layer.getClass() == CustomHeadLayer.class || layer.getClass() == ItemInHandLayer.class);
 
         this.addLayer(new ClaySoldierArmorLayer(this,
@@ -43,12 +42,13 @@ public abstract class AbstractClaySoldierRenderer extends HumanoidMobRenderer<Ab
                         ClaySoldierModel.CHESTPLATE_LAYER_LOCATION,
                         ClaySoldierModel.LEGGINGS_LAYER_LOCATION,
                         ClaySoldierModel.BOOTS_LAYER_LOCATION
-                ), pContext.getModelSet(), ClaySoldierModel::new),
-                pContext.getAtlas(AtlasIds.ARMOR_TRIMS),
-                pContext.getEquipmentAssets()
+                ), context.getModelSet(), ClaySoldierModel::new),
+                context.getAtlas(AtlasIds.ARMOR_TRIMS),
+                context.getEquipmentAssets()
         ));
-        this.addLayer(new AccessoryRenderLayer(this, pContext.getModelSet(), pContext.getEquipmentAssets(), pContext.getPlayerSkinRenderCache()));
-        this.addLayer(new ClayMobStatusRenderlayer<>(this, pContext.getEntityRenderDispatcher(), e -> e.isInSittingPose, s -> s.shouldShowStatus, s -> s.workStatus, s -> s.statusAttachmentPoint));
+        this.addLayer(SlimeRootLayer.ofSoldier(this, context.getItemModelResolver()));
+        this.addLayer(new AccessoryRenderLayer(this, context.getModelSet(), context.getEquipmentAssets(), context.getPlayerSkinRenderCache()));
+        this.addLayer(new ClayMobStatusRenderlayer<>(this, context.getEntityRenderDispatcher(), e -> e.isInSittingPose, s -> s.shouldShowStatus, s -> s.workStatus, s -> s.statusAttachmentPoint));
         this.addLayer(new WaxedRenderLayer<>(this));
         this.addLayer(new ClaySoldierItemInHandLayer(this));
     }

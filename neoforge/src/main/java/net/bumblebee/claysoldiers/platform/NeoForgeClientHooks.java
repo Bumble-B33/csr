@@ -4,8 +4,6 @@ import net.bumblebee.claysoldiers.init.ModCreativeTab;
 import net.bumblebee.claysoldiers.platform.services.IClientHooks;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
-import net.minecraft.world.entity.LivingEntity;
-import net.neoforged.neoforge.client.ClientHooks;
 
 public class NeoForgeClientHooks implements IClientHooks {
 

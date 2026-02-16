@@ -25,7 +25,6 @@ import net.minecraft.world.item.component.BundleContents;
 import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.item.context.UseOnContext;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 

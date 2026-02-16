@@ -5,7 +5,10 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.init.ModRegistries;
 import net.minecraft.Util;
-import net.minecraft.core.*;
+import net.minecraft.core.Holder;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.HolderSet;
+import net.minecraft.core.NonNullList;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -95,7 +98,7 @@ public class SoldierItemType {
                 },
                 () -> {
                     available = List.of();
-                    LOGGER.warn("Tag {} for SoldierItemType {} not present", tag, name);
+                    LOGGER.warn("Tag {} for SoldierItemType {} not present", tag, name.isEmpty() ? descriptionId : name);
                 }
         );
     }

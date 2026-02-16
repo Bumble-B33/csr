@@ -21,7 +21,6 @@ import net.bumblebee.claysoldiers.soldierproperties.customproperties.AttackTypeP
 import net.minecraft.advancements.CriteriaTriggers;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.UUIDUtil;
-import net.minecraft.nbt.*;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -356,7 +355,7 @@ public class BossClaySoldierEntity extends AbstractClaySoldierEntity {
 
     @Override
     public boolean canHoldItem(ItemStack pStack) {
-        return pStack.is(ModTags.Items.SOLDIER_BOSS_EQUIPABLE);
+        return pStack.is(ModTags.Items.SOLDIER_BOSS_EQUIPPABLE);
     }
 
     @Override

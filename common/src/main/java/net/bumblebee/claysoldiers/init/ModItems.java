@@ -21,7 +21,6 @@ import net.bumblebee.claysoldiers.team.ClayMobTeamManger;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.tags.ItemTags;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.*;
 import net.minecraft.world.item.enchantment.Enchantment;
@@ -48,7 +47,7 @@ public class ModItems {
     public static final Supplier<Item> TERRACOTTA_DISRUPTOR = ClaySoldiersCommon.PLATFORM.registerItem("terracotta_disruptor",
             properties -> new ClayMobKillItem(properties.component(ModDataComponents.DISRUPTOR_KILL_RANGE.get(), DisruptorKillRange.unlimited()).durability(255).repairable(Items.IRON_INGOT).enchantable(1)));
 
-    public static final Supplier<Item> CLAY_COOKIE = ClaySoldiersCommon.PLATFORM.registerItem("clay_cookie",
+    public static final ItemLikeSupplier<Item> CLAY_COOKIE = ClaySoldiersCommon.PLATFORM.registerItem("clay_cookie",
             Item::new, new Item.Properties());
     public static final Supplier<ClayBrushItem> CLAY_BRUSH = ClaySoldiersCommon.PLATFORM.registerItem("clay_brush",
             p -> new ClayBrushItem(p.stacksTo(1).rarity(Rarity.UNCOMMON)));
@@ -57,6 +56,9 @@ public class ModItems {
 
     public static final ItemLikeSupplier<Item> SLIME_BOOTS = ClaySoldiersCommon.PLATFORM.registerItem("slime_boots",
             p -> new Item(p.humanoidArmor(ModArmorMaterials.CLAY_ARMOR_MATERIAL, ArmorType.BOOTS).rarity(Rarity.UNCOMMON)));
+
+    public static final ItemLikeSupplier<Item> STATOMETER = ClaySoldiersCommon.PLATFORM.registerItem("statometer",
+            Item::new, new Item.Properties().stacksTo(1));
 
 
     public static final ItemLikeSupplier<Item> TEST_ITEM = ClaySoldiersCommon.PLATFORM.ifDevEv(() -> ClaySoldiersCommon.PLATFORM.registerItem("debug_device",

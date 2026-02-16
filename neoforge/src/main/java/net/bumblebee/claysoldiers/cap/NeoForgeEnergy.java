@@ -6,7 +6,6 @@ import net.bumblebee.claysoldiers.block.hamsterwheel.HamsterWheelBlock;
 import net.bumblebee.claysoldiers.block.hamsterwheel.HamsterWheelBlockEntity;
 import net.bumblebee.claysoldiers.block.hamsterwheel.IHamsterWheelEnergyStorage;
 import net.minecraft.core.Direction;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
@@ -14,7 +13,6 @@ import net.neoforged.neoforge.capabilities.BlockCapabilityCache;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.transfer.TransferPreconditions;
 import net.neoforged.neoforge.transfer.energy.EnergyHandler;
-import net.neoforged.neoforge.transfer.energy.SimpleEnergyHandler;
 import net.neoforged.neoforge.transfer.transaction.SnapshotJournal;
 import net.neoforged.neoforge.transfer.transaction.Transaction;
 import net.neoforged.neoforge.transfer.transaction.TransactionContext;
@@ -51,9 +49,9 @@ public class NeoForgeEnergy implements EnergyHandler, IHamsterWheelEnergyStorage
 
     @Override
     public void generate(float speed) {
-        long generate = energy + (int) Math.max(1, ConfigNeoForge.HAMSTER_WHEEL_SPEED.get() * speed);
+        long generate = energy + IHamsterWheelEnergyStorage.energyGeneratedPerTick(speed);
         if (generate < 0) {
-            generate = Integer.MAX_VALUE;
+            generate = 0;
         }
         energy = Math.min(generate, maxEnergyStored());
         if (!(blockEntity.getLevel() instanceof ServerLevel serverLevel)) {

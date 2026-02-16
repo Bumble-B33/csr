@@ -2,7 +2,6 @@ package net.bumblebee.claysoldiers.entity.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.bumblebee.claysoldiers.datamap.SoldierEquipmentSlot;
-import net.bumblebee.claysoldiers.datamap.armor.ClientSoldierWearableEffect;
 import net.bumblebee.claysoldiers.datamap.armor.SoldierWearableEffect;
 import net.bumblebee.claysoldiers.entity.client.renderstates.AbstractClaySoldierRenderState;
 import net.bumblebee.claysoldiers.item.itemeffectholder.ItemStackWithEffect;
@@ -12,6 +11,7 @@ import net.minecraft.client.renderer.Sheets;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.ArmorModelSet;
 import net.minecraft.client.renderer.entity.RenderLayerParent;
+import net.minecraft.client.renderer.entity.layers.RenderLayer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -32,7 +32,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 
-public class ClaySoldierArmorLayer extends SlimeRootLayer<AbstractClaySoldierRenderState, ClaySoldierModel> {
+public class ClaySoldierArmorLayer extends RenderLayer<AbstractClaySoldierRenderState, ClaySoldierModel> {
     private static final Map<SoldierEquipmentSlot, Equippable> FALLBACK_EQUIPPABLE = new EnumMap<>(SoldierEquipmentSlot.class);
     static {
         FALLBACK_EQUIPPABLE.put(SoldierEquipmentSlot.HEAD, Equippable.builder(EquipmentSlot.HEAD).setAsset(EquipmentAssets.IRON).build());
@@ -60,19 +60,16 @@ public class ClaySoldierArmorLayer extends SlimeRootLayer<AbstractClaySoldierRen
         this.submitArmorPiece(poseStack, nodeCollector, claySoldierRenderState, SoldierEquipmentSlot.LEGS, packedLight, this.getArmorModel(SoldierEquipmentSlot.LEGS));
         this.submitArmorPiece(poseStack, nodeCollector, claySoldierRenderState, SoldierEquipmentSlot.FEET, packedLight, this.getArmorModel(SoldierEquipmentSlot.FEET));
         this.submitArmorPiece(poseStack, nodeCollector, claySoldierRenderState, SoldierEquipmentSlot.HEAD, packedLight, this.getArmorModel(SoldierEquipmentSlot.HEAD));
-
-        this.renderSlimeRoot(poseStack, nodeCollector, claySoldierRenderState, packedLight);
-
     }
 
     private void submitArmorPiece(PoseStack poseStack, SubmitNodeCollector nodeCollector, AbstractClaySoldierRenderState claySoldier, SoldierEquipmentSlot slot, int packedLight, ClaySoldierModel model) {
-        ClientSoldierWearableEffect wearableEffect = (ClientSoldierWearableEffect) getWearableEffect(claySoldier, slot);
+        SoldierWearableEffect wearableEffect = getWearableEffect(claySoldier, slot);
         if (wearableEffect == null) {
             return;
         }
-        Equippable equippable = wearableEffect.getEquippable();
-        if (equippable == null) {
-            equippable = FALLBACK_EQUIPPABLE.get(slot);
+        ResourceKey<EquipmentAsset> assetId = wearableEffect.getAssetId();
+        if (assetId == null) {
+            assetId = FALLBACK_EQUIPPABLE.get(slot).assetId().orElseThrow();
         }
 
         EquipmentClientInfo.LayerType layerType = this.usesInnerModel(slot)
@@ -86,10 +83,10 @@ public class ClaySoldierArmorLayer extends SlimeRootLayer<AbstractClaySoldierRen
                 color = wearableEffect.getColorHelper().getColor(claySoldier.id, claySoldier.ageInTicks);
             }
 
-            key = renderArmorLayers(layerType, equippable.assetId().orElseThrow(), model, claySoldier, poseStack, nodeCollector, packedLight, color, false);
+            key = renderArmorLayers(layerType, assetId, model, claySoldier, poseStack, nodeCollector, packedLight, color, false);
         }
-        for (ClientSoldierWearableEffect.TrimHolder trimHolder : wearableEffect.getArmorTrims()) {
-            renderTrims(layerType, equippable.assetId().orElseThrow(), model, claySoldier, trimHolder.trim(), poseStack, nodeCollector, packedLight, trimHolder.color().getColor(claySoldier.id, claySoldier.ageInTicks), key);
+        for (SoldierWearableEffect.TrimHolder trimHolder : wearableEffect.getArmorTrims()) {
+            renderTrims(layerType, assetId, model, claySoldier, trimHolder.trim(), poseStack, nodeCollector, packedLight, trimHolder.color().getColor(claySoldier.id, claySoldier.ageInTicks), key);
         }
     }
 

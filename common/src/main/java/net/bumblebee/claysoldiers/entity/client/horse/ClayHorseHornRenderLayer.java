@@ -24,6 +24,9 @@ public class ClayHorseHornRenderLayer extends RenderLayer<ClayHorseRenderState, 
 
     @Override
     public void submit(PoseStack poseStack, SubmitNodeCollector nodeCollector, int packedLight, ClayHorseRenderState clayHorseRenderState, float v, float v1) {
+        if (!clayHorseRenderState.hasHorn) {
+            return;
+        }
         nodeCollector.submitModel(model, clayHorseRenderState, poseStack, RenderType.entitySolid(HORN_LOCATION), packedLight, OverlayTexture.NO_OVERLAY, clayHorseRenderState.outlineColor, null);
     }
 }

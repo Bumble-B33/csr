@@ -2,7 +2,6 @@ package net.bumblebee.claysoldiers.init;
 
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.block.hamsterwheel.HamsterWheelBlockEntity;
-import net.bumblebee.claysoldiers.cap.ClaySoldierItemHandler;
 import net.bumblebee.claysoldiers.capability.AssignableWorksiteCapability;
 import net.bumblebee.claysoldiers.capability.BlueprintRequestHandler;
 import net.minecraft.core.BlockPos;

@@ -1,40 +1,6 @@
 package net.bumblebee.claysoldiers.integration.curios;
 
-import com.mojang.blaze3d.vertex.PoseStack;
-import net.bumblebee.claysoldiers.init.ModDataComponents;
-import net.bumblebee.claysoldiers.init.ModItems;
-import net.bumblebee.claysoldiers.item.claymobspawn.ClaySoldierOnHeadModel;
-import net.bumblebee.claysoldiers.item.claymobspawn.ClaySoldierSpawnItem;
-import net.bumblebee.claysoldiers.team.ClayMobTeamManger;
-import net.minecraft.ChatFormatting;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.model.EntityModel;
-import net.minecraft.client.model.HumanoidModel;
-import net.minecraft.client.model.geom.ModelLayers;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.entity.EntityRendererProvider;
-import net.minecraft.client.renderer.entity.RenderLayerParent;
-import net.minecraft.client.renderer.entity.layers.EquipmentLayerRenderer;
-import net.minecraft.client.renderer.entity.state.HumanoidRenderState;
-import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
-import net.minecraft.client.resources.model.EquipmentClientInfo;
-import net.minecraft.core.component.DataComponents;
-import net.minecraft.network.chat.CommonComponents;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.equipment.Equippable;
 import net.neoforged.bus.api.IEventBus;
-import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
-import net.neoforged.neoforge.client.event.EntityRenderersEvent;
-import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
-import java.util.Map;
 
 public final class ModCuriosRenderers {
     public ModCuriosRenderers(IEventBus modEventBus) {

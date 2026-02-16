@@ -1,7 +1,6 @@
 package net.bumblebee.claysoldiers.entity.soldier;
 
 import com.mojang.logging.LogUtils;
-import com.mojang.serialization.Codec;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.capability.AssignableWorksiteCapability;
 import net.bumblebee.claysoldiers.capability.ThrowableItemCapability;
@@ -10,15 +9,13 @@ import net.bumblebee.claysoldiers.clayremovalcondition.RemovalConditionContext;
 import net.bumblebee.claysoldiers.datamap.SoldierEquipmentSlot;
 import net.bumblebee.claysoldiers.datamap.SoldierHoldableEffect;
 import net.bumblebee.claysoldiers.datamap.SoldierSlotCallback;
-import net.bumblebee.claysoldiers.entity.ClayMobEntity;
-import net.bumblebee.claysoldiers.entity.ClayMobTeamOwnerEntity;
-import net.bumblebee.claysoldiers.entity.ClaySoldierRideableMap;
-import net.bumblebee.claysoldiers.entity.ClayWraithEntity;
+import net.bumblebee.claysoldiers.entity.*;
 import net.bumblebee.claysoldiers.entity.goal.*;
 import net.bumblebee.claysoldiers.entity.goal.target.*;
 import net.bumblebee.claysoldiers.entity.goal.workgoal.*;
 import net.bumblebee.claysoldiers.entity.goal.workgoal.dig.DigHoleGoal;
 import net.bumblebee.claysoldiers.entity.inventory.ClaySoldierInventory;
+import net.bumblebee.claysoldiers.entity.inventory.ClaySoldierInventoryHandler;
 import net.bumblebee.claysoldiers.entity.soldier.status.SoldierStatusHolder;
 import net.bumblebee.claysoldiers.entity.soldier.status.SoldierStatusManager;
 import net.bumblebee.claysoldiers.init.ModCriterions;
@@ -51,9 +48,9 @@ import net.bumblebee.claysoldiers.soldierproperties.types.BreathHoldPropertyType
 import net.bumblebee.claysoldiers.team.ClayMobTeamManger;
 import net.bumblebee.claysoldiers.util.color.ColorHelper;
 import net.bumblebee.claysoldiers.util.color.EntityDataColorWrapper;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponents;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -106,7 +103,6 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
 import java.util.*;
-import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -125,6 +121,8 @@ public class AbstractClaySoldierEntity extends ClayMobTeamOwnerEntity implements
     public static final String IGNITED_TAG = "ignited";
     public static final String VERY_ANGRY_TAG = "very_angry";
 
+    public static final float BASE_MOVEMENT_SPEED = 0.1f;
+
     private static final EntityDataAccessor<Byte> DATA_WORK_STATUS = SynchedEntityData.defineId(AbstractClaySoldierEntity.class, EntityDataSerializers.BYTE);
     private static final EntityDataAccessor<Integer> DATA_SWELL_DIR = SynchedEntityData.defineId(AbstractClaySoldierEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> DATA_IS_IGNITED = SynchedEntityData.defineId(AbstractClaySoldierEntity.class, EntityDataSerializers.BOOLEAN);
@@ -140,9 +138,6 @@ public class AbstractClaySoldierEntity extends ClayMobTeamOwnerEntity implements
     public static final float NON_CLAY_MOB_POWER_MULTIPLIER = 0.2f;
 
     private static final int MIN_POWER_FOR_SPECIAL_ATTACKS = 1;
-
-    private static final Codec<List<ItemStackWithEffect>> ARMOR_ITEMS_LIST_CODEC = ItemStack.OPTIONAL_CODEC.xmap(ItemStackWithEffect::new, ItemStackWithEffect::stack).sizeLimitedListOf(SoldierEquipmentSlot.values().length);
-
 
     protected final AttackTypeProperty defaultAttackType;
     private static final byte NO_GLIDE = -1;
@@ -221,16 +216,11 @@ public class AbstractClaySoldierEntity extends ClayMobTeamOwnerEntity implements
                 .add(Attributes.MAX_HEALTH, 20.0D)
                 .add(Attributes.ARMOR, 0D)
                 .add(Attributes.ATTACK_DAMAGE, 2.5f)
-                .add(Attributes.ATTACK_SPEED, 0.1D)
+                .add(Attributes.ATTACK_SPEED, BASE_MOVEMENT_SPEED)
                 .add(Attributes.MOVEMENT_SPEED, 0.3D)
                 .add(Attributes.FOLLOW_RANGE, 16.0)
                 .add(Attributes.KNOCKBACK_RESISTANCE, 0.5)
                 .build();
-    }
-
-
-    private static Iterable<ItemStack> convertToStack(List<ItemStackWithEffect> stackWithEffects) {
-        return stackWithEffects.stream().map(ItemStackWithEffect::stack).toList();
     }
 
     /**
@@ -254,7 +244,6 @@ public class AbstractClaySoldierEntity extends ClayMobTeamOwnerEntity implements
         workSelector = new WorkSelectorGoal(this, goals);
         return workSelector;
     }
-
 
     @Override
     protected void registerGoals() {
@@ -280,7 +269,6 @@ public class AbstractClaySoldierEntity extends ClayMobTeamOwnerEntity implements
         this.targetSelector.addGoal(3, new ClayMobOwnerTarget(this));
         this.targetSelector.addGoal(4, new ClaySoldierNearestTargetGoal(this, false, this::targetPredicate, this::specificTargetPredicate));
     }
-
 
     @Override
     public void addAdditionalSaveData(ValueOutput output) {
@@ -337,25 +325,6 @@ public class AbstractClaySoldierEntity extends ClayMobTeamOwnerEntity implements
         workSelector.readFromTag(input);
 
         carriedStack = input.read(CARRIED_ITEM_TAG, ItemStack.CODEC).orElse(ItemStack.EMPTY);
-    }
-
-    /**
-     * Populates a list of {@link ItemStackWithEffect} objects from a given {@link CompoundTag}.
-     * <p>
-     * If the specified key exists in the tag as a list, the method reads its elements and updates
-     * the provided list of items by parsing each entry from the tag.
-     * <p>
-     *
-     * @param tag        The {@code CompoundTag} containing the serialized list of item stacks.
-     * @param key        The key under which the item stack data is stored.
-     * @param listSetter Called for each parsed {@code ItemStackWithEffect} and its index.
-     */
-    public static void getFromTag(ValueInput tag, String key, BiConsumer<Integer, ItemStackWithEffect> listSetter) {
-        tag.read(key, ARMOR_ITEMS_LIST_CODEC).ifPresent(l -> {
-            for (int index = 0; index < l.size(); ++index) {
-                listSetter.accept(index, l.get(index));
-            }
-        });
     }
 
     @Override
@@ -1965,14 +1934,30 @@ public class AbstractClaySoldierEntity extends ClayMobTeamOwnerEntity implements
     }
 
     @Override
+    public void getStatDisplay(List<Component> list, LivingEntity viewer) {
+        super.getStatDisplay(list, viewer);
+        int damageIndex = 3;
+        var attackType = getAttackType().getAnimatedDisplayName(this);
+        if (attackType != null) {
+            list.add(1, attackType);
+            damageIndex++;
+        }
+
+        float damage = Math.round((this.getBaseAttackDamage() + this.allProperties().damage()) * 10) / 10f;
+        list.add(damageIndex, CommonComponents.space().append(Component.translatable(StatInfoDisplay.DAMAGE, damage).withStyle(ChatFormatting.GRAY)));
+        var status = statusManger.getStatusDisplayName();
+        if (status != null) {
+            list.add(CommonComponents.space().append(Component.translatable(StatInfoDisplay.STATUS, status).withStyle(ChatFormatting.GRAY)));
+        }
+    }
+
+    @Override
     public boolean startRiding(Entity entity, boolean force, boolean sendGameEvent) {
         var result = super.startRiding(entity, force, sendGameEvent);
         updateRidingProperties();
         ClaySoldierRideableMap.onRide(entity, this);
         return result;
     }
-
-
 
     @Override
     public void stopRiding() {

@@ -1,0 +1,25 @@
+package net.bumblebee.claysoldiers.init;
+
+import net.bumblebee.claysoldiers.ClaySoldiersCommon;
+import net.bumblebee.claysoldiers.loot.SetRandomClayMobTeam;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.storage.loot.LootTable;
+import net.minecraft.world.level.storage.loot.functions.LootItemFunctionType;
+
+import java.util.function.Supplier;
+
+public class ModLootTables {
+    public static final ResourceKey<LootTable> SMALL_HOUSE = ResourceKey.create(Registries.LOOT_TABLE, ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "chests/small_house"));
+
+    public static final Supplier<LootItemFunctionType<SetRandomClayMobTeam>> RANDOM_CLAY_SOLDIER_TEAM = ClaySoldiersCommon.PLATFORM.registerLootItemFunction("random_clay_soldier_team",
+            () -> new LootItemFunctionType<>(SetRandomClayMobTeam.CODEC)
+    );
+
+    private ModLootTables() {
+    }
+
+    public static void init() {
+    }
+}

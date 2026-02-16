@@ -5,7 +5,6 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
-import net.minecraft.world.phys.Vec2;
 import org.jetbrains.annotations.Nullable;
 import snownee.jade.api.theme.IThemeHelper;
 import snownee.jade.api.ui.Element;

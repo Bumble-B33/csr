@@ -3,14 +3,17 @@ package net.bumblebee.claysoldiers.block.hamsterwheel;
 import com.mojang.logging.LogUtils;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.entity.ClayMobEntity;
 import net.bumblebee.claysoldiers.entity.client.ClientClaySoldierEntity;
 import net.bumblebee.claysoldiers.entity.inventory.ClaySoldierInventory;
 import net.bumblebee.claysoldiers.entity.soldier.AbstractClaySoldierEntity;
-import net.bumblebee.claysoldiers.item.itemeffectholder.ItemStackWithEffect;
 import net.bumblebee.claysoldiers.team.ClayMobTeam;
 import net.bumblebee.claysoldiers.util.ErrorHandler;
-import net.minecraft.core.*;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
@@ -18,7 +21,6 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.resources.RegistryOps;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.*;
@@ -39,29 +41,24 @@ public class HamsterWheelSoldierData {
     private static final Logger LOGGER = LogUtils.getLogger();
     private static final Codec<EntityType<?>> ENTITY_TYPE_CODEC = BuiltInRegistries.ENTITY_TYPE.byNameCodec();
     private static final List<String> IGNORED_TAGS = Arrays.asList(
-            "Air",
-            "ArmorDropChances",
-            "ArmorItems",
-            "Brain",
-            "CanPickUpLoot",
-            "DeathTime",
-            "FallDistance",
-            "FallFlying",
-            "Fire",
-            "HandDropChances",
-            "HandItems",
-            "Health",
-            "HurtByTimestamp",
-            "HurtTime",
-            "LeftHanded",
-            "Motion",
-            "OnGround",
-            "PortalCooldown",
-            "Pos",
-            "Rotation",
-            "SleepingX",
-            "SleepingY",
-            "SleepingZ",
+            Entity.TAG_AIR,
+            LivingEntity.TAG_BRAIN,
+            Mob.TAG_CAN_PICK_UP_LOOT,
+            LivingEntity.TAG_DEATH_TIME,
+            Entity.TAG_FALL_DISTANCE,
+            LivingEntity.TAG_FALL_FLYING,
+            Entity.TAG_FIRE,
+            Mob.TAG_DROP_CHANCES,
+            LivingEntity.TAG_HEALTH,
+            LivingEntity.TAG_HURT_BY_TIMESTAMP,
+            LivingEntity.TAG_HURT_TIME,
+            Mob.TAG_LEFT_HANDED,
+            Entity.TAG_MOTION,
+            Entity.TAG_ON_GROUND,
+            Entity.TAG_PORTAL_COOLDOWN,
+            Entity.TAG_POS,
+            Entity.TAG_ROTATION,
+            LivingEntity.TAG_SLEEPING_POS,
             Entity.TAG_ID,
             Entity.TAG_PASSENGERS,
             Leashable.LEASH_TAG,
@@ -79,7 +76,6 @@ public class HamsterWheelSoldierData {
             AbstractClaySoldierEntity.SKIN_VARIANT_ID_TAG,
             ClayMobEntity.WAXED_TAG
     );
-    private static final String ACTIVE_EFFECTS_TAG = "active_effects";
 
     public static final String CLIENT_TAG = "client";
 
@@ -88,13 +84,14 @@ public class HamsterWheelSoldierData {
     private static final String SOLDIER_SIZE_TAG = "SoldierSize";
     private static final String SOLDIER_SPEED_TAG = "SoldierSpeed";
     private static final String SOLDIER_ENTER_TAG = "SoldierEnterTime";
+    private static final float DEFAULT_SPEED = AbstractClaySoldierEntity.BASE_MOVEMENT_SPEED * ClaySoldiersCommon.COMMON_HOOKS.getHamsterWheelSpeed();
 
     private static final Codec<HamsterWheelSoldierData> CODEC = RecordCodecBuilder.create(in -> in.group(
             ENTITY_TYPE_CODEC.fieldOf(ENTITY_TYPE_TAG).forGetter(d -> d.type),
             CompoundTag.CODEC.fieldOf(DATA_TAG).forGetter(d -> d.data),
             ResourceLocation.CODEC.fieldOf(ClayMobTeam.TEAM_ID_TAG).forGetter(d -> d.teamReference),
             Codec.FLOAT.optionalFieldOf(SOLDIER_SIZE_TAG, 1f).forGetter(d -> d.soldierScale),
-            Codec.FLOAT.optionalFieldOf(SOLDIER_SPEED_TAG, 0.3f).forGetter(d -> d.speed),
+            Codec.FLOAT.optionalFieldOf(SOLDIER_SPEED_TAG, DEFAULT_SPEED).forGetter(d -> d.speed),
             Codec.LONG.optionalFieldOf(SOLDIER_ENTER_TAG, 0L).forGetter(d -> d.enterTime)
     ).apply(in, HamsterWheelSoldierData::createUnsafe));
 
@@ -136,7 +133,7 @@ public class HamsterWheelSoldierData {
     }
 
     public static HamsterWheelSoldierData of(AbstractClaySoldierEntity soldier) {
-        TagValueOutput compoundtag = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, soldier.registryAccess());
+        TagValueOutput compoundtag = TagValueOutput.createWithContext(ClaySoldiersCommon.PROBLEM_REPORTER, soldier.registryAccess());
         soldier.save(compoundtag);
         IGNORED_TAGS.forEach(compoundtag::discard);
         return HamsterWheelSoldierData.createUnsafe(soldier.getType(), compoundtag.buildResult(), soldier.getClayTeamType(), soldier.getScale(), (float) soldier.getAttribute(Attributes.MOVEMENT_SPEED).getValue(), soldier.level().getGameTime());
@@ -160,7 +157,7 @@ public class HamsterWheelSoldierData {
         if (soldierScale != 1) {
             tag.putFloat(SOLDIER_SIZE_TAG, soldierScale);
         }
-        if (speed >= 0.31f || speed <= 0.29f) {
+        if (speed >= DEFAULT_SPEED + 0.1f || speed <= DEFAULT_SPEED - 0.1f) {
             tag.putFloat(SOLDIER_SPEED_TAG, speed);
         }
     }
@@ -193,18 +190,18 @@ public class HamsterWheelSoldierData {
             return null;
         }
         float size = tag.getFloatOr(SOLDIER_SIZE_TAG, 1f);
-        float speed = tag.getFloatOr(SOLDIER_SPEED_TAG, 3f);
+        float speed = tag.getFloatOr(SOLDIER_SPEED_TAG, DEFAULT_SPEED);
         long enterTime = tag.getLongOr(SOLDIER_ENTER_TAG, 0);
 
-        HamsterWheelSoldierData blockData = HamsterWheelSoldierData.createUnsafe(
+        HamsterWheelSoldierData soldierData = HamsterWheelSoldierData.createUnsafe(
                 type, data, id, size, speed, enterTime
         );
         if (tag.getBooleanOr(CLIENT_TAG, false)) {
-            blockData.setUpClient(pos, state);
+            soldierData.setUpClient(pos, state);
         }
 
 
-        return blockData;
+        return soldierData;
     }
 
     public static void markTagAsClient(ValueOutput tag) {
@@ -236,7 +233,7 @@ public class HamsterWheelSoldierData {
         ClayMobTeam.save(getTeamId(), newEntityData);
 
         if (entity != null) {
-            entity.load(TagValueInput.create(ProblemReporter.DISCARDING, level.registryAccess(), newEntityData));
+            entity.load(TagValueInput.create(ClaySoldiersCommon.PROBLEM_REPORTER, level.registryAccess(), newEntityData));
             data.read(Entity.TAG_UUID, UUIDUtil.CODEC).ifPresentOrElse(entity::setUUID, () -> ErrorHandler.INSTANCE.debug("Loaded a ClaySoldier without its UUID"));
 
             entity.getActiveEffectsMap().clear();
@@ -302,8 +299,7 @@ public class HamsterWheelSoldierData {
     }
 
     public void dropItems(ServerLevel level, double x, double y, double z) {
-        List<ItemStackWithEffect> stackWithEffects = new ArrayList<>();
-        ValueInput input = TagValueInput.create(ProblemReporter.DISCARDING, level.registryAccess(), data);
+        ValueInput input = TagValueInput.create(ClaySoldiersCommon.PROBLEM_REPORTER, level.registryAccess(), data);
         ClaySoldierInventory inventory = new ClaySoldierInventory();
         inventory.load(input);
         inventory.dropInventory(level, (slot, stack) -> spawnItemInWorld(level, stack, x, y, z));
@@ -323,6 +319,6 @@ public class HamsterWheelSoldierData {
 
     @Override
     public String toString() {
-        return "HamsterWheelSoldierData(%s(%s))".formatted(type.getBaseClass().getSimpleName(), getTeamId());
+        return "HamsterWheelSoldierData(%s(%s), Speed: (%s - %s)".formatted("ClaySoldier", getTeamId(), speed, roundedSpeed);
     }
 }

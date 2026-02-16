@@ -6,7 +6,6 @@ import net.bumblebee.claysoldiers.init.ModEffects;
 import net.bumblebee.claysoldiers.init.ModEntityTypes;
 import net.bumblebee.claysoldiers.soldierproperties.customproperties.AttackTypeProperty;
 import net.minecraft.core.UUIDUtil;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;

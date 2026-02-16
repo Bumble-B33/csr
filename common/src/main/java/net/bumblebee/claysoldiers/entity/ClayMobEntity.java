@@ -11,14 +11,12 @@ import net.bumblebee.claysoldiers.item.ClayBrushItem;
 import net.bumblebee.claysoldiers.item.TestItem;
 import net.bumblebee.claysoldiers.soldierpoi.SoldierPoiWithItem;
 import net.bumblebee.claysoldiers.team.*;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.particles.ItemParticleOption;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtUtils;
-import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -54,7 +52,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Consumer;
 
-public abstract class ClayMobEntity extends PathfinderMob implements TeamHolder {
+public abstract class ClayMobEntity extends PathfinderMob implements TeamHolder, StatInfoDisplay {
     public static final float DEFAULT_SCALE = 0.25f;
     protected static final double DEFAULT_ATTACK_REACH = 2.8f * DEFAULT_SCALE;
     private static final EntityDataAccessor<Boolean> SLIME_ROOT_SYNC = SynchedEntityData.defineId(ClayMobEntity.class, EntityDataSerializers.BOOLEAN);
@@ -110,11 +108,11 @@ public abstract class ClayMobEntity extends PathfinderMob implements TeamHolder 
     protected ClayMobEntity(EntityType<? extends ClayMobEntity> pEntityType, Level pLevel) {
         super(pEntityType, pLevel);
         this.clayDamageSources = ClaySoldiersCommon.PLATFORM.createClayDamageSources(pLevel.registryAccess());
-        getPlayerTeamData(pLevel);
+        setPlayerTeamData(pLevel);
         setPersistenceRequired();
     }
 
-    private void getPlayerTeamData(Level level) {
+    private void setPlayerTeamData(Level level) {
         if (teamPlayerData != null) {
             return;
         }
@@ -169,7 +167,6 @@ public abstract class ClayMobEntity extends PathfinderMob implements TeamHolder 
         }
     }
 
-
     @Override
     public void addAdditionalSaveData(ValueOutput pCompound) {
         super.addAdditionalSaveData(pCompound);
@@ -181,8 +178,6 @@ public abstract class ClayMobEntity extends PathfinderMob implements TeamHolder 
         pCompound.putBoolean(WAXED_TAG, this.isWaxed());
         pCompound.storeNullable(POI_POS_TAG, BlockPos.CODEC, getPoiPos());
     }
-
-
 
     @Override
     public void readAdditionalSaveData(ValueInput pCompound) {
@@ -589,7 +584,6 @@ public abstract class ClayMobEntity extends PathfinderMob implements TeamHolder 
         return cachedTeam == null ? ClayMobTeamManger.ERROR : cachedTeam.value();
     }
 
-
     @Override
     public @Nullable UUID getClayTeamOwnerUUID() {
         return getCachedTeamOwner().map(TeamPlayerData.PlayerData::getUUID).orElse(null);
@@ -601,7 +595,7 @@ public abstract class ClayMobEntity extends PathfinderMob implements TeamHolder 
 
     private Optional<TeamPlayerData.PlayerData> getCachedTeamOwner() {
         if (teamPlayerData == null) {
-            getPlayerTeamData(level());
+            setPlayerTeamData(level());
         }
         if (teamPlayerData != null) {
             if (lastOwnerChange < 0 || lastOwnerChange <= teamPlayerData.lastChangeTime()) {
@@ -705,6 +699,7 @@ public abstract class ClayMobEntity extends PathfinderMob implements TeamHolder 
         }
         return false;
     }
+
     private boolean teleportToAroundBlockPos(BlockPos p_350657_) {
         for (int i = 0; i < 10; i++) {
             int j = this.random.nextIntBetweenInclusive(-3, 3);
@@ -864,6 +859,18 @@ public abstract class ClayMobEntity extends PathfinderMob implements TeamHolder 
         goalSelector.getAvailableGoals().stream().filter(WrappedGoal::isRunning).map(g -> g.getGoal().getClass().getSimpleName()).forEach(c -> info.add(" - " + c));
 
         return info;
+    }
+
+    @Override
+    public void getStatDisplay(List<Component> list, LivingEntity livingEntity) {
+        list.add(this.getDisplayName());
+
+        list.add(CommonComponents.space().append(Component.translatable(StatInfoDisplay.HEALTH, this.getHealth(), this.getMaxHealth()).withStyle(ChatFormatting.GRAY)));
+        list.add(CommonComponents.space().append(Component.translatable(StatInfoDisplay.ARMOR, this.getArmorValue()).withStyle(ChatFormatting.GRAY)));
+        if (!getClayTeamType().equals(ClayMobTeamManger.NO_TEAM_TYPE)) {
+            list.add(CommonComponents.space().append(Component.translatable(StatInfoDisplay.TEAM, getClayTeam().getDisplayNameWithColor(c -> c.getColor(this, 0))).withStyle(ChatFormatting.GRAY)));
+        }
+        getCachedTeamOwner().ifPresent(owner -> list.add(CommonComponents.space().append(Component.translatable(StatInfoDisplay.OWNER, owner.getLastDisplayName())).withStyle(ChatFormatting.GRAY)));
     }
 
     @FunctionalInterface

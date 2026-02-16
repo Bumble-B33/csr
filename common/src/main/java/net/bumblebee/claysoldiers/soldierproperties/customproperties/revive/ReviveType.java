@@ -19,12 +19,10 @@ import net.minecraft.util.StringRepresentable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiPredicate;
-import java.util.function.Function;
 
 public enum ReviveType implements StringRepresentable, KeyableTranslatableProperty {
     NONE("none", (level, toRevive, reviver) -> ReviveResult.FAIL, (toRevive, reviver) -> false, null),

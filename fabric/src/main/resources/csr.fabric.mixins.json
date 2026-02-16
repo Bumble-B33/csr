@@ -9,7 +9,9 @@
     "DataPackCommandMixin",
     "PlayerHurtMixin"
   ],
-  "client": [],
+  "client": [
+    "RenderGuiOverlayMixin"
+  ],
   "server": [],
   "injectors": {
     "defaultRequire": 1

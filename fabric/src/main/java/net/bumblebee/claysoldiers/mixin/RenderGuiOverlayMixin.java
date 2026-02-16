@@ -1,0 +1,19 @@
+package net.bumblebee.claysoldiers.mixin;
+
+import net.bumblebee.claysoldiers.menu.info.StatOverlay;
+import net.minecraft.client.DeltaTracker;
+import net.minecraft.client.gui.Gui;
+import net.minecraft.client.gui.GuiGraphics;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+@Mixin(Gui.class)
+public class RenderGuiOverlayMixin {
+
+    @Inject(method = "renderCameraOverlays", at = @At("HEAD"))
+    private void renderStatOverlay(GuiGraphics guiGraphics, DeltaTracker deltaTracker, CallbackInfo ci) {
+        StatOverlay.getInstance().render(guiGraphics, deltaTracker.getGameTimeDeltaTicks());
+    }
+}

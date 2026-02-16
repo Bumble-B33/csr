@@ -1,19 +1,15 @@
 package net.bumblebee.claysoldiers.entity;
 
-import com.mojang.datafixers.util.Either;
 import com.mojang.logging.LogUtils;
 import net.bumblebee.claysoldiers.entity.goal.ClayMobSitGoal;
+import net.bumblebee.claysoldiers.entity.inventory.ClaySoldierInventoryHandler;
 import net.bumblebee.claysoldiers.entity.soldier.AbstractClaySoldierEntity;
-import net.bumblebee.claysoldiers.entity.soldier.ClaySoldierInventoryHandler;
 import net.bumblebee.claysoldiers.entity.soldier.ClaySoldierLike;
 import net.bumblebee.claysoldiers.init.ModEntityTypes;
 import net.bumblebee.claysoldiers.soldierproperties.customproperties.specialattack.SpecialAttack;
 import net.bumblebee.claysoldiers.soldierproperties.customproperties.specialattack.SpecialAttackType;
 import net.bumblebee.claysoldiers.util.codec.CodecUtils;
 import net.minecraft.core.BlockPos;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtOps;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;

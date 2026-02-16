@@ -28,9 +28,7 @@ public class SoldierHoldablePropertiesCombiner implements SoldierPropertyMapRead
     private final Map<SoldierEquipmentSlot, PredicatePropertiesPair> slotPropertyMap;
     private final ClaySoldierInventoryQuery inventory;
     private final AttributeMap attributeMap;
-    private PredicatePropertiesPair fromTeam = new PredicatePropertiesPair(ClayPredicates.ConstantPredicate.getAlwaysTruePredicate(), SoldierPropertyMap.EMPTY, TEAM_SLOT_NAME);
-    private PredicatePropertiesPair fromVehicle = new PredicatePropertiesPair(ClayPredicates.ConstantPredicate.getAlwaysTruePredicate(), SoldierPropertyMap.EMPTY, VEHICLES_SLOT_NAME);
-    private PredicatePropertiesPair baseProperties = new PredicatePropertiesPair(ClayPredicates.ConstantPredicate.getAlwaysTruePredicate(), SoldierPropertyMap.EMPTY, BASE_SLOT_NAME);
+    private final Map<String, PredicatePropertiesPair> specialProperties;
 
     private final SoldierPropertyCombinedMap combinedPropertiesMap;
 
@@ -39,28 +37,31 @@ public class SoldierHoldablePropertiesCombiner implements SoldierPropertyMapRead
         this.combinedPropertiesMap = new SoldierPropertyCombinedMap();
         this.inventory = inventory;
         this.attributeMap = attributeMap;
+        this.specialProperties = new HashMap<>(3);
+        specialProperties.put(TEAM_SLOT_NAME, new PredicatePropertiesPair(ClayPredicates.ConstantPredicate.getAlwaysTruePredicate(), SoldierPropertyMap.EMPTY, TEAM_SLOT_NAME));
+        specialProperties.put(VEHICLES_SLOT_NAME, new PredicatePropertiesPair(ClayPredicates.ConstantPredicate.getAlwaysTruePredicate(), SoldierPropertyMap.EMPTY, VEHICLES_SLOT_NAME));
+        specialProperties.put(BASE_SLOT_NAME, new PredicatePropertiesPair(ClayPredicates.ConstantPredicate.getAlwaysTruePredicate(), SoldierPropertyMap.EMPTY, BASE_SLOT_NAME));
+
+    }
+
+    private void addSpecialProperty(String key, SoldierPropertyMapReader properties, @Nullable ClayPredicate<?> predicate) {
+        attributeMap.removeAttributeModifiers(specialProperties.get(key).attributesAsMultiMapHolder());
+        specialProperties.put(key, new PredicatePropertiesPair(predicate == null ? ClayPredicates.ConstantPredicate.getAlwaysTruePredicate() : predicate, properties, key));
     }
 
     /**
      * Add the Properties of a {@code ClayMobTeam} to the combined properties.
      */
-    public void addPropertyFromTeam(ClayMobTeam team) {
-        if (fromTeam != null) {
-            attributeMap.removeAttributeModifiers(fromTeam.attributesAsMultiMapHolder());
-        }
-        fromTeam = new PredicatePropertiesPair(null, team.getProperties(), TEAM_SLOT_NAME);
+    public void addPropertyFromTeam(@NotNull ClayMobTeam team) {
+        addSpecialProperty(TEAM_SLOT_NAME, team.getProperties(), null);
     }
 
     public void addVehicle(@NotNull SoldierVehicleProperties soldierProperties) {
-        attributeMap.removeAttributeModifiers(fromVehicle.attributesAsMultiMapHolder());
-
-        fromVehicle = new PredicatePropertiesPair(soldierProperties.predicate(), soldierProperties.properties(), VEHICLES_SLOT_NAME);
+        addSpecialProperty(VEHICLES_SLOT_NAME, soldierProperties.properties(), soldierProperties.predicate());
     }
 
     public void addBaseProperties(@NotNull SoldierPropertyMapReader properties) {
-        attributeMap.removeAttributeModifiers(baseProperties.attributesAsMultiMapHolder());
-
-        baseProperties = new PredicatePropertiesPair(ClayPredicates.ConstantPredicate.getAlwaysTruePredicate(), properties, BASE_SLOT_NAME);
+        addSpecialProperty(BASE_SLOT_NAME, properties, null);
     }
 
     /**
@@ -106,7 +107,6 @@ public class SoldierHoldablePropertiesCombiner implements SoldierPropertyMapRead
     private void testAndCombine() {
         List<PredicatePropertiesPair> highPriorityCompleted = getAddedProperties().filter(l -> l.getPriority() == ClayPredicatePriority.HIGH).filter(l -> l.predicate.test(inventory)).toList();
         addTestedProperties(highPriorityCompleted);
-        addTestedProperties(List.of(fromTeam, fromVehicle, baseProperties));
 
         List<PredicatePropertiesPair> restAll = getAddedProperties().filter(p -> p.getPriority() != ClayPredicatePriority.HIGH).toList();
         List<PredicatePropertiesPair> newlyTrue = new ArrayList<>();
@@ -119,7 +119,7 @@ public class SoldierHoldablePropertiesCombiner implements SoldierPropertyMapRead
     }
 
     private Stream<PredicatePropertiesPair> getAddedProperties() {
-        return slotPropertyMap.values().stream();
+        return Stream.concat(slotPropertyMap.values().stream(), specialProperties.values().stream());
     }
 
     private void addTestedProperties(List<PredicatePropertiesPair> allReadyCompleted) {
@@ -150,7 +150,7 @@ public class SoldierHoldablePropertiesCombiner implements SoldierPropertyMapRead
         return combinedPropertiesMap.iterator();
     }
 
-    private record PredicatePropertiesPair(ClayPredicate<?> predicate, SoldierPropertyMapReader properties, String slotName) {
+    private record PredicatePropertiesPair(@NotNull ClayPredicate<?> predicate, @NotNull SoldierPropertyMapReader properties, String slotName) {
         public ClayPredicatePriority getPriority() {
             return predicate.getPriority();
         }

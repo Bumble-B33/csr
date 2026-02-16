@@ -60,6 +60,7 @@ import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.storage.loot.functions.LootItemFunctionType;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
@@ -76,13 +77,11 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import net.neoforged.neoforge.registries.DataPackRegistryEvent;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.neoforged.neoforge.registries.NewRegistryEvent;
-import net.neoforged.neoforge.registries.callback.BakeCallback;
 import net.neoforged.neoforge.registries.datamaps.DataMapsUpdatedEvent;
 import net.neoforged.neoforge.resource.VanillaServerListeners;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
-import java.util.function.Consumer;
 
 @Mod(ClaySoldiersCommon.MOD_ID)
 public class ClaySoldiersNeoForge {
@@ -106,6 +105,7 @@ public class ClaySoldiersNeoForge {
     public static final DeferredRegister<PoiType> POI_TYPES = DeferredRegister.create(Registries.POINT_OF_INTEREST_TYPE, ClaySoldiersCommon.MOD_ID);
     public static final DeferredRegister<CriterionTrigger<?>> CRITERION_TRIGGERS = DeferredRegister.create(Registries.TRIGGER_TYPE, ClaySoldiersCommon.MOD_ID);
     public static final DeferredRegister<MapCodec<? extends EntitySubPredicate>> ENTITY_SUB_PREDICATE = DeferredRegister.create(Registries.ENTITY_SUB_PREDICATE_TYPE, ClaySoldiersCommon.MOD_ID);
+    public static final DeferredRegister<LootItemFunctionType<?>> LOOT_ITEM_FUNCTIONS = DeferredRegister.create(Registries.LOOT_FUNCTION_TYPE, ClaySoldiersCommon.MOD_ID);
 
 
     private static final Holder<ArgumentTypeInfo<?, ?>> COLOR_HELPER = COMMAND_ARGUMENT_TYPES.register("color_helper",
@@ -141,6 +141,7 @@ public class ClaySoldiersNeoForge {
         POI_TYPES.register(modEventBus);
         CRITERION_TRIGGERS.register(modEventBus);
         ENTITY_SUB_PREDICATE.register(modEventBus);
+        LOOT_ITEM_FUNCTIONS.register(modEventBus);
 
         modEventBus.addListener(this::registerRegistry);
         modEventBus.addListener(this::registerPayload);
@@ -199,8 +200,6 @@ public class ClaySoldiersNeoForge {
 
         event.addListener(ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "capability_manager"), new NeoForgeCapabilityManager());
         event.addListener(BlueprintManager.LISTENER_KEY, new BlueprintManager(
-                        event.getRegistryAccess().lookupOrThrow(Registries.BLOCK),
-                        event.getRegistryAccess().lookupOrThrow(ModRegistries.BLUEPRINTS),
                         blueprintTagLoader
                 )
         );
@@ -259,17 +258,10 @@ public class ClaySoldiersNeoForge {
     private void addDataPackRegistry(final DataPackRegistryEvent.NewRegistry event) {
         ClaySoldiersCommon.registerDynamicRegistry(new ClaySoldiersCommon.DynamicRegistryEvent() {
             @Override
-            public <T> void register(ResourceKey<Registry<T>> registry, Codec<T> codec, @Nullable Codec<T> sync, @Nullable ClaySoldiersCommon.RegistryRegisteredCallBack<T> callBack, @Nullable Consumer<Registry<T>> onLoadCallback) {
-                if (callBack != null && onLoadCallback != null) {
-                    event.dataPackRegistry(registry, codec, codec, r -> r
-                            .onAdd((ignored, i, k, v) -> callBack.onRegister(i, k.location(), v))
-                            .onBake(onLoadCallback::accept));
-                } else if (callBack != null) {
+            public <T> void register(ResourceKey<Registry<T>> registry, Codec<T> codec, @Nullable Codec<T> sync, @Nullable ClaySoldiersCommon.RegistryRegisteredCallBack<T> callBack) {
+                if (callBack != null) {
                     event.dataPackRegistry(registry, codec, codec, r -> r
                             .onAdd((ignored, i, k, v) -> callBack.onRegister(i, k.location(), v)));
-                } else if (onLoadCallback != null) {
-                    event.dataPackRegistry(registry, codec, codec, r -> r
-                            .onBake(onLoadCallback::accept));
                 } else {
                     event.dataPackRegistry(registry, codec, codec);
                 }

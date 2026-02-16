@@ -2,11 +2,11 @@ package net.bumblebee.claysoldiers.entity.client.renderstates;
 
 import net.bumblebee.claysoldiers.datamap.SoldierEquipmentSlot;
 import net.bumblebee.claysoldiers.datamap.armor.SoldierMultiWearable;
-import net.bumblebee.claysoldiers.datamap.armor.accessories.AccessoryRenderState;
-import net.bumblebee.claysoldiers.datamap.armor.accessories.RenderableAccessory;
-import net.bumblebee.claysoldiers.datamap.armor.accessories.SoldierAccessorySlot;
-import net.bumblebee.claysoldiers.datamap.armor.accessories.custom.GliderRenderable;
-import net.bumblebee.claysoldiers.datamap.armor.accessories.custom.SkullRenderable;
+import net.bumblebee.claysoldiers.datamap.armor.accessories.SoldierAccessoryData;
+import net.bumblebee.claysoldiers.datamap.armor.accessories.SoldierAccessoryKey;
+import net.bumblebee.claysoldiers.datamap.armor.accessories.client.AccessoryRenderState;
+import net.bumblebee.claysoldiers.datamap.armor.accessories.custom.GliderAccessoryData;
+import net.bumblebee.claysoldiers.datamap.armor.accessories.custom.SkullAccessoryData;
 import net.bumblebee.claysoldiers.entity.boss.BossClaySoldierEntity;
 import net.bumblebee.claysoldiers.entity.soldier.AbstractClaySoldierEntity;
 import net.bumblebee.claysoldiers.item.itemeffectholder.ItemStackWithEffect;
@@ -104,18 +104,20 @@ public class AbstractClaySoldierRenderState extends ClayMobRenderState {
     public static void extractAccessoryRenderState(AbstractClaySoldierEntity claySoldierEntity, AbstractClaySoldierRenderState renderState, ItemModelResolver itemModelResolver) {
         var acc = new AccessoryRenderState();
 
-        Map<SoldierAccessorySlot<?>, RenderableAccessory> map = new HashMap<>();
+        Map<SoldierAccessoryKey<?>, SoldierAccessoryData> map = new HashMap<>();
         for (SoldierEquipmentSlot slot : SoldierEquipmentSlot.values()) {
             var multi = getMulti(claySoldierEntity, slot);
             if (multi != null) {
                 map.putAll(multi.getAccessories());
             }
         }
-        acc.renderableAccessories = map.values();
-        for (RenderableAccessory accessory : acc.renderableAccessories) {
-            if (accessory instanceof SkullRenderable skullRenderable) {
+
+        acc.renderableAccessories = map;
+
+        for (SoldierAccessoryData data : acc.renderableAccessories.values()) {
+            if (data instanceof SkullAccessoryData skullRenderable) {
                 itemModelResolver.updateForLiving(acc.skullAccessory, skullRenderable.getHeadStack(), ItemDisplayContext.HEAD, claySoldierEntity);
-            } else if (accessory instanceof GliderRenderable gliderRenderable) {
+            } else if (data instanceof GliderAccessoryData gliderRenderable) {
                 itemModelResolver.updateForLiving(acc.gliderAccessory, gliderRenderable.getGliderStack(), ItemDisplayContext.HEAD, claySoldierEntity);
             }
         }

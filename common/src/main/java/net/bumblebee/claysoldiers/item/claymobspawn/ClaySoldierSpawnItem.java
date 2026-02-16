@@ -2,10 +2,7 @@ package net.bumblebee.claysoldiers.item.claymobspawn;
 
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.entity.soldier.ClaySoldierEntity;
-import net.bumblebee.claysoldiers.init.ModDataComponents;
-import net.bumblebee.claysoldiers.init.ModEntityTypes;
-import net.bumblebee.claysoldiers.init.ModItems;
-import net.bumblebee.claysoldiers.init.ModTags;
+import net.bumblebee.claysoldiers.init.*;
 import net.bumblebee.claysoldiers.item.BrickedItemHolder;
 import net.bumblebee.claysoldiers.item.itemeffectholder.ItemStackWithEffect;
 import net.bumblebee.claysoldiers.team.ClayMobTeam;
@@ -16,6 +13,7 @@ import net.bumblebee.claysoldiers.util.ErrorHandler;
 import net.bumblebee.claysoldiers.util.color.ColorHelper;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.CommonComponents;
@@ -24,7 +22,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.ARGB;
 import net.minecraft.util.RandomSource;
-import net.minecraft.util.Unit;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -213,21 +210,13 @@ public class ClaySoldierSpawnItem extends MultiSpawnItem<ClaySoldierEntity> impl
         return null;
     }
 
-    private static final RandomSource RANDOM = RandomSource.create();
-
-
-
-    public void verifyComponentsAfterLoad(ItemStack stack) {
-        Unit unit = stack.get(ModDataComponents.CLAY_MOB_RANDOM_TEAM_COMPONENT.get());
-        if (unit != null) {
-            stack.remove(ModDataComponents.CLAY_MOB_RANDOM_TEAM_COMPONENT.get());
-            ClayMobTeamManger.setLoadCallback(reg -> reg.getRandom(RANDOM).ifPresentOrElse(
-                    team -> {
-                        stack.set(ModDataComponents.CLAY_MOB_TEAM_COMPONENT.get(), team.key().location());
-                    },
-                    () -> ErrorHandler.INSTANCE.error("Failed to set a Random Team Component for " + stack)
-            ));
-        }
-
+    public static void setRandomTeam(ItemStack stack, RegistryAccess registryAccess, RandomSource random) {
+        stack.remove(ModDataComponents.CLAY_MOB_TEAM_COMPONENT.get());
+        registryAccess.lookupOrThrow(ModRegistries.CLAY_MOB_TEAMS).getRandom(random).ifPresentOrElse(
+                team -> {
+                    stack.set(ModDataComponents.CLAY_MOB_TEAM_COMPONENT.get(), team.key().location());
+                },
+                () -> ErrorHandler.INSTANCE.error("Failed to set a Random Team Component for " + stack)
+        );
     }
 }

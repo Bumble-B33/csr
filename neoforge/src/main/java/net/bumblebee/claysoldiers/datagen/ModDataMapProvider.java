@@ -6,7 +6,6 @@ import net.bumblebee.claysoldiers.soldierproperties.SoldierProperty;
 import net.bumblebee.claysoldiers.soldierproperties.SoldierPropertyMap;
 import net.bumblebee.claysoldiers.soldierproperties.SoldierPropertyTypes;
 import net.bumblebee.claysoldiers.soldierproperties.SoldierVehicleProperties;
-import net.bumblebee.claysoldiers.soldierproperties.customproperties.UnitProperty;
 import net.bumblebee.claysoldiers.soldierproperties.customproperties.specialattack.SpecialAttackType;
 import net.bumblebee.claysoldiers.soldierproperties.customproperties.specialattack.SpecialAttacks;
 import net.bumblebee.claysoldiers.soldierproperties.types.BreathHoldPropertyType;
@@ -29,8 +28,8 @@ public class ModDataMapProvider extends DataMapProvider {
                 .add(EntityType.ENDERMITE.builtInRegistryHolder(),
                         new SoldierVehicleProperties(
                                 SoldierPropertyMap.of(
-                                        new SoldierProperty<>(SoldierPropertyTypes.TELEPORTATION.get(), UnitProperty.INSTANCE),
-                                        new SoldierProperty<>(SoldierPropertyTypes.TELEPORT_TO_OWNER.get(), UnitProperty.INSTANCE)
+                                        SoldierProperty.unit(SoldierPropertyTypes.TELEPORTATION.get()),
+                                        SoldierProperty.unit(SoldierPropertyTypes.TELEPORT_TO_OWNER.get())
                                 )), false)
                 .add(EntityType.TURTLE.builtInRegistryHolder(),
                         new SoldierVehicleProperties(

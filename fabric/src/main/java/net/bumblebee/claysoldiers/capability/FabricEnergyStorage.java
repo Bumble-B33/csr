@@ -8,8 +8,9 @@ import net.fabricmc.fabric.api.lookup.v1.block.BlockApiCache;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.minecraft.core.Direction;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import org.jetbrains.annotations.Nullable;
 import team.reborn.energy.api.EnergyStorage;
 import team.reborn.energy.api.base.SimpleEnergyStorage;
@@ -58,7 +59,7 @@ public class FabricEnergyStorage extends SimpleEnergyStorage implements IHamster
 
     @Override
     public void generate(float speed) {
-        long generated = amount + (int) Math.max(1, ClaySoldierFabric.hamsterWheelSpeed * speed);
+        long generated = amount + IHamsterWheelEnergyStorage.energyGeneratedPerTick(speed);
         if (generated < 0) {
             generated = Long.MAX_VALUE;
         }
@@ -87,12 +88,12 @@ public class FabricEnergyStorage extends SimpleEnergyStorage implements IHamster
     }
 
     @Override
-    public void save(CompoundTag tag) {
+    public void save(ValueOutput tag) {
         tag.putLong(TAG_KEY, amount);
     }
 
     @Override
-    public void load(CompoundTag tag) {
+    public void load(ValueInput tag) {
         amount = Math.min(ClaySoldierFabric.hamsterWheelCapacity, tag.getLongOr(TAG_KEY, 0));
     }
 
@@ -129,11 +130,11 @@ public class FabricEnergyStorage extends SimpleEnergyStorage implements IHamster
         }
 
         @Override
-        public void save(CompoundTag tag) {
+        public void save(ValueOutput tag) {
         }
 
         @Override
-        public void load(CompoundTag tag) {
+        public void load(ValueInput tag) {
         }
 
         @Override

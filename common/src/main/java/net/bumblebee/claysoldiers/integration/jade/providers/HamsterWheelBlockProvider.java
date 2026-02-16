@@ -1,9 +1,9 @@
 package net.bumblebee.claysoldiers.integration.jade.providers;
 
-import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.block.hamsterwheel.HamsterWheelBlock;
 import net.bumblebee.claysoldiers.block.hamsterwheel.HamsterWheelBlockEntity;
 import net.bumblebee.claysoldiers.block.hamsterwheel.HamsterWheelSoldierData;
+import net.bumblebee.claysoldiers.block.hamsterwheel.IHamsterWheelEnergyStorage;
 import net.bumblebee.claysoldiers.entity.client.ClientClaySoldierEntity;
 import net.bumblebee.claysoldiers.integration.jade.CommonBlockProvider;
 import net.bumblebee.claysoldiers.integration.jade.CommonTooltipHelper;
@@ -43,10 +43,9 @@ public enum HamsterWheelBlockProvider implements CommonBlockProvider {
             tooltip.addHorizontalLine();
         }
         if (detail && blockEntity.hasEnergyStorage()) {
-            int generating = 0;
+            long generating = 0;
             if (soldierBlockData != null) {
-                long speed = ClaySoldiersCommon.COMMON_HOOKS.getHamsterWheelSpeed();
-                generating = (int) Math.max(1, speed * soldierBlockData.getAdjustedSpeed());
+                generating = IHamsterWheelEnergyStorage.energyGeneratedPerTick(soldierBlockData.getAdjustedSpeed());
             }
 
             tooltip.add(Component.translatable(GENERATING, generating));

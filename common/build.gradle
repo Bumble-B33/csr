@@ -54,7 +54,7 @@ dependencies {
     compileOnly("mezz.jei:jei-${minecraft_version}-common-api:${jei_version}")
     // at runtime, use the full JEI jar for NeoForge
     runtimeOnly("mezz.jei:jei-${minecraft_version}-common:${jei_version}")
-    compileOnly("io.wispforest:accessories-common:${accessories_version}-mojmap")
+    compileOnly("io.wispforest:accessories-common:${accessories_version}+${minecraft_version}-mojmap")
 
     implementation "net.tslat.smartbrainlib:SmartBrainLib-common-${sbl_version}"
 

@@ -1,4 +1,4 @@
-package net.bumblebee.claysoldiers.entity.soldier;
+package net.bumblebee.claysoldiers.entity.inventory;
 
 import net.bumblebee.claysoldiers.claypoifunction.ClaySoldierInventorySetter;
 import net.bumblebee.claysoldiers.claysoldierpredicate.ClaySoldierInventoryQuery;

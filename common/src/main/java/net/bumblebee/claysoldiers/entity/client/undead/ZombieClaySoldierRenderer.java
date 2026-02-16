@@ -1,13 +1,9 @@
 package net.bumblebee.claysoldiers.entity.client.undead;
 
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.bumblebee.claysoldiers.entity.client.ClaySoldierRenderer;
 import net.bumblebee.claysoldiers.entity.client.renderstates.AbstractClaySoldierRenderState;
 import net.bumblebee.claysoldiers.entity.soldier.AbstractClaySoldierEntity;
 import net.bumblebee.claysoldiers.entity.soldier.ZombieClaySoldierEntity;
-import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 
 public class ZombieClaySoldierRenderer extends ClaySoldierRenderer {

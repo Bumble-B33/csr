@@ -3,8 +3,8 @@ package net.bumblebee.claysoldiers.datamap.armor;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.bumblebee.claysoldiers.datamap.SoldierEquipmentSlot;
-import net.bumblebee.claysoldiers.datamap.armor.accessories.RenderableAccessory;
-import net.bumblebee.claysoldiers.datamap.armor.accessories.SoldierAccessorySlot;
+import net.bumblebee.claysoldiers.datamap.armor.accessories.SoldierAccessoryData;
+import net.bumblebee.claysoldiers.datamap.armor.accessories.SoldierAccessoryKey;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -18,18 +18,18 @@ import java.util.function.Consumer;
 public class SoldierMultiWearable {
     public static final Codec<SoldierMultiWearable> CODEC = RecordCodecBuilder.create(in -> in.group(
             Codec.unboundedMap(SoldierEquipmentSlot.CODEC, SoldierWearableEffect.CODEC).optionalFieldOf("armor", Map.of()).forGetter(m -> m.armorItemSlotMap),
-            SoldierAccessorySlot.MAP_CODEC.optionalFieldOf("accessories", Map.of()).forGetter(m -> m.accessories)
+            SoldierAccessoryKey.MAP_CODEC.optionalFieldOf("accessories", Map.of()).forGetter(m -> m.accessories)
     ).apply(in, SoldierMultiWearable::new));
     public static final StreamCodec<RegistryFriendlyByteBuf, SoldierMultiWearable> STREAM_CODEC = StreamCodec.composite(
             ByteBufCodecs.map(i -> new EnumMap<>(SoldierEquipmentSlot.class), SoldierEquipmentSlot.STREAM_CODEC, SoldierWearableEffect.STREAM_CODEC, SoldierEquipmentSlot.values().length), m -> m.armorItemSlotMap,
-            SoldierAccessorySlot.MAP_STREAM_CODEC, m -> m.accessories,
+            SoldierAccessoryKey.MAP_STREAM_CODEC, m -> m.accessories,
             SoldierMultiWearable::new
     );
 
     private final EnumMap<SoldierEquipmentSlot, SoldierWearableEffect> armorItemSlotMap;
-    private final Map<SoldierAccessorySlot<?>, RenderableAccessory> accessories;
+    private final Map<SoldierAccessoryKey<?>, SoldierAccessoryData> accessories;
 
-    private SoldierMultiWearable(Map<SoldierEquipmentSlot, SoldierWearableEffect> map, Map<SoldierAccessorySlot<?>, RenderableAccessory> accessories) {
+    private SoldierMultiWearable(Map<SoldierEquipmentSlot, SoldierWearableEffect> map, Map<SoldierAccessoryKey<?>, SoldierAccessoryData> accessories) {
         this.armorItemSlotMap = map.isEmpty() ? new EnumMap<>(SoldierEquipmentSlot.class) : new EnumMap<>(map);
         this.accessories = accessories;
     }
@@ -43,7 +43,7 @@ public class SoldierMultiWearable {
         return armorItemSlotMap.get(slot);
     }
 
-    public Map<SoldierAccessorySlot<?>, RenderableAccessory> getAccessories() {
+    public Map<SoldierAccessoryKey<?>, SoldierAccessoryData> getAccessories() {
         return accessories;
     }
 
@@ -77,19 +77,19 @@ public class SoldierMultiWearable {
     public static SoldierMultiWearable single(SoldierEquipmentSlot slot, SoldierWearableEffect effect) {
         return of().put(slot, effect).build();
     }
-    public static <T extends RenderableAccessory> SoldierMultiWearable accessory(SoldierAccessorySlot<T> key, T value) {
+    public static <T extends SoldierAccessoryData> SoldierMultiWearable accessory(SoldierAccessoryKey<T> key, T value) {
         return of().put(key, value).build();
     }
 
     public static class Builder {
         private final Map<SoldierEquipmentSlot, SoldierWearableEffect> map = new EnumMap<>(SoldierEquipmentSlot.class);
-        private final Map<SoldierAccessorySlot<?>, RenderableAccessory> accessories = new HashMap<>();
+        private final Map<SoldierAccessoryKey<?>, SoldierAccessoryData> accessories = new HashMap<>();
 
         public Builder put(SoldierEquipmentSlot key, SoldierWearableEffect value) {
             map.put(key, value);
             return this;
         }
-        public <T extends RenderableAccessory>Builder put(SoldierAccessorySlot<T> key, T value) {
+        public <T extends SoldierAccessoryData>Builder put(SoldierAccessoryKey<T> key, T value) {
             accessories.put(key, value);
             return this;
         }

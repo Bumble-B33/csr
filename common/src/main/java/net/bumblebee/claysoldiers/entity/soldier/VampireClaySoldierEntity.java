@@ -3,7 +3,6 @@ package net.bumblebee.claysoldiers.entity.soldier;
 import net.bumblebee.claysoldiers.entity.VampireSubjugate;
 import net.bumblebee.claysoldiers.entity.VampiricClayMob;
 import net.bumblebee.claysoldiers.soldierproperties.customproperties.AttackTypeProperty;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;

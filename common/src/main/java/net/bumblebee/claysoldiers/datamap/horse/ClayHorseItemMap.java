@@ -1,6 +1,5 @@
 package net.bumblebee.claysoldiers.datamap.horse;
 
-import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;

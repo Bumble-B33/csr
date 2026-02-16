@@ -9,10 +9,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.util.ARGB;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.animal.sheep.Sheep;
-import net.minecraft.world.item.DyeColor;
 
 import java.util.Locale;
 import java.util.Objects;
@@ -22,6 +19,7 @@ public class ColorHelper {
     public static final Codec<ColorHelper> CODEC = Codec.either(Codec.INT, Codec.string(4, 7)).comapFlatMap(ColorHelper::getFromEither, ColorHelper::convertToEither);
     public static final StreamCodec<ByteBuf, ColorHelper> STREAM_CODEC = ByteBufCodecs.either(ByteBufCodecs.INT, ByteBufCodecs.STRING_UTF8).map(ColorHelper::new, ColorHelper::convertToEither);
     public static final ColorHelper EMPTY = color(-1);
+    public static final ColorHelper JEB =  new ColorHelper(-1, true);
     public static final String JEB_NAME = "jeb_";
     private static final int MAGIC_NUMBER = 25;
     private static final String INT_COLOR_TAG = "color";
@@ -42,7 +40,7 @@ public class ColorHelper {
         }
         String name = either.right().orElseThrow();
         if (name.equals(JEB_NAME)) {
-            return DataResult.success(ColorHelper.jeb());
+            return DataResult.success(JEB);
         }
         if (name.matches("^#[0-9A-Fa-f]{6}$")) {
             return DataResult.success(ColorHelper.color(Integer.parseInt(name.substring(1), 16)));
@@ -80,7 +78,7 @@ public class ColorHelper {
      * Creates a new ColorHelper with a rainbow chaining color.
      */
     public static ColorHelper jeb() {
-        return new ColorHelper(Either.right(JEB_NAME));
+        return JEB;
     }
 
     /**

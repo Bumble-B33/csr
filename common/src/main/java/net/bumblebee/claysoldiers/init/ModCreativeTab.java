@@ -25,16 +25,16 @@ public final class ModCreativeTab {
     public static final Supplier<CreativeModeTab> CLAY_SOLDIER_ITEMS_TAB = ClaySoldiersCommon.PLATFORM.registerCreativeModeTabSoldierItems();
 
 
-
     public static CreativeModeTab.DisplayItemsGenerator addAllItems() {
         return ((itemDisplayParameters, output) -> {
             for (Item item : ClaySoldiersCommon.PLATFORM.getAllItems()) {
                 if (item == ModItems.BLUEPRINT.get()) {
                     modifyBlueprint(output, itemDisplayParameters.holders());
+                } else if (item instanceof BlueprintDependendBlockItem bluePrintItem) {
+                    if (bluePrintItem.isEnabled(itemDisplayParameters.enabledFeatures())) {
+                        output.accept(item);
+                    }
                 } else {
-                    output.accept(item);
-                }
-                if (item instanceof BlueprintDependendBlockItem && ClaySoldiersCommon.COMMON_HOOKS.isBlueprintEnabled(itemDisplayParameters.enabledFeatures())) {
                     output.accept(item);
                 }
             }

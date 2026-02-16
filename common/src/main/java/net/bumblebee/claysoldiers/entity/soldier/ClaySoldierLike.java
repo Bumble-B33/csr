@@ -1,7 +1,7 @@
 package net.bumblebee.claysoldiers.entity.soldier;
 
 import net.bumblebee.claysoldiers.entity.ClayMobEntity;
-import net.minecraft.nbt.CompoundTag;
+import net.bumblebee.claysoldiers.entity.inventory.ClaySoldierInventoryHandler;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;

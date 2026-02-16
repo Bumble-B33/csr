@@ -20,7 +20,7 @@ public final class ModTags {
         public static final TagKey<Item> SOLDIER_WEAPON = create("clay_soldier_weapon");
 
         public static final TagKey<Item> SOLDIER_ARMOR = create("clay_soldier_armor");
-        public static final TagKey<Item> SOLDIER_BOSS_EQUIPABLE = create("clay_boss_equiable");
+        public static final TagKey<Item> SOLDIER_BOSS_EQUIPPABLE = create("clay_boss_equippable");
         public static final TagKey<Item> SOLDIER_THROWABLE_HARMFUL = create("clay_soldier_head_throwable");
 
 
@@ -59,6 +59,8 @@ public final class ModTags {
 
         public static final TagKey<Item> ACCESSORIES_FACE = create(ExternalMods.ACCESSORIES.getName(), "face");
         public static final TagKey<Item> ACCESSORIES_HAT = create(ExternalMods.ACCESSORIES.getName(), "hat");
+        public static final TagKey<Item> ACCESSORIES_BELT = create(ExternalMods.ACCESSORIES.getName(), "belt");
+
         public static final TagKey<Item> CURIOS_HEAD = create(ExternalMods.CURIOS.getName(), "head");
 
         private static TagKey<Item> create(String location) {

@@ -1,9 +1,7 @@
 package net.bumblebee.claysoldiers.datagen;
 
-import net.bumblebee.claysoldiers.init.ModBlocks;
-import net.bumblebee.claysoldiers.init.ModBossBehaviours;
-import net.bumblebee.claysoldiers.init.ModEnchantments;
-import net.bumblebee.claysoldiers.init.ModItems;
+import net.bumblebee.claysoldiers.init.*;
+import net.bumblebee.claysoldiers.loot.SetRandomClayMobTeam;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.HolderOwner;
@@ -14,6 +12,7 @@ import net.minecraft.data.loot.BlockLootSubProvider;
 import net.minecraft.data.loot.LootTableProvider;
 import net.minecraft.data.loot.LootTableSubProvider;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.util.Unit;
 import net.minecraft.world.entity.EquipmentSlotGroup;
 import net.minecraft.world.flag.FeatureFlags;
 import net.minecraft.world.item.Items;
@@ -22,6 +21,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.storage.loot.LootPool;
 import net.minecraft.world.level.storage.loot.LootTable;
 import net.minecraft.world.level.storage.loot.entries.LootItem;
+import net.minecraft.world.level.storage.loot.functions.SetComponentsFunction;
 import net.minecraft.world.level.storage.loot.functions.SetEnchantmentsFunction;
 import net.minecraft.world.level.storage.loot.functions.SetItemCountFunction;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
@@ -34,16 +34,18 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
 
-public class ModLoottableProvider extends LootTableProvider {
-    public ModLoottableProvider(PackOutput pOutput, CompletableFuture<HolderLookup.Provider> pRegistries) {
+public class ModLootTableProvider extends LootTableProvider {
+    public ModLootTableProvider(PackOutput pOutput, CompletableFuture<HolderLookup.Provider> pRegistries) {
         super(pOutput, Set.of(), List.of(
-                new SubProviderEntry(BlockLoottableProvider::new, LootContextParamSets.BLOCK),
-                new SubProviderEntry(BossLootTableProvider::new, LootContextParamSets.ENTITY)
+                new SubProviderEntry(BlockLootTableProvider::new, LootContextParamSets.BLOCK),
+                new SubProviderEntry(BossLootTableProvider::new, LootContextParamSets.ENTITY),
+                new SubProviderEntry(ChestLootSubProvider::new, LootContextParamSets.CHEST)
+
         ), pRegistries);
     }
 
-    private static class BlockLoottableProvider extends BlockLootSubProvider {
-        protected BlockLoottableProvider(HolderLookup.Provider lookupProvider) {
+    private static class BlockLootTableProvider extends BlockLootSubProvider {
+        protected BlockLootTableProvider(HolderLookup.Provider lookupProvider) {
             super(Set.of(), FeatureFlags.REGISTRY.allFlags(), lookupProvider);
         }
 
@@ -57,6 +59,47 @@ public class ModLoottableProvider extends LootTableProvider {
         @Override
         protected Iterable<Block> getKnownBlocks() {
             return List.of(ModBlocks.HAMSTER_WHEEL_BLOCK.get(), ModBlocks.EASEL_BLOCK.get(), ModBlocks.ESCRITOIRE_BLOCK.get());
+        }
+    }
+
+    private record ChestLootSubProvider(HolderLookup.Provider lookup) implements LootTableSubProvider {
+
+        @Override
+        public void generate(BiConsumer<ResourceKey<LootTable>, LootTable.Builder> biConsumer) {
+            biConsumer.accept(ModLootTables.SMALL_HOUSE,
+                    LootTable.lootTable()
+                            .withPool(LootPool.lootPool().setRolls(ConstantValue.exactly(1))
+                                    .add(LootItem.lootTableItem(ModItems.CLAY_COOKIE)
+                                            .apply(SetItemCountFunction.setCount(UniformGenerator.between(1f, 3f)))
+                                    )
+                                    .add(LootItem.lootTableItem(ModItems.CLAY_DISRUPTOR))
+                            )
+                            .withPool(LootPool.lootPool()
+                                    .setRolls(UniformGenerator.between(5f, 10f))
+                                    .add(LootItem.lootTableItem(Items.CLAY_BALL)
+                                            .setWeight(10)
+                                            .apply(SetItemCountFunction.setCount(UniformGenerator.between(2f, 5f)))
+                                    )
+                                    .add(LootItem.lootTableItem(Items.STICK)
+                                            .setWeight(3)
+                                            .apply(SetItemCountFunction.setCount(UniformGenerator.between(1f, 2f)))
+                                    )
+                                    .add(LootItem.lootTableItem(Items.COPPER_INGOT)
+                                            .setWeight(3)
+                                            .apply(SetItemCountFunction.setCount(UniformGenerator.between(1f, 2f)))
+                                    )
+                                    .add(LootItem.lootTableItem(Items.CLAY)
+                                            .setWeight(2)
+                                            .apply(SetItemCountFunction.setCount(UniformGenerator.between(1f, 2f)))
+                                    )
+                                    .add(LootItem.lootTableItem(ModItems.CLAY_SOLDIER)
+                                            .apply(SetComponentsFunction.setComponent(ModDataComponents.CLAY_MOB_RANDOM_TEAM_COMPONENT.get(), Unit.INSTANCE))
+                                            .setWeight(8)
+                                            .apply(SetItemCountFunction.setCount(UniformGenerator.between(3f, 7f)))
+                                            .apply(SetRandomClayMobTeam.of())
+                                    )
+                            )
+            );
         }
     }
 

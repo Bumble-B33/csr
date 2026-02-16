@@ -1,21 +1,6 @@
 package net.bumblebee.claysoldiers.integration.curios;
 
-import net.bumblebee.claysoldiers.ClaySoldiersCommon;
-import net.bumblebee.claysoldiers.init.ModCriterions;
-import net.bumblebee.claysoldiers.init.ModItems;
-import net.bumblebee.claysoldiers.item.claymobspawn.ClaySoldierSpawnItem;
-import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.IEventBus;
-import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 public class ModCurios {
     public ModCurios(IEventBus modEventBus) {

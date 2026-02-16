@@ -32,13 +32,6 @@ ordering = "NONE"
 side = "BOTH"
 
 [[dependencies.${mod_id}]]
-modId="smartbrainlib"
-type="optional"
-versionRange="[${sbl_version},)"
-ordering="NONE"
-side="SERVER"
-
-[[dependencies.${mod_id}]]
 modId="accessories"
 type="optional"
 versionRange = "[${accessories_version},)"

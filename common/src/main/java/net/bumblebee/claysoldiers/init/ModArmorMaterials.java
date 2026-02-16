@@ -14,6 +14,9 @@ import java.util.EnumMap;
 
 public final class ModArmorMaterials {
     public static final ResourceKey<EquipmentAsset> CLAY_GOGGLES_ID = ResourceKey.create(EquipmentAssets.ROOT_ID, ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_goggles"));
+    public static final ResourceKey<EquipmentAsset> MUSHROOM_HELMET_ID = ResourceKey.create(EquipmentAssets.ROOT_ID, ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "red_mushroom"));
+    public static final ResourceKey<EquipmentAsset> SHULKER_HELMET_ID = ResourceKey.create(EquipmentAssets.ROOT_ID, ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "shulker_shell"));
+
     public static final ArmorMaterial CLAY_ARMOR_MATERIAL = new ArmorMaterial(
                     5,
                     Util.make(new EnumMap<>(ArmorType.class), p_371485_ -> {

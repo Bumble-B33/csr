@@ -13,7 +13,6 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
 import net.neoforged.neoforge.common.Tags;
 import net.neoforged.neoforge.common.data.BlockTagCopyingItemTagProvider;
-import net.neoforged.neoforge.common.data.ItemTagsProvider;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -42,7 +41,7 @@ public class ModItemTagProvider extends BlockTagCopyingItemTagProvider {
                 Items.LIGHT,
                 Items.DEBUG_STICK
         );
-        this.tag(ModTags.Items.SOLDIER_BOSS_EQUIPABLE).addTag(ModTags.Items.SOLDIER_HOLDABLE).remove(Items.COMMAND_BLOCK, Items.DEBUG_STICK);
+        this.tag(ModTags.Items.SOLDIER_BOSS_EQUIPPABLE).addTag(ModTags.Items.SOLDIER_HOLDABLE).remove(Items.COMMAND_BLOCK, Items.DEBUG_STICK);
         this.addItemToTags(ModItems.CLAY_STAFF.get(),
                 ItemTags.CROSSBOW_ENCHANTABLE, ItemTags.VANISHING_ENCHANTABLE, Tags.Items.RANGED_WEAPON_TOOLS, ModTags.Items.SOLDIER_SLINGSHOT_ENCHANTABLE);
 
@@ -52,6 +51,8 @@ public class ModItemTagProvider extends BlockTagCopyingItemTagProvider {
 
         this.tag(ModTags.Items.ACCESSORIES_FACE).add(ModItems.CLAY_GOGGLES.get());
         this.tag(ModTags.Items.ACCESSORIES_HAT).add(ModItems.CLAY_SOLDIER.get());
+        this.tag(ModTags.Items.ACCESSORIES_BELT).add(ModItems.STATOMETER.get());
+
         ModCuriosDataProvider.generateTags((t, i) -> this.tag(t).add(i));
 
         this.tag(Tags.Items.MELEE_WEAPON_TOOLS).add(ModItems.SHEAR_BLADE.get(), ModItems.SHARPENED_STICK.get());

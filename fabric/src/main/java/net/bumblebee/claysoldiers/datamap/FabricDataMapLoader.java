@@ -14,7 +14,6 @@ import net.bumblebee.claysoldiers.soldierpoi.SoldierPoi;
 import net.bumblebee.claysoldiers.soldierproperties.SoldierVehicleProperties;
 import net.bumblebee.claysoldiers.util.ErrorHandler;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.fabricmc.fabric.api.resource.IdentifiableResourceReloadListener;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.Registry;
@@ -24,6 +23,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.FileToIdConverter;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.packs.resources.PreparableReloadListener;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
 import net.minecraft.tags.TagLoader;
@@ -32,13 +32,14 @@ import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 
-public class FabricDataMapLoader extends SimpleJsonResourceReloadListener<JsonElement> implements IdentifiableResourceReloadListener {
+public class FabricDataMapLoader extends SimpleJsonResourceReloadListener<JsonElement> implements PreparableReloadListener {
     private static final String PATH = "data_maps";
     private static final String HOLDABLE_PATH = "item/soldier_holdable";
     private static final String WEARABLE_PATH = "item/soldier_wearable";
@@ -46,7 +47,7 @@ public class FabricDataMapLoader extends SimpleJsonResourceReloadListener<JsonEl
     private static final String BLOCK_POI_PATH = "block/soldier_poi";
     private static final String ENTITY_VEHICLE_PROPERTIES_PATH = "entity_type/soldier_vehicle_properties";
 
-    public static final ResourceLocation FABRIC_ITEM_ID = ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "csr_items");
+    public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "csr_items");
     private static final Logger LOGGER = ClaySoldiersCommon.LOGGER;
 
     public static final Map<Holder<Item>, SoldierHoldableEffect> SOLDIER_HOLDABLE_MAP = new HashMap<>();
@@ -68,10 +69,14 @@ public class FabricDataMapLoader extends SimpleJsonResourceReloadListener<JsonEl
     private final static Codec<DataMap<Block, SoldierPoi>> DATA_MAP_BLOCK_POI_CODEC = createDataMapCodec(ITEM_SOLDIER_POI_CODEC, BuiltInRegistries.BLOCK);
     private final static Codec<DataMap<EntityType<?>, SoldierVehicleProperties>> DATA_MAP_VEHICLE_PROPERTIES_CODEC = createDataMapCodec(ENTITY_SOLDIER_PROPRTIES_CODEC, BuiltInRegistries.ENTITY_TYPE);
 
-    private final HolderLookup.Provider provider;
+    @Nullable
+    private HolderLookup.Provider provider = null;
 
-    public FabricDataMapLoader(HolderLookup.Provider provider) {
+    public FabricDataMapLoader() {
         super(ExtraCodecs.JSON, FileToIdConverter.json(PATH));
+    }
+
+    public void setProvider(@Nullable HolderLookup.Provider provider) {
         this.provider = provider;
     }
 
@@ -167,11 +172,6 @@ public class FabricDataMapLoader extends SimpleJsonResourceReloadListener<JsonEl
             list.add(BLOCK_POI_PATH + ": " + SOLDIER_BLOCK_POI_MAP.size());
         }
         return list;
-    }
-
-    @Override
-    public ResourceLocation getFabricId() {
-        return FABRIC_ITEM_ID;
     }
 
     private record DataMap<H, T>(Map<ExtraCodecs.TagOrElementLocation, T> data, boolean replace, Registry<H> registry) {

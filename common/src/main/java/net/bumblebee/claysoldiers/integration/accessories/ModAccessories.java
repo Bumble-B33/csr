@@ -1,8 +1,8 @@
 package net.bumblebee.claysoldiers.integration.accessories;
 
 import io.wispforest.accessories.api.AccessoriesCapability;
-import io.wispforest.accessories.api.core.AccessoryRegistry;
 import io.wispforest.accessories.api.core.Accessory;
+import io.wispforest.accessories.api.core.AccessoryRegistry;
 import io.wispforest.accessories.api.slot.SlotReference;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.init.ModCriterions;
@@ -22,6 +22,7 @@ import java.util.function.Supplier;
 public class ModAccessories {
     private enum Accessories implements Accessory {
         CLAY_GOGGLES(ModItems.CLAY_GOGGLES),
+        STATOMETER(ModItems.STATOMETER),
         CLAY_SOLDIER(ModItems.CLAY_SOLDIER) {
             @Override
             public boolean canEquip(ItemStack stack, SlotReference reference) {
@@ -61,6 +62,7 @@ public class ModAccessories {
                 hasAccessory(p, stack -> stack.is(ModItems.CLAY_GOGGLES.get()))
         );
         ClaySoldiersCommon.IS_WEARING_CLAY_SOLDIER.add(e -> hasAccessory(e, stack -> stack.is(ModItems.CLAY_SOLDIER.get())));
+        ClaySoldiersCommon.IS_WEARING_STATOMETER.add(e -> hasAccessory(e, stack -> stack.is(ModItems.STATOMETER.get())));
     }
 
     public static boolean hasAccessory(Entity pEntity, Predicate<ItemStack> condition) {

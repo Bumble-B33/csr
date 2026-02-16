@@ -7,6 +7,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.ComponentSerialization;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
@@ -48,7 +49,7 @@ public interface TeamPlayerData {
         private final UUID player;
         private Component lastKnowName;
 
-        public PlayerData(UUID player, Component lastKnowName) {
+        public PlayerData(UUID player, @NotNull Component lastKnowName) {
             this.player = player;
             this.lastKnowName = lastKnowName;
         }

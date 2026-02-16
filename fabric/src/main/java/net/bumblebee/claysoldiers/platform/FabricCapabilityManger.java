@@ -7,19 +7,14 @@ import net.bumblebee.claysoldiers.block.hamsterwheel.IHamsterWheelEnergyStorage;
 import net.bumblebee.claysoldiers.capability.*;
 import net.bumblebee.claysoldiers.platform.services.AbstractCapabilityManger;
 import net.fabricmc.fabric.api.lookup.v1.block.BlockApiCache;
-import net.fabricmc.fabric.api.resource.IdentifiableResourceReloadListener;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
-import org.jetbrains.annotations.ApiStatus;
+import net.minecraft.server.packs.resources.PreparableReloadListener;
 import org.jetbrains.annotations.Nullable;
 
-public class FabricCapabilityManger extends AbstractCapabilityManger implements IdentifiableResourceReloadListener {
+public class FabricCapabilityManger extends AbstractCapabilityManger implements PreparableReloadListener {
     public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "csr_capabilities");
-
-    @ApiStatus.Internal
-    public FabricCapabilityManger() {
-    }
 
     @Override
     public IBlockCache<IBlockStorageAccess> create(ServerLevel level, BlockPos pos) {
@@ -39,11 +34,6 @@ public class FabricCapabilityManger extends AbstractCapabilityManger implements 
     @Override
     public IHamsterWheelEnergyStorage createEnergyStorage(HamsterWheelBlockEntity hamsterWheelBlockEntity) {
         return new FabricEnergyStorage(hamsterWheelBlockEntity);
-    }
-
-    @Override
-    public ResourceLocation getFabricId() {
-        return ID;
     }
 
     private record FabricBlueprintRequestCache(BlockApiCache<BlueprintRequestHandler, Void> cache) implements IBlockCache<BlueprintRequestHandler> {

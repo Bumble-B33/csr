@@ -45,9 +45,10 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.storage.loot.functions.LootItemFunction;
+import net.minecraft.world.level.storage.loot.functions.LootItemFunctionType;
 import net.neoforged.fml.ModList;
 import net.neoforged.fml.loading.FMLEnvironment;
-import net.neoforged.fml.loading.FMLLoader;
 import net.neoforged.neoforge.common.extensions.IMenuTypeExtension;
 import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.RegistryBuilder;
@@ -180,6 +181,11 @@ public class NeoForgePlatformHelper implements IPlatformHelper {
     @Override
     public <T extends CriterionTrigger<?>> Supplier<T> registerCriterionTrigger(String name, Supplier<T> criterionTrigger) {
         return ClaySoldiersNeoForge.CRITERION_TRIGGERS.register(name, criterionTrigger);
+    }
+
+    @Override
+    public <T extends LootItemFunction> Supplier<LootItemFunctionType<T>> registerLootItemFunction(String name, Supplier<LootItemFunctionType<T>> lootItemFunction) {
+        return ClaySoldiersNeoForge.LOOT_ITEM_FUNCTIONS.register(name, lootItemFunction);
     }
 
     @Override

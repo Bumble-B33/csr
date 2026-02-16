@@ -3,6 +3,7 @@ package net.bumblebee.claysoldiers.entity.soldier;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.entity.ClayMobEntity;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
@@ -11,7 +12,6 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.storage.TagValueInput;
@@ -48,7 +48,7 @@ public final class AdditionalSoldierData {
      * @param cause The player how should receive credit for this conversion.
      */
     public <T extends ClayMobEntity & ClaySoldierLike> void convert(T soldier, @Nullable Player cause) {
-        ValueInput input = TagValueInput.create(ProblemReporter.DISCARDING, soldier.registryAccess(), tag);
+        ValueInput input = TagValueInput.create(ClaySoldiersCommon.PROBLEM_REPORTER, soldier.registryAccess(), tag);
         soldier.convertToSoldier(soldierType(), (newSoldier) -> {
             newSoldier.readItemPersistentData(input);
             newSoldier.setClayTeamType(soldier.getClayTeamType());

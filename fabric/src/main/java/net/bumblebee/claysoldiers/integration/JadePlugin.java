@@ -13,8 +13,6 @@ import org.jetbrains.annotations.Nullable;
 import snownee.jade.api.*;
 import snownee.jade.api.config.IPluginConfig;
 import snownee.jade.api.ui.Element;
-import snownee.jade.api.ui.IElement;
-import snownee.jade.api.ui.IElementHelper;
 import snownee.jade.api.ui.JadeUI;
 import snownee.jade.impl.ui.CompoundElement;
 import snownee.jade.impl.ui.HorizontalLineElement;
@@ -49,9 +47,6 @@ public class JadePlugin implements IWailaPlugin {
             provider.appendTooltip(
                     new CommonBlockProvider.BlockData(blockAccessor.getBlockState(), blockAccessor.getBlockEntity(), blockAccessor.getServerData()
                     ), new FabricTooltipHelper(iTooltip), blockAccessor.showDetails());
-
-
-
         }
 
         @Override
@@ -146,7 +141,8 @@ public class JadePlugin implements IWailaPlugin {
 
         @Override
         public void addHorizontalLine() {
-            tooltip.add(LINE_ELEMENT);
+            //Todo
+            //tooltip.add(LINE_ELEMENT);
         }
     }
 

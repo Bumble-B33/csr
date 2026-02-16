@@ -1,7 +1,6 @@
 package net.bumblebee.claysoldiers.entity.client.boss;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.bumblebee.claysoldiers.entity.boss.BossClaySoldierEntity;
 import net.bumblebee.claysoldiers.entity.client.ClaySoldierModel;
 import net.bumblebee.claysoldiers.entity.client.ClaySoldierRenderer;
@@ -11,8 +10,6 @@ import net.bumblebee.claysoldiers.entity.client.undead.VampireClaySoldierRendere
 import net.bumblebee.claysoldiers.entity.client.undead.VampireEyesLayer;
 import net.bumblebee.claysoldiers.entity.client.undead.ZombieClaySoldierRenderer;
 import net.bumblebee.claysoldiers.entity.soldier.AbstractClaySoldierEntity;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.RenderLayerParent;

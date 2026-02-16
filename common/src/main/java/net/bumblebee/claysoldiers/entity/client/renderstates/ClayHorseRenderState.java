@@ -18,4 +18,7 @@ public class ClayHorseRenderState extends EquineRenderState {
 
     public HorseWearableItemStack clayHorseArmor;
     public int clayHorseArmorColor;
+    public boolean isSlimeRooted;
+    public boolean hasHorn;
+
 }

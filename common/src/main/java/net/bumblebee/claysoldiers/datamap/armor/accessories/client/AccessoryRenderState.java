@@ -1,12 +1,15 @@
-package net.bumblebee.claysoldiers.datamap.armor.accessories;
+package net.bumblebee.claysoldiers.datamap.armor.accessories.client;
 
+import net.bumblebee.claysoldiers.datamap.armor.accessories.SoldierAccessoryData;
+import net.bumblebee.claysoldiers.datamap.armor.accessories.SoldierAccessoryKey;
+import net.bumblebee.claysoldiers.entity.client.renderstates.AbstractClaySoldierRenderState;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ResolvableProfile;
 
-import java.util.Collection;
+import java.util.Map;
 
 public class AccessoryRenderState {
     public boolean isInvisible;
@@ -14,7 +17,7 @@ public class AccessoryRenderState {
     public int offsetColor;
     public int id;
     public float ageInTicks;
-    public Object renderStateFrom;
+    public AbstractClaySoldierRenderState renderStateFrom;
     public boolean isFalling;
 
     public boolean isInSittingPose;
@@ -30,7 +33,7 @@ public class AccessoryRenderState {
     public int outlineColor;
     public boolean isInWater;
 
-    public Collection<RenderableAccessory> renderableAccessories;
+    public Map<SoldierAccessoryKey<?>, SoldierAccessoryData> renderableAccessories;
     public final ItemStackRenderState skullAccessory = new ItemStackRenderState();
     public final ItemStackRenderState gliderAccessory = new ItemStackRenderState();
 

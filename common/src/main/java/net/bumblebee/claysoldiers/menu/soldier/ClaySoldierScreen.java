@@ -1,6 +1,5 @@
 package net.bumblebee.claysoldiers.menu.soldier;
 
-import com.mojang.blaze3d.pipeline.RenderPipeline;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.entity.soldier.AbstractClaySoldierEntity;
 import net.bumblebee.claysoldiers.entity.soldier.ZombieClaySoldierEntity;
@@ -11,7 +10,6 @@ import net.bumblebee.claysoldiers.util.ComponentFormating;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.RenderPipelines;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;

@@ -72,7 +72,7 @@ public class ColorHelperArgumentType implements ArgumentType<ColorHelper> {
             return ColorHelper.EMPTY;
         }
         if (s.equals("jeb_")) {
-            return ColorHelper.jeb();
+            return ColorHelper.JEB;
         }
         try {
             return ColorHelper.color(Integer.parseInt(s.substring(1), 16));

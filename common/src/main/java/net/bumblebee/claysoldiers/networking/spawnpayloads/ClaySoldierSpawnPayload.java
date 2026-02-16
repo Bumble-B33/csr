@@ -2,8 +2,8 @@ package net.bumblebee.claysoldiers.networking.spawnpayloads;
 
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.datamap.SoldierEquipmentSlot;
-import net.bumblebee.claysoldiers.entity.soldier.AbstractClaySoldierEntity;
 import net.bumblebee.claysoldiers.entity.inventory.ClaySoldierInventory;
+import net.bumblebee.claysoldiers.entity.soldier.AbstractClaySoldierEntity;
 import net.bumblebee.claysoldiers.networking.IClientPayload;
 import net.bumblebee.claysoldiers.platform.services.INetworkManger;
 import net.bumblebee.claysoldiers.soldierproperties.customproperties.revive.ReviveType;
@@ -13,7 +13,10 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 public class ClaySoldierSpawnPayload implements IClientPayload {
     public static final Type<ClaySoldierSpawnPayload> ID = new Type<>(ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_soldier_spawn"));

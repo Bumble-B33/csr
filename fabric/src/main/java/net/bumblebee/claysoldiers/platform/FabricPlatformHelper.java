@@ -54,6 +54,8 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.storage.loot.functions.LootItemFunction;
+import net.minecraft.world.level.storage.loot.functions.LootItemFunctionType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -102,7 +104,7 @@ public class FabricPlatformHelper implements IPlatformHelper {
     public <T extends Block> ItemLikeSupplier<T> registerBlockWithItem(String id, Function<BlockBehaviour.Properties, T> block, BlockBehaviour.Properties properties, BiFunction<Block, Item.Properties, BlockItem> createBlockItem) {
         ResourceLocation location = ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, id);
         var unpacked = block.apply(properties.setId(ResourceKey.create(Registries.BLOCK, location)));
-        registerItem(id, props -> new BlockItem(unpacked, props), new Item.Properties().useBlockDescriptionPrefix());
+        registerItem(id, props -> createBlockItem.apply(unpacked, props), new Item.Properties().useBlockDescriptionPrefix());
 
         Registry.register(BuiltInRegistries.BLOCK, location, unpacked);
         return () -> unpacked;
@@ -201,6 +203,11 @@ public class FabricPlatformHelper implements IPlatformHelper {
     }
 
     @Override
+    public <T extends LootItemFunction> Supplier<LootItemFunctionType<T>> registerLootItemFunction(String name, Supplier<LootItemFunctionType<T>> lootItemFunction) {
+        return defaultRegistration(BuiltInRegistries.LOOT_FUNCTION_TYPE, name, lootItemFunction);
+    }
+
+    @Override
     public List<Item> getAllItems() {
         return items;
     }
@@ -231,7 +238,7 @@ public class FabricPlatformHelper implements IPlatformHelper {
                             });
                         })
                         .build();
-        Registry.register(BuiltInRegistries.CREATIVE_MODE_TAB, ResourceLocation.fromNamespaceAndPath( ClaySoldiersCommon.MOD_ID, "dlay_soldiers"), group);
+        Registry.register(BuiltInRegistries.CREATIVE_MODE_TAB, ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_soldier_items"), group);
         ClaySoldiersCommon.LOGGER.debug("Added {} twice to Clay Soldier Items Tab", duplicates);
         return () -> group;
     }

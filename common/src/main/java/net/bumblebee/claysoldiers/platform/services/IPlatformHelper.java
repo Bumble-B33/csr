@@ -39,6 +39,8 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.loot.functions.LootItemFunction;
+import net.minecraft.world.level.storage.loot.functions.LootItemFunctionType;
 
 import java.util.List;
 import java.util.function.BiFunction;
@@ -98,6 +100,9 @@ public interface IPlatformHelper {
     GameRules.Key<GameRules.BooleanValue> createBoolRule(String name, GameRules.Category category, boolean defaultValue);
     <T extends CriterionTrigger<?>> Supplier<T> registerCriterionTrigger(String name, Supplier<T> criterionTrigger);
     <T extends EntitySubPredicate> Supplier<MapCodec<T>> registerEntitySubPredicate(String name, Supplier<MapCodec<T>> subPredicate);
+
+    <T extends LootItemFunction> Supplier<LootItemFunctionType<T>> registerLootItemFunction(String name, Supplier<LootItemFunctionType<T>> lootItemFunction);
+
 
     List<Item> getAllItems();
     Supplier<CreativeModeTab> registerCreativeModeTab(String id, Function<CreativeModeTab.Builder, CreativeModeTab> creativeModeTab);

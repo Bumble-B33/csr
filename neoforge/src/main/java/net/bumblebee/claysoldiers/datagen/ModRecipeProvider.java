@@ -122,6 +122,16 @@ public class ModRecipeProvider extends RecipeProvider {
                 .unlockedBy("has_clay_ball", has(Items.CLAY_BALL))
                 .save(recipeOutput);
 
+        shaped(RecipeCategory.TOOLS, ModItems.STATOMETER.get())
+                .define('#', Items.IRON_INGOT)
+                .define('C', Items.CLAY_BALL)
+                .define('R', Items.REDSTONE)
+                .pattern("  #")
+                .pattern("#R#")
+                .pattern("#C#")
+                .unlockedBy("has_clay_ball", has(Items.CLAY_BALL))
+                .save(recipeOutput);
+
         shaped(RecipeCategory.MISC, ModItems.BLUEPRINT_PAGE.get())
                 .define('#', Items.LAPIS_LAZULI)
                 .define('C', Items.PAPER)
@@ -132,7 +142,7 @@ public class ModRecipeProvider extends RecipeProvider {
                 .unlockedBy("has_clay_ball", has(Items.CLAY_BALL))
                 .save(recipeOutput, BLUEPRINT_PAGE);
 
-        shaped(RecipeCategory.MISC, ModBlocks.ESCRITOIRE_BLOCK)
+        shaped(RecipeCategory.DECORATIONS, ModBlocks.ESCRITOIRE_BLOCK)
                 .define('#', ModItems.BLUEPRINT_PAGE)
                 .define('C', ItemTags.PLANKS)
                 .pattern("##")
@@ -170,7 +180,7 @@ public class ModRecipeProvider extends RecipeProvider {
     }
 
     private void clayHorseRecipe(ClayHorseVariants variant, ItemLike material) {
-        shaped(RecipeCategory.TOOLS, ClayHorseVariants.clayHorseByVariant(variant).get(), 2)
+        shaped(RecipeCategory.MISC, ClayHorseVariants.clayHorseByVariant(variant).get(), 2)
                 .define('C', Items.CLAY_BALL)
                 .define('H', material)
                 .pattern("CHC")
@@ -178,7 +188,7 @@ public class ModRecipeProvider extends RecipeProvider {
                 .unlockedBy("has_clay_ball", has(Items.CLAY_BALL))
                 .group(CLAY_HORSE_GROUP_NAME)
                 .save(recipeOutput, getClayHorseKey(variant));
-        shaped(RecipeCategory.TOOLS, ClayHorseVariants.clayPegasusByVariant(variant).get(), 2)
+        shaped(RecipeCategory.MISC, ClayHorseVariants.clayPegasusByVariant(variant).get(), 2)
                 .define('C', Items.CLAY_BALL)
                 .define('H', material)
                 .define('F', Items.FEATHER)
@@ -188,7 +198,7 @@ public class ModRecipeProvider extends RecipeProvider {
                 .unlockedBy("has_clay_ball", has(Items.CLAY_BALL))
                 .group(CLAY_PEGASUS_GROUP_NAME)
                 .save(recipeOutput, getClayPegasusKey(variant, false));
-        shaped(RecipeCategory.TOOLS, ClayHorseVariants.clayPegasusByVariant(variant).get())
+        shaped(RecipeCategory.MISC, ClayHorseVariants.clayPegasusByVariant(variant).get())
                 .define('H', ClayHorseVariants.clayHorseByVariant(variant).get())
                 .define('F', Items.FEATHER)
                 .pattern("F")

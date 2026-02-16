@@ -4,23 +4,29 @@ import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.block.ClayMobContainer;
 import net.bumblebee.claysoldiers.capability.AssignableWorksiteCapability;
 import net.bumblebee.claysoldiers.entity.ClayMobEntity;
+import net.bumblebee.claysoldiers.entity.StatInfoDisplay;
 import net.bumblebee.claysoldiers.entity.soldier.AbstractClaySoldierEntity;
 import net.bumblebee.claysoldiers.init.ModBlockEntities;
+import net.bumblebee.claysoldiers.init.ModEntityTypes;
 import net.bumblebee.claysoldiers.init.ModTags;
 import net.bumblebee.claysoldiers.networking.HamsterWheelEnergyPayload;
+import net.bumblebee.claysoldiers.team.ClayMobTeamManger;
 import net.bumblebee.claysoldiers.team.TeamLoyaltyManger;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.CommonComponents;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.Containers;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.WalkAnimationState;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
@@ -33,7 +39,9 @@ import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class HamsterWheelBlockEntity extends BlockEntity implements ClayMobContainer {
+import java.util.List;
+
+public class HamsterWheelBlockEntity extends BlockEntity implements ClayMobContainer, StatInfoDisplay {
     public static final ResourceLocation WORKSITE_ID = ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "hamster_wheel");
     private final WalkAnimationState walkAnimation = new WalkAnimationState();
     private final IHamsterWheelEnergyStorage energyStorage;
@@ -237,7 +245,7 @@ public class HamsterWheelBlockEntity extends BlockEntity implements ClayMobConta
 
     @Override
     public CompoundTag getUpdateTag(HolderLookup.Provider pRegistries) {
-        var output = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, pRegistries);
+        var output = TagValueOutput.createWithContext(ClaySoldiersCommon.PROBLEM_REPORTER, pRegistries);
         HamsterWheelSoldierData.markTagAsClient(output);
         saveAdditional(output);
         return output.buildResult();
@@ -285,6 +293,29 @@ public class HamsterWheelBlockEntity extends BlockEntity implements ClayMobConta
         }
         if (HamsterWheelBlock.hasPowerConnection(state)) {
             Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), Items.REDSTONE.getDefaultInstance());
+        }
+    }
+
+    @Override
+    public void getStatDisplay(List<Component> list, LivingEntity livingEntity) {
+        list.add(getBlockState().getBlock().getName());
+        if (hasSoldier()) {
+            var team = ClayMobTeamManger.getFromKey(soldierData.getTeamId(), level.registryAccess());
+            list.add(CommonComponents.space().append(
+                    team.getDisplayNameWithColor(c -> c.getColor(0, livingEntity.tickCount, 0))
+            ).append(CommonComponents.space())
+                            .append(ModEntityTypes.CLAY_SOLDIER_ENTITY.get().getDescription()).withStyle(ChatFormatting.GRAY)
+            );
+            list.add(CommonComponents.space().append(Component.translatable(StatInfoDisplay.SPEED_LANG, soldierData.getSpeed()).withStyle(ChatFormatting.GRAY)));
+        }
+
+        if (hasEnergyStorage()) {
+            list.add(CommonComponents.space().append(
+                    Component.translatable(StatInfoDisplay.ENERGY_LANG, energyStorage.energyStored(), energyStorage.maxEnergyStored()).withStyle(ChatFormatting.GRAY)
+            ));
+            list.add(CommonComponents.space().append(
+                    Component.translatable(StatInfoDisplay.GENERATION_LANG, IHamsterWheelEnergyStorage.energyGeneratedPerTick(soldierData == null ? 0 : soldierData.getAdjustedSpeed())).withStyle(ChatFormatting.GRAY)
+            ));
         }
     }
 }

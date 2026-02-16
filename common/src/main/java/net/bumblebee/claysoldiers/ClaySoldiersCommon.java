@@ -23,7 +23,6 @@ import net.bumblebee.claysoldiers.soldierproperties.customproperties.specialatta
 import net.bumblebee.claysoldiers.team.ClayMobTeam;
 import net.bumblebee.claysoldiers.team.ClayMobTeamManger;
 import net.bumblebee.claysoldiers.team.TeamLoyaltyManger;
-import net.minecraft.core.Holder;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.Registries;
@@ -33,6 +32,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
@@ -47,7 +47,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.ServiceLoader;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
@@ -56,6 +55,7 @@ public class ClaySoldiersCommon {
     public static final String MOD_ID = "csr";
     public static final String MOD_NAME = "Clay Soldiers Remake";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_NAME);
+    public static final ProblemReporter PROBLEM_REPORTER = new ProblemReporter.ScopedCollector(LOGGER);
     public static final String CLAY_SOLDIER_PROPERTY = "clay_soldier_property";
     public static final String CLAY_SOLDIER_PROPERTY_LANG = CLAY_SOLDIER_PROPERTY + "." + MOD_ID + ".";
 
@@ -81,6 +81,10 @@ public class ClaySoldiersCommon {
 
     public static Predicate<Player> IS_WEARING_GOGGLES = p -> p.getItemBySlot(EquipmentSlot.HEAD).is(ModItems.CLAY_GOGGLES.get());
     public final static List<Predicate<Player>> IS_WEARING_CLAY_SOLDIER = new ArrayList<>();
+    public final static List<Predicate<Player>> IS_WEARING_STATOMETER = new ArrayList<>(List.of(
+            p -> ModItems.STATOMETER.is(p.getOffhandItem()),
+            p -> ModItems.STATOMETER.is(p.getMainHandItem())
+            ));
 
     @Nullable
     public static Supplier<@Nullable Player> clientPlayer;
@@ -110,6 +114,8 @@ public class ClaySoldiersCommon {
         ModBossBehaviours.init();
         ModPoiTypes.init();
         ModCriterions.init();
+
+        ModLootTables.init();
 
         NETWORK_MANGER.registerS2CPayload(ClayMobItemBreakParticles.ID, ClayMobItemBreakParticles.STREAM_CODEC, ClayMobItemBreakParticles::handleClient);
         NETWORK_MANGER.registerS2CPayload(SoldierItemChangePayload.ID, SoldierItemChangePayload.STREAM_CODEC, SoldierItemChangePayload::handleClient);
@@ -191,9 +197,7 @@ public class ClaySoldiersCommon {
         event.register(ModRegistries.BLUEPRINTS, BlueprintData.JSON_CODEC, BlueprintData.JSON_CODEC);
         event.register(ModRegistries.SOLDIER_ITEM_TYPES, SoldierItemType.CODEC, null, ((id, location, value) -> value.onRegister(location)));
         event.register(ModRegistries.CLAY_MOB_TEAMS, ClayMobTeam.CODEC_JSON, ClayMobTeam.CODEC_JSON,
-                (id, key, value) -> ClayMobTeamManger.appendFromItemMap(value.getGetFrom(), key),
-                ClayMobTeamManger::onRegistryLoad
-        );
+                (id, key, value) -> ClayMobTeamManger.appendFromItemMap(value.getGetFrom(), key));
     }
 
     public static void onTagLoad(HolderLookup.Provider registryAccess, boolean client) {
@@ -215,23 +219,17 @@ public class ClaySoldiersCommon {
             register(registry, codec, synced, null);
         }
 
-        default  <T> void register(ResourceKey<Registry<T>> registry, Codec<T> codec, @Nullable Codec<T> synced, @Nullable RegistryRegisteredCallBack<T> callback) {
-            register(registry, codec, synced, callback, null);
-        }
-
-        <T> void register(ResourceKey<Registry<T>> registry, Codec<T> codec, @Nullable Codec<T> synced, @Nullable RegistryRegisteredCallBack<T> callback, @Nullable Consumer<Registry<T>> onLoadCallBack);
-
+        <T> void register(ResourceKey<Registry<T>> registry, Codec<T> codec, @Nullable Codec<T> synced, @Nullable RegistryRegisteredCallBack<T> callback);
     }
 
     public interface RegistryRegisteredCallBack<T> {
         void onRegister(int id, ResourceLocation location, T value);
     }
 
-    public static class BlueprintTagLoad implements BiConsumer<BlueprintManager, ResourceManager> {
+    public static class BlueprintTagLoad {
         private BlueprintManager manger;
         private ResourceManager resourceManager;
 
-        @Override
         public void accept(BlueprintManager manger, ResourceManager resourceManager) {
             this.manger = manger;
             this.resourceManager = resourceManager;
@@ -245,7 +243,7 @@ public class ClaySoldiersCommon {
                     throw new IllegalStateException("Cannot load Blueprint Tags on the Client");
                 }
             }
-            manger.onTagLoad(resourceManager, registries.lookupOrThrow(Registries.BLOCK).get(ModTags.Blocks.BLUEPRINT_BLACK_LISTED).orElseThrow().stream().toList());
+            manger.onTagLoad(resourceManager, registries, registries.lookupOrThrow(Registries.BLOCK).get(ModTags.Blocks.BLUEPRINT_BLACK_LISTED).orElseThrow().stream().toList());
             manger = null;
             resourceManager = null;
         }

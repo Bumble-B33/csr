@@ -5,11 +5,11 @@ import net.bumblebee.claysoldiers.entity.soldier.AbstractClaySoldierEntity;
 import net.bumblebee.claysoldiers.entity.soldier.status.SoldierStatusHolder;
 import net.bumblebee.claysoldiers.util.ErrorHandler;
 import net.minecraft.core.BlockPos;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -218,7 +218,7 @@ public class WorkSelectorGoal extends Goal implements SoldierStatusHolder {
     }
 
     /**
-     * Initialise this {@code WorkSelector} from the given {@code CompoundTag}
+     * Initialize this {@code WorkSelector} from the given {@code CompoundTag}
      */
     public void readFromTag(ValueInput tag) {
         setWorkMode(tag.getByteOr(WORK_MODE_TAG, (byte) 0));
@@ -235,7 +235,7 @@ public class WorkSelectorGoal extends Goal implements SoldierStatusHolder {
     }
 
     @Override
-    public String toString() {
+    public @NotNull String toString() {
         return "WorkSelectorGoal{%s/%s [%s]}".formatted(
                 workIndex,
                 availableWorkGoals.length - 1,

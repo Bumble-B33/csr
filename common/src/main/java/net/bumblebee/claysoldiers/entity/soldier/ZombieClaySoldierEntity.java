@@ -6,7 +6,6 @@ import net.bumblebee.claysoldiers.soldierproperties.customproperties.AttackTypeP
 import net.bumblebee.claysoldiers.team.ClayMobTeam;
 import net.bumblebee.claysoldiers.team.ClayMobTeamManger;
 import net.bumblebee.claysoldiers.team.IClayMobTeamReference;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
