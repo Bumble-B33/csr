@@ -93,7 +93,7 @@ public class FabricPlatformHelper implements IPlatformHelper {
     @Override
     public <T extends Block> ItemLikeSupplier<T> registerBlockWithItem(String id, Function<BlockBehaviour.Properties, T> block, BlockBehaviour.Properties properties, BiFunction<Block, Item.Properties, BlockItem> createBlockItem) {
         var unpacked = block.apply(properties);
-        registerItem(id, props -> new BlockItem(unpacked, props), new Item.Properties());
+        registerItem(id, props -> createBlockItem.apply(unpacked, props), new Item.Properties());
         Registry.register(BuiltInRegistries.BLOCK, ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, id), unpacked);
         return () -> unpacked;
     }

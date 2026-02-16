@@ -31,10 +31,11 @@ public final class ModCreativeTab {
             for (Item item : ClaySoldiersCommon.PLATFORM.getAllItems()) {
                 if (item == ModItems.BLUEPRINT.get()) {
                     modifyBlueprint(output, itemDisplayParameters.holders());
+                } else if (item instanceof BlueprintDependendBlockItem blueprintDependendBlockItem) {
+                    if (blueprintDependendBlockItem.isEnabled(itemDisplayParameters.enabledFeatures())) {
+                        output.accept(item);
+                    }
                 } else {
-                    output.accept(item);
-                }
-                if (item instanceof BlueprintDependendBlockItem && ClaySoldiersCommon.COMMON_HOOKS.isBlueprintEnabled(itemDisplayParameters.enabledFeatures())) {
                     output.accept(item);
                 }
             }
