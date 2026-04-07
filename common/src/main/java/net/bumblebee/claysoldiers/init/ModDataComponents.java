@@ -1,7 +1,7 @@
 package net.bumblebee.claysoldiers.init;
 
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
-import net.bumblebee.claysoldiers.entity.soldier.AdditionalSoldierData;
+import net.bumblebee.claysoldiers.entity.common.soldier.AdditionalSoldierData;
 import net.bumblebee.claysoldiers.item.ClayBrushItem;
 import net.bumblebee.claysoldiers.item.TestItem;
 import net.bumblebee.claysoldiers.item.blueprint.BlueprintItem;

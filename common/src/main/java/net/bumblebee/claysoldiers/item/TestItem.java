@@ -4,7 +4,7 @@ import com.mojang.serialization.Codec;
 import io.netty.buffer.ByteBuf;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.block.hamsterwheel.HamsterWheelBlockEntity;
-import net.bumblebee.claysoldiers.entity.boss.ClaySoldierBossEquipment;
+import net.bumblebee.claysoldiers.entity.common.boss.ClaySoldierBossEquipment;
 import net.bumblebee.claysoldiers.entity.goal.workgoal.dig.DigBreakManger;
 import net.bumblebee.claysoldiers.init.ModDataComponents;
 import net.bumblebee.claysoldiers.init.ModEntityTypes;
@@ -28,6 +28,7 @@ import net.minecraft.world.entity.ai.village.poi.PoiManager;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ItemUseAnimation;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.item.context.UseOnContext;
@@ -257,5 +258,10 @@ public class TestItem extends Item {
         LOGGER.info("{}---", entity);
         infos.forEach(LOGGER::info);
         LOGGER.info("---");
+    }
+
+    @Override
+    public ItemUseAnimation getUseAnimation(ItemStack stack) {
+        return super.getUseAnimation(stack);
     }
 }

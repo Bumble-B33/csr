@@ -1,6 +1,6 @@
 package net.bumblebee.claysoldiers.menu.horse;
 
-import net.bumblebee.claysoldiers.entity.horse.AbstractClayHorse;
+import net.bumblebee.claysoldiers.entity.common.horse.AbstractClayHorse;
 import net.bumblebee.claysoldiers.init.ModMenuTypes;
 import net.bumblebee.claysoldiers.menu.AbstractClayMobMenu;
 import net.minecraft.world.entity.player.Inventory;

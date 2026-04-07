@@ -2,8 +2,8 @@ package net.bumblebee.claysoldiers.soldierpoi;
 
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.claypoifunction.ClayPoiSource;
-import net.bumblebee.claysoldiers.entity.ClayMobEntity;
-import net.bumblebee.claysoldiers.entity.soldier.AbstractClaySoldierEntity;
+import net.bumblebee.claysoldiers.entity.common.ClayMobEntity;
+import net.bumblebee.claysoldiers.entity.common.soldier.AbstractClaySoldierEntity;
 import net.bumblebee.claysoldiers.networking.ClayMobItemBreakParticles;
 import net.minecraft.network.protocol.game.ClientboundTakeItemEntityPacket;
 import net.minecraft.server.level.ServerLevel;

@@ -4,7 +4,8 @@ import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.blueprint.BlueprintData;
 import net.bumblebee.claysoldiers.claypoifunction.ClayPoiFunctionSerializer;
 import net.bumblebee.claysoldiers.claysoldierpredicate.ClayPredicateSerializer;
-import net.bumblebee.claysoldiers.entity.boss.BossClaySoldierBehaviour;
+import net.bumblebee.claysoldiers.entity.common.boss.BossClaySoldierBehaviour;
+import net.bumblebee.claysoldiers.entity.common.programmable.chips.ClaySoldierChip;
 import net.bumblebee.claysoldiers.soldieritemtypes.ItemGenerator;
 import net.bumblebee.claysoldiers.soldieritemtypes.SoldierItemType;
 import net.bumblebee.claysoldiers.soldierproperties.SoldierPropertyType;
@@ -47,6 +48,12 @@ public final class ModRegistries {
 
     public static final ResourceKey<Registry<ClayMobTeam>> CLAY_MOB_TEAMS =
             ResourceKey.createRegistryKey(ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_teams"));
+
+    public static final ResourceKey<Registry<ClaySoldierChip.Type<?>>> CLAY_SOLDIER_MODULES =
+            ResourceKey.createRegistryKey(ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_soldier_modules"));
+    public static final Registry<ClaySoldierChip.Type<?>> CLAY_SOLDIER_MODULES_REGISTRY = ClaySoldiersCommon.PLATFORM.createRegistry(CLAY_SOLDIER_MODULES, true);
+
+
 
     public static void init() {
     }

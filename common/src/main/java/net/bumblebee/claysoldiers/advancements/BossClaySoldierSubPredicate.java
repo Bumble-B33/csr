@@ -1,8 +1,8 @@
 package net.bumblebee.claysoldiers.advancements;
 
 import com.mojang.serialization.MapCodec;
-import net.bumblebee.claysoldiers.entity.boss.BossClaySoldierBehaviour;
-import net.bumblebee.claysoldiers.entity.boss.BossClaySoldierEntity;
+import net.bumblebee.claysoldiers.entity.common.boss.BossClaySoldierBehaviour;
+import net.bumblebee.claysoldiers.entity.common.boss.BossClaySoldierEntity;
 import net.bumblebee.claysoldiers.init.ModRegistries;
 import net.minecraft.advancements.critereon.EntitySubPredicate;
 import net.minecraft.server.level.ServerLevel;

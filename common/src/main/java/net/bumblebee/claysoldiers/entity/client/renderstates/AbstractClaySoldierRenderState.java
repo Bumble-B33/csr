@@ -7,13 +7,14 @@ import net.bumblebee.claysoldiers.datamap.armor.accessories.SoldierAccessoryKey;
 import net.bumblebee.claysoldiers.datamap.armor.accessories.client.AccessoryRenderState;
 import net.bumblebee.claysoldiers.datamap.armor.accessories.custom.GliderAccessoryData;
 import net.bumblebee.claysoldiers.datamap.armor.accessories.custom.SkullAccessoryData;
-import net.bumblebee.claysoldiers.entity.boss.BossClaySoldierEntity;
-import net.bumblebee.claysoldiers.entity.soldier.AbstractClaySoldierEntity;
+import net.bumblebee.claysoldiers.entity.common.boss.BossClaySoldierEntity;
+import net.bumblebee.claysoldiers.entity.common.soldier.AbstractClaySoldierEntity;
 import net.bumblebee.claysoldiers.item.itemeffectholder.ItemStackWithEffect;
 import net.bumblebee.claysoldiers.soldierproperties.SoldierPropertyMapReader;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.item.ItemModelResolver;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemDisplayContext;
@@ -49,6 +50,8 @@ public class AbstractClaySoldierRenderState extends ClayMobRenderState {
     public int previousTeamColor = -1;
     @Nullable
     public BossClaySoldierEntity.BossTypes bossType = null;
+    @Nullable
+    public ResourceLocation moduleTexture = null;
 
     public SoldierPropertyMapReader allProperties;
 

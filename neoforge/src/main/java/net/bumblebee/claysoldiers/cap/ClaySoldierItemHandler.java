@@ -2,7 +2,7 @@ package net.bumblebee.claysoldiers.cap;
 
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.datamap.SoldierEquipmentSlot;
-import net.bumblebee.claysoldiers.entity.inventory.ClaySoldierInventoryHandler;
+import net.bumblebee.claysoldiers.entity.common.inventory.ClaySoldierInventoryHandler;
 import net.minecraft.world.item.ItemStack;
 
 public class ClaySoldierItemHandler {

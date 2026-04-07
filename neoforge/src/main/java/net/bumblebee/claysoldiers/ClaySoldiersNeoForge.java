@@ -11,7 +11,8 @@ import net.bumblebee.claysoldiers.commands.ColorHelperArgumentType;
 import net.bumblebee.claysoldiers.commands.DefaultedResourceLocationArgument;
 import net.bumblebee.claysoldiers.datagen.DataGenerators;
 import net.bumblebee.claysoldiers.datamap.SoldierHoldableEffect;
-import net.bumblebee.claysoldiers.entity.boss.BossClaySoldierBehaviour;
+import net.bumblebee.claysoldiers.entity.common.boss.BossClaySoldierBehaviour;
+import net.bumblebee.claysoldiers.entity.common.programmable.chips.ClaySoldierChip;
 import net.bumblebee.claysoldiers.init.ModCapabilities;
 import net.bumblebee.claysoldiers.init.ModDataMaps;
 import net.bumblebee.claysoldiers.init.ModRegistries;
@@ -106,6 +107,7 @@ public class ClaySoldiersNeoForge {
     public static final DeferredRegister<CriterionTrigger<?>> CRITERION_TRIGGERS = DeferredRegister.create(Registries.TRIGGER_TYPE, ClaySoldiersCommon.MOD_ID);
     public static final DeferredRegister<MapCodec<? extends EntitySubPredicate>> ENTITY_SUB_PREDICATE = DeferredRegister.create(Registries.ENTITY_SUB_PREDICATE_TYPE, ClaySoldiersCommon.MOD_ID);
     public static final DeferredRegister<LootItemFunctionType<?>> LOOT_ITEM_FUNCTIONS = DeferredRegister.create(Registries.LOOT_FUNCTION_TYPE, ClaySoldiersCommon.MOD_ID);
+    public static final DeferredRegister<ClaySoldierChip.Type<?>> CLAY_SOLDIER_CHIPS = DeferredRegister.create(ModRegistries.CLAY_SOLDIER_MODULES_REGISTRY, ClaySoldiersCommon.MOD_ID);
 
 
     private static final Holder<ArgumentTypeInfo<?, ?>> COLOR_HELPER = COMMAND_ARGUMENT_TYPES.register("color_helper",
@@ -142,6 +144,7 @@ public class ClaySoldiersNeoForge {
         CRITERION_TRIGGERS.register(modEventBus);
         ENTITY_SUB_PREDICATE.register(modEventBus);
         LOOT_ITEM_FUNCTIONS.register(modEventBus);
+        CLAY_SOLDIER_CHIPS.register(modEventBus);
 
         modEventBus.addListener(this::registerRegistry);
         modEventBus.addListener(this::registerPayload);
@@ -194,6 +197,7 @@ public class ClaySoldiersNeoForge {
         event.register(ModRegistries.SOLDIER_PROPERTY_TYPES_REGISTRY);
         event.register(ModRegistries.ITEM_GENERATORS_REGISTRY);
         event.register(ModRegistries.BOSS_CLAY_SOLDIER_BEHAVIOURS_REGISTRY);
+        event.register(ModRegistries.CLAY_SOLDIER_MODULES_REGISTRY);
     }
 
     private void reloadEvent(AddServerReloadListenersEvent event) {

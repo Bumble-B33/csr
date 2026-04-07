@@ -5,7 +5,8 @@ import net.bumblebee.claysoldiers.claypoifunction.ClayPoiFunction;
 import net.bumblebee.claysoldiers.claypoifunction.ClayPoiFunctionSerializer;
 import net.bumblebee.claysoldiers.claysoldierpredicate.ClayPredicate;
 import net.bumblebee.claysoldiers.claysoldierpredicate.ClayPredicateSerializer;
-import net.bumblebee.claysoldiers.entity.boss.BossClaySoldierBehaviour;
+import net.bumblebee.claysoldiers.entity.common.boss.BossClaySoldierBehaviour;
+import net.bumblebee.claysoldiers.entity.common.programmable.chips.ClaySoldierChip;
 import net.bumblebee.claysoldiers.platform.ItemLikeSupplier;
 import net.bumblebee.claysoldiers.soldieritemtypes.ItemGenerator;
 import net.bumblebee.claysoldiers.soldierproperties.SoldierPropertyType;
@@ -102,6 +103,8 @@ public interface IPlatformHelper {
     <T extends EntitySubPredicate> Supplier<MapCodec<T>> registerEntitySubPredicate(String name, Supplier<MapCodec<T>> subPredicate);
 
     <T extends LootItemFunction> Supplier<LootItemFunctionType<T>> registerLootItemFunction(String name, Supplier<LootItemFunctionType<T>> lootItemFunction);
+
+    <T> Supplier<ClaySoldierChip.Type<T>> registerClaySoldierModule(String name, Supplier<ClaySoldierChip.Type<T>> chipType);
 
 
     List<Item> getAllItems();

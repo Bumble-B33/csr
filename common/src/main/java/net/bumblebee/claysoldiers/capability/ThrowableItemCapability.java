@@ -1,7 +1,7 @@
 package net.bumblebee.claysoldiers.capability;
 
-import net.bumblebee.claysoldiers.entity.throwables.ClaySoldierSnowball;
-import net.bumblebee.claysoldiers.entity.throwables.ClaySoldierThrowableItemEntity;
+import net.bumblebee.claysoldiers.entity.common.throwables.ClaySoldierSnowball;
+import net.bumblebee.claysoldiers.entity.common.throwables.ClaySoldierThrowableItemEntity;
 import net.bumblebee.claysoldiers.item.itemeffectholder.ItemStackWithEffect;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.LivingEntity;

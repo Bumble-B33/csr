@@ -2,8 +2,8 @@ package net.bumblebee.claysoldiers.soldierproperties.customproperties;
 
 import com.mojang.serialization.Codec;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
-import net.bumblebee.claysoldiers.entity.ClayMobEntity;
-import net.bumblebee.claysoldiers.entity.soldier.AbstractClaySoldierEntity;
+import net.bumblebee.claysoldiers.entity.common.ClayMobEntity;
+import net.bumblebee.claysoldiers.entity.common.soldier.AbstractClaySoldierEntity;
 import net.bumblebee.claysoldiers.init.ModTags;
 import net.bumblebee.claysoldiers.soldierproperties.combined.ValueCombiner;
 import net.bumblebee.claysoldiers.soldierproperties.customproperties.specialattack.SpecialEffectCategory;
@@ -52,6 +52,25 @@ public enum AttackTypeProperty implements StringRepresentable, KeyableTranslatab
                 return false;
             }
             return target instanceof Player || target instanceof ClayMobEntity;
+        }
+
+        @Override
+        public Style getAnimatedStyle(LivingEntity livingEntity) {
+            if (livingEntity instanceof ClayMobEntity clayMobEntity) {
+                return Style.EMPTY.withColor(clayMobEntity.getClayTeam().getColor(livingEntity, 0));
+            }
+            return super.getAnimatedStyle(livingEntity);
+        }
+
+        @Override
+        public Component getAnimatedDisplayName(LivingEntity livingEntity) {
+            return Component.translatable(translatableKey()).withStyle(getAnimatedStyle(livingEntity));
+        }
+    },
+    ROBOT("robot", true, false, false, null, ChatFormatting.GOLD) {
+        @Override
+        public boolean canAttack(AbstractClaySoldierEntity attacker, LivingEntity target) {
+            return false;
         }
 
         @Override

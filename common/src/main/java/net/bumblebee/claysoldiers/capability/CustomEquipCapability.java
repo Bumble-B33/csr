@@ -2,7 +2,7 @@ package net.bumblebee.claysoldiers.capability;
 
 import net.bumblebee.claysoldiers.datamap.SoldierEquipmentSlot;
 import net.bumblebee.claysoldiers.datamap.SoldierHoldableEffect;
-import net.bumblebee.claysoldiers.entity.inventory.ClaySoldierInventoryHandler;
+import net.bumblebee.claysoldiers.entity.common.inventory.ClaySoldierInventoryHandler;
 import net.bumblebee.claysoldiers.init.ModItems;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;

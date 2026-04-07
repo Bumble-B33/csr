@@ -1,6 +1,6 @@
 package net.bumblebee.claysoldiers.mobeffects;
 
-import net.bumblebee.claysoldiers.entity.VampireSubjugate;
+import net.bumblebee.claysoldiers.entity.common.VampireSubjugate;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectCategory;

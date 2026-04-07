@@ -1,6 +1,6 @@
 package net.bumblebee.claysoldiers.entity.goal.target;
 
-import net.bumblebee.claysoldiers.entity.soldier.AbstractClaySoldierEntity;
+import net.bumblebee.claysoldiers.entity.common.soldier.AbstractClaySoldierEntity;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.ai.targeting.TargetingConditions;
 

@@ -11,13 +11,15 @@ import net.bumblebee.claysoldiers.commands.ColorHelperArgumentType;
 import net.bumblebee.claysoldiers.commands.DefaultedResourceLocationArgument;
 import net.bumblebee.claysoldiers.datagen.advancements.ModAdvancements;
 import net.bumblebee.claysoldiers.datamap.SoldierEquipmentSlot;
-import net.bumblebee.claysoldiers.entity.ClayMobEntity;
-import net.bumblebee.claysoldiers.entity.StatInfoDisplay;
-import net.bumblebee.claysoldiers.entity.VampireSubjugate;
+import net.bumblebee.claysoldiers.entity.common.ClayMobEntity;
+import net.bumblebee.claysoldiers.entity.common.StatInfoDisplay;
+import net.bumblebee.claysoldiers.entity.common.VampireSubjugate;
 import net.bumblebee.claysoldiers.entity.goal.workgoal.*;
 import net.bumblebee.claysoldiers.entity.goal.workgoal.dig.DigHoleGoal;
-import net.bumblebee.claysoldiers.entity.soldier.AbstractClaySoldierEntity;
-import net.bumblebee.claysoldiers.entity.soldier.status.SoldierStatusManager;
+import net.bumblebee.claysoldiers.entity.common.programmable.chips.ClaySoldierChip;
+import net.bumblebee.claysoldiers.entity.common.programmable.chips.ClaySoldierChips;
+import net.bumblebee.claysoldiers.entity.common.soldier.AbstractClaySoldierEntity;
+import net.bumblebee.claysoldiers.entity.common.soldier.status.SoldierStatusManager;
 import net.bumblebee.claysoldiers.init.*;
 import net.bumblebee.claysoldiers.integration.jade.JadeRegistry;
 import net.bumblebee.claysoldiers.integration.jade.providers.*;
@@ -181,6 +183,9 @@ public class ModLangProvider extends LanguageProvider {
 
         addEntityType(ModEntityTypes.CLAY_BLOCK_PROJECTILE, "Clay Block");
 
+        addEntityType(ModEntityTypes.PROGRAMMABLE_CLAY_SOLDIER_ENTITY, "Programmable Clay Soldier");
+
+
 
         add(ModEffects.SLIME_ROOT.value(), "Slime Root");
         add(ModEffects.VAMPIRE_CONVERSION.value(), "Vampiric Conversion");
@@ -330,6 +335,8 @@ public class ModLangProvider extends LanguageProvider {
         addKeyableProperty(AttackTypeProperty.ZOMBIE, "Zombie");
         addKeyableProperty(AttackTypeProperty.VAMPIRE, "Vampire");
         addKeyableProperty(AttackTypeProperty.BOSS, "Boss");
+    addKeyableProperty(AttackTypeProperty.ROBOT, "Robot");
+
         add(RangedAttackType.RANGED_ATTACK_TYPE, "Ranged Attack");
         addKeyableProperty(RangedAttackType.NONE, "None");
         addKeyableProperty(RangedAttackType.HARM, "Harmful");
@@ -556,7 +563,9 @@ public class ModLangProvider extends LanguageProvider {
         add(StatInfoDisplay.DAMAGE, "Damage: %s");
         add(StatInfoDisplay.STATUS, "Status: %s");
 
+        add(StatInfoDisplay.MODULE, "Module: %s");
 
+        addModuleType(ClaySoldierChips.COMBAT_TYPE, "Combat Module");
     }
 
     private void addKeyableProperty(KeyableTranslatableProperty property, String name) {
@@ -566,6 +575,11 @@ public class ModLangProvider extends LanguageProvider {
     private <T extends SoldierPropertyType<?>> void addSoldierPropertyType(Supplier<T> propertyType, String name) {
         this.add(propertyType.get().getDescriptionId(), name);
     }
+
+    private <T extends ClaySoldierChip.Type<?>> void addModuleType(Supplier<T> moduleType, String name) {
+        this.add(moduleType.get().getDescriptionId(), name);
+    }
+
     private void addJade(ResourceLocation key, String name) {
         this.add("config.jade.plugin_%s.%s".formatted(key.getNamespace(), key.getPath()), name);
     }

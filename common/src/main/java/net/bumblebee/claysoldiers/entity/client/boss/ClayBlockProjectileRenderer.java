@@ -2,7 +2,7 @@ package net.bumblebee.claysoldiers.entity.client.boss;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
-import net.bumblebee.claysoldiers.entity.boss.ClayBlockProjectileEntity;
+import net.bumblebee.claysoldiers.entity.common.boss.ClayBlockProjectileEntity;
 import net.bumblebee.claysoldiers.entity.client.renderstates.ClayBlockProjectileRenderState;
 import net.minecraft.client.model.SkullModel;
 import net.minecraft.client.model.SkullModelBase;

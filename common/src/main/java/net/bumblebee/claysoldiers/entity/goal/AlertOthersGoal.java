@@ -1,6 +1,6 @@
 package net.bumblebee.claysoldiers.entity.goal;
 
-import net.bumblebee.claysoldiers.entity.soldier.AbstractClaySoldierEntity;
+import net.bumblebee.claysoldiers.entity.common.soldier.AbstractClaySoldierEntity;
 import net.bumblebee.claysoldiers.soldierproperties.customproperties.AttackTypeProperty;
 import net.minecraft.world.entity.EntitySelector;
 import net.minecraft.world.entity.LivingEntity;

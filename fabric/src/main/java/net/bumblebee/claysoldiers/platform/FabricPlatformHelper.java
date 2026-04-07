@@ -6,7 +6,8 @@ import net.bumblebee.claysoldiers.claypoifunction.ClayPoiFunction;
 import net.bumblebee.claysoldiers.claypoifunction.ClayPoiFunctionSerializer;
 import net.bumblebee.claysoldiers.claysoldierpredicate.ClayPredicate;
 import net.bumblebee.claysoldiers.claysoldierpredicate.ClayPredicateSerializer;
-import net.bumblebee.claysoldiers.entity.boss.BossClaySoldierBehaviour;
+import net.bumblebee.claysoldiers.entity.common.boss.BossClaySoldierBehaviour;
+import net.bumblebee.claysoldiers.entity.common.programmable.chips.ClaySoldierChip;
 import net.bumblebee.claysoldiers.init.*;
 import net.bumblebee.claysoldiers.platform.services.IPlatformHelper;
 import net.bumblebee.claysoldiers.soldieritemtypes.ItemGenerator;
@@ -205,6 +206,11 @@ public class FabricPlatformHelper implements IPlatformHelper {
     @Override
     public <T extends LootItemFunction> Supplier<LootItemFunctionType<T>> registerLootItemFunction(String name, Supplier<LootItemFunctionType<T>> lootItemFunction) {
         return defaultRegistration(BuiltInRegistries.LOOT_FUNCTION_TYPE, name, lootItemFunction);
+    }
+
+    @Override
+    public <T> Supplier<ClaySoldierChip.Type<T>> registerClaySoldierModule(String name, Supplier<ClaySoldierChip.Type<T>> chipType) {
+        return defaultRegistration(ModRegistries.CLAY_SOLDIER_MODULES_REGISTRY, name, chipType);
     }
 
     @Override

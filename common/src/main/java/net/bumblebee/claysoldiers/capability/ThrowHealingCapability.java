@@ -1,6 +1,6 @@
 package net.bumblebee.claysoldiers.capability;
 
-import net.bumblebee.claysoldiers.entity.throwables.ClaySoldierThrownPotion;
+import net.bumblebee.claysoldiers.entity.common.throwables.ClaySoldierThrownPotion;
 import net.bumblebee.claysoldiers.item.itemeffectholder.ItemStackWithEffect;
 import net.minecraft.core.Holder;
 import net.minecraft.sounds.SoundEvents;

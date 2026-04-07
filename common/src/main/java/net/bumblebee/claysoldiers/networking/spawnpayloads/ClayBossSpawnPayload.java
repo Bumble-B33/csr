@@ -1,8 +1,8 @@
 package net.bumblebee.claysoldiers.networking.spawnpayloads;
 
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
-import net.bumblebee.claysoldiers.entity.boss.BossClaySoldierBehaviour;
-import net.bumblebee.claysoldiers.entity.boss.BossClaySoldierEntity;
+import net.bumblebee.claysoldiers.entity.common.boss.BossClaySoldierBehaviour;
+import net.bumblebee.claysoldiers.entity.common.boss.BossClaySoldierEntity;
 import net.bumblebee.claysoldiers.init.ModRegistries;
 import net.bumblebee.claysoldiers.networking.IClientPayload;
 import net.bumblebee.claysoldiers.platform.services.INetworkManger;

@@ -5,17 +5,20 @@ import net.bumblebee.claysoldiers.blueprint.BlueprintData;
 import net.bumblebee.claysoldiers.blueprint.BlueprintManager;
 import net.bumblebee.claysoldiers.claypoifunction.ClayPoiFunctions;
 import net.bumblebee.claysoldiers.claysoldierpredicate.ClayPredicates;
-import net.bumblebee.claysoldiers.entity.ClayWraithEntity;
-import net.bumblebee.claysoldiers.entity.boss.BossBatEntity;
-import net.bumblebee.claysoldiers.entity.boss.BossClaySoldierEntity;
-import net.bumblebee.claysoldiers.entity.horse.ClayHorseEntity;
-import net.bumblebee.claysoldiers.entity.horse.ClayPegasusEntity;
-import net.bumblebee.claysoldiers.entity.soldier.AbstractClaySoldierEntity;
+import net.bumblebee.claysoldiers.entity.common.ClayWraithEntity;
+import net.bumblebee.claysoldiers.entity.common.boss.BossBatEntity;
+import net.bumblebee.claysoldiers.entity.common.boss.BossClaySoldierEntity;
+import net.bumblebee.claysoldiers.entity.common.horse.ClayHorseEntity;
+import net.bumblebee.claysoldiers.entity.common.horse.ClayPegasusEntity;
+import net.bumblebee.claysoldiers.entity.common.programmable.chips.ClaySoldierChips;
+import net.bumblebee.claysoldiers.entity.common.soldier.AbstractClaySoldierEntity;
+import net.bumblebee.claysoldiers.entity.common.programmable.ProgrammableClaySoldierEntity;
 import net.bumblebee.claysoldiers.init.*;
 import net.bumblebee.claysoldiers.networking.*;
 import net.bumblebee.claysoldiers.networking.spawnpayloads.ClayBossSpawnPayload;
 import net.bumblebee.claysoldiers.networking.spawnpayloads.ClayMobSpawnPayload;
 import net.bumblebee.claysoldiers.networking.spawnpayloads.ClaySoldierSpawnPayload;
+import net.bumblebee.claysoldiers.networking.spawnpayloads.ProgrammableClaySoldierSpawnPayload;
 import net.bumblebee.claysoldiers.platform.services.*;
 import net.bumblebee.claysoldiers.soldieritemtypes.SoldierItemType;
 import net.bumblebee.claysoldiers.soldierproperties.SoldierPropertyTypes;
@@ -114,6 +117,7 @@ public class ClaySoldiersCommon {
         ModBossBehaviours.init();
         ModPoiTypes.init();
         ModCriterions.init();
+        ClaySoldierChips.init();
 
         ModLootTables.init();
 
@@ -134,6 +138,7 @@ public class ClaySoldiersCommon {
         NETWORK_MANGER.registerS2CPayload(ClayMobSpawnPayload.ID, ClayMobSpawnPayload.STREAM_CODEC, ClayMobSpawnPayload::handleClient);
         NETWORK_MANGER.registerS2CPayload(ClaySoldierSpawnPayload.ID, ClaySoldierSpawnPayload.STREAM_CODEC, ClaySoldierSpawnPayload::handleClient);
         NETWORK_MANGER.registerS2CPayload(ClayBossSpawnPayload.ID, ClayBossSpawnPayload.STREAM_CODEC, ClayBossSpawnPayload::handleClient);
+        NETWORK_MANGER.registerS2CPayload(ProgrammableClaySoldierSpawnPayload.ID, ProgrammableClaySoldierSpawnPayload.STREAM_CODEC, ProgrammableClaySoldierSpawnPayload::handleClient);
 
 
         NETWORK_MANGER.registerS2CPayload(BlueprintPlacePayload.ID, BlueprintPlacePayload.STREAM_CODEC, BlueprintPlacePayload::handleClient);
@@ -189,6 +194,7 @@ public class ClaySoldiersCommon {
         event.accept(ModEntityTypes.CLAY_PEGASUS_ENTITY.get(), ClayPegasusEntity.createPegasusAttributes());
 
         event.accept(ModEntityTypes.BOSS_CLAY_SOLDIER_ENTITY.get(), BossClaySoldierEntity.bossAttributes());
+        event.accept(ModEntityTypes.PROGRAMMABLE_CLAY_SOLDIER_ENTITY.get(), ProgrammableClaySoldierEntity.setSoldierAttributes());
         event.accept(ModEntityTypes.VAMPIRE_BAT.get(), BossBatEntity.createBatAttributes());
 
     }

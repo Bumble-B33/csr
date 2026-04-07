@@ -1,7 +1,7 @@
 package net.bumblebee.claysoldiers.datagen;
 
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
-import net.bumblebee.claysoldiers.entity.variant.ClayHorseVariants;
+import net.bumblebee.claysoldiers.entity.common.variant.ClayHorseVariants;
 import net.bumblebee.claysoldiers.init.ModBlocks;
 import net.bumblebee.claysoldiers.init.ModItems;
 import net.bumblebee.claysoldiers.recipe.BrickedItemReviveRecipe;

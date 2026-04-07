@@ -1,7 +1,7 @@
 package net.bumblebee.claysoldiers.integration;
 
-import net.bumblebee.claysoldiers.entity.boss.BossClaySoldierEntity;
-import net.bumblebee.claysoldiers.entity.boss.SmartBossClaySoldierEntity;
+import net.bumblebee.claysoldiers.entity.common.boss.BossClaySoldierEntity;
+import net.bumblebee.claysoldiers.entity.common.boss.SmartBossClaySoldierEntity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.Level;
 

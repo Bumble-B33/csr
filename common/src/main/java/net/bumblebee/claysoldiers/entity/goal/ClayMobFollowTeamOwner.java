@@ -1,6 +1,6 @@
 package net.bumblebee.claysoldiers.entity.goal;
 
-import net.bumblebee.claysoldiers.entity.ClayMobEntity;
+import net.bumblebee.claysoldiers.entity.common.ClayMobEntity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;

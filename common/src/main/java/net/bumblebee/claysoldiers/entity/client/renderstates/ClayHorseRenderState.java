@@ -1,6 +1,6 @@
 package net.bumblebee.claysoldiers.entity.client.renderstates;
 
-import net.bumblebee.claysoldiers.entity.variant.ClayHorseVariants;
+import net.bumblebee.claysoldiers.entity.common.variant.ClayHorseVariants;
 import net.bumblebee.claysoldiers.item.itemeffectholder.HorseWearableItemStack;
 import net.minecraft.client.renderer.entity.state.EquineRenderState;
 import net.minecraft.network.chat.Component;

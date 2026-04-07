@@ -1,7 +1,7 @@
 package net.bumblebee.claysoldiers.capability;
 
 import net.bumblebee.claysoldiers.blueprint.BlueprintRequest;
-import net.bumblebee.claysoldiers.entity.ClayMobEntity;
+import net.bumblebee.claysoldiers.entity.common.ClayMobEntity;
 import net.minecraft.core.BlockPos;
 import org.jetbrains.annotations.Nullable;
 

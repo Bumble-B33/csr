@@ -1,8 +1,8 @@
 package net.bumblebee.claysoldiers.menu.soldier;
 
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
-import net.bumblebee.claysoldiers.entity.soldier.AbstractClaySoldierEntity;
-import net.bumblebee.claysoldiers.entity.soldier.ZombieClaySoldierEntity;
+import net.bumblebee.claysoldiers.entity.common.soldier.AbstractClaySoldierEntity;
+import net.bumblebee.claysoldiers.entity.common.soldier.ZombieClaySoldierEntity;
 import net.bumblebee.claysoldiers.menu.AbstractClayMobScreen;
 import net.bumblebee.claysoldiers.soldierproperties.SoldierPropertyMapReader;
 import net.bumblebee.claysoldiers.soldierproperties.SoldierPropertyTypes;

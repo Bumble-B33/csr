@@ -1,6 +1,6 @@
 package net.bumblebee.claysoldiers.team;
 
-import net.bumblebee.claysoldiers.entity.ClayMobEntity;
+import net.bumblebee.claysoldiers.entity.common.ClayMobEntity;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityReference;
@@ -46,7 +46,7 @@ public interface TeamHolder extends OwnableEntity {
 
     /**
      * Returns whether this {@code TeamHolder} should attack another {@code TeamHolder}
-     * @param teamHolder the other team holder
+     * @param teamHolder the other team holder to attack
      * @return whether this {@code TeamHolder} should attack another {@code TeamHolder}
      */
     default boolean shouldAttackTeamHolder(TeamHolder teamHolder) {

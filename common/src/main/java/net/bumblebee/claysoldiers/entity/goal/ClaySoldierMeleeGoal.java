@@ -1,7 +1,6 @@
 package net.bumblebee.claysoldiers.entity.goal;
 
-import net.bumblebee.claysoldiers.entity.ClayMobEntity;
-import net.bumblebee.claysoldiers.entity.soldier.AbstractClaySoldierEntity;
+import net.bumblebee.claysoldiers.entity.common.soldier.AbstractClaySoldierEntity;
 import net.minecraft.world.entity.EntitySelector;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
@@ -45,9 +44,7 @@ public abstract class ClaySoldierMeleeGoal extends Goal {
         } else {
             this.lastCanUseCheck = gameTime;
             LivingEntity target = this.claySoldier.getTarget();
-            if (!(target instanceof ClayMobEntity) && !isTargetFromOwner(target)) {
-                return false;
-            } else if (!target.isAlive()) {
+            if (target == null || !target.isAlive()) {
                 return false;
             } else {
                 this.path = this.claySoldier.getNavigation().createPath(target, 0);
@@ -72,9 +69,7 @@ public abstract class ClaySoldierMeleeGoal extends Goal {
     @Override
     public boolean canContinueToUse() {
         LivingEntity target = this.claySoldier.getTarget();
-        if (!(target instanceof ClayMobEntity) && !isTargetFromOwner(target)){
-            return false;
-        } else if (!target.isAlive()) {
+        if (target == null || !target.isAlive()) {
             return false;
         } else if (!this.followingTargetEvenIfNotSeen) {
             return !this.claySoldier.getNavigation().isDone();

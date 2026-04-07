@@ -1,9 +1,9 @@
 package net.bumblebee.claysoldiers.init;
 
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
-import net.bumblebee.claysoldiers.entity.boss.BossBatEntity;
-import net.bumblebee.claysoldiers.entity.boss.BossClaySoldierBehaviour;
-import net.bumblebee.claysoldiers.entity.boss.BossClaySoldierEntity;
+import net.bumblebee.claysoldiers.entity.common.boss.BossBatEntity;
+import net.bumblebee.claysoldiers.entity.common.boss.BossClaySoldierBehaviour;
+import net.bumblebee.claysoldiers.entity.common.boss.BossClaySoldierEntity;
 import net.bumblebee.claysoldiers.soldierproperties.SoldierPropertyMap;
 import net.bumblebee.claysoldiers.soldierproperties.SoldierPropertyTypes;
 import net.minecraft.core.BlockPos;

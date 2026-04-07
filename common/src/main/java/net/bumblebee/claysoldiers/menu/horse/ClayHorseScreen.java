@@ -2,8 +2,8 @@ package net.bumblebee.claysoldiers.menu.horse;
 
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.datamap.horse.ClayHorseItemMap;
-import net.bumblebee.claysoldiers.entity.ClayMobEntity;
-import net.bumblebee.claysoldiers.entity.horse.AbstractClayHorse;
+import net.bumblebee.claysoldiers.entity.common.ClayMobEntity;
+import net.bumblebee.claysoldiers.entity.common.horse.AbstractClayHorse;
 import net.bumblebee.claysoldiers.menu.AbstractClayMobScreen;
 import net.bumblebee.claysoldiers.util.ComponentFormating;
 import net.minecraft.client.gui.GuiGraphics;

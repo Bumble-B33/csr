@@ -1,7 +1,7 @@
 package net.bumblebee.claysoldiers.integration.jade.providers;
 
-import net.bumblebee.claysoldiers.entity.ClayMobEntity;
-import net.bumblebee.claysoldiers.entity.soldier.AbstractClaySoldierEntity;
+import net.bumblebee.claysoldiers.entity.common.ClayMobEntity;
+import net.bumblebee.claysoldiers.entity.common.soldier.AbstractClaySoldierEntity;
 import net.bumblebee.claysoldiers.init.ModTags;
 import net.bumblebee.claysoldiers.integration.jade.CommonEntityProvider;
 import net.bumblebee.claysoldiers.integration.jade.CommonTooltipHelper;

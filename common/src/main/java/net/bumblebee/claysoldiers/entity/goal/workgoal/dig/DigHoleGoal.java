@@ -3,7 +3,7 @@ package net.bumblebee.claysoldiers.entity.goal.workgoal.dig;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.entity.goal.workgoal.AbstractWorkGoal;
 import net.bumblebee.claysoldiers.entity.goal.workgoal.WorkSelectorGoal;
-import net.bumblebee.claysoldiers.entity.soldier.AbstractClaySoldierEntity;
+import net.bumblebee.claysoldiers.entity.common.soldier.AbstractClaySoldierEntity;
 import net.bumblebee.claysoldiers.util.ErrorHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;

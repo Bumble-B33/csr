@@ -1,6 +1,6 @@
 package net.bumblebee.claysoldiers.integration.jade.providers;
 
-import net.bumblebee.claysoldiers.entity.ClayWraithEntity;
+import net.bumblebee.claysoldiers.entity.common.ClayWraithEntity;
 import net.bumblebee.claysoldiers.integration.jade.CommonEntityProvider;
 import net.bumblebee.claysoldiers.integration.jade.CommonEntityServerAppender;
 import net.bumblebee.claysoldiers.integration.jade.CommonTooltipHelper;

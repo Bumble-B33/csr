@@ -1,7 +1,7 @@
 package net.bumblebee.claysoldiers.networking.spawnpayloads;
 
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
-import net.bumblebee.claysoldiers.entity.ClayMobEntity;
+import net.bumblebee.claysoldiers.entity.common.ClayMobEntity;
 import net.bumblebee.claysoldiers.networking.IClientPayload;
 import net.bumblebee.claysoldiers.platform.services.INetworkManger;
 import net.minecraft.network.RegistryFriendlyByteBuf;

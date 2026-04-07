@@ -7,7 +7,7 @@ import io.netty.buffer.ByteBuf;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.block.ClayMobContainer;
 import net.bumblebee.claysoldiers.block.hamsterwheel.HamsterWheelBlockEntity;
-import net.bumblebee.claysoldiers.entity.ClayMobEntity;
+import net.bumblebee.claysoldiers.entity.common.ClayMobEntity;
 import net.bumblebee.claysoldiers.init.ModTags;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;

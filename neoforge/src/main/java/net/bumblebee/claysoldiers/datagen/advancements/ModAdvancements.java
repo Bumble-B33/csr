@@ -6,7 +6,7 @@ import net.bumblebee.claysoldiers.block.hamsterwheel.HamsterWheelBlockEntity;
 import net.bumblebee.claysoldiers.datagen.ModRecipeProvider;
 import net.bumblebee.claysoldiers.datamap.SoldierEquipmentSlot;
 import net.bumblebee.claysoldiers.entity.goal.UseAssignedPoiGoal;
-import net.bumblebee.claysoldiers.entity.variant.ClayHorseVariants;
+import net.bumblebee.claysoldiers.entity.common.variant.ClayHorseVariants;
 import net.bumblebee.claysoldiers.init.*;
 import net.bumblebee.claysoldiers.item.ClayBrushItem;
 import net.bumblebee.claysoldiers.item.blueprint.BlueprintItem;

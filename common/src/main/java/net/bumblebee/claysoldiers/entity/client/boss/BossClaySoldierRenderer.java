@@ -1,7 +1,7 @@
 package net.bumblebee.claysoldiers.entity.client.boss;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import net.bumblebee.claysoldiers.entity.boss.BossClaySoldierEntity;
+import net.bumblebee.claysoldiers.entity.common.boss.BossClaySoldierEntity;
 import net.bumblebee.claysoldiers.entity.client.ClaySoldierModel;
 import net.bumblebee.claysoldiers.entity.client.ClaySoldierRenderer;
 import net.bumblebee.claysoldiers.entity.client.renderstates.AbstractClaySoldierRenderState;
@@ -9,7 +9,7 @@ import net.bumblebee.claysoldiers.entity.client.undead.SoldierSuitLayer;
 import net.bumblebee.claysoldiers.entity.client.undead.VampireClaySoldierRenderer;
 import net.bumblebee.claysoldiers.entity.client.undead.VampireEyesLayer;
 import net.bumblebee.claysoldiers.entity.client.undead.ZombieClaySoldierRenderer;
-import net.bumblebee.claysoldiers.entity.soldier.AbstractClaySoldierEntity;
+import net.bumblebee.claysoldiers.entity.common.soldier.AbstractClaySoldierEntity;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.RenderLayerParent;
@@ -28,9 +28,7 @@ public class BossClaySoldierRenderer extends ClaySoldierRenderer {
     @Override
     public void extractRenderState(AbstractClaySoldierEntity claySoldierEntity, AbstractClaySoldierRenderState claySoldierRenderState, float partialTick) {
         super.extractRenderState(claySoldierEntity, claySoldierRenderState, partialTick);
-        if (claySoldierEntity instanceof BossClaySoldierEntity boss) {
-            claySoldierRenderState.bossType = boss.getBossType();
-        }
+
     }
 
     @Override

@@ -1,7 +1,7 @@
 package net.bumblebee.claysoldiers.entity.client.renderstates;
 
 import net.bumblebee.claysoldiers.ClaySoldiersClient;
-import net.bumblebee.claysoldiers.entity.ClayMobEntity;
+import net.bumblebee.claysoldiers.entity.common.ClayMobEntity;
 import net.bumblebee.claysoldiers.team.ClayMobTeam;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;

@@ -1,6 +1,6 @@
 package net.bumblebee.claysoldiers.mixin;
 
-import net.bumblebee.claysoldiers.entity.soldier.AbstractClaySoldierEntity;
+import net.bumblebee.claysoldiers.entity.common.soldier.AbstractClaySoldierEntity;
 import net.bumblebee.claysoldiers.util.SlimeBootsUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;

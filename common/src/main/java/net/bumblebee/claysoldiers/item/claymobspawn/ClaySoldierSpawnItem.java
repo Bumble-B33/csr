@@ -1,7 +1,7 @@
 package net.bumblebee.claysoldiers.item.claymobspawn;
 
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
-import net.bumblebee.claysoldiers.entity.soldier.ClaySoldierEntity;
+import net.bumblebee.claysoldiers.entity.common.soldier.ClaySoldierEntity;
 import net.bumblebee.claysoldiers.init.*;
 import net.bumblebee.claysoldiers.item.BrickedItemHolder;
 import net.bumblebee.claysoldiers.item.itemeffectholder.ItemStackWithEffect;

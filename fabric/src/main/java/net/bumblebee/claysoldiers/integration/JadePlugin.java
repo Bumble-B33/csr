@@ -1,6 +1,6 @@
 package net.bumblebee.claysoldiers.integration;
 
-import net.bumblebee.claysoldiers.entity.ClayMobEntity;
+import net.bumblebee.claysoldiers.entity.common.ClayMobEntity;
 import net.bumblebee.claysoldiers.integration.jade.*;
 import net.bumblebee.claysoldiers.integration.jade.providers.ClayMobProvider;
 import net.minecraft.nbt.CompoundTag;

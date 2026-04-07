@@ -2,7 +2,7 @@ package net.bumblebee.claysoldiers.integration;
 
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.capability.AssignableWorksiteCapability;
-import net.bumblebee.claysoldiers.entity.ClayMobEntity;
+import net.bumblebee.claysoldiers.entity.common.ClayMobEntity;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;

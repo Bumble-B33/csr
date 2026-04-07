@@ -5,6 +5,7 @@ import net.bumblebee.claysoldiers.block.SpecialItemRenderers;
 import net.bumblebee.claysoldiers.block.blueprint.EaselBlockEntityRenderer;
 import net.bumblebee.claysoldiers.block.hamsterwheel.HamsterWheelBlockEntityRenderer;
 import net.bumblebee.claysoldiers.block.hamsterwheel.HamsterWheelModel;
+import net.bumblebee.claysoldiers.entity.client.programmable.ClaySoldierChipModel;
 import net.bumblebee.claysoldiers.entity.client.ClaySoldierModel;
 import net.bumblebee.claysoldiers.entity.client.ClaySoldierRenderer;
 import net.bumblebee.claysoldiers.entity.client.accesories.ClaySoldierCapeModel;
@@ -14,6 +15,7 @@ import net.bumblebee.claysoldiers.entity.client.boss.BossClaySoldierRenderer;
 import net.bumblebee.claysoldiers.entity.client.boss.ClayBlockProjectileRenderer;
 import net.bumblebee.claysoldiers.entity.client.boss.VampireBatRenderer;
 import net.bumblebee.claysoldiers.entity.client.horse.*;
+import net.bumblebee.claysoldiers.entity.client.programmable.ProgrammableClaySoldierRenderer;
 import net.bumblebee.claysoldiers.entity.client.undead.VampireClaySoldierRenderer;
 import net.bumblebee.claysoldiers.entity.client.undead.ZombieClaySoldierRenderer;
 import net.bumblebee.claysoldiers.entity.client.wraith.WraithModel;
@@ -92,6 +94,8 @@ public class ClaySoldiersClient {
         event.accept(ClaySoldierSnorkelModel.SNORKEL_LAYER_LOCATION, ClaySoldierSnorkelModel::createSnorkelLayer);
         event.accept(ClaySoldierCapeModel.LAYER_LOCATION, ClaySoldierCapeModel::createSoldierCapeLayer);
         event.accept(ClaySoldierShieldModel.LAYER_LOCATION, ClaySoldierShieldModel::createShieldLayer);
+        event.accept(ClaySoldierChipModel.LAYER_LOCATION, ClaySoldierChipModel::createChipLayer);
+
 
         event.accept(ClayBlockProjectileRenderer.LAYER_LOCATION, ClayBlockProjectileRenderer::createClayBlockLayer);
 
@@ -141,6 +145,9 @@ public class ClaySoldiersClient {
 
         event.registerEntityRenderer(ModEntityTypes.BOSS_CLAY_SOLDIER_ENTITY.get(), BossClaySoldierRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.CLAY_BLOCK_PROJECTILE.get(), ClayBlockProjectileRenderer::new);
+
+        event.registerEntityRenderer(ModEntityTypes.PROGRAMMABLE_CLAY_SOLDIER_ENTITY.get(), ProgrammableClaySoldierRenderer::new);
+
     }
 
     public enum ClaySoldierItemTintSource implements ItemTintSource {

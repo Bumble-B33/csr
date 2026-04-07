@@ -1,6 +1,6 @@
 package net.bumblebee.claysoldiers.item.claystaff;
 
-import net.bumblebee.claysoldiers.entity.boss.ClayBlockProjectileEntity;
+import net.bumblebee.claysoldiers.entity.common.boss.ClayBlockProjectileEntity;
 import net.bumblebee.claysoldiers.init.ModDataComponents;
 import net.bumblebee.claysoldiers.init.ModEnchantments;
 import net.bumblebee.claysoldiers.init.ModItems;

@@ -9,7 +9,7 @@ import net.bumblebee.claysoldiers.blueprint.templates.BlueprintPlan;
 import net.bumblebee.claysoldiers.blueprint.templates.ClientBlueprintPlan;
 import net.bumblebee.claysoldiers.blueprint.templates.ServerBlueprintPlan;
 import net.bumblebee.claysoldiers.capability.BlueprintRequestHandler;
-import net.bumblebee.claysoldiers.entity.ClayMobEntity;
+import net.bumblebee.claysoldiers.entity.common.ClayMobEntity;
 import net.bumblebee.claysoldiers.init.ModBlockEntities;
 import net.bumblebee.claysoldiers.init.ModCriterions;
 import net.bumblebee.claysoldiers.init.ModRegistries;

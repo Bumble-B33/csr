@@ -9,7 +9,9 @@
     "DefaultDataPackCommandMixin",
     "SlimeBootsMixin"
   ],
-  "client": [],
+  "client": [
+    "StatoMeterRendering"
+  ],
   "server": [],
   "injectors": {
     "defaultRequire": 1

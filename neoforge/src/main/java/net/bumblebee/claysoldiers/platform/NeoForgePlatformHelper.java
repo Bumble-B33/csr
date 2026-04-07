@@ -6,11 +6,9 @@ import net.bumblebee.claysoldiers.claypoifunction.ClayPoiFunction;
 import net.bumblebee.claysoldiers.claypoifunction.ClayPoiFunctionSerializer;
 import net.bumblebee.claysoldiers.claysoldierpredicate.ClayPredicate;
 import net.bumblebee.claysoldiers.claysoldierpredicate.ClayPredicateSerializer;
-import net.bumblebee.claysoldiers.entity.boss.BossClaySoldierBehaviour;
-import net.bumblebee.claysoldiers.init.ClayDamageSources;
-import net.bumblebee.claysoldiers.init.ModCreativeTab;
-import net.bumblebee.claysoldiers.init.ModItems;
-import net.bumblebee.claysoldiers.init.ModTags;
+import net.bumblebee.claysoldiers.entity.common.boss.BossClaySoldierBehaviour;
+import net.bumblebee.claysoldiers.entity.common.programmable.chips.ClaySoldierChip;
+import net.bumblebee.claysoldiers.init.*;
 import net.bumblebee.claysoldiers.platform.services.IPlatformHelper;
 import net.bumblebee.claysoldiers.soldieritemtypes.ItemGenerator;
 import net.bumblebee.claysoldiers.soldierproperties.SoldierPropertyType;
@@ -181,6 +179,11 @@ public class NeoForgePlatformHelper implements IPlatformHelper {
     @Override
     public <T extends CriterionTrigger<?>> Supplier<T> registerCriterionTrigger(String name, Supplier<T> criterionTrigger) {
         return ClaySoldiersNeoForge.CRITERION_TRIGGERS.register(name, criterionTrigger);
+    }
+
+    @Override
+    public <T> Supplier<ClaySoldierChip.Type<T>> registerClaySoldierModule(String name, Supplier<ClaySoldierChip.Type<T>> chipType) {
+        return ClaySoldiersNeoForge.CLAY_SOLDIER_CHIPS.register(name, chipType);
     }
 
     @Override

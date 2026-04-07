@@ -17,10 +17,10 @@ import net.bumblebee.claysoldiers.datamap.armor.accessories.custom.CapeAccessory
 import net.bumblebee.claysoldiers.datamap.armor.accessories.custom.GliderAccessoryData;
 import net.bumblebee.claysoldiers.datamap.armor.accessories.custom.SkullAccessoryData;
 import net.bumblebee.claysoldiers.datamap.armor.accessories.custom.TextureAccessoryData;
-import net.bumblebee.claysoldiers.entity.ClayWraithEntity;
-import net.bumblebee.claysoldiers.entity.boss.BossClaySoldierEntity;
-import net.bumblebee.claysoldiers.entity.soldier.VampireClaySoldierEntity;
-import net.bumblebee.claysoldiers.entity.soldier.ZombieClaySoldierEntity;
+import net.bumblebee.claysoldiers.entity.common.ClayWraithEntity;
+import net.bumblebee.claysoldiers.entity.common.boss.BossClaySoldierEntity;
+import net.bumblebee.claysoldiers.entity.common.soldier.VampireClaySoldierEntity;
+import net.bumblebee.claysoldiers.entity.common.soldier.ZombieClaySoldierEntity;
 import net.bumblebee.claysoldiers.init.*;
 import net.bumblebee.claysoldiers.soldieritemtypes.DefaultSoldierItemTypes;
 import net.bumblebee.claysoldiers.soldierpoi.SoldierPoi;

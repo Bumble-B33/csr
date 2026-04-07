@@ -1,7 +1,7 @@
 package net.bumblebee.claysoldiers.menu.horse;
 
 import net.bumblebee.claysoldiers.datamap.SoldierEquipmentSlot;
-import net.bumblebee.claysoldiers.entity.horse.AbstractClayHorse;
+import net.bumblebee.claysoldiers.entity.common.horse.AbstractClayHorse;
 import net.bumblebee.claysoldiers.menu.AbstractClayMenuSlot;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;

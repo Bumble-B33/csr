@@ -1,6 +1,6 @@
 package net.bumblebee.claysoldiers.soldierproperties.customproperties.revive;
 
-import net.bumblebee.claysoldiers.entity.ClayMobEntity;
+import net.bumblebee.claysoldiers.entity.common.ClayMobEntity;
 
 public enum ReviveResult {
     SUCCESS(false),

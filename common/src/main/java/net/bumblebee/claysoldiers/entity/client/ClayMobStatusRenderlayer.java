@@ -1,7 +1,7 @@
 package net.bumblebee.claysoldiers.entity.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import net.bumblebee.claysoldiers.entity.ClayMobEntity;
+import net.bumblebee.claysoldiers.entity.common.ClayMobEntity;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.model.EntityModel;

@@ -1,6 +1,6 @@
 package net.bumblebee.claysoldiers.integration.jade.providers;
 
-import net.bumblebee.claysoldiers.entity.soldier.VampireClaySoldierEntity;
+import net.bumblebee.claysoldiers.entity.common.soldier.VampireClaySoldierEntity;
 import net.bumblebee.claysoldiers.integration.jade.CommonEntityProvider;
 import net.bumblebee.claysoldiers.integration.jade.CommonTooltipHelper;
 import net.bumblebee.claysoldiers.integration.jade.JadeRegistry;

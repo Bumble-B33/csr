@@ -1,10 +1,10 @@
 package net.bumblebee.claysoldiers.init;
 
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
-import net.bumblebee.claysoldiers.entity.ClayMobEntity;
-import net.bumblebee.claysoldiers.entity.variant.ClayHorseVariants;
-import net.bumblebee.claysoldiers.entity.variant.NameableVariant;
-import net.bumblebee.claysoldiers.entity.variant.VariantHolder;
+import net.bumblebee.claysoldiers.entity.common.ClayMobEntity;
+import net.bumblebee.claysoldiers.entity.common.variant.ClayHorseVariants;
+import net.bumblebee.claysoldiers.entity.common.variant.NameableVariant;
+import net.bumblebee.claysoldiers.entity.common.variant.VariantHolder;
 import net.bumblebee.claysoldiers.item.BrickedClaySoldierItem;
 import net.bumblebee.claysoldiers.item.ClayBrushItem;
 import net.bumblebee.claysoldiers.item.TestItem;

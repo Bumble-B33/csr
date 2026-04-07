@@ -1,10 +1,8 @@
 package net.bumblebee.claysoldiers.menu.info;
 
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
-import net.bumblebee.claysoldiers.entity.ClayMobEntity;
-import net.bumblebee.claysoldiers.entity.StatInfoDisplay;
-import net.bumblebee.claysoldiers.entity.soldier.AbstractClaySoldierEntity;
-import net.bumblebee.claysoldiers.soldierproperties.customproperties.AttackTypeProperty;
+import net.bumblebee.claysoldiers.entity.common.ClayMobEntity;
+import net.bumblebee.claysoldiers.entity.common.StatInfoDisplay;
 import net.bumblebee.claysoldiers.team.ClayMobTeam;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
@@ -125,8 +123,8 @@ public class StatOverlay {
         return cachedMap;
     }
 
-    private static List<AbstractClaySoldierEntity> getClaySoldiersNearby() {
-        return Minecraft.getInstance().level.getEntitiesOfClass(AbstractClaySoldierEntity.class, getBoxAroundPlayer(), s -> s.getAttackType() != AttackTypeProperty.BOSS);
+    private static List<ClayMobEntity> getClaySoldiersNearby() {
+        return Minecraft.getInstance().level.getEntitiesOfClass(ClayMobEntity.class, getBoxAroundPlayer(), ClayMobEntity::showInStatDisplay);
     }
 
     private static AABB getBoxAroundPlayer() {

@@ -1,6 +1,6 @@
 package net.bumblebee.claysoldiers.entity.goal.horse;
 
-import net.bumblebee.claysoldiers.entity.horse.AbstractClayHorse;
+import net.bumblebee.claysoldiers.entity.common.horse.AbstractClayHorse;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.ai.goal.Goal;
 

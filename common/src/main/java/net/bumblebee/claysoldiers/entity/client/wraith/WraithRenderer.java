@@ -2,7 +2,7 @@ package net.bumblebee.claysoldiers.entity.client.wraith;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
-import net.bumblebee.claysoldiers.entity.ClayWraithEntity;
+import net.bumblebee.claysoldiers.entity.common.ClayWraithEntity;
 import net.bumblebee.claysoldiers.entity.client.ClayMobStatusRenderlayer;
 import net.bumblebee.claysoldiers.entity.client.renderstates.ClayMobRenderState;
 import net.bumblebee.claysoldiers.entity.client.renderstates.ClayWraithRenderState;

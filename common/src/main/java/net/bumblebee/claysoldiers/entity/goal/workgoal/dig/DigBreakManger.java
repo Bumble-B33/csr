@@ -1,6 +1,6 @@
 package net.bumblebee.claysoldiers.entity.goal.workgoal.dig;
 
-import net.bumblebee.claysoldiers.entity.soldier.AbstractClaySoldierEntity;
+import net.bumblebee.claysoldiers.entity.common.soldier.AbstractClaySoldierEntity;
 import net.bumblebee.claysoldiers.util.ErrorHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;

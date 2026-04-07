@@ -2,7 +2,7 @@ package net.bumblebee.claysoldiers.soldierproperties.customproperties.revive;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.bumblebee.claysoldiers.entity.soldier.AbstractClaySoldierEntity;
+import net.bumblebee.claysoldiers.entity.common.soldier.AbstractClaySoldierEntity;
 import net.bumblebee.claysoldiers.soldierproperties.combined.ValueCombiner;
 import net.bumblebee.claysoldiers.soldierproperties.translation.ITranslatableProperty;
 import net.bumblebee.claysoldiers.util.codec.CodecUtils;

@@ -1,7 +1,7 @@
 package net.bumblebee.claysoldiers.menu;
 
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
-import net.bumblebee.claysoldiers.entity.ClayMobEntity;
+import net.bumblebee.claysoldiers.entity.common.ClayMobEntity;
 import net.bumblebee.claysoldiers.init.ModTags;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.Font;

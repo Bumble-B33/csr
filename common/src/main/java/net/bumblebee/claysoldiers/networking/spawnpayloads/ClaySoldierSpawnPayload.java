@@ -2,8 +2,8 @@ package net.bumblebee.claysoldiers.networking.spawnpayloads;
 
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.datamap.SoldierEquipmentSlot;
-import net.bumblebee.claysoldiers.entity.inventory.ClaySoldierInventory;
-import net.bumblebee.claysoldiers.entity.soldier.AbstractClaySoldierEntity;
+import net.bumblebee.claysoldiers.entity.common.inventory.ClaySoldierInventory;
+import net.bumblebee.claysoldiers.entity.common.soldier.AbstractClaySoldierEntity;
 import net.bumblebee.claysoldiers.networking.IClientPayload;
 import net.bumblebee.claysoldiers.platform.services.INetworkManger;
 import net.bumblebee.claysoldiers.soldierproperties.customproperties.revive.ReviveType;

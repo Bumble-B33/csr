@@ -2,7 +2,7 @@ package net.bumblebee.claysoldiers.item.disruptor;
 
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.block.ClayMobContainer;
-import net.bumblebee.claysoldiers.entity.ClayMobEntity;
+import net.bumblebee.claysoldiers.entity.common.ClayMobEntity;
 import net.bumblebee.claysoldiers.init.ModCriterions;
 import net.bumblebee.claysoldiers.init.ModDataComponents;
 import net.minecraft.ChatFormatting;

@@ -1,7 +1,7 @@
 package net.bumblebee.claysoldiers.networking;
 
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
-import net.bumblebee.claysoldiers.entity.soldier.AbstractClaySoldierEntity;
+import net.bumblebee.claysoldiers.entity.common.soldier.AbstractClaySoldierEntity;
 import net.bumblebee.claysoldiers.platform.services.INetworkManger;
 import net.bumblebee.claysoldiers.soldierproperties.customproperties.revive.ReviveType;
 import net.minecraft.network.FriendlyByteBuf;

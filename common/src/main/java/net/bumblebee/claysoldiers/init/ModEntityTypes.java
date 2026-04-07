@@ -1,19 +1,17 @@
 package net.bumblebee.claysoldiers.init;
 
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
-import net.bumblebee.claysoldiers.entity.ClayWraithEntity;
-import net.bumblebee.claysoldiers.entity.boss.BossBatEntity;
-import net.bumblebee.claysoldiers.entity.boss.BossClaySoldierEntity;
-import net.bumblebee.claysoldiers.entity.boss.ClayBlockProjectileEntity;
-import net.bumblebee.claysoldiers.entity.horse.ClayHorseEntity;
-import net.bumblebee.claysoldiers.entity.horse.ClayPegasusEntity;
-import net.bumblebee.claysoldiers.entity.soldier.AbstractClaySoldierEntity;
-import net.bumblebee.claysoldiers.entity.soldier.ClaySoldierEntity;
-import net.bumblebee.claysoldiers.entity.soldier.VampireClaySoldierEntity;
-import net.bumblebee.claysoldiers.entity.soldier.ZombieClaySoldierEntity;
-import net.bumblebee.claysoldiers.entity.throwables.ClaySoldierSnowball;
-import net.bumblebee.claysoldiers.entity.throwables.ClaySoldierThrowableItemEntity;
-import net.bumblebee.claysoldiers.entity.throwables.ClaySoldierThrownPotion;
+import net.bumblebee.claysoldiers.entity.common.ClayWraithEntity;
+import net.bumblebee.claysoldiers.entity.common.boss.BossBatEntity;
+import net.bumblebee.claysoldiers.entity.common.boss.BossClaySoldierEntity;
+import net.bumblebee.claysoldiers.entity.common.boss.ClayBlockProjectileEntity;
+import net.bumblebee.claysoldiers.entity.common.horse.ClayHorseEntity;
+import net.bumblebee.claysoldiers.entity.common.horse.ClayPegasusEntity;
+import net.bumblebee.claysoldiers.entity.common.programmable.ProgrammableClaySoldierEntity;
+import net.bumblebee.claysoldiers.entity.common.soldier.*;
+import net.bumblebee.claysoldiers.entity.common.throwables.ClaySoldierSnowball;
+import net.bumblebee.claysoldiers.entity.common.throwables.ClaySoldierThrowableItemEntity;
+import net.bumblebee.claysoldiers.entity.common.throwables.ClaySoldierThrownPotion;
 import net.bumblebee.claysoldiers.integration.ExternalMods;
 import net.bumblebee.claysoldiers.integration.SBLEntityConstructor;
 import net.minecraft.core.registries.Registries;
@@ -52,6 +50,14 @@ public class ModEntityTypes {
                     .sized(0.6F * AbstractClaySoldierEntity.DEFAULT_SCALE, 1.95F * AbstractClaySoldierEntity.DEFAULT_SCALE)
                     .ridingOffset(-0.7F * AbstractClaySoldierEntity.DEFAULT_SCALE)
                     .build(ResourceKey.create(Registries.ENTITY_TYPE, ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "boss_clay_soldier")))
+            );
+
+    public static final Supplier<EntityType<ProgrammableClaySoldierEntity>> PROGRAMMABLE_CLAY_SOLDIER_ENTITY =
+            ClaySoldiersCommon.PLATFORM.registerEntity("programmable_clay_soldier", () -> EntityType.Builder.of(
+                            ProgrammableClaySoldierEntity::new, MobCategory.MISC)
+                    .sized(0.6F * AbstractClaySoldierEntity.DEFAULT_SCALE, 1.95F * AbstractClaySoldierEntity.DEFAULT_SCALE)
+                    .ridingOffset(-0.7F * AbstractClaySoldierEntity.DEFAULT_SCALE)
+                    .build(ResourceKey.create(Registries.ENTITY_TYPE, ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "programmable_clay_soldier")))
             );
 
     public static final Supplier<EntityType<ClayHorseEntity>> CLAY_HORSE_ENTITY =

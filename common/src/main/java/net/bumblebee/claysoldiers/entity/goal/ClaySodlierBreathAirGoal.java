@@ -1,6 +1,6 @@
 package net.bumblebee.claysoldiers.entity.goal;
 
-import net.bumblebee.claysoldiers.entity.soldier.AbstractClaySoldierEntity;
+import net.bumblebee.claysoldiers.entity.common.soldier.AbstractClaySoldierEntity;
 import net.bumblebee.claysoldiers.soldierproperties.types.BreathHoldPropertyType;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.world.entity.ai.goal.Goal;

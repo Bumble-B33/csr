@@ -4,7 +4,7 @@ import com.google.common.collect.Multimaps;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
-import net.bumblebee.claysoldiers.entity.ClayWraithEntity;
+import net.bumblebee.claysoldiers.entity.common.ClayWraithEntity;
 import net.bumblebee.claysoldiers.soldierproperties.combined.ValueCombiner;
 import net.bumblebee.claysoldiers.soldierproperties.customproperties.specialattack.SpecialAttack;
 import net.bumblebee.claysoldiers.soldierproperties.translation.ITranslatableProperty;

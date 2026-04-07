@@ -43,7 +43,6 @@ public class EaselBlockEntityRenderer implements BlockEntityRenderer<EaselBlockE
     public static final Material MATERIAL_STAND = new Material(TextureAtlas.LOCATION_BLOCKS, STAND_TEXTURE);
     public static final Material MATERIAL_BLUEPRINT = new Material(TextureAtlas.LOCATION_BLOCKS, BLUEPRINT_TEXTURE);
 
-
     public static final ModelLayerLocation STAND_LAYER_LOCATION = new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "easel_stand"), "main");
     public static final ModelLayerLocation BLUEPRINT_LAYER_LOCATION = new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "easel_blueprint"), "main");
 

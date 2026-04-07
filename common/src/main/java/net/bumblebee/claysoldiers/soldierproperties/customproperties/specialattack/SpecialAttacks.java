@@ -3,8 +3,8 @@ package net.bumblebee.claysoldiers.soldierproperties.customproperties.specialatt
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
-import net.bumblebee.claysoldiers.entity.ClayMobEntity;
-import net.bumblebee.claysoldiers.entity.soldier.ZombieClaySoldierEntity;
+import net.bumblebee.claysoldiers.entity.common.ClayMobEntity;
+import net.bumblebee.claysoldiers.entity.common.soldier.ZombieClaySoldierEntity;
 import net.bumblebee.claysoldiers.init.ModEffects;
 import net.bumblebee.claysoldiers.soldierproperties.combined.ValueCombiner;
 import net.bumblebee.claysoldiers.util.EffectHolder;

@@ -1,7 +1,7 @@
 package net.bumblebee.claysoldiers.entity.client.horse;
 
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
-import net.bumblebee.claysoldiers.entity.horse.ClayHorseEntity;
+import net.bumblebee.claysoldiers.entity.common.horse.ClayHorseEntity;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;

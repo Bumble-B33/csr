@@ -1,7 +1,7 @@
 package net.bumblebee.claysoldiers.menu.soldier;
 
 import net.bumblebee.claysoldiers.datamap.SoldierEquipmentSlot;
-import net.bumblebee.claysoldiers.entity.soldier.AbstractClaySoldierEntity;
+import net.bumblebee.claysoldiers.entity.common.soldier.AbstractClaySoldierEntity;
 import net.bumblebee.claysoldiers.init.ModMenuTypes;
 import net.bumblebee.claysoldiers.menu.AbstractClayMobMenu;
 import net.minecraft.world.entity.player.Inventory;
