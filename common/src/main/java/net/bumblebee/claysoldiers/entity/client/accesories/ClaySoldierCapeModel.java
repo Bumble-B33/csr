@@ -1,6 +1,5 @@
 package net.bumblebee.claysoldiers.entity.client.accesories;
 
-import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.entity.client.ClaySoldierModel;
 import net.bumblebee.claysoldiers.entity.client.renderstates.AbstractClaySoldierRenderState;
 import net.bumblebee.claysoldiers.entity.common.soldier.AbstractClaySoldierEntity;
@@ -8,11 +7,10 @@ import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.client.model.geom.builders.*;
-import net.minecraft.resources.ResourceLocation;
 import org.joml.Quaternionf;
 
 public class ClaySoldierCapeModel extends ClaySoldierModel {
-    public static final ModelLayerLocation LAYER_LOCATION = new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_soldier"), "cloak");
+    public static final ModelLayerLocation LAYER_LOCATION = createLayerLocation("cloak");
 
     private static final float SCALE = AbstractClaySoldierEntity.DEFAULT_SCALE;
     private static final CubeDeformation SHRINK_DEFORMATION = new CubeDeformation(SCALE, SCALE, SCALE);

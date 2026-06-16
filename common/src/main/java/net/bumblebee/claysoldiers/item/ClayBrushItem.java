@@ -38,37 +38,39 @@ public class ClayBrushItem extends Item {
     public static final String NO_MODE_LANG = "item." + ClaySoldiersCommon.MOD_ID + ".clay_brush.mode.no_mode";
 
     public ClayBrushItem(Properties pProperties) {
-        super(pProperties.component(ModDataComponents.CLAY_BRUSH_MODE.get(), Mode.COMMAND).component(ModDataComponents.CLAY_BRUSH_POI.get(), PoiPos.EMPTY));
+        super(pProperties);
     }
-
 
     @Override
     public boolean canDestroyBlock(ItemStack stack, BlockState state, Level level, BlockPos pos, LivingEntity entity) {
         if (!level.isClientSide()) {
             ItemStack itemInHand = entity.getItemInHand(InteractionHand.MAIN_HAND);
             if (getMode(itemInHand) == Mode.POI && entity instanceof ServerPlayer serverPlayer) {
-                if (entity.isCrouching()) {
-                    message(serverPlayer, Component.translatable(POI_CLEAR_LANG).withColor(Mode.POI.color));
-                    setPoiPos(itemInHand, null);
-                } else {
-                    message(serverPlayer, Component.translatable(POI_SET_LANG, pos.toShortString()).withColor(Mode.POI.color));
-                    setPoiPos(itemInHand, pos);
-                }
+                setPoiPosAfterClick(serverPlayer, itemInHand, pos);
             }
         }
-
         return false;
     }
 
+    public static void setPoiPosAfterClick(ServerPlayer serverPlayer, ItemStack stack, BlockPos pos) {
+        if (serverPlayer.isCrouching()) {
+            message(serverPlayer, Component.translatable(ClayBrushItem.POI_CLEAR_LANG).withColor(ClayBrushItem.Mode.POI.color));
+            setPoiPos(stack, null);
+        } else {
+            message(serverPlayer, Component.translatable(ClayBrushItem.POI_SET_LANG, pos.toShortString()).withColor(ClayBrushItem.Mode.POI.color));
+            setPoiPos(stack, pos);
+        }
+
+    }
+
     private static void setPoiPos(ItemStack stack, @Nullable BlockPos pos) {
-        stack.set(ModDataComponents.CLAY_BRUSH_POI.get(), pos == null ? PoiPos.EMPTY : new PoiPos(pos, false));
+        stack.set(ModDataComponents.POI_POS.get(), pos == null ? PoiPos.EMPTY : new PoiPos(pos, false));
     }
 
     private void cycleMode(ItemStack itemInHand, Player player) {
         if (player instanceof ServerPlayer serverPlayer) {
             Mode newMode = switch (itemInHand.get(ModDataComponents.CLAY_BRUSH_MODE.get())) {
-                case COMMAND -> Mode.WORK;
-                case WORK -> Mode.POI;
+                case COMMAND -> Mode.POI;
                 case POI -> Mode.COMMAND;
                 case null -> Mode.COMMAND;
             };
@@ -90,8 +92,8 @@ public class ClayBrushItem extends Item {
         return InteractionResult.SUCCESS;
     }
 
-    private static void message(ServerPlayer pPlayer, Component pMessageComponent) {
-        pPlayer.sendSystemMessage(pMessageComponent, true);
+    private static void message(ServerPlayer player, Component msg) {
+        player.sendSystemMessage(msg, true);
     }
 
     @Override
@@ -99,7 +101,7 @@ public class ClayBrushItem extends Item {
         var mode = getMode(stack);
         if (mode != null) {
             MutableComponent name = mode.getMutableDisplayName();
-            PoiPos poiPos = stack.get(ModDataComponents.CLAY_BRUSH_POI.get());
+            PoiPos poiPos = stack.get(ModDataComponents.POI_POS.get());
             if (mode == Mode.POI && poiPos != null && !poiPos.isEmpty()) {
                 name.append(Component.literal(" (" + poiPos.pos.toShortString() + ")"));
             }
@@ -114,15 +116,15 @@ public class ClayBrushItem extends Item {
         return stack.get(ModDataComponents.CLAY_BRUSH_MODE.get());
     }
 
+    @Nullable
     public static BlockPos getPoiPos(ItemStack stack) {
-        var poiPos = stack.get(ModDataComponents.CLAY_BRUSH_POI.get());
+        var poiPos = stack.get(ModDataComponents.POI_POS.get());
         return poiPos == null || poiPos.isEmpty() ? null : poiPos.pos;
     }
 
     public enum Mode implements StringRepresentable, KeyableTranslatableProperty {
         COMMAND(0, "command", 0, 0xc15a36),
-        WORK(1, "work", 0.5f, 0x9a2323),
-        POI(2, "poi", 1, 0x1a3bb3);
+        POI(1, "poi", 1, 0x1a3bb3);
 
         public static final IntFunction<Mode> BY_ID = ByIdMap.continuous(mode -> mode.id, values(), ByIdMap.OutOfBoundsStrategy.ZERO);
         public static final StreamCodec<ByteBuf, Mode> STREAM_CODEC = ByteBufCodecs.idMapper(BY_ID, mode -> mode.id);
@@ -159,6 +161,7 @@ public class ClayBrushItem extends Item {
         public Style getStyle() {
             return Style.EMPTY.withColor(color);
         }
+
         private MutableComponent getMutableDisplayName() {
             return Component.translatable(translatableKey()).withStyle(getStyle());
         }

@@ -9,9 +9,8 @@ import net.bumblebee.claysoldiers.entity.goal.workgoal.dig.DigBreakManger;
 import net.bumblebee.claysoldiers.init.ModDataComponents;
 import net.bumblebee.claysoldiers.init.ModEntityTypes;
 import net.bumblebee.claysoldiers.init.ModRegistries;
-import net.bumblebee.claysoldiers.init.ModTags;
 import net.bumblebee.claysoldiers.team.ClayMobTeamManger;
-import net.bumblebee.claysoldiers.team.TeamLoyaltyManger;
+import net.bumblebee.claysoldiers.team.loyalty.TeamLoyaltyManger;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
@@ -24,7 +23,6 @@ import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntitySpawnReason;
-import net.minecraft.world.entity.ai.village.poi.PoiManager;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -71,12 +69,8 @@ public class TestItem extends Item {
 
     @Override
     public InteractionResult use(Level level, Player pPlayer, InteractionHand pUsedHand) {
-
         var itemInHand = pPlayer.getItemInHand(pUsedHand);
 
-        if (level instanceof ServerLevel serverLevel) {
-            serverLevel.getPoiManager().getInSquare(h -> h.is(ModTags.PoiTypes.SOLDIER_CONTAINER), pPlayer.getOnPos(), 10, PoiManager.Occupancy.ANY);
-        }
 
         if (pPlayer.isCrouching()) {
             var offHand = pPlayer.getItemInHand(InteractionHand.OFF_HAND);
@@ -100,7 +94,6 @@ public class TestItem extends Item {
             List<String> info = new ArrayList<>();
             info.add((level.isClientSide() ? "Client---" : "Server---"));
             mode.getInfo(level, pPlayer, info);
-            info.add("---");
             info.forEach(LOGGER::info);
 
         }
@@ -124,14 +117,6 @@ public class TestItem extends Item {
         }
     }
 
-    public static boolean isBlueprintEnabled(Level level) {
-        return ClaySoldiersCommon.COMMON_HOOKS.isBlueprintEnabled(level.enabledFeatures());
-    }
-
-    public static long wheelSpeed() {
-        return ClaySoldiersCommon.COMMON_HOOKS.getHamsterWheelSpeed();
-    }
-
     interface InfoGenerator<L extends Level> {
         InfoGenerator<Level> EMPTY = (l, p, infoList) -> {};
         InfoGenerator<ServerLevel> EMPTY_SERVER = (l, p, infoList) -> {};
@@ -143,7 +128,7 @@ public class TestItem extends Item {
         TEAM("team", ChatFormatting.DARK_GREEN,
                 ((level, player, list) -> {
                     list.add("Custom Reg and Level: " + level.registryAccess().lookup(ModRegistries.CLAY_MOB_TEAMS));
-                    list.add("Teams: " + ClayMobTeamManger.getAllKeys(level.registryAccess()).toList());
+                    list.add("Teams: " + ClayMobTeamManger.getAll(level.registryAccess()).map(Holder::getRegisteredName).toList());
                     list.add("From Item: " + ClayMobTeamManger.getFromItemMap());
                 }),
                 (s, p, info) -> info.add("Loyalty: " + TeamLoyaltyManger.getTeamPlayerData(s)),
@@ -163,7 +148,7 @@ public class TestItem extends Item {
 
         }), InfoGenerator.EMPTY),
         CONFIG("config", ChatFormatting.YELLOW, (l, p, infos) -> {
-            infos.add("Config: MenuModify: %s | WheelSpeed: %s | Blueprint: %s".formatted(ClaySoldiersCommon.claySolderMenuModify ? "Allowed" : "Disabled", wheelSpeed(), isBlueprintEnabled(l) ? "Enabled" : "Disabled"));
+            ClaySoldiersCommon.CONFIG.getInfo(infos::add, l.isClientSide());
             infos.add("Caps: " + ClaySoldiersCommon.CAPABILITY_MANGER.toString());
         }),
         BLUEPRINT("blueprint", ChatFormatting.AQUA, (l, p, info) -> {

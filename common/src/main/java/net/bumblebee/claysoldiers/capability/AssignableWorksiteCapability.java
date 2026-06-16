@@ -1,8 +1,8 @@
 package net.bumblebee.claysoldiers.capability;
 
 import net.bumblebee.claysoldiers.entity.common.ClayMobEntity;
-import net.bumblebee.claysoldiers.init.ModCriterions;
-import net.minecraft.resources.ResourceLocation;
+import net.bumblebee.claysoldiers.init.ModCritirions;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 
 /**
@@ -25,7 +25,7 @@ public interface AssignableWorksiteCapability {
     default void useWorksite(ClayMobEntity clayMob) {
         int used = onUse(clayMob);
         if (clayMob.getClayTeamOwner() instanceof ServerPlayer serverPlayer) {
-            ModCriterions.USE_ASSIGNED_POI_TRIGGER.get().trigger(serverPlayer, clayMob, this, used);
+            ModCritirions.USE_ASSIGNED_POI_TRIGGER.get().trigger(serverPlayer, clayMob, this, used);
         }
     }
 
@@ -39,5 +39,5 @@ public interface AssignableWorksiteCapability {
     /**
      * @return the ID of this POI.
      */
-    ResourceLocation descriptionId();
+    Identifier descriptionId();
 }

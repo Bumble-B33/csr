@@ -5,7 +5,7 @@ import net.bumblebee.claysoldiers.entity.common.ClayMobEntity;
 import net.bumblebee.claysoldiers.init.ModTags;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.core.component.DataComponents;
@@ -30,9 +30,13 @@ public abstract class AbstractClayMobScreen<C extends ClayMobEntity, T extends A
         super(pMenu, pPlayerInventory, pTitle);
     }
 
+    public AbstractClayMobScreen(T pMenu, Inventory pPlayerInventory, Component pTitle, int width, int height) {
+        super(pMenu, pPlayerInventory, pTitle, width, height);
+    }
+
     @Override
-    protected void renderLabels(GuiGraphics pGuiGraphics, int pMouseX, int pMouseY) {
-        pGuiGraphics.drawString(this.font, this.title, this.titleLabelX, this.titleLabelY, GRAY_COLOR, false);
+    protected void extractLabels(GuiGraphicsExtractor pGuiGraphics, int pMouseX, int pMouseY) {
+        pGuiGraphics.text(this.font, this.title, this.titleLabelX, this.titleLabelY, GRAY_COLOR, false);
         List<Label> labels = new ArrayList<>();
         queLabels(labels);
         int labelY = teamPropertiesY;
@@ -48,7 +52,7 @@ public abstract class AbstractClayMobScreen<C extends ClayMobEntity, T extends A
 
     protected void queLabels(List<Label> labels) {
         menu.forSourceIfPresent(clayMob -> {
-            if (!clayMob.getType().is(ModTags.EntityTypes.CLAY_BOSS)) {
+            if (!clayMob.is(ModTags.EntityTypes.CLAY_BOSS)) {
                 labels.add(new Label(getTeamLabel(clayMob), 0xFF000000 | clayMob.getTeamColor()));
             }
             if (clayMob.hasClayTeamOwner()) {
@@ -60,16 +64,16 @@ public abstract class AbstractClayMobScreen<C extends ClayMobEntity, T extends A
     /**
      * Renders the ClayMob the menu.
      */
-    protected void renderSource(GuiGraphics guiGraphics, int x1, int y1, int x2, int y2, int scale, float yOffset, int mouseX, int mouseY) {
+    protected void renderSource(GuiGraphicsExtractor guiGraphics, int x1, int y1, int x2, int y2, int scale, float yOffset, int mouseX, int mouseY) {
         menu.forSourceIfPresent(
-                clayMob -> InventoryScreen.renderEntityInInventoryFollowsMouse(guiGraphics, x1, y1, x2, y2, scale, yOffset, mouseX, mouseY, clayMob)
+                clayMob -> InventoryScreen.extractEntityInInventoryFollowsMouse(guiGraphics, x1, y1, x2, y2, scale, yOffset, mouseX, mouseY, clayMob)
         );
     }
 
     @Override
-    protected void renderTooltip(GuiGraphics guiGraphics, int mouseX, int mouseY) {
+    protected void extractTooltip(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY) {
         if (isHovering(8, 84 + menu.inventoryYOffset, 161, 75, mouseX, mouseY)) {
-            super.renderTooltip(guiGraphics, mouseX, mouseY);
+            super.extractTooltip(guiGraphics, mouseX, mouseY);
             return;
         }
         if (!menu.getCarried().isEmpty() || hoveredSlot == null) {
@@ -79,7 +83,7 @@ public abstract class AbstractClayMobScreen<C extends ClayMobEntity, T extends A
         if (this.hoveredSlot.hasItem()) {
             ItemStack itemstack = this.hoveredSlot.getItem();
             renderSpecialTooltip(guiGraphics, itemstack, mouseX, mouseY);
-        } else if (hoveredSlot instanceof AbstractClayMenuSlot clayMenuSlot) {
+        } else if (hoveredSlot instanceof AbstractClayMobMenuSlot clayMenuSlot) {
             guiGraphics.setTooltipForNextFrame(this.font, Component.translatable(SLOT_LABEL, clayMenuSlot.getDisplayName()).withStyle(ChatFormatting.GRAY), mouseX, mouseY);
         }
 
@@ -88,7 +92,7 @@ public abstract class AbstractClayMobScreen<C extends ClayMobEntity, T extends A
     /**
      * Renders the Special tooltip of the give Item. Usually displaying the bonus for the ClayMob
      */
-    protected abstract void renderSpecialTooltip(GuiGraphics pGuiGraphics, ItemStack stack, int mouseX, int mouseY);
+    protected abstract void renderSpecialTooltip(GuiGraphicsExtractor pGuiGraphics, ItemStack stack, int mouseX, int mouseY);
 
     /**
      * Adds the name of the Item to the give tooltip
@@ -105,7 +109,7 @@ public abstract class AbstractClayMobScreen<C extends ClayMobEntity, T extends A
      * Adds the currently hovered slot name to the tooltip
      */
     protected void addSlotName(List<Component> tooltip) {
-        if (hoveredSlot instanceof AbstractClayMenuSlot slot) {
+        if (hoveredSlot instanceof AbstractClayMobMenuSlot slot) {
             tooltip.add(Component.translatable(SLOT_LABEL, slot.getDisplayName()).withStyle(ChatFormatting.GRAY));
         }
     }
@@ -115,15 +119,15 @@ public abstract class AbstractClayMobScreen<C extends ClayMobEntity, T extends A
             this(text, color, 1f, 10);
         }
 
-        public void render(GuiGraphics guiGraphics, Font font, int x, int y) {
+        public void render(GuiGraphicsExtractor guiGraphics, Font font, int x, int y) {
             if (scale != 1f) {
                 var pose = guiGraphics.pose();
 
                 pose.pushMatrix().scale(scale, scale);
-                guiGraphics.drawString(font, text, (int) (x / scale), (int) (y / scale), color, false);
+                guiGraphics.text(font, text, (int) (x / scale), (int) (y / scale), color, false);
                 pose.popMatrix();
             } else {
-                guiGraphics.drawString(font, text, x, y, color, false);
+                guiGraphics.text(font, text, x, y, color, false);
             }
         }
     }

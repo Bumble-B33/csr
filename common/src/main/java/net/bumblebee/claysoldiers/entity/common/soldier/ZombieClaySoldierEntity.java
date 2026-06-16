@@ -1,15 +1,14 @@
 package net.bumblebee.claysoldiers.entity.common.soldier;
 
 import net.bumblebee.claysoldiers.entity.common.ClayMobEntity;
+import net.bumblebee.claysoldiers.init.ModEntitySerializers;
 import net.bumblebee.claysoldiers.init.ModEntityTypes;
 import net.bumblebee.claysoldiers.soldierproperties.customproperties.AttackTypeProperty;
 import net.bumblebee.claysoldiers.team.ClayMobTeam;
 import net.bumblebee.claysoldiers.team.ClayMobTeamManger;
-import net.bumblebee.claysoldiers.team.IClayMobTeamReference;
+import net.minecraft.core.Holder;
 import net.minecraft.network.syncher.EntityDataAccessor;
-import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
@@ -22,15 +21,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ZombieClaySoldierEntity extends UndeadClaySoldier {
-    private static final EntityDataAccessor<String> PREVIOUS_TEAM_SYNC = SynchedEntityData.defineId(ZombieClaySoldierEntity.class, EntityDataSerializers.STRING);
+    private static final EntityDataAccessor<Holder.Reference<ClayMobTeam>> PREVIOUS_TEAM_SYNC = SynchedEntityData.defineId(ZombieClaySoldierEntity.class, ModEntitySerializers.CLAY_TEAM);
     public static final String CURABLE_TAG = "Curable";
     public static final String PICK_ITEMS_TAG = "PickUpItems";
     public static final String MATCH_TEAMS = "match_teams";
     private boolean curable = true;
     private boolean canPickItems = false;
-
-    private IClayMobTeamReference cachedPrevTeam = null;
-
 
     public ZombieClaySoldierEntity(EntityType<? extends ZombieClaySoldierEntity> pEntityType, Level pLevel) {
         super(pEntityType, pLevel, AttackTypeProperty.ZOMBIE);
@@ -39,52 +35,38 @@ public class ZombieClaySoldierEntity extends UndeadClaySoldier {
     @Override
     public void readAdditionalSaveData(ValueInput input) {
         super.readAdditionalSaveData(input);
-        final ResourceLocation prevTeamId = ClayMobTeam.read(input, "zombie");
-
-
-        if (ClayMobTeamManger.isValidTeam(prevTeamId, registryAccess())) {
-            setPreviousTeam(prevTeamId);
-        } else {
-            setClayTeamType(ClayMobTeamManger.DEFAULT_TYPE);
-        }
-
+        ClayMobTeam.read(input, "zombie", level().registryAccess()).ifPresent(this::setPreviousTeam);
 
         setCurable(input.getBooleanOr(CURABLE_TAG, false));
         setCanPickItems(input.getBooleanOr(PICK_ITEMS_TAG, false));
     }
 
     @Override
-    public void addAdditionalSaveData(ValueOutput output) {
-        super.addAdditionalSaveData(output);
-        ClayMobTeam.save(getPreviousTeamId(), output, "zombie");
-        output.putBoolean(CURABLE_TAG, isCurable());
-        output.putBoolean(PICK_ITEMS_TAG, canPickItems());
+    public void addAdditionalSaveData(ValueOutput valueOutput) {
+        super.addAdditionalSaveData(valueOutput);
+        ClayMobTeam.store(getClayTeamHolder(), valueOutput, "zombie");
+        valueOutput.putBoolean(CURABLE_TAG, isCurable());
+        valueOutput.putBoolean(PICK_ITEMS_TAG, canPickItems());
     }
 
     @Override
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
         super.defineSynchedData(builder);
-        builder.define(PREVIOUS_TEAM_SYNC, ClayMobTeamManger.DEFAULT_TYPE.toString());
+        builder.define(PREVIOUS_TEAM_SYNC, ClayMobTeamManger.getDefault(level().registryAccess()));
     }
 
     @NotNull
     public ClayMobTeam getPreviousTeam() {
-        var prevKey = getPreviousTeamId();
-        if (cachedPrevTeam == null || !cachedPrevTeam.isValidForKey(prevKey)) {
-            cachedPrevTeam = ClayMobTeamManger.getReferenceOrDefault(prevKey, registryAccess(),() -> {
-                setPreviousTeam(ClayMobTeamManger.NO_TEAM_TYPE);
-                ClayMobTeamManger.LOGGER.error("{} has a Previous Team ({}) that does not exist anymore", this.getClass().getSimpleName(), prevKey);
-            });
-        }
-        return cachedPrevTeam == null ? ClayMobTeamManger.ERROR : cachedPrevTeam.value();
+        return getPreviousHolder().value();
     }
 
-    public ResourceLocation getPreviousTeamId() {
-        return ResourceLocation.parse(entityData.get(PREVIOUS_TEAM_SYNC));
+    @NotNull
+    public Holder.Reference<ClayMobTeam> getPreviousHolder() {
+        return entityData.get(PREVIOUS_TEAM_SYNC);
     }
 
-    public void setPreviousTeam(ResourceLocation variant) {
-        this.entityData.set(PREVIOUS_TEAM_SYNC, variant.toString());
+    public void setPreviousTeam(Holder.Reference<ClayMobTeam> variant) {
+        this.entityData.set(PREVIOUS_TEAM_SYNC, variant);
     }
 
     @Override
@@ -106,7 +88,7 @@ public class ZombieClaySoldierEntity extends UndeadClaySoldier {
         if (!getPreviousTeam().isCooperative() || claySoldier.hasNoTeam()) {
             return false;
         }
-        return getPreviousTeamId().equals(claySoldier.getClayTeamType());
+        return getPreviousHolder().is(claySoldier.getClayTeamHolder());
     }
 
     /**
@@ -135,7 +117,7 @@ public class ZombieClaySoldierEntity extends UndeadClaySoldier {
             ModEntityTypes.CLAY_SOLDIER_ENTITY.get().spawn(serverLevel,
                     curedSoldier -> {
                         copyInventory(curedSoldier);
-                        curedSoldier.setClayTeamType(getPreviousTeamId());
+                        curedSoldier.setClayTeamType(getClayTeamHolder());
                     },
                     this.blockPosition(), EntitySpawnReason.CONVERSION, false, false);
             this.discard();
@@ -159,7 +141,7 @@ public class ZombieClaySoldierEntity extends UndeadClaySoldier {
     @Override
     public void onConversion(ClayMobEntity oldSoldier, ValueInput tag, @Nullable Player player) {
         if (tag.getBooleanOr(MATCH_TEAMS, false)) {
-            setPreviousTeam(oldSoldier.getClayTeamType());
+            setPreviousTeam(oldSoldier.getClayTeamHolder());
         }
     }
 

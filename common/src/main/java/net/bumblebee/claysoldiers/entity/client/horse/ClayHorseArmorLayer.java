@@ -3,18 +3,18 @@ package net.bumblebee.claysoldiers.entity.client.horse;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.bumblebee.claysoldiers.entity.client.ClaySoldierArmorLayer;
 import net.bumblebee.claysoldiers.entity.client.renderstates.ClayHorseRenderState;
-import net.minecraft.Util;
 import net.minecraft.client.model.Model;
 import net.minecraft.client.model.geom.EntityModelSet;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.RenderLayerParent;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.resources.model.EquipmentAssetManager;
 import net.minecraft.client.resources.model.EquipmentClientInfo;
+import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Util;
 import net.minecraft.world.item.equipment.EquipmentAsset;
 import net.minecraft.world.item.equipment.Equippable;
 
@@ -24,7 +24,7 @@ import java.util.function.Function;
 public class ClayHorseArmorLayer extends RenderLayer<ClayHorseRenderState, ClayHorseModel> {
     private final ClayHorseModel model;
     private final EquipmentAssetManager equipmentAssets;
-    private final Function<ClaySoldierArmorLayer.LayerTextureKey, ResourceLocation> layerTextureLookup;
+    private final Function<ClaySoldierArmorLayer.LayerTextureKey, Identifier> layerTextureLookup;
 
     public ClayHorseArmorLayer(RenderLayerParent<ClayHorseRenderState, ClayHorseModel> renderer, EntityModelSet modelSet, EquipmentAssetManager equipmentAssets) {
         super(renderer);
@@ -64,14 +64,14 @@ public class ClayHorseArmorLayer extends RenderLayer<ClayHorseRenderState, ClayH
             int j = 1;
 
             for (EquipmentClientInfo.Layer equipmentclientinfo$layer : list) {
-                    ResourceLocation armorTextureLocation =
+                    Identifier armorTextureLocation =
                             this.layerTextureLookup.apply(new ClaySoldierArmorLayer.LayerTextureKey(layerType, equipmentclientinfo$layer));
                     nodeCollector.order(j++)
                         .submitModel(
                                 armorModel,
                                 renderState,
                                 poseStack,
-                                RenderType.armorCutoutNoCull(armorTextureLocation),
+                                RenderTypes.armorCutoutNoCull(armorTextureLocation),
                                 packedLight,
                                 OverlayTexture.NO_OVERLAY,
                                 color,

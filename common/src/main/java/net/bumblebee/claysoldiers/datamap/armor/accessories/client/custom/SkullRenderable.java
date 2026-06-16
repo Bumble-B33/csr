@@ -7,10 +7,10 @@ import net.bumblebee.claysoldiers.datamap.armor.accessories.client.IAccessoryRen
 import net.bumblebee.claysoldiers.datamap.armor.accessories.client.RenderableAccessory;
 import net.bumblebee.claysoldiers.datamap.armor.accessories.custom.SkullAccessoryData;
 import net.bumblebee.claysoldiers.entity.client.ClaySoldierModel;
-import net.minecraft.client.model.SkullModelBase;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.model.object.skull.SkullModelBase;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.SkullBlockRenderer;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 
 public class SkullRenderable implements RenderableAccessory<SkullAccessoryData> {
@@ -41,7 +41,7 @@ public class SkullRenderable implements RenderableAccessory<SkullAccessoryData> 
                     rendertype = SkullBlockRenderer.getSkullRenderType(type, null);
                 }
 
-                SkullBlockRenderer.submitSkull(null, 180.0F, claySoldier.wornHeadAnimationPos, pPoseStack, nodeCollector, pPackedLight, skullmodelbase, rendertype, claySoldier.outlineColor, null);
+                SkullBlockRenderer.submitSkull(claySoldier.wornHeadAnimationPos, pPoseStack, nodeCollector, pPackedLight, skullmodelbase, rendertype, claySoldier.outlineColor, null);
             } else {
                 translateToHead(pPoseStack);
                 claySoldier.skullAccessory.submit(pPoseStack, nodeCollector, pPackedLight, OverlayTexture.NO_OVERLAY, claySoldier.outlineColor);

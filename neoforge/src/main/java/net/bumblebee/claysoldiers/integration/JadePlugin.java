@@ -5,7 +5,7 @@ import net.bumblebee.claysoldiers.integration.jade.*;
 import net.bumblebee.claysoldiers.integration.jade.providers.ClayMobProvider;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -52,7 +52,7 @@ public class JadePlugin implements IWailaPlugin {
         }
 
         @Override
-        public ResourceLocation getUid() {
+        public Identifier getUid() {
             return provider.getUniqueId();
         }
     }
@@ -61,7 +61,7 @@ public class JadePlugin implements IWailaPlugin {
             CommonEntityProvider<T> provider) implements IEntityComponentProvider {
 
         @Override
-        public ResourceLocation getUid() {
+        public Identifier getUid() {
             return provider.getUniqueId();
         }
 
@@ -101,7 +101,7 @@ public class JadePlugin implements IWailaPlugin {
         }
 
         @Override
-        public ResourceLocation getUid() {
+        public Identifier getUid() {
             return serverAppender.getUniqueId();
         }
     }

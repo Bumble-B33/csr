@@ -6,7 +6,6 @@ import com.mojang.serialization.DataResult;
 import io.netty.buffer.ByteBuf;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.block.ClayMobContainer;
-import net.bumblebee.claysoldiers.block.hamsterwheel.HamsterWheelBlockEntity;
 import net.bumblebee.claysoldiers.entity.common.ClayMobEntity;
 import net.bumblebee.claysoldiers.init.ModTags;
 import net.minecraft.core.BlockPos;
@@ -75,7 +74,7 @@ public class DisruptorKillRange {
         if (level.getBlockEntity(pos) instanceof ClayMobContainer clayMobContainer) {
             return clayMobContainer;
         }
-        ClaySoldiersCommon.LOGGER.error("ClayMobContainerPoi({}) does not implement {}", pos.toShortString(), HamsterWheelBlockEntity.class.getSimpleName());
+        ClaySoldiersCommon.LOGGER.error("ClayMobContainerPoi({}) does not implement {}", pos.toShortString(), ClayMobContainer.class.getSimpleName());
         return null;
     }
 

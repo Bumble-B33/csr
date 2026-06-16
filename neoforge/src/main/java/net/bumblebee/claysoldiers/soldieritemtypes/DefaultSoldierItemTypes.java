@@ -6,11 +6,11 @@ import net.bumblebee.claysoldiers.init.ModItemGenerators;
 import net.bumblebee.claysoldiers.init.ModRegistries;
 import net.bumblebee.claysoldiers.init.ModTags;
 import net.bumblebee.claysoldiers.soldierproperties.translation.KeyableTranslatableProperty;
-import net.minecraft.Util;
 import net.minecraft.data.worldgen.BootstrapContext;
+import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
+import net.minecraft.util.Util;
 import net.minecraft.world.item.Item;
 
 import java.util.function.Supplier;
@@ -50,7 +50,7 @@ public enum DefaultSoldierItemTypes implements ClaySoldiersItemProvider.ItemTagH
 
     private void register(BootstrapContext<SoldierItemType> context) {
         context.register(
-                ResourceKey.create(ModRegistries.SOLDIER_ITEM_TYPES, ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, name)),
+                ResourceKey.create(ModRegistries.SOLDIER_ITEM_TYPES, Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, name)),
                 new SoldierItemType(tag, generator.get()));
     }
 
@@ -61,6 +61,6 @@ public enum DefaultSoldierItemTypes implements ClaySoldiersItemProvider.ItemTagH
 
     @Override
     public String translatableKey() {
-        return Util.makeDescriptionId(SoldierItemType.LANG, ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, name));
+        return Util.makeDescriptionId(SoldierItemType.LANG, Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, name));
     }
 }

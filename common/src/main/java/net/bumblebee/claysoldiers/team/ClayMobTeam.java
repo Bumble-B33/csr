@@ -4,17 +4,20 @@ import com.mojang.authlib.GameProfile;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.netty.buffer.ByteBuf;
+import net.bumblebee.claysoldiers.ClaySoldiersCommon;
+import net.bumblebee.claysoldiers.init.ModRegistries;
 import net.bumblebee.claysoldiers.soldierproperties.SoldierPropertyMap;
 import net.bumblebee.claysoldiers.util.color.ColorHelper;
+import net.minecraft.core.Holder;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -29,9 +32,12 @@ import java.util.*;
 import java.util.function.ToIntFunction;
 
 public class ClayMobTeam {
+    public static final Codec<ResourceKey<ClayMobTeam>> KEY_CODEC = ResourceKey.codec(ModRegistries.CLAY_MOB_TEAMS);
+    public static final StreamCodec<ByteBuf, ResourceKey<ClayMobTeam>> KEY_STREAM_CODE = ResourceKey.streamCodec(ModRegistries.CLAY_MOB_TEAMS);
+
     public static final Codec<ClayMobTeam> CODEC_JSON = RecordCodecBuilder.create(in -> in.group(
             Codec.STRING.fieldOf("name").forGetter(ClayMobTeam::getName),
-            ColorHelper.CODEC.optionalFieldOf("color", ColorHelper.EMPTY).forGetter(c -> c.color),
+            ColorHelper.CODEC.optionalFieldOf("color", ColorHelper.CLAY_COLOR).forGetter(c -> c.color),
             Codec.BOOL.optionalFieldOf("friendly_fire", false).forGetter(ClayMobTeam::isFriendlyFireAllowed),
             BuiltInRegistries.ITEM.byNameCodec().optionalFieldOf("from", Items.AIR).forGetter(ClayMobTeam::getGetFromOrAir),
             SoldierPropertyMap.CODEC_FOR_NON_ITEM.optionalFieldOf("properties", SoldierPropertyMap.EMPTY_MAP).forGetter(ClayMobTeam::getProperties),
@@ -39,17 +45,23 @@ public class ClayMobTeam {
             PlayerUUIDAndName.CODEC.listOf().optionalFieldOf("players", List.of()).forGetter(c -> c.players)
     ).apply(in, ClayMobTeam::new));
 
-    public static final StreamCodec<RegistryFriendlyByteBuf, ClayMobTeam> STREAM_CODEC = StreamCodec.composite(
-            ByteBufCodecs.STRING_UTF8, ClayMobTeam::getName,
-            ColorHelper.STREAM_CODEC, c -> c.color,
-            ByteBufCodecs.BOOL, ClayMobTeam::isFriendlyFireAllowed,
-            ByteBufCodecs.registry(Registries.ITEM), t -> t.getFrom == null ? Items.AIR : t.getFrom,
-            SoldierPropertyMap.STREAM_CODEC, ClayMobTeam::getProperties,
-            ByteBufCodecs.BOOL, ClayMobTeam::canBeTamed,
-            PlayerUUIDAndName.STREAM_CODEC.apply(ByteBufCodecs.collection(ArrayList::new)), c -> c.players,
-            ClayMobTeam::new
-    );
+    public static final StreamCodec<RegistryFriendlyByteBuf, Holder.Reference<ClayMobTeam>> STREAM_CODEC = new StreamCodec<>() {
+        @Override
+        public Holder.Reference<ClayMobTeam> decode(RegistryFriendlyByteBuf byteBuf) {
+            var opt = byteBuf.registryAccess().lookupOrThrow(ModRegistries.CLAY_MOB_TEAMS).get(byteBuf.readVarInt());
+            if (opt.isEmpty()) {
+                ClaySoldiersCommon.ERROR_HANDLER.warn("StreamCodec with invalid id, for Clay Mob Team");
+            }
 
+            return opt.orElse(ClayMobTeamManger.getDefault(byteBuf.registryAccess()));
+        }
+
+        @Override
+        public void encode(RegistryFriendlyByteBuf o, Holder.Reference<ClayMobTeam> clayMobTeamHolder) {
+            int id = o.registryAccess().lookupOrThrow(ModRegistries.CLAY_MOB_TEAMS).getId(clayMobTeamHolder.value());
+            o.writeVarInt(id);
+        }
+    };
     public static final String TEAM_ID_TAG = "team_id";
     private static final String FORMATTED_TEAM_ID_TAG = "%s_" + TEAM_ID_TAG;
 
@@ -74,6 +86,9 @@ public class ClayMobTeam {
         this.playerUUIDs = players.stream().map(PlayerUUIDAndName::uuid).toList();
         this.playerNames = players.stream().map(PlayerUUIDAndName::name).toList();
         this.tamable = tamable;
+        if (color.isEmpty()) {
+            throw new IllegalArgumentException("Clay Team Color Cannot be Empty");
+        }
     }
 
     protected ClayMobTeam(String name, ColorHelper color, boolean friendlyFire, boolean tamable, @NotNull Item getFrom) {
@@ -118,6 +133,11 @@ public class ClayMobTeam {
         return color.getColor(livingEntity, partialTick);
     }
 
+    public ColorHelper getColor() {
+        return color;
+    }
+
+
     /**
      * Returns the dynamic color of this Team.
      */
@@ -128,6 +148,7 @@ public class ClayMobTeam {
     /**
      * Returns the dynamic color of this Team.
      */
+    @Deprecated
     public int getColor(int offsetStart, float ageInTicks) {
         return color.getColor(offsetStart, ageInTicks);
     }
@@ -170,20 +191,12 @@ public class ClayMobTeam {
     }
 
     @UnmodifiableView
-    public Collection<UUID> getPlayers() {
-        return playerUUIDs;
-    }
-    @UnmodifiableView
     public List<String> getPlayerNames() {
         return playerNames;
     }
 
     public boolean canBeUsed(Player player) {
         return players.isEmpty() || players.contains(new PlayerUUIDAndName(player.getGameProfile()));
-    }
-
-    public boolean hasPlayer() {
-        return !players.isEmpty();
     }
 
     @Override
@@ -219,11 +232,15 @@ public class ClayMobTeam {
      * @param key the key to save
      * @param tag tag the tag to save to
      */
-    public static void save(ResourceLocation key, CompoundTag tag) {
+    public static void save(Identifier key, CompoundTag tag) {
         tag.putString(TEAM_ID_TAG, key.toString());
     }
 
-    public static void save(ResourceLocation key, ValueOutput tag) {
+    public static void save(ResourceKey<ClayMobTeam> key, CompoundTag tag) {
+        tag.store(TEAM_ID_TAG, KEY_CODEC, key);
+    }
+
+    public static void save(Identifier key, ValueOutput tag) {
         tag.putString(TEAM_ID_TAG, key.toString());
     }
 
@@ -232,12 +249,28 @@ public class ClayMobTeam {
      *
      * @param tag the tag to read from
      */
-    public static Optional<ResourceLocation> read(CompoundTag tag) {
-        return tag.getString(TEAM_ID_TAG).map(ResourceLocation::parse);
+    public static Optional<Identifier> read(CompoundTag tag) {
+        return tag.getString(TEAM_ID_TAG).map(Identifier::parse);
     }
 
-    public static Optional<ResourceLocation> read(ValueInput tag) {
-        return tag.getString(TEAM_ID_TAG).map(ResourceLocation::parse);
+    public static Optional<Identifier> read(ValueInput tag) {
+        return tag.getString(TEAM_ID_TAG).map(Identifier::parse);
+    }
+
+    public static void store(Holder.Reference<ClayMobTeam> team, ValueOutput tag, String prefix) {
+        tag.store(FORMATTED_TEAM_ID_TAG.formatted(prefix), KEY_CODEC, team.key());
+    }
+
+    public static Optional<Holder.Reference<ClayMobTeam>> read(ValueInput tag, String prefix, RegistryAccess registry) {
+        return tag.read(FORMATTED_TEAM_ID_TAG.formatted(prefix), KEY_CODEC).flatMap(registry::get);
+    }
+
+    public static void store(Holder.Reference<ClayMobTeam> team, ValueOutput tag) {
+        tag.store(TEAM_ID_TAG, KEY_CODEC, team.key());
+    }
+
+    public static Optional<Holder.Reference<ClayMobTeam>> read(ValueInput tag, RegistryAccess registry) {
+        return tag.read(TEAM_ID_TAG, KEY_CODEC).flatMap(registry::get);
     }
 
     /**
@@ -247,7 +280,7 @@ public class ClayMobTeam {
      * @param tag    tag the tag to save to
      * @param prefix the prefix to distinguish this team from the normal team
      */
-    public static void save(ResourceLocation key, ValueOutput tag, String prefix) {
+    public static void save(Identifier key, ValueOutput tag, String prefix) {
         tag.putString(FORMATTED_TEAM_ID_TAG.formatted(prefix), key.toString());
     }
 
@@ -257,8 +290,8 @@ public class ClayMobTeam {
      * @param tag    the tag to read from
      * @param prefix the prefix to distinguish this team from the normal team
      */
-    public static ResourceLocation read(ValueInput tag, String prefix) {
-        return ResourceLocation.parse(tag.getString(FORMATTED_TEAM_ID_TAG.formatted(prefix)).orElseThrow());
+    public static Identifier read(ValueInput tag, String prefix) {
+        return Identifier.parse(tag.getString(FORMATTED_TEAM_ID_TAG.formatted(prefix)).orElseThrow());
     }
 
     public static Builder of(String name, ColorHelper color) {
@@ -270,10 +303,6 @@ public class ClayMobTeam {
                 UUIDUtil.CODEC.fieldOf("uuid").forGetter(PlayerUUIDAndName::uuid),
                 Codec.STRING.fieldOf("name").forGetter(PlayerUUIDAndName::name)
         ).apply(in, PlayerUUIDAndName::new));
-        public static final StreamCodec<ByteBuf, PlayerUUIDAndName> STREAM_CODEC = StreamCodec.composite(
-                UUIDUtil.STREAM_CODEC, PlayerUUIDAndName::uuid, ByteBufCodecs.STRING_UTF8,
-                PlayerUUIDAndName::name, PlayerUUIDAndName::new
-        );
 
         private PlayerUUIDAndName(GameProfile profile) {
             this(profile.id(), profile.name());

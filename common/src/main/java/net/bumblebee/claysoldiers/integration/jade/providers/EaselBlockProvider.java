@@ -6,7 +6,7 @@ import net.bumblebee.claysoldiers.integration.jade.CommonBlockProvider;
 import net.bumblebee.claysoldiers.integration.jade.CommonTooltipHelper;
 import net.bumblebee.claysoldiers.integration.jade.JadeRegistry;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.block.Block;
 
 public enum EaselBlockProvider implements CommonBlockProvider {
@@ -40,7 +40,7 @@ public enum EaselBlockProvider implements CommonBlockProvider {
 
 
     @Override
-    public ResourceLocation getUniqueId() {
+    public Identifier getUniqueId() {
         return JadeRegistry.EASEL_BLOCK;
     }
 

@@ -6,7 +6,7 @@ import net.bumblebee.claysoldiers.integration.jade.CommonTooltipHelper;
 import net.bumblebee.claysoldiers.integration.jade.JadeRegistry;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 public enum VampireClaySoldierProvider implements CommonEntityProvider<VampireClaySoldierEntity> {
     INSTANCE;
@@ -23,7 +23,7 @@ public enum VampireClaySoldierProvider implements CommonEntityProvider<VampireCl
     }
 
     @Override
-    public ResourceLocation getUniqueId() {
+    public Identifier getUniqueId() {
         return JadeRegistry.VAMPIRE_SOLDIER;
     }
 

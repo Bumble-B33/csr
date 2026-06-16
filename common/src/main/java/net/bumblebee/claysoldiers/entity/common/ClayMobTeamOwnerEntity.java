@@ -1,26 +1,27 @@
 package net.bumblebee.claysoldiers.entity.common;
 
-import net.bumblebee.claysoldiers.ClaySoldiersCommon;
-import net.bumblebee.claysoldiers.networking.spawnpayloads.ClayMobSpawnPayload;
+import net.bumblebee.claysoldiers.init.ModEntitySerializers;
 import net.bumblebee.claysoldiers.team.ClayMobTeam;
 import net.bumblebee.claysoldiers.team.ClayMobTeamManger;
+import net.minecraft.core.Holder;
 import net.minecraft.network.syncher.EntityDataAccessor;
-import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NonNull;
 
 public abstract class ClayMobTeamOwnerEntity extends ClayMobEntity {
-    private static final EntityDataAccessor<String> VARIANT_SYNC = SynchedEntityData.defineId(ClayMobTeamOwnerEntity.class, EntityDataSerializers.STRING);
+    private static final EntityDataAccessor<Holder.Reference<ClayMobTeam>> CLAY_MOB_TEAM = SynchedEntityData.defineId(ClayMobTeamOwnerEntity.class, ModEntitySerializers.CLAY_TEAM);
+
     @Nullable
-    private ResourceLocation teamBeforeChange = null;
+    private Holder.Reference<ClayMobTeam> teamBeforeChange = null;
 
     protected ClayMobTeamOwnerEntity(EntityType<? extends ClayMobEntity> pEntityType, Level pLevel) {
         super(pEntityType, pLevel);
@@ -29,51 +30,53 @@ public abstract class ClayMobTeamOwnerEntity extends ClayMobEntity {
     @Override
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
         super.defineSynchedData(builder);
-        builder.define(VARIANT_SYNC, ClayMobTeamManger.DEFAULT_TYPE.toString());
+        builder.define(CLAY_MOB_TEAM, ClayMobTeamManger.getDefault(level().registryAccess()));
     }
 
     @Override
     public void readAdditionalSaveData(ValueInput pCompound) {
         super.readAdditionalSaveData(pCompound);
-        final var team = ClayMobTeam.read(pCompound);
-        if (team.isEmpty()) {
-            setClayTeamType(ClayMobTeamManger.DEFAULT_TYPE);
-        } else if (!ClayMobTeamManger.isValidTeam(team.orElseThrow(), registryAccess())) {
-            ClayMobTeamManger.LOGGER.error("{} was saved with a Team ({}) that does not exist anymore", this.getClass().getSimpleName(), team);
-            setClayTeamType(ClayMobTeamManger.DEFAULT_TYPE);
-        } else {
-            setClayTeamType(team.orElseThrow());
-        }
-    }
-
-
-    @Override
-    public void addAdditionalSaveData(ValueOutput pCompound) {
-        super.addAdditionalSaveData(pCompound);
-        ClayMobTeam.save(getClayTeamType(), pCompound);
+        ClayMobTeam.read(pCompound, level().registryAccess()).ifPresentOrElse(
+                this::setClayTeamType,
+                () -> ClayMobTeamManger.LOGGER.error("{} was saved with a Team that does not exist anymore", this.getClass().getSimpleName()));
     }
 
     @Override
-    public ResourceLocation getClayTeamType() {
-        return ResourceLocation.parse(this.entityData.get(VARIANT_SYNC));
+    public void addAdditionalSaveData(ValueOutput valueOutput) {
+        super.addAdditionalSaveData(valueOutput);
+        ClayMobTeam.store(getClayTeamHolder(), valueOutput);
     }
 
     @Override
-    public void setClayTeamType(ResourceLocation type) {
-        if (getClayTeamType().equals(type)) {
+    public @NonNull ResourceKey<ClayMobTeam> getClayTeamKey() {
+        return getClayTeamHolder().key();
+    }
+
+    @Override
+    public @NotNull Holder.Reference<ClayMobTeam> getClayTeamHolder() {
+        return this.entityData.get(CLAY_MOB_TEAM);
+    }
+
+    @Override
+    public void setClayTeamType(ResourceKey<ClayMobTeam> type) {
+        level().registryAccess().get(type).ifPresent(this::setClayTeamType);
+    }
+
+    @Override
+    public void setClayTeamType(Holder.Reference<ClayMobTeam> team) {
+        if (team.is(getClayTeamHolder())) {
             return;
         }
-        ClayMobTeamManger.getOptional(type, registryAccess()).ifPresent(team -> {
-            this.entityData.set(VARIANT_SYNC, type.toString());
-            level().broadcastEntityEvent(this, TEAM_CHANGE_EVENT);
-            handleTeamChange(type);
-        });
+        this.entityData.set(CLAY_MOB_TEAM, team);
+        level().broadcastEntityEvent(this, TEAM_CHANGE_EVENT);
+        handleTeamChange(team);
+
     }
 
     @Override
     public void handleEntityEvent(byte id) {
         if (id == TEAM_CHANGE_EVENT) {
-            teamBeforeChange = getClayTeamType();
+            teamBeforeChange = getClayTeamHolder();
             return;
         }
         super.handleEntityEvent(id);
@@ -83,10 +86,9 @@ public abstract class ClayMobTeamOwnerEntity extends ClayMobEntity {
     public void tick() {
         super.tick();
         if (teamBeforeChange != null && level().isClientSide() && tickCount % 5 == 0) {
-            var teamId = getClayTeamType();
-            if (!teamId.equals(teamBeforeChange)) {
+            if (!getClayTeamHolder().is(teamBeforeChange)) {
+                handleTeamChange(teamBeforeChange);
                 teamBeforeChange = null;
-                handleTeamChange(teamId);
             }
         }
     }
@@ -96,12 +98,7 @@ public abstract class ClayMobTeamOwnerEntity extends ClayMobEntity {
      *
      * @param teamId the new team
      */
-    protected abstract void handleTeamChange(ResourceLocation teamId);
-
-    @Override
-    public void sendSpawnPayload(ServerPlayer tracking) {
-        ClaySoldiersCommon.NETWORK_MANGER.sendToPlayersTrackingEntity(this, new ClayMobSpawnPayload(this));
-    }
+    protected abstract void handleTeamChange(Holder.Reference<ClayMobTeam> teamId);
 
     protected abstract boolean targetPredicate(LivingEntity other, ServerLevel serverLevel);
 }

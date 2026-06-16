@@ -3,6 +3,7 @@ package net.bumblebee.claysoldiers.soldierproperties.types;
 import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
+import com.mojang.serialization.MapCodec;
 import net.bumblebee.claysoldiers.claysoldierpredicate.ClaySoldierInventoryQuery;
 import net.bumblebee.claysoldiers.soldierproperties.SoldierPropertyType;
 import net.bumblebee.claysoldiers.soldierproperties.customproperties.UnitProperty;
@@ -15,7 +16,7 @@ import java.util.List;
 
 public class UnitPropertyType extends SoldierPropertyType<UnitProperty> {
     private static final Codec<UnitProperty> CODEC = Codec.either(
-            Codec.unit(UnitProperty.INSTANCE),
+            MapCodec.unitCodec(UnitProperty.INSTANCE),
             Codec.BOOL
     ).comapFlatMap(UnitPropertyType::getFromEither, Either::left);
     private static final StreamCodec<RegistryFriendlyByteBuf, UnitProperty> STREAM_CODEC = StreamCodec.unit(UnitProperty.INSTANCE);

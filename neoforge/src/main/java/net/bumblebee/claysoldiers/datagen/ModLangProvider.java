@@ -5,34 +5,38 @@ import net.bumblebee.claysoldiers.block.blueprint.EscritoireBlock;
 import net.bumblebee.claysoldiers.claypoifunction.ClayPoiFunctions;
 import net.bumblebee.claysoldiers.claypoifunction.ColorGetterFunction;
 import net.bumblebee.claysoldiers.clayremovalcondition.*;
+import net.bumblebee.claysoldiers.claysoldierchips.*;
+import net.bumblebee.claysoldiers.claysoldierchips.addon.ClaySoldierChipAddon;
+import net.bumblebee.claysoldiers.claysoldierchips.addon.ClaySoldierChipAddons;
 import net.bumblebee.claysoldiers.claysoldierpredicate.ClayPredicates;
-import net.bumblebee.claysoldiers.commands.ClaySoldierCommands;
 import net.bumblebee.claysoldiers.commands.ColorHelperArgumentType;
-import net.bumblebee.claysoldiers.commands.DefaultedResourceLocationArgument;
 import net.bumblebee.claysoldiers.datagen.advancements.ModAdvancements;
 import net.bumblebee.claysoldiers.datamap.SoldierEquipmentSlot;
 import net.bumblebee.claysoldiers.entity.common.ClayMobEntity;
 import net.bumblebee.claysoldiers.entity.common.StatInfoDisplay;
 import net.bumblebee.claysoldiers.entity.common.VampireSubjugate;
-import net.bumblebee.claysoldiers.entity.goal.workgoal.*;
-import net.bumblebee.claysoldiers.entity.goal.workgoal.dig.DigHoleGoal;
-import net.bumblebee.claysoldiers.entity.common.programmable.chips.ClaySoldierChip;
-import net.bumblebee.claysoldiers.entity.common.programmable.chips.ClaySoldierChips;
+import net.bumblebee.claysoldiers.entity.common.programmable.ClaySoldierFishingData;
+import net.bumblebee.claysoldiers.entity.common.programmable.ClaySoldierFishingTicker;
+import net.bumblebee.claysoldiers.entity.common.programmable.ProgrammableClaySoldierEntity;
 import net.bumblebee.claysoldiers.entity.common.soldier.AbstractClaySoldierEntity;
 import net.bumblebee.claysoldiers.entity.common.soldier.status.SoldierStatusManager;
+import net.bumblebee.claysoldiers.entity.goal.workgoal.*;
+import net.bumblebee.claysoldiers.entity.goal.workgoal.dig.DigHoleGoal;
 import net.bumblebee.claysoldiers.init.*;
 import net.bumblebee.claysoldiers.integration.jade.JadeRegistry;
 import net.bumblebee.claysoldiers.integration.jade.providers.*;
 import net.bumblebee.claysoldiers.item.BrickedClaySoldierItem;
 import net.bumblebee.claysoldiers.item.ClayBrushItem;
 import net.bumblebee.claysoldiers.item.blueprint.BlueprintItem;
+import net.bumblebee.claysoldiers.item.chip.ClaySoldierChipItem;
 import net.bumblebee.claysoldiers.item.claymobspawn.ClaySoldierSpawnItem;
 import net.bumblebee.claysoldiers.item.claypouch.ClayPouchItem;
 import net.bumblebee.claysoldiers.item.disruptor.ClayMobKillItem;
 import net.bumblebee.claysoldiers.menu.AbstractClayMobScreen;
+import net.bumblebee.claysoldiers.menu.horse.ClayHorseMenuSlot;
 import net.bumblebee.claysoldiers.menu.horse.ClayHorseScreen;
-import net.bumblebee.claysoldiers.menu.horse.ClayHorseSlot;
 import net.bumblebee.claysoldiers.menu.soldier.ClaySoldierScreen;
+import net.bumblebee.claysoldiers.platform.services.IConfig;
 import net.bumblebee.claysoldiers.soldieritemtypes.DefaultSoldierItemTypes;
 import net.bumblebee.claysoldiers.soldierproperties.SoldierPropertyType;
 import net.bumblebee.claysoldiers.soldierproperties.SoldierPropertyTypes;
@@ -45,9 +49,9 @@ import net.bumblebee.claysoldiers.soldierproperties.customproperties.specialatta
 import net.bumblebee.claysoldiers.soldierproperties.translation.KeyableTranslatableProperty;
 import net.bumblebee.claysoldiers.soldierproperties.types.BreathHoldPropertyType;
 import net.bumblebee.claysoldiers.util.ComponentFormating;
-import net.minecraft.Util;
 import net.minecraft.data.PackOutput;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
+import net.minecraft.util.Util;
 import net.neoforged.neoforge.common.data.LanguageProvider;
 
 import java.util.function.Supplier;
@@ -59,31 +63,33 @@ public class ModLangProvider extends LanguageProvider {
 
     @Override
     protected void addTranslations() {
-        add(ClaySoldiersCommon.BLUEPRINT_DATA_PACK_LANG, "Clay Soldiers: Blueprints");
-        add(ClaySoldiersCommon.BLUEPRINT_PACK_DESCRIPTION, "Enabled Blueprint features for Clay Soldiers");
-        add(ClaySoldiersCommon.BLUEPRINT_PACK_SOURCE, "feature, experimental");
-
         add(ClaySoldiersCommon.CSR_DEFAULT_DATA_PACK_LANG, "Default Clay Soldiers Items");
         add(ClaySoldiersCommon.CSR_DEFAULT_PACK_DESCRIPTION, "Default Clay Soldier Items");
 
 
-        addConfig("csrClientConfig", "Client Config");
-        addConfig("claySoldierMenuModify", "Modify in Menu");
-        addConfig("hamsterWheelCapacity", "Hamster Wheel Energy Capacity");
-        addConfig("hamsterWheelSpeed", "Hamster Wheel Speed");
+        addConfig(IConfig.SOLDIER_MODIFY_MENU_KEY, "Modify in Menu");
+        addConfig(IConfig.HAMSTER_WHEEL_CAPACITY_KEY, "Hamster Wheel Energy Capacity");
+        addConfig(IConfig.HAMSTER_WHEEL_SPEED_KEY, "Hamster Wheel Speed");
+        addConfig(IConfig.SHEAR_BLADE_RECIPE_KEY, "Shear Blade Recipe");
 
-        add(ClaySoldiersCommon.CLAY_SOLDIER_DROP_RULE.getDescriptionId(), "Chance (in %) for a Clay Soldier to drop itself when killed");
-        add(ClaySoldiersCommon.CLAY_SOLDIER_INVENTORY_DROP_RULE.getDescriptionId(), "Clay Soldier drop their inventory on Death");
+        addConfig(IConfig.SOLDIER_DROP_INVENTORY_KEY, "Clay Soldiers drop Inventory");
+        addConfig(IConfig.SOLDIER_DROP_SELF_KEY, "Clay Soldier drop them selfs on death");
+        addConfig(IConfig.CHIP_REQUIRES_LOYALTY_KEY, "Chip requires Loyalty of the Soldier to be inserted");
+
+        addConfig(IConfig.STATO_METER_SHOW_INFO_KEY, "Stat Item: Show Clay Soldier Info");
+        addConfig(IConfig.STATO_METER_SHOW_COUNT_KEY, "Stat Item: Show Clay Soldier Count");
 
         add(ModCreativeTab.CLAY_SOLDIERS_TAB_TITLE, "Clay Soldiers");
         add(ModCreativeTab.CLAY_SOLDIER_ITEMS_TAB_TITLE, "Clay Soldier Items");
 
-        add(Util.makeDescriptionId("enchantment", ModEnchantments.SOLDIER_PROJECTILE.location()), "Clay Soldier Slingshot");
+        add(Util.makeDescriptionId("enchantment", ModEnchantments.SOLDIER_PROJECTILE.identifier()), "Clay Soldier Slingshot");
 
         addBlock(ModBlocks.HAMSTER_WHEEL_BLOCK, "Hamster Wheel");
         addBlock(ModBlocks.EASEL_BLOCK, "Easel");
         addBlock(ModBlocks.ESCRITOIRE_BLOCK, "Escritoire");
         add(EscritoireBlock.CONTAINER_TITLE, "Escritoire");
+
+        addBlock(ModBlocks.CHIP_ASSEMBLER, "Chip Assembler");
 
         addItem(ModItems.CLAY_SOLDIER, "Clay Soldier");
         add(ModItems.CLAY_SOLDIER.get().getDescriptionId() + ClaySoldierSpawnItem.DESCRIPTION_ID_PREFIX, "%s Clay Soldier");
@@ -113,47 +119,6 @@ public class ModLangProvider extends LanguageProvider {
         add(BlueprintItem.STRUCTURE_NAME_LANG, "Structure: %s");
         add(BlueprintItem.BLUEPRINT_INVALID_LANG, "Invalid");
 
-        addItem(ModItems.CLAY_STAFF, "Clay Staff");
-        addItem(ModItems.CLAY_POUCH, "Clay Pouch");
-        add(ClayPouchItem.FULLNESS_LANG, "%s/%s");
-
-        addItem(ModItems.STATOMETER, "Statometer");
-
-
-        add(ModDatapackProvider.SMALL_HOUSE_LANG, "Small House");
-        add(ModDatapackProvider.SMALL_FARM_LANG, "Farm");
-        add(ModDatapackProvider.LARGE_HOUSE_LANG, "Large House");
-
-
-        addKeyableProperty(ClayBrushItem.Mode.COMMAND, "Command");
-        addKeyableProperty(ClayBrushItem.Mode.WORK, "Work");
-        addKeyableProperty(ClayBrushItem.Mode.POI, "Poi");
-        add(SoldierStatusManager.SITTING_LANG, "Sitting");
-        add(SoldierStatusManager.USING_POI_LANG, "Using Work Poi");
-        add(IWorkGoal.DEFAULT_STATUS_LANG, "Working");
-        add(AbstractWorkGoal.BREAK_LANG, "On a short Break");
-        add(AbstractWorkGoal.CARRYING_LANG, "Carrying");
-        add(AbstractWorkGoal.SEARCHING_LANG, "Searching");
-        add(AbstractWorkGoal.STUCK_LANG, "Stuck");
-        add(AbstractWorkGoal.REQUIRES_POI_LANG, "But does not know where");
-        add(DigHoleGoal.DIG_LANG, "Digging");
-        add(DigHoleGoal.BREAKING_LANG, "breaking blocks");
-        add(DigHoleGoal.UNBREAKABLE_BLOCK, "but cannot break block");
-        add(BreakCropGoal.BREAK_CROPS_LANG, "Harvesting");
-        add(BreakCropGoal.CROP_BREAK_DISALLOWED, "Not allowed to Break Crops");
-        add(PlaceSeedsGoal.PLACING_SEEDS_LANG, "Replanting");
-        add(PickUpItemsGoal.PICK_UP_ITEM_LANG, "Pick up Items");
-        add(BuildBlueprintGoal.BUILDING_LANG, "Building");
-
-        add(WorkSelectorGoal.WORK_STATUS_PAIR_LANG, "%s: %s");
-        add(WorkSelectorGoal.WORK_STATUS_SOMETHING_LANG, "Does Something");
-        add(WorkSelectorGoal.WORK_STATUS_RESTING_LANG, "Resting");
-
-        add(AbstractClaySoldierEntity.DEFENDING_AREA_LANG, "Defending this Area");
-        add(AbstractClaySoldierEntity.PROTECTING_OWNER_LANG, "Protecting its owner");
-        add(ClayMobEntity.WORK_POI_CLEARED_LANG, "Poi Cleared");
-        add(ClayMobEntity.WORK_POI_INVALID_LANG, "Invalid Poi (%s)");
-
         add(ModItems.CAKE_HORSE.get(), "Cake Horse");
         add(ModItems.GRASS_HORSE.get(), "Grass Horse");
         add(ModItems.SNOW_HORSE.get(), "Snow Horse");
@@ -164,6 +129,79 @@ public class ModLangProvider extends LanguageProvider {
         add(ModItems.MYCELIUM_PEGASUS.get(), "Mycelium Pegasus");
 
         add(BrickedClaySoldierItem.ORIGINAL_DISPLAY_NAME, "Original: %s");
+
+        addItem(ModItems.CLAY_STAFF, "Clay Staff");
+        addItem(ModItems.CLAY_POUCH, "Clay Pouch");
+        add(ClayPouchItem.FULLNESS_LANG, "%s/%s");
+
+        addItem(ModItems.STATOMETER, "Statometer");
+
+        addItem(ModItems.BLANK_CHIP, "Black Clay Soldier Chip");
+        add(ClaySoldierChipItem.INSTALLED_CHIP_LANG, "Chip: %s");
+        add(ClaySoldierChipItem.NO_CHIP_ERROR_LANG, "Unknown");
+        add(ClaySoldierChipItem.INSTALLED_ADDONS_LANG, "Addons [%s]");
+        add(ClaySoldierChipItem.NO_ADDON_INSTALLED_LANG, "Empty");
+        add(ClaySoldierChipItem.AT_POS_LANG, "At: (%s)");
+
+
+        addItem(ModItems.POI_CHIP, "POI Clay Soldier Chip");
+        addItem(ModItems.FISHING_CHIP, "Fishing Clay Soldier Chip");
+        addItem(ModItems.DIG_CHIP, "Dig Clay Soldier Chip");
+        addItem(ModItems.PICK_UP_ITEMS_CHIP, "Pick Up Items Clay Soldier Chip");
+        addItem(ModItems.PLACE_SEEDS_CHIP, "Plant Seeds Clay Soldier Chip");
+        addItem(ModItems.BREAK_CROPS_CHIP, "Harvest Crops Clay Soldier Chip");
+        addItem(ModItems.COMBAT_CHIP, "Combat Clay Soldier Chip");
+        addItem(ModItems.BLUEPRINT_CHIP, "Build Blueprint Clay Soldier Chip");
+
+
+        addItem(ModItems.BLANK_ADDON, "Blank Addon");
+        addItem(ModItems.RANGE_ADDON, "Range Addon");
+        addItem(ModItems.TREASURY_ADDON, "Fishing Treasure Addon");
+        addItem(ModItems.NO_BREAK_ADDON, "No Break Addon");
+        addItem(ModItems.TARGET_ANIMAL_ADDON, "Target Animals Addon");
+        addItem(ModItems.TARGET_MONSTER_ADDON, "Target Monsters Addon");
+        addItem(ModItems.TARGET_IGNORE_BABIES_ADDON, "Target Ignore Babies Addon");
+
+        add(ModDatapackProvider.SMALL_HOUSE_LANG, "Small House");
+        add(ModDatapackProvider.SMALL_FARM_LANG, "Farm");
+        add(ModDatapackProvider.LARGE_HOUSE_LANG, "Large House");
+
+
+        addKeyableProperty(ClayBrushItem.Mode.COMMAND, "Command");
+        addKeyableProperty(ClayBrushItem.Mode.POI, "Poi");
+        add(SoldierStatusManager.SITTING_LANG, "Sitting");
+        add(SoldierStatusManager.USING_POI_LANG, "Using Work Poi");
+
+        add(IWorkGoal.DEFAULT_STATUS_LANG, "Working");
+        add(AbstractWorkGoal.BREAK_LANG, "On a short Break");
+        add(AbstractWorkGoal.CARRYING_LANG, "Carrying");
+        add(AbstractWorkGoal.SEARCHING_LANG, "Searching");
+        add(AbstractWorkGoal.STUCK_LANG, "Stuck");
+        add(AbstractWorkGoal.REQUIRES_POI_LANG, "But does not know where");
+        add(AbstractWorkGoal.RETURNING_LANG, "Returning");
+        add(AbstractWorkGoal.CANNOT_FIND_ITEM_LANG, "Cannot find the needed Item");
+
+
+        add(DigHoleGoal.DIG_LANG, "Digging");
+        add(DigHoleGoal.BREAKING_LANG, "breaking blocks");
+        add(DigHoleGoal.UNBREAKABLE_BLOCK, "But cannot break block");
+        add(BreakCropGoal.BREAK_CROPS_LANG, "Harvesting");
+        add(BreakCropGoal.CROP_BREAK_DISALLOWED, "Not allowed to Break Crops");
+        add(PlaceSeedsGoal.PLACING_SEEDS_LANG, "Replanting");
+        add(PickUpItemsGoal.PICK_UP_ITEM_LANG, "Pick up Items");
+        add(BuildBlueprintGoal.BUILDING_LANG, "Building");
+        add(ClaySoldierFishGoal.FISH_LANG, "Fishing");
+        add(ClaySoldierFishGoal.IS_ANKER_LANG, "Fishing Anker");
+        add(ClaySoldierFishGoal.SEARCHING_FOR_WATER_LANG, "Searching for Water");
+        add(ClaySoldierFishGoal.SEARCHING_ANKER_LANG, "Searching for Anker");
+        add(ClaySoldierFishGoal.FISHING_LANG, "Catching Fish");
+
+
+        add(AbstractClaySoldierEntity.DEFENDING_AREA_LANG, "Defending this Area");
+        add(AbstractClaySoldierEntity.PROTECTING_OWNER_LANG, "Protecting its owner");
+        add(ClayMobEntity.WORK_POI_CLEARED_LANG, "Poi Cleared");
+        add(ClayMobEntity.WORK_POI_INVALID_LANG, "Invalid Poi (%s)");
+
 
         addEntityType(ModEntityTypes.CLAY_SOLDIER_ENTITY, "Clay Soldier");
         addEntityType(ModEntityTypes.CLAY_WRAITH, "Wraith");
@@ -185,7 +223,8 @@ public class ModLangProvider extends LanguageProvider {
 
         addEntityType(ModEntityTypes.PROGRAMMABLE_CLAY_SOLDIER_ENTITY, "Programmable Clay Soldier");
 
-
+        add(ProgrammableClaySoldierEntity.NO_OWNER_LANG, "No Owner");
+        add(ProgrammableClaySoldierEntity.UNKNOWN_OWNER_LANG, "Unknown Owner: %s");
 
         add(ModEffects.SLIME_ROOT.value(), "Slime Root");
         add(ModEffects.VAMPIRE_CONVERSION.value(), "Vampiric Conversion");
@@ -204,32 +243,31 @@ public class ModLangProvider extends LanguageProvider {
         addKeyableProperty(DefaultSoldierItemTypes.KINGDOM, "Spawned Items for an entire Kingdom");
 
         add(ColorHelperArgumentType.INVALID_COLOR, "'%s' is not a valid color");
-        add(DefaultedResourceLocationArgument.INVALID_RESOURCE_LOCATION, "Unknown Id '%s'");
 
-        add(ClaySoldierCommands.COMMAND_TEAM_SINGLE_SUCCESS, "Changed the Team of a ClaySoldier to %s");
-        add(ClaySoldierCommands.COMMAND_TEAM_MULTIPLE_SUCCESS, "Changed the Team of %s ClaySoldiers to %s");
-        add(ClaySoldierCommands.COMMAND_TEAM_FAILURE, "Failed to find any Clay Soldiers");
+        add(ModCommands.COMMAND_TEAM_SINGLE_SUCCESS, "Changed the Team of a ClaySoldier to %s");
+        add(ModCommands.COMMAND_TEAM_MULTIPLE_SUCCESS, "Changed the Team of %s ClaySoldiers to %s");
+        add(ModCommands.COMMAND_TEAM_FAILURE, "Failed to find any Clay Soldiers");
 
-        add(ClaySoldierCommands.COMMAND_EXECUTED_BY_PLAYER, "Command needs to be executed by a player");
-        add(ClaySoldierCommands.COMMAND_TEAM_ITEM_SUCCESS, "Successfully changed the Team of a Clay Doll");
+        add(ModCommands.COMMAND_EXECUTED_BY_PLAYER, "Command needs to be executed by a player");
+        add(ModCommands.COMMAND_TEAM_ITEM_SUCCESS, "Successfully changed the Team of a Clay Doll");
 
-        add(ClaySoldierCommands.COMMAND_LOADED_TEAMS_SUCCESS, "All currently loaded Clay Soldier Teams [%s]");
-        add(ClaySoldierCommands.COMMAND_SHOW_TEAM_ALLEGIANCE_SUCCESS, "%s is loyal to %s");
-        add(ClaySoldierCommands.COMMAND_SHOW_TEAM_ALLEGIANCE_EMPTY, "No Team is currently loyal to any Player");
+        add(ModCommands.COMMAND_LOADED_TEAMS_SUCCESS, "All currently loaded Clay Soldier Teams [%s]");
+        add(ModCommands.COMMAND_SHOW_TEAM_ALLEGIANCE_SUCCESS, "%s is loyal to %s");
+        add(ModCommands.COMMAND_SHOW_TEAM_ALLEGIANCE_EMPTY, "No Team is currently loyal to any Player");
 
-        add(ClaySoldierCommands.COMMAND_ITEM_SET_ERROR, "This item set does not exist");
-        add(ClaySoldierCommands.COMMAND_ITEM_SET_FAILURE, "The Item Set does not contain any Items");
+        add(ModCommands.COMMAND_ITEM_SET_ERROR, "This item set does not exist");
+        add(ModCommands.COMMAND_ITEM_SET_FAILURE, "The Item Set does not contain any Items");
 
-        add(ClaySoldierCommands.COMMAND_TEAM_LOYALTY_REMOVE, "%s is no longer loyal anyone");
-        add(ClaySoldierCommands.COMMAND_TEAM_LOYALTY_SET, "%s is now loyal to %s");
+        add(ModCommands.COMMAND_TEAM_LOYALTY_REMOVE, "%s is no longer loyal anyone");
+        add(ModCommands.COMMAND_TEAM_LOYALTY_SET, "%s is now loyal to %s");
 
-        add(ClaySoldierCommands.COMMAND_TEAM_LOYALTY_REMOVE_FAILURE, "%s is not loyal to any one");
-        add(ClaySoldierCommands.COMMAND_TEAM_LOYALTY_FAILURE, "Could not set loyalty of %s to %s");
-        add(ClaySoldierCommands.COMMAND_TEAM_LOYALTY_DISABLE_FAILURE, "Cannot change loyalty of %s");
+        add(ModCommands.COMMAND_TEAM_LOYALTY_REMOVE_FAILURE, "%s is not loyal to any one");
+        add(ModCommands.COMMAND_TEAM_LOYALTY_FAILURE, "Could not set loyalty of %s to %s");
+        add(ModCommands.COMMAND_TEAM_LOYALTY_DISABLE_FAILURE, "Cannot change loyalty of %s");
 
 
-        add(ClaySoldierCommands.ENABLING_DATAPACK, "Enabling this datapack requires a world restart to fully work.");
-        add(ClaySoldierCommands.DISABLING_DATAPACK, "Disabling this datapack requires a world restart to fully work.");
+        add(ModCommands.ENABLING_DATAPACK, "Enabling this datapack requires a world restart to fully work.");
+        add(ModCommands.DISABLING_DATAPACK, "Disabling this datapack requires a world restart to fully work.");
 
 
         this.addJade(JadeRegistry.CLAY_MOB, "Clay Mob");
@@ -335,7 +373,7 @@ public class ModLangProvider extends LanguageProvider {
         addKeyableProperty(AttackTypeProperty.ZOMBIE, "Zombie");
         addKeyableProperty(AttackTypeProperty.VAMPIRE, "Vampire");
         addKeyableProperty(AttackTypeProperty.BOSS, "Boss");
-    addKeyableProperty(AttackTypeProperty.ROBOT, "Robot");
+        addKeyableProperty(AttackTypeProperty.ROBOT, "Robot");
 
         add(RangedAttackType.RANGED_ATTACK_TYPE, "Ranged Attack");
         addKeyableProperty(RangedAttackType.NONE, "None");
@@ -378,8 +416,8 @@ public class ModLangProvider extends LanguageProvider {
         addKeyableProperty(SoldierEquipmentSlot.OFFHAND, "Offhand");
         addKeyableProperty(SoldierEquipmentSlot.MAINHAND, "Mainhand");
 
-        add(ClayHorseSlot.ARMOR_SLOT_NAME, "Armor");
-        add(ClayHorseSlot.HORN_SLOT_NAME, "Horn");
+        add(ClayHorseMenuSlot.ARMOR_SLOT_NAME, "Armor");
+        add(ClayHorseMenuSlot.HORN_SLOT_NAME, "Horn");
 
 
         add(ClayPredicates.LogicComparator.ALL.getDisplayName().getString(), "When all:");
@@ -425,8 +463,12 @@ public class ModLangProvider extends LanguageProvider {
         addSoldierPropertyType(SoldierPropertyTypes.EVACUATION, "Emergency Evacuation");
         addSoldierPropertyType(SoldierPropertyTypes.BOUNCE, "Bounce");
         addSoldierPropertyType(SoldierPropertyTypes.BREAKING_POWER, "Breaking Power");
+        addSoldierPropertyType(SoldierPropertyTypes.LUCK, "Luck");
 
 
+        add(ModTags.Items.STAT_ITEM, "Statometer");
+        add(ModTags.Items.CLAY_GOGGLES_ITEM, "Clay Goggles");
+        add(ModTags.Items.CHIP, "Clay Soldier Chips");
 
         add(ModTags.Items.GAME_MASTER_ITEM, "Game Master Items");
         add(ModTags.Items.SOLDIER_WEAPON, "Clay Soldier Weapon");
@@ -440,7 +482,6 @@ public class ModLangProvider extends LanguageProvider {
         add(ModTags.Items.SOLDIER_POI, "Clay Soldier POIs");
         add(ModTags.Items.CLAY_WAX, "Clay Soldier Wax");
         add(ModTags.Items.SOLDIER_BOSS_EQUIPPABLE, "Clay Soldier Boss Equipment");
-
 
         add(ModTags.Items.ARMORED, "Clay Soldier Armored Items");
         add(ModTags.Items.BASIC, "Basic Clay Soldier Items");
@@ -461,7 +502,7 @@ public class ModLangProvider extends LanguageProvider {
         add(ModTags.EntityTypes.CLAY_BOSS, "Clay Soldier Boss");
         add(ModTags.SoldierPropertyTypes.REQUIRES_OWNER, "Requires Owner");
 
-        add(ModAdvancements.ROOT_TITLE, "Getting Started");
+        add(ModAdvancements.ROOT_TITLE, "Clay Soldiers");
         add(ModAdvancements.ROOT_DESCRIPTION, "Obtain some Clay.");
 
         add(ModAdvancements.SOLDIER_TITLE, "Clay Soldier");
@@ -500,11 +541,18 @@ public class ModLangProvider extends LanguageProvider {
         add(ModAdvancements.LOYALTY_TITLE, "Loyalty");
         add(ModAdvancements.LOYALTY_DESCRIPTION, "Gain the loyalty of a team");
 
-        add(ModAdvancements.WORKER_TITLE, "The Working Soldier");
-        add(ModAdvancements.WORKER_DESCRIPTION, "Turn a Soldier into a Pacifist");
 
-        add(ModAdvancements.COMMAND_TITLE, "Loyalty");
-        add(ModAdvancements.COMMAND_DESCRIPTION, "Gain the loyalty of a team");
+        add(ModAdvancements.CHIP_TITLE, "This is Science");
+        add(ModAdvancements.CHIP_DESCRIPTION, "Craft any Clay Soldier Chip");
+
+        add(ModAdvancements.PROGRAMMABLE_TITLE, "The Programmable Soldier");
+        add(ModAdvancements.PROGRAMMABLE_DESCRIPTION, "Give a Clay Soldier a Chip");
+
+        add(ModAdvancements.CHIP_ADDON_TITLE, "Apply an Addon");
+        add(ModAdvancements.CHIP_ADDON_DESCRIPTION, "Use the Chip Assembler to apply any to a Chip");
+
+        add(ModAdvancements.COMMAND_TITLE, "Stay. Stay.");
+        add(ModAdvancements.COMMAND_DESCRIPTION, "Use a Clay Brush in Command Mode on a loyal Clay Soldier");
 
         add(ModAdvancements.POI_TITLE, "This Block looks special!");
         add(ModAdvancements.POI_DESCRIPTION, "Give a Clay Soldier a point of interest");
@@ -514,9 +562,6 @@ public class ModLangProvider extends LanguageProvider {
 
         add(ModAdvancements.CHEST_TITLE, "Chesting Up");
         add(ModAdvancements.CHEST_DESCRIPTION, "Have a Soldier take %s Items from a Chest at once".formatted(SoldierEquipmentSlot.values().length));
-
-        add(ModAdvancements.WORK_TITLE, "They do the work now");
-        add(ModAdvancements.WORK_DESCRIPTION, "Give a Clay Soldier a Job");
 
         add(ModAdvancements.POI_USE_TITLE, "You do that, now!");
         add(ModAdvancements.POI_USE_DESCRIPTION, "Have a Soldier use an Item on the Ground");
@@ -545,6 +590,9 @@ public class ModLangProvider extends LanguageProvider {
         add(ModAdvancements.BLUEPRINT_TITLE, "The Plan");
         add(ModAdvancements.BLUEPRINT_DESCRIPTION, "Obtain a Blueprint from a Escritoire");
 
+        add(ModAdvancements.BLUEPRINT_CHIP_TITLE, "Obtain a Blueprint Chip");
+        add(ModAdvancements.BLUEPRINT_CHIP_DESCRIPTION, "Equip a Soldier with a Blueprint Chip");
+
         add(ModAdvancements.HOUSE_TITLE, "Home Sweet Home");
         add(ModAdvancements.HOUSE_DESCRIPTION, "Fully build any Blueprint Plan");
 
@@ -555,6 +603,19 @@ public class ModLangProvider extends LanguageProvider {
         add(StatInfoDisplay.ENERGY_LANG, "Energy: (%s/%s)");
         add(StatInfoDisplay.GENERATION_LANG, "Generating: %s/t");
 
+        add(StatInfoDisplay.PROGRESS, "Time Remaining: %ss");
+        add(StatInfoDisplay.ENERGY, "Energy (%s/%s)");
+
+        add(StatInfoDisplay.NO_STRUCTURE, "Blueprint: Empty");
+        add(StatInfoDisplay.STRUCTURE, "Blueprint: %s");
+        add(StatInfoDisplay.ITEMS_NEEDED, "Remaining Items");
+        add(StatInfoDisplay.BLUEPRINT_SETTINGS, "Size: (%s), Mirror: %s");
+
+        add(StatInfoDisplay.MIRROR_NONE, "None");
+        add(StatInfoDisplay.MIRROR_LEFT_RIGHT, "Left to Right");
+        add(StatInfoDisplay.MIRROR_FRONT_BACK, "Front to Back");
+
+
         add(StatInfoDisplay.HEALTH, "Health: (%s/%s)");
         add(StatInfoDisplay.ARMOR, "Armor: %s");
         add(StatInfoDisplay.TEAM, "Team: %s");
@@ -564,8 +625,49 @@ public class ModLangProvider extends LanguageProvider {
         add(StatInfoDisplay.STATUS, "Status: %s");
 
         add(StatInfoDisplay.MODULE, "Module: %s");
+        add(StatInfoDisplay.FISHING, "Fishing: %s");
 
+        add(ClaySoldierFishingData.FISHING_LANG, "At: %s");
+        add(ClaySoldierFishingData.EMPTY_LANG, "None");
+        add(ClaySoldierFishingData.ANKER_LANG, "Anker");
+
+        add(ClaySoldierFishingTicker.BREAK_LANG, "Fishing Ticker Break: %ss");
+        add(ClaySoldierFishingTicker.FISHING_LANG, "Fishing Ticker Fishing: %ss");
+
+        addModuleType(ClaySoldierChips.EMPTY_TYPE, "Empty Module");
         addModuleType(ClaySoldierChips.COMBAT_TYPE, "Combat Module");
+        addModuleType(ClaySoldierChips.USE_POI, "Poi Module");
+
+        addModuleType(ClaySoldierChips.BREAK_CROPS_TYPE, "Harvest Crops Module");
+        addModuleType(ClaySoldierChips.PLACE_SEEDS_TYPE, "Plant Seeds Module");
+        addModuleType(ClaySoldierChips.PICK_UP_ITEMS_TYPE, "Pick up Items Module");
+
+        addModuleType(ClaySoldierChips.DIG_TYPE, "Dig Module");
+        addModuleType(ClaySoldierChips.FISHING_TYPE, "Fishing Module");
+        addModuleType(ClaySoldierChips.BUILD_BLUEPRINT_TYPE, "Build Blueprint Module");
+
+
+        addChipAddon(ClaySoldierChipAddons.RANGE_ADDON, "Range");
+        addChipAddon(ClaySoldierChipAddons.NO_BREAK_ADDON, "No Break");
+        addChipAddon(ClaySoldierChipAddons.FISH_TREASURE_ADDON, "Fish Treasure");
+        addChipAddon(ClaySoldierChipAddons.TARGET_MONSTER_ADDON, "Target Monsters");
+        addChipAddon(ClaySoldierChipAddons.TARGET_ANIMALS_ADDON, "Target Animals");
+        addChipAddon(ClaySoldierChipAddons.TARGET_IGNORE_BABIES_ADDON, "Target Ignore Babies");
+
+
+        add(ClaySoldierChip.NO_MODI, "This Chip does not have any additional Modi");
+
+        add(EmptyClaySoldierChip.EMPTY_CHIP_DATA_LANG, "No Data");
+
+        add(PoiChip.POI_NO_DATA_LANG, "POI: Unset");
+        add(PoiChip.ACTIVE_POI_DATA_LANG, "POI: Active");
+
+
+        add(CombatChip.COMBAT_DATA_MONSTER_LANG, "Target Monsters");
+        add(CombatChip.COMBAT_DATA_ANIMAL_LANG, "Target Animals");
+        add(CombatChip.COMBAT_DATA_IGNORE_BABIES_LANG, "Ignoring Babies");
+        add(CombatChip.COMBAT_DATA_OWNER_LANG, "Target from Owner");
+
     }
 
     private void addKeyableProperty(KeyableTranslatableProperty property, String name) {
@@ -580,7 +682,11 @@ public class ModLangProvider extends LanguageProvider {
         this.add(moduleType.get().getDescriptionId(), name);
     }
 
-    private void addJade(ResourceLocation key, String name) {
+    private void addChipAddon(ClaySoldierChipAddon addon, String name) {
+        this.add(addon.getDescriptionId(), name);
+    }
+
+    private void addJade(Identifier key, String name) {
         this.add("config.jade.plugin_%s.%s".formatted(key.getNamespace(), key.getPath()), name);
     }
     private void addConfig(String key, String name) {

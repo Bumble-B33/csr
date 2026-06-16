@@ -8,7 +8,6 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.flag.FeatureFlagSet;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -36,10 +35,5 @@ public class EscritoireBlock extends Block {
     @Override
     protected @Nullable MenuProvider getMenuProvider(BlockState state, Level level, BlockPos pos) {
         return new SimpleMenuProvider((id, inventory, player) -> new EscritoireMenu(id, inventory, ContainerLevelAccess.create(level, pos)), Component.translatable(CONTAINER_TITLE));
-    }
-
-    @Override
-    public boolean isEnabled(FeatureFlagSet enabledFeatures) {
-        return ClaySoldiersCommon.COMMON_HOOKS.isBlueprintEnabled(enabledFeatures);
     }
 }

@@ -1,26 +1,31 @@
 package net.bumblebee.claysoldiers.entity.goal.workgoal;
 
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
+import net.bumblebee.claysoldiers.claysoldierchips.ClayMobWorkAccess;
 import net.bumblebee.claysoldiers.datamap.SoldierEquipmentSlot;
-import net.bumblebee.claysoldiers.entity.common.soldier.AbstractClaySoldierEntity;
+import net.bumblebee.claysoldiers.entity.common.ClayMobEntity;
+import net.bumblebee.claysoldiers.entity.common.programmable.ProgrammableClaySoldierEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.item.ItemStack;
 
 import java.util.EnumSet;
 import java.util.List;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
 
 public class PickUpItemsGoal extends AbstractWorkGoal {
     public static final String PICK_UP_ITEM_LANG = JOB_LANG_KEY.formatted(ClaySoldiersCommon.MOD_ID, "pick_up_items");
     private static final Predicate<ItemEntity> ALLOWED_ITEMS = itemEntity -> !itemEntity.hasPickUpDelay() && itemEntity.isAlive();
-    private static final float VERTICAL_SEARCH_RANGE = 8;
+    private final int verticalSearchRange;
+    private final int horizontalSearchRange;
 
-    public PickUpItemsGoal(AbstractClaySoldierEntity soldier, Supplier<WorkSelectorGoal> workSelector) {
-        super(soldier, workSelector);
+    public PickUpItemsGoal(ProgrammableClaySoldierEntity soldier, ClayMobWorkAccess workAccess, SearchRange searchRange) {
+        super(soldier, workAccess);
         this.setFlags(EnumSet.of(Flag.MOVE));
+        this.horizontalSearchRange = searchRange.horizontalRange();
+        this.verticalSearchRange = searchRange.verticalRange();
     }
 
     @Override
@@ -66,7 +71,9 @@ public class PickUpItemsGoal extends AbstractWorkGoal {
                         if (cap != null) {
                             soldier.setCarriedStack(cap.tryInserting(soldier.getCarriedStack()));
                         }
-                        takeAShortBreak();
+
+                        takeAShortBreak(false);
+
                     } else {
                         setCapCache();
                     }
@@ -88,14 +95,14 @@ public class PickUpItemsGoal extends AbstractWorkGoal {
     }
 
     private List<ItemEntity> getItemsInArea() {
-        return getItemsInArea(soldier, VERTICAL_SEARCH_RANGE, ALLOWED_ITEMS);
+        return getItemsInArea(soldier, horizontalSearchRange, verticalSearchRange, ALLOWED_ITEMS);
     }
 
-    public static List<ItemEntity> getItemsInArea(AbstractClaySoldierEntity soldier, float verticalSearchRange, Predicate<ItemEntity> allowed) {
-        return soldier.level().getEntitiesOfClass(ItemEntity.class, soldier.getBoundingBox().inflate(8.0, verticalSearchRange, 8.0), allowed);
+    public static List<ItemEntity> getItemsInArea(ClayMobEntity soldier, float searchRange, float verticalSearchRange, Predicate<ItemEntity> allowed) {
+        return soldier.level().getEntitiesOfClass(ItemEntity.class, soldier.getBoundingBox().inflate(searchRange, verticalSearchRange, searchRange), allowed);
     }
 
-    public static void pushToWardsItem(AbstractClaySoldierEntity soldier, ItemEntity itemEntity) {
+    public static void pushToWardsItem(ClayMobEntity soldier, ItemEntity itemEntity) {
         double xDif = itemEntity.getX() - soldier.getX();
         double zDif = itemEntity.getZ() - soldier.getZ();
         double absMax = Mth.absMax(xDif, zDif);
@@ -127,12 +134,12 @@ public class PickUpItemsGoal extends AbstractWorkGoal {
     }
 
     @Override
-    public boolean workRequiresItemPickUp() {
+    public boolean workRequiresItemPickUp(ItemStack stack) {
         return true;
     }
 
     @Override
-    public boolean workRequiresItemCarrying() {
+    public boolean workRequiresItemCarrying(ItemStack stack) {
         return true;
     }
 }

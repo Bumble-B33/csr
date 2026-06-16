@@ -1,23 +1,24 @@
 package net.bumblebee.claysoldiers.entity.common;
 
-import com.mojang.logging.LogUtils;
-import net.bumblebee.claysoldiers.entity.goal.ClayMobSitGoal;
 import net.bumblebee.claysoldiers.entity.common.inventory.ClaySoldierInventoryHandler;
 import net.bumblebee.claysoldiers.entity.common.soldier.AbstractClaySoldierEntity;
 import net.bumblebee.claysoldiers.entity.common.soldier.ClaySoldierLike;
+import net.bumblebee.claysoldiers.entity.goal.ClayMobSitGoal;
 import net.bumblebee.claysoldiers.init.ModEntityTypes;
 import net.bumblebee.claysoldiers.soldierproperties.customproperties.specialattack.SpecialAttack;
 import net.bumblebee.claysoldiers.soldierproperties.customproperties.specialattack.SpecialAttackType;
+import net.bumblebee.claysoldiers.team.ClayMobTeam;
 import net.bumblebee.claysoldiers.util.codec.CodecUtils;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
+import net.minecraft.world.attribute.EnvironmentAttributes;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
@@ -33,14 +34,12 @@ import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.Logger;
 
 import java.util.EnumSet;
 import java.util.List;
 import java.util.function.Consumer;
 
 public class ClayWraithEntity extends ClayMobTeamOwnerEntity implements ClaySoldierLike, VampiricClayMob {
-    private static final Logger LOGGER = LogUtils.getLogger();
     private static final double WRAITH_ATTACK_REACH = Math.sqrt(2.04F) - 0.6F;
     public static final float FLAP_DEGREES_PER_TICK = 45.836624F;
     public static final int TICKS_PER_FLAP = Mth.ceil((float) (Math.PI * 5.0 / 4.0));
@@ -106,7 +105,7 @@ public class ClayWraithEntity extends ClayMobTeamOwnerEntity implements ClaySold
     }
 
     @Override
-    protected void handleTeamChange(ResourceLocation teamId) {
+    protected void handleTeamChange(Holder.Reference<ClayMobTeam> team) {
     }
 
     @Override
@@ -143,15 +142,15 @@ public class ClayWraithEntity extends ClayMobTeamOwnerEntity implements ClaySold
     }
 
     @Override
-    public void addAdditionalSaveData(ValueOutput pCompound) {
-        super.addAdditionalSaveData(pCompound);
-        pCompound.storeNullable("bound_pos", BlockPos.CODEC, boundOrigin);
+    public void addAdditionalSaveData(ValueOutput valueOutput) {
+        super.addAdditionalSaveData(valueOutput);
+        valueOutput.storeNullable("bound_pos", BlockPos.CODEC, boundOrigin);
         if (hasLimitedLife()) {
-            pCompound.putInt(MAX_LIFE_TICKS_TAG, this.maxLimitedLifeTicks);
-            pCompound.putInt(LIFE_TICKS_TAG, this.limitedLifeTicks);
+            valueOutput.putInt(MAX_LIFE_TICKS_TAG, this.maxLimitedLifeTicks);
+            valueOutput.putInt(LIFE_TICKS_TAG, this.limitedLifeTicks);
         }
         if (!attackFunctions.isEmpty()) {
-            writeSpecialAttackToTag(pCompound, attackFunctions);
+            writeSpecialAttackToTag(valueOutput, attackFunctions);
         }
 
     }
@@ -286,7 +285,7 @@ public class ClayWraithEntity extends ClayMobTeamOwnerEntity implements ClaySold
 
     @Override
     public float getNightPower() {
-        return (level().getMoonBrightness() + 1) * 1.5f;
+        return VampiricClayMob.getPowerForMoonPhase(level().environmentAttributes().getValue(EnvironmentAttributes.MOON_PHASE, this.blockPosition()));
     }
 
     @Override
@@ -323,7 +322,7 @@ public class ClayWraithEntity extends ClayMobTeamOwnerEntity implements ClaySold
             wraith.finalizeSpawn(level, level.getCurrentDifficultyAt(bound), summoned ? EntitySpawnReason.MOB_SUMMONED : EntitySpawnReason.CONVERSION, null);
             wraith.setBoundOrigin(bound);
             wraith.setLimitedLife(20 * (duration + caster.getRandom().nextInt(duration)));
-            wraith.setClayTeamType(caster.getClayTeamType());
+            wraith.setClayTeamType(caster.getClayTeamHolder());
             level.addFreshEntityWithPassengers(wraith);
             level.gameEvent(GameEvent.ENTITY_PLACE, bound, GameEvent.Context.of(caster));
             onSpawn.accept(wraith);

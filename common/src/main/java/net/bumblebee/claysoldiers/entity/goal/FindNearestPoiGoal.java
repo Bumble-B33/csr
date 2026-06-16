@@ -2,6 +2,7 @@ package net.bumblebee.claysoldiers.entity.goal;
 
 import net.bumblebee.claysoldiers.entity.common.soldier.AbstractClaySoldierEntity;
 import net.bumblebee.claysoldiers.soldierpoi.SoldierPoiWithBlock;
+import net.bumblebee.claysoldiers.soldierpoi.SoldierPoiWithItem;
 import net.bumblebee.claysoldiers.soldierpoi.SoldierPoiWithSource;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -79,7 +80,7 @@ public class FindNearestPoiGoal extends Goal {
     }
 
     private SoldierPoiWithSource<ItemEntity> getPoiWithPos(ItemEntity entity) {
-        return SoldierPoiWithSource.getPoiFromItem(entity);
+        return new SoldierPoiWithItem(entity);
     }
 
     protected AABB getTargetSearchArea(double pTargetDistance) {

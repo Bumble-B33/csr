@@ -9,23 +9,24 @@ import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.client.model.geom.builders.*;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.state.HumanoidRenderState;
 import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
+import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 
 import java.util.function.Function;
 
 public class ClaySoldierOnHeadModel<T extends HumanoidRenderState> extends HumanoidModel<T> {
     public static final ModelLayerLocation LAYER_LOCATION =
-            new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_soldier_on_head"), "main");
+            new ModelLayerLocation(Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_soldier_on_head"), "main");
     private static final String SOLDIER_NAME = "soldier";
     private static final String SOLDIER_LEFT_ARM = "soldier_left_arm";
     private static final String SOLDIER_RIGHT_ARM = "soldier_right_arm";
-    private static final ResourceLocation SOLDIER_TEXTURE = ResourceLocation.withDefaultNamespace("textures/block/clay.png");
-    public static final RenderType RENDER_TYPE = RenderType.entityCutoutNoCull(SOLDIER_TEXTURE);
+    private static final Identifier SOLDIER_TEXTURE = Identifier.withDefaultNamespace("textures/block/clay.png");
+    public static final RenderType RENDER_TYPE = RenderTypes.entityCutout(SOLDIER_TEXTURE);
     public final ModelPart soldierHead;
     public final ModelPart soldierLeftArm;
     public final ModelPart soldierRightArm;

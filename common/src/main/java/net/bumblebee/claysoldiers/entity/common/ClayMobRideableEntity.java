@@ -1,12 +1,16 @@
 package net.bumblebee.claysoldiers.entity.common;
 
 import net.bumblebee.claysoldiers.entity.common.soldier.AbstractClaySoldierEntity;
+import net.bumblebee.claysoldiers.team.ClayMobTeam;
 import net.bumblebee.claysoldiers.team.ClayMobTeamManger;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.core.Holder;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
+import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NonNull;
 
 import java.util.List;
 
@@ -14,8 +18,15 @@ import java.util.List;
  * The abstract class of a {@code ClayMob} that can be ridden.
  */
 public abstract class ClayMobRideableEntity extends ClayMobEntity {
-    protected ClayMobRideableEntity(EntityType<? extends ClayMobRideableEntity> pEntityType, Level pLevel) {
-        super(pEntityType, pLevel);
+    private final Holder.Reference<ClayMobTeam> defaultTeam;
+
+    protected ClayMobRideableEntity(EntityType<? extends ClayMobRideableEntity> entityType, Level level) {
+        super(entityType, level);
+        this.defaultTeam = ClayMobTeamManger.getDefault(level.registryAccess());
+    }
+
+    protected Holder.Reference<ClayMobTeam> getDefaultTeam() {
+        return defaultTeam;
     }
 
     @Override
@@ -35,12 +46,21 @@ public abstract class ClayMobRideableEntity extends ClayMobEntity {
     }
 
     @Override
-    public ResourceLocation getClayTeamType() {
+    public @NonNull ResourceKey<ClayMobTeam> getClayTeamKey() {
         if (getFirstPassenger() instanceof ClayMobEntity clayMob) {
-            return clayMob.getClayTeamType();
+            return clayMob.getClayTeamKey();
         }
-        return ClayMobTeamManger.NO_TEAM_TYPE;
+        return getDefaultTeam().key();
     }
+
+    @Override
+    public @NotNull Holder.Reference<ClayMobTeam> getClayTeamHolder() {
+        if (getFirstPassenger() instanceof ClayMobEntity clayMob) {
+            return clayMob.getClayTeamHolder();
+        }
+        return getDefaultTeam();
+    }
+
 
     @Override
     public int getTeamColor() {
@@ -55,6 +75,7 @@ public abstract class ClayMobRideableEntity extends ClayMobEntity {
     @Override
     public List<String> getInfoState() {
         List<String> info = super.getInfoState();
+        info.add("CachedTeam: " + defaultTeam);
         info.add("Rider: " + (getFirstPassenger() == null ? "Null" : getFirstPassenger().getClass().getSimpleName()));
         return info;
     }

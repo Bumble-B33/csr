@@ -4,12 +4,13 @@ import net.bumblebee.claysoldiers.entity.common.boss.ClayBlockProjectileEntity;
 import net.bumblebee.claysoldiers.init.ModDataComponents;
 import net.bumblebee.claysoldiers.init.ModEnchantments;
 import net.bumblebee.claysoldiers.init.ModItems;
+import net.bumblebee.claysoldiers.item.claymobspawn.ClaySoldierSpawnItem;
+import net.bumblebee.claysoldiers.team.ClayMobTeam;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -97,7 +98,7 @@ public class ClayStaffItem extends Item {
         }
 
         if (ammo != null) {
-            shootBlock(livingEntity, level, stack, timeRemaining, ammo.get(ModDataComponents.CLAY_MOB_TEAM_COMPONENT.get()));
+            shootBlock(livingEntity, level, stack, timeRemaining, ClaySoldierSpawnItem.getTeamFromStack(ammo));
             return true;
         }
         return false;
@@ -120,7 +121,7 @@ public class ClayStaffItem extends Item {
         return null;
     }
 
-    protected void shootBlock(LivingEntity shooter, Level level, ItemStack firedFrom, int timeRemaining, @Nullable ResourceLocation clayTeam) {
+    protected void shootBlock(LivingEntity shooter, Level level, ItemStack firedFrom, int timeRemaining, @Nullable ResourceKey<ClayMobTeam> clayTeam) {
         int pierce = getEnchantmentLevel(firedFrom, Enchantments.PIERCING, level.registryAccess());
 
         float blockSize = ((MAX_HOLD_DURATION - timeRemaining) * 3f) / getMaxPower(firedFrom, level.registryAccess());
@@ -137,7 +138,7 @@ public class ClayStaffItem extends Item {
      * @param blockSize Value in range [{@value MIN_BLOCK_SIZE} - {@value MAX_BLOCK_SIZE}]
      * @param yAngleOffset y angle offset in degree
      */
-    protected void shootBlock(LivingEntity shooter, Level level, float blockSize, float yAngleOffset, int pierce, @Nullable ResourceLocation clayTeam, ItemStack firedFrom) {
+    protected void shootBlock(LivingEntity shooter, Level level, float blockSize, float yAngleOffset, int pierce, @Nullable ResourceKey<ClayMobTeam> clayTeam, ItemStack firedFrom) {
 
         ClayBlockProjectileEntity clayBlock = new ClayBlockProjectileEntity(level, shooter, shooter.getEyeHeight());
         clayBlock.shootFromRotation(shooter, shooter.getXRot(), shooter.getYRot() + yAngleOffset, 0.0F, blockSize / 2f, 1.0F);

@@ -66,10 +66,6 @@ public class ClaySoldierInventory {
         return inventory.getOrDefault(slot, ItemStackWithEffect.EMPTY);
     }
 
-    public Iterable<ItemStack> getAllSlotsAsStacks() {
-        return inventory.values().stream().map(ItemStackWithEffect::stack).toList();
-    }
-
     public Iterable<ItemStackWithEffect> getAllSlots() {
         return inventory.values();
     }
@@ -101,7 +97,7 @@ public class ClaySoldierInventory {
     }
 
     public void dropInventory(ServerLevel level, BiConsumer<SoldierEquipmentSlot, ItemStack> dropInWorld) {
-        if (!level.getGameRules().getBoolean(ClaySoldiersCommon.CLAY_SOLDIER_INVENTORY_DROP_RULE)) {
+        if (!ClaySoldiersCommon.CONFIG.getServerConfig().soldierDropInventory()) {
             return;
         }
         for (SoldierEquipmentSlot slot : SoldierEquipmentSlot.values()) {

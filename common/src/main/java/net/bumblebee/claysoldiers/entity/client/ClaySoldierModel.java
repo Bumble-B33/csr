@@ -10,22 +10,20 @@ import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.builders.CubeDeformation;
 import net.minecraft.client.model.geom.builders.LayerDefinition;
 import net.minecraft.client.model.geom.builders.MeshDefinition;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.HumanoidArm;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.SwingAnimationType;
 
 public class ClaySoldierModel extends HumanoidModel<AbstractClaySoldierRenderState> {
-    public static final ModelLayerLocation LAYER_LOCATION =
-            new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_soldier"), "main");
-    public static final ModelLayerLocation HELMET_LAYER_LOCATION =
-            new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_soldier"), "helmet");
-    public static final ModelLayerLocation CHESTPLATE_LAYER_LOCATION =
-            new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_soldier"), "chestplate");
-    public static final ModelLayerLocation LEGGINGS_LAYER_LOCATION =
-            new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_soldier"), "leggings");
-    public static final ModelLayerLocation BOOTS_LAYER_LOCATION =
-            new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_soldier"), "boots");
+    protected static final Identifier LAYER_KEY = Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_soldier");
+    public static final ModelLayerLocation LAYER_LOCATION = createLayerLocation("main");
+    public static final ModelLayerLocation HELMET_LAYER_LOCATION = createLayerLocation("helmet");
+    public static final ModelLayerLocation CHESTPLATE_LAYER_LOCATION = createLayerLocation("chestplate");
+    public static final ModelLayerLocation LEGGINGS_LAYER_LOCATION = createLayerLocation("leggings");
+    public static final ModelLayerLocation BOOTS_LAYER_LOCATION = createLayerLocation("boots");
 
     private static final float SCALE = AbstractClaySoldierEntity.DEFAULT_SCALE;
     protected static final CubeDeformation SHRINK_DEFORMATION = new CubeDeformation(SCALE, SCALE, SCALE);
@@ -47,13 +45,32 @@ public class ClaySoldierModel extends HumanoidModel<AbstractClaySoldierRenderSta
     public void setupAnim(AbstractClaySoldierRenderState claySoldier) {
         super.setupAnim(claySoldier);
 
-        if (claySoldier.isZombie) {
-            AnimationUtils.animateZombieArms(leftArm, rightArm, claySoldier.isAggressive, claySoldier.attackTime, claySoldier.ageInTicks);
+        if (claySoldier.isZombie && (!claySoldier.isBaby || claySoldier.getMainHandItemStack() == ItemStack.EMPTY)) {
+            boolean animateAttack = claySoldier.swingAnimationType != SwingAnimationType.STAB;
+            if (animateAttack) {
+                float attackTime = claySoldier.attackTime;
+                float armDrop = -(float) Math.PI / (claySoldier.isAggressive ? 1.5F : 2.25F);
+                float attackYRotModifier = Mth.sin(attackTime * (float) Math.PI);
+                float attackXRotModifier = Mth.sin((1.0F - (1.0F - attackTime) * (1.0F - attackTime)) * (float) Math.PI);
+                rightArm.zRot = 0.0F;
+                rightArm.yRot = -(0.1F - attackYRotModifier * 0.6F);
+                rightArm.xRot = armDrop;
+                rightArm.xRot += attackYRotModifier * 1.2F - attackXRotModifier * 0.4F;
+                leftArm.zRot = 0.0F;
+                leftArm.yRot = 0.1F - attackYRotModifier * 0.6F;
+                leftArm.xRot = armDrop;
+                leftArm.xRot += attackYRotModifier * 1.2F - attackXRotModifier * 0.4F;
+            }
+
+
         }
+        AnimationUtils.bobArms(rightArm, leftArm, claySoldier.ageInTicks);
+
         animateArms(claySoldier);
 
         setUpRidingPose(claySoldier);
         setSittingPose(claySoldier);
+        setupFishingPose(claySoldier);
     }
 
     private void animateArms(AbstractClaySoldierRenderState claySoldier) {
@@ -68,7 +85,7 @@ public class ClaySoldierModel extends HumanoidModel<AbstractClaySoldierRenderSta
             this.leftArm.xRot = -Mth.PI / (2.45F);
             this.leftArm.yRot = 0.5f;
         }
-        if (claySoldier.isFallingWithGlider || !claySoldier.carriedItemStack.isEmpty()) {
+        if (claySoldier.isFallingWithGlider || !claySoldier.carriedItemRenderState.isEmpty()) {
             this.leftArm.xRot = -Mth.PI;
             this.rightArm.xRot = -Mth.PI;
             this.rightArm.yRot = 0;
@@ -117,6 +134,7 @@ public class ClaySoldierModel extends HumanoidModel<AbstractClaySoldierRenderSta
             }
         }
     }
+
     public void sittingPose1() {
         head.y = 7.5f;
         leftArm.y = 9.5f;
@@ -129,6 +147,7 @@ public class ClaySoldierModel extends HumanoidModel<AbstractClaySoldierRenderSta
         leftLeg.z = 1.8f;
         setLegSittingRot();
     }
+
     private void sittingPose2() {
         head.y = 11f;
         head.z = 5f;
@@ -155,10 +174,32 @@ public class ClaySoldierModel extends HumanoidModel<AbstractClaySoldierRenderSta
         setLegSittingRot();
 
     }
+
     private void setLegSittingRot() {
         rightLeg.yRot = (float) (Math.PI / 10);
         leftLeg.yRot = (float) (-Math.PI / 10);
         rightLeg.xRot = -1.4137167F;
         leftLeg.xRot = -1.4137167F;
+    }
+
+    private void setupFishingPose(AbstractClaySoldierRenderState soldier) {
+        if (!soldier.isFishingAnker) {
+            return;
+        }
+
+        sittingPose1();
+        rightArm.xRot = Mth.PI;
+        leftArm.xRot = Mth.PI;
+        rightArm.zRot = 0.23f;
+        leftArm.zRot = -0.23f;
+        rightArm.y -= 2;
+        leftArm.y -= 2;
+
+
+        head.xRot = 0.5f;
+    }
+
+    protected static ModelLayerLocation createLayerLocation(String key) {
+        return new ModelLayerLocation(LAYER_KEY, key);
     }
 }

@@ -5,9 +5,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.client.color.ColorLerper;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.entity.LivingEntity;
 
@@ -16,22 +14,44 @@ import java.util.Objects;
 
 public class ColorHelper {
     public static final int DEFAULT_CLAY_COLOR = 0xFFa1a7b1;
+    public static final int NO_COLOR = -1;
     public static final Codec<ColorHelper> CODEC = Codec.either(Codec.INT, Codec.string(4, 7)).comapFlatMap(ColorHelper::getFromEither, ColorHelper::convertToEither);
-    public static final StreamCodec<ByteBuf, ColorHelper> STREAM_CODEC = ByteBufCodecs.either(ByteBufCodecs.INT, ByteBufCodecs.STRING_UTF8).map(ColorHelper::new, ColorHelper::convertToEither);
-    public static final ColorHelper EMPTY = color(-1);
-    public static final ColorHelper JEB =  new ColorHelper(-1, true);
+    public static final StreamCodec<ByteBuf, ColorHelper> STREAM_CODEC = new StreamCodec<>() {
+        @Override
+        public ColorHelper decode(ByteBuf byteBuf) {
+            if (!byteBuf.readBoolean()) {
+                return EMPTY;
+            }
+
+            return new ColorHelper(byteBuf.readInt(), byteBuf.readBoolean(), false);
+        }
+
+        @Override
+        public void encode(ByteBuf buf, ColorHelper colorHelper) {
+            if (colorHelper.empty) {
+                buf.writeBoolean(false);
+            } else {
+                buf.writeBoolean(true);
+                buf.writeInt(colorHelper.color);
+                buf.writeBoolean(colorHelper.jeb);
+            }
+        }
+    };
+
+    public static final ColorHelper CLAY_COLOR = new ColorHelper(DEFAULT_CLAY_COLOR, false, false);
+    public static final ColorHelper JEB =  new ColorHelper(NO_COLOR, true, false);
+
+    public static final ColorHelper EMPTY = new ColorHelper(NO_COLOR, false, true);
+
     public static final String JEB_NAME = "jeb_";
-    private static final int MAGIC_NUMBER = 25;
-    private static final String INT_COLOR_TAG = "color";
     private final int color;
     private final boolean jeb;
+    private final boolean empty;
 
-    public ColorHelper(int color, boolean jeb) {
-        this.color = color;
+    private ColorHelper(int color, boolean jeb, boolean empty) {
+        this.color = empty ? NO_COLOR : color | 0xFF000000;
         this.jeb = jeb;
-    }
-    private ColorHelper(Either<Integer, String> either) {
-        this(either.left().orElse(-1), either.right().isPresent());
+        this.empty = empty || (color == NO_COLOR && !jeb);
     }
 
     private static DataResult<ColorHelper> getFromEither(Either<Integer, String> either) {
@@ -52,28 +72,6 @@ public class ColorHelper {
         return jeb ? Either.right(JEB_NAME) : Either.left(color);
     }
 
-    public void writeToTag(String key, CompoundTag tag) {
-        var tagColor = new CompoundTag();
-        if (color >= 0) {
-            tagColor.putInt(INT_COLOR_TAG, color);
-        }
-        if (jeb) {
-            tagColor.putBoolean(JEB_NAME, true);
-        }
-        tag.put(key, tagColor);
-    }
-    public static ColorHelper getFromTag(String key, CompoundTag tag) {
-        if (!tag.contains(key)) {
-            return EMPTY;
-        }
-
-        return tag.getCompound(key).map(t ->
-            new ColorHelper(
-                    t.getIntOr(INT_COLOR_TAG, -1),
-                    t.getBooleanOr(JEB_NAME, false))
-        ).orElse(EMPTY);
-    }
-
     /**
      * Creates a new ColorHelper with a rainbow chaining color.
      */
@@ -85,7 +83,7 @@ public class ColorHelper {
      * Creates a new static color.
      */
     public static ColorHelper color(int color) {
-        return new ColorHelper(Either.left(color));
+        return new ColorHelper(color, false, false);
     }
 
     @Override
@@ -131,7 +129,7 @@ public class ColorHelper {
 
     }
     public boolean isEmpty() {
-        return !jeb && color <= -1;
+        return empty;
     }
     public boolean isJeb() {
         return jeb;
@@ -141,7 +139,7 @@ public class ColorHelper {
     }
 
     public int[] covertToRgb() {
-        if (color <= -1) {
+        if (isEmpty()) {
             return new int[0];
         }
 
@@ -177,11 +175,11 @@ public class ColorHelper {
      * @return the combined Color.
      */
     public ColorHelper addColor(ColorHelper colorHelper) {
-        if (color <= -1 ) {
-            return new ColorHelper(colorHelper.color, jeb || colorHelper.jeb);
+        if (isEmpty()) {
+            return colorHelper;
         }
-        if (colorHelper.color <= -1) {
-            return new ColorHelper(color, jeb || colorHelper.jeb);
+        if (colorHelper.isEmpty()) {
+            return this;
         }
 
         return dyeColorHelper(colorHelper.covertToRgb(), jeb || colorHelper.jeb);
@@ -211,7 +209,7 @@ public class ColorHelper {
         newColorArray[1] += dyeGreen;
         newColorArray[2] += dyeBlue;
 
-        return new ColorHelper(getColorInt(newColorArray, (float) heightsValueOfEveryColorArray), jeb);
+        return new ColorHelper(getColorInt(newColorArray, (float) heightsValueOfEveryColorArray), jeb, false);
     }
 
     private static int getColorInt(int[] newColorArray, float heightsValueOfEveryColorArray) {

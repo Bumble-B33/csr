@@ -1,17 +1,17 @@
 package net.bumblebee.claysoldiers.integration;
 
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import org.jetbrains.annotations.Nullable;
 import snownee.jade.api.ui.Element;
 import snownee.jade.api.ui.IDisplayHelper;
 
 public class NeoForgeAirBubbleElement extends Element {
-    public static final ResourceLocation AIR_BUBBLE = ResourceLocation.withDefaultNamespace("hud/air");
-    public static final ResourceLocation AIR_BUBBLE_BURSTING = ResourceLocation.withDefaultNamespace("hud/air_bursting");
+    public static final Identifier AIR_BUBBLE = Identifier.withDefaultNamespace("hud/air");
+    public static final Identifier AIR_BUBBLE_BURSTING = Identifier.withDefaultNamespace("hud/air_bursting");
 
     private final int armor;
     private final boolean bursting;
@@ -39,7 +39,7 @@ public class NeoForgeAirBubbleElement extends Element {
     }
 
     @Override
-    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float maxX) {
+    public void extractRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float maxX) {
         if (iconCount == 0) {
             return;
         }

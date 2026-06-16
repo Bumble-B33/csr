@@ -11,7 +11,7 @@ import net.bumblebee.claysoldiers.init.ModEntityTypes;
 import net.bumblebee.claysoldiers.init.ModTags;
 import net.bumblebee.claysoldiers.networking.HamsterWheelEnergyPayload;
 import net.bumblebee.claysoldiers.team.ClayMobTeamManger;
-import net.bumblebee.claysoldiers.team.TeamLoyaltyManger;
+import net.bumblebee.claysoldiers.team.loyalty.TeamLoyaltyManger;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -22,7 +22,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Containers;
@@ -42,9 +42,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class HamsterWheelBlockEntity extends BlockEntity implements ClayMobContainer, StatInfoDisplay {
-    public static final ResourceLocation WORKSITE_ID = ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "hamster_wheel");
+    public static final Identifier WORKSITE_ID = Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "hamster_wheel");
     private final WalkAnimationState walkAnimation = new WalkAnimationState();
-    private final IHamsterWheelEnergyStorage energyStorage;
+    private final HamsterWheelEnergyStorage energyStorage;
     private final AssignableWorksiteCapability poiCap = new AssignableWorksiteCapability() {
         @Override
         public boolean canUse(ClayMobEntity clayMob) {
@@ -62,7 +62,7 @@ public class HamsterWheelBlockEntity extends BlockEntity implements ClayMobConta
         }
 
         @Override
-        public ResourceLocation descriptionId() {
+        public Identifier descriptionId() {
             return WORKSITE_ID;
         }
     };
@@ -104,7 +104,7 @@ public class HamsterWheelBlockEntity extends BlockEntity implements ClayMobConta
 
         soldier.stopRiding();
         soldier.ejectPassengers();
-        soldier.dropCarried();
+        soldier.enteredHamsterWheel();
 
         setSoldierData(HamsterWheelSoldierData.of(soldier), 7);
 
@@ -115,7 +115,7 @@ public class HamsterWheelBlockEntity extends BlockEntity implements ClayMobConta
         return poiCap;
     }
 
-    public @Nullable IHamsterWheelEnergyStorage getEnergyStorage(@Nullable Direction direction) {
+    public @Nullable HamsterWheelEnergyStorage getEnergyStorage(@Nullable Direction direction) {
         if (hasEnergyStorage()) {
             if (direction == null) {
                 return energyStorage.asViewOnly();
@@ -125,7 +125,7 @@ public class HamsterWheelBlockEntity extends BlockEntity implements ClayMobConta
         return null;
     }
 
-    public static @Nullable IHamsterWheelEnergyStorage getEnergyStorage(BlockEntity blockEntity, Direction context) {
+    public static @Nullable HamsterWheelEnergyStorage getEnergyStorage(BlockEntity blockEntity, Direction context) {
         if (blockEntity instanceof HamsterWheelBlockEntity hamsterWheelBlockEntity) {
             return hamsterWheelBlockEntity.getEnergyStorage(context);
         }
@@ -208,7 +208,7 @@ public class HamsterWheelBlockEntity extends BlockEntity implements ClayMobConta
         if (soldierData == null) {
             return;
         }
-        var owner = TeamLoyaltyManger.getTeamPlayerData(level).getPlayerForTeam(soldierData.getTeamId());
+        var owner = TeamLoyaltyManger.getTeamPlayerData(level).getPlayerForTeam(soldierData.getTeamKey());
         if (owner == null || owner.is(player)) {
             Vec3 pos = getExitPosition();
             soldierData.dropItems(level, pos.x, pos.y, pos.z);
@@ -223,7 +223,7 @@ public class HamsterWheelBlockEntity extends BlockEntity implements ClayMobConta
         if (soldierData == null) {
             return false;
         }
-        var owner = TeamLoyaltyManger.getTeamPlayerData(level).getPlayerForTeam(soldierData.getTeamId());
+        var owner = TeamLoyaltyManger.getTeamPlayerData(level).getPlayerForTeam(soldierData.getTeamKey());
         return owner == null || owner.is(player);
     }
 
@@ -239,7 +239,7 @@ public class HamsterWheelBlockEntity extends BlockEntity implements ClayMobConta
     @Override
     protected void loadAdditional(@NotNull ValueInput pTag) {
         super.loadAdditional(pTag);
-        setSoldierData(HamsterWheelSoldierData.load(pTag, getBlockPos(), walkAnimation), 0);
+        setSoldierData(HamsterWheelSoldierData.load(pTag, getBlockPos(), walkAnimation, level == null ? null : level.registryAccess()), 0);
         energyStorage.load(pTag);
     }
 
@@ -247,7 +247,7 @@ public class HamsterWheelBlockEntity extends BlockEntity implements ClayMobConta
     public CompoundTag getUpdateTag(HolderLookup.Provider pRegistries) {
         var output = TagValueOutput.createWithContext(ClaySoldiersCommon.PROBLEM_REPORTER, pRegistries);
         HamsterWheelSoldierData.markTagAsClient(output);
-        saveAdditional(output);
+        this.saveWithoutMetadata(output);
         return output.buildResult();
     }
 
@@ -297,12 +297,13 @@ public class HamsterWheelBlockEntity extends BlockEntity implements ClayMobConta
     }
 
     @Override
-    public void getStatDisplay(List<Component> list, LivingEntity livingEntity) {
+    public void getStatDisplay(List<Component> list, LivingEntity viewer) {
+        String energyUnit = ClaySoldiersCommon.PLATFORM.getEnergyUnitName();
         list.add(getBlockState().getBlock().getName());
         if (hasSoldier()) {
-            var team = ClayMobTeamManger.getFromKey(soldierData.getTeamId(), level.registryAccess());
+            var team = ClayMobTeamManger.get(soldierData.getTeamKey(), level.registryAccess()).orElse(null);
             list.add(CommonComponents.space().append(
-                    team.getDisplayNameWithColor(c -> c.getColor(0, livingEntity.tickCount, 0))
+                    team.value().getDisplayNameWithColor(c -> c.getColor(0, viewer.tickCount, 0))
             ).append(CommonComponents.space())
                             .append(ModEntityTypes.CLAY_SOLDIER_ENTITY.get().getDescription()).withStyle(ChatFormatting.GRAY)
             );
@@ -311,10 +312,10 @@ public class HamsterWheelBlockEntity extends BlockEntity implements ClayMobConta
 
         if (hasEnergyStorage()) {
             list.add(CommonComponents.space().append(
-                    Component.translatable(StatInfoDisplay.ENERGY_LANG, energyStorage.energyStored(), energyStorage.maxEnergyStored()).withStyle(ChatFormatting.GRAY)
+                    Component.translatable(StatInfoDisplay.ENERGY_LANG, energyStorage.energyStored() + energyUnit, energyStorage.maxEnergyStored() + energyUnit).withStyle(ChatFormatting.GRAY)
             ));
             list.add(CommonComponents.space().append(
-                    Component.translatable(StatInfoDisplay.GENERATION_LANG, IHamsterWheelEnergyStorage.energyGeneratedPerTick(soldierData == null ? 0 : soldierData.getAdjustedSpeed())).withStyle(ChatFormatting.GRAY)
+                    Component.translatable(StatInfoDisplay.GENERATION_LANG, HamsterWheelEnergyStorage.energyGeneratedPerTick(soldierData == null ? 0 : soldierData.getAdjustedSpeed()) + energyUnit).withStyle(ChatFormatting.GRAY)
             ));
         }
     }

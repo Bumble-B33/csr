@@ -7,29 +7,31 @@ import net.bumblebee.claysoldiers.item.BrickedItemHolder;
 import net.bumblebee.claysoldiers.item.itemeffectholder.ItemStackWithEffect;
 import net.bumblebee.claysoldiers.team.ClayMobTeam;
 import net.bumblebee.claysoldiers.team.ClayMobTeamManger;
-import net.bumblebee.claysoldiers.team.TeamLoyaltyManger;
-import net.bumblebee.claysoldiers.team.TeamPlayerData;
-import net.bumblebee.claysoldiers.util.ErrorHandler;
+import net.bumblebee.claysoldiers.team.loyalty.TeamLoyaltyManger;
+import net.bumblebee.claysoldiers.team.loyalty.TeamPlayerData;
 import net.bumblebee.claysoldiers.util.color.ColorHelper;
 import net.minecraft.ChatFormatting;
+import net.minecraft.core.Holder;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.component.DataComponentMap;
+import net.minecraft.core.component.DataComponentPatch;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.util.ARGB;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ItemStackTemplate;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NonNull;
 
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -44,7 +46,7 @@ public class ClaySoldierSpawnItem extends MultiSpawnItem<ClaySoldierEntity> impl
     }
 
     @Override
-    public EntityType<ClaySoldierEntity> getType() {
+    public @NonNull EntityType<ClaySoldierEntity> getType() {
         return ModEntityTypes.CLAY_SOLDIER_ENTITY.get();
     }
 
@@ -74,15 +76,18 @@ public class ClaySoldierSpawnItem extends MultiSpawnItem<ClaySoldierEntity> impl
             return;
         }
 
-        ClayMobTeam team = ClayMobTeamManger.getFromKeyOrError(teamKey, context.registries());
-        var list = team.getPlayerNames();
-        if (!list.isEmpty()) {
-
-            if (list.size() == 1) {
-                tooltipAdder.accept(CommonComponents.space().append(Component.translatable(PLAYER_LANG, list.getFirst())).withStyle(ChatFormatting.DARK_GRAY));
-            } else {
-                tooltipAdder.accept(CommonComponents.space().append(Component.translatable(PLAYER_LANG, list.toString())).withStyle(ChatFormatting.DARK_GRAY));
-            }
+        var reg = context.registries();
+        if (reg != null) {
+            ClayMobTeamManger.get(teamKey, reg).ifPresent(h -> {
+                var list = h.value().getPlayerNames();
+                if (!list.isEmpty()) {
+                    if (list.size() == 1) {
+                        tooltipAdder.accept(CommonComponents.space().append(Component.translatable(PLAYER_LANG, list.getFirst())).withStyle(ChatFormatting.DARK_GRAY));
+                    } else {
+                        tooltipAdder.accept(CommonComponents.space().append(Component.translatable(PLAYER_LANG, list.toString())).withStyle(ChatFormatting.DARK_GRAY));
+                    }
+                }
+            });
         }
     }
 
@@ -98,15 +103,49 @@ public class ClaySoldierSpawnItem extends MultiSpawnItem<ClaySoldierEntity> impl
         };
     }
 
-    public static void setClayMobTeam(ItemStack stack, @Nullable ResourceLocation teamId, HolderLookup.Provider registries) {
-        var team = ClayMobTeamManger.getFromKeyOrError(teamId, registries);
-        stack.set(ModDataComponents.CLAY_MOB_TEAM_COMPONENT.get(), teamId);
-        if (!ClayMobTeamManger.DEFAULT_TYPE.equals(teamId)) {
+    public static void setClayMobTeam(ItemStack stack, Holder.Reference<ClayMobTeam> team) {
+        stack.set(ModDataComponents.CLAY_MOB_TEAM_COMPONENT.get(), team.key());
+        if (!ClayMobTeamManger.DEFAULT_KEY.equals(team.key())) {
+            stack.set(DataComponents.ITEM_NAME,
+                    Component.translatable(ModItems.CLAY_SOLDIER.get().getDescriptionId() + DESCRIPTION_ID_PREFIX, team.value().getDisplayName())
+            );
+        }
+    }
+
+    public static ItemStack createStack(@Nullable ResourceKey<ClayMobTeam> team, HolderLookup.Provider registries) {
+        return createStack(ClayMobTeamManger.getOrDefault(team, registries));
+    }
+
+    public static ItemStack createStack(Holder.Reference<ClayMobTeam> team) {
+        return createTemplateClayMobTeam(team).create();
+    }
+
+    public static ItemStack createStackUnchecked(ResourceKey<ClayMobTeam> team, int count) {
+        var stack = new ItemStack(ModItems.CLAY_SOLDIER.get(), count);
+        stack.set(ModDataComponents.CLAY_MOB_TEAM_COMPONENT.get(), team);
+        return stack;
+    }
+
+    public static ItemStackTemplate createTemplateClayMobTeam(Holder.Reference<ClayMobTeam> teamId) {
+        var builder = DataComponentPatch.builder();
+        builder.set(ModDataComponents.CLAY_MOB_TEAM_COMPONENT.get(), teamId.key());
+        if (!ClayMobTeamManger.DEFAULT_KEY.equals(teamId.key())) {
+            builder.set(DataComponents.ITEM_NAME,
+                    Component.translatable(ModItems.CLAY_SOLDIER.get().getDescriptionId() + DESCRIPTION_ID_PREFIX, teamId.value().getDisplayName())
+            );
+        }
+        return new ItemStackTemplate(ModItems.CLAY_SOLDIER.get(), builder.build());
+    }
+
+    @Override
+    public void onCraftedPostProcess(ItemStack stack, Level level) {
+        var teamId = stack.get(ModDataComponents.CLAY_MOB_TEAM_COMPONENT.get());
+        var team = ClayMobTeamManger.getFromKeyOrError(teamId, level.registryAccess());
+        if (!ClayMobTeamManger.DEFAULT_KEY.equals(teamId)) {
             stack.set(DataComponents.ITEM_NAME,
                     Component.translatable(ModItems.CLAY_SOLDIER.get().getDescriptionId() + DESCRIPTION_ID_PREFIX, team.getDisplayName())
             );
         }
-
     }
 
     @Override
@@ -115,11 +154,11 @@ public class ClaySoldierSpawnItem extends MultiSpawnItem<ClaySoldierEntity> impl
         if (key == null) {
             return false;
         }
-        var team = ClayMobTeamManger.getFromKey(key, level.registryAccess());
-        if (team == null) {
+        var team = ClayMobTeamManger.get(key, level.registryAccess());
+        if (team.isEmpty()) {
             return false;
         }
-        return team.canBeUsed(player);
+        return team.orElseThrow().value().canBeUsed(player);
     }
 
     @Override
@@ -137,30 +176,27 @@ public class ClaySoldierSpawnItem extends MultiSpawnItem<ClaySoldierEntity> impl
 
     @Override
     public ItemStack recreateStackFromPouch(DataComponentMap data, HolderLookup.Provider registries) {
-        ItemStack stack = new ItemStack(this);
-        setClayMobTeam(stack, data.get(ModDataComponents.CLAY_MOB_TEAM_COMPONENT.get()), registries);
-        return stack;
+        return ClaySoldierSpawnItem.createStack(data.get(ModDataComponents.CLAY_MOB_TEAM_COMPONENT.get()), registries);
     }
 
-    public static int getColorFromTeam(@Nullable ResourceLocation team, LivingEntity player) {
+    public static int getColorFromTeam(@Nullable ResourceKey<ClayMobTeam> team, LivingEntity player) {
         if (team == null) {
-            return ClayMobTeamManger.ERROR.getColor(0, 0);
+            return ClayMobTeamManger.ERROR.getColor(player, 0);
         }
-        int color = ClayMobTeamManger.getFromKeyOrError(team, player.registryAccess()).getColor(player, 0);
-        if (color == -1) {
+        ColorHelper color = ClayMobTeamManger.getFromKeyOrError(team, player.registryAccess()).getColor();
+        if (color.isEmpty()) {
             return ColorHelper.DEFAULT_CLAY_COLOR;
         }
-        return ARGB.opaque(color);
+        return color.getColor(player, 0);
     }
 
     @Nullable
-    public static ResourceLocation getTeamFromStack(ItemStack stack) {
+    public static ResourceKey<ClayMobTeam> getTeamFromStack(ItemStack stack) {
         return stack.get(ModDataComponents.CLAY_MOB_TEAM_COMPONENT.get());
     }
 
-
-    public static boolean canEquipClaySoldier(Player player, ResourceLocation team) {
-        var optTeam = ClayMobTeamManger.getOptional(team, player.registryAccess());
+    public static boolean canEquipClaySoldier(Player player, ResourceKey<ClayMobTeam> team) {
+        var optTeam = ClayMobTeamManger.get(team, player.registryAccess());
         if (optTeam.isEmpty()) {
             return false;
         }
@@ -213,10 +249,8 @@ public class ClaySoldierSpawnItem extends MultiSpawnItem<ClaySoldierEntity> impl
     public static void setRandomTeam(ItemStack stack, RegistryAccess registryAccess, RandomSource random) {
         stack.remove(ModDataComponents.CLAY_MOB_TEAM_COMPONENT.get());
         registryAccess.lookupOrThrow(ModRegistries.CLAY_MOB_TEAMS).getRandom(random).ifPresentOrElse(
-                team -> {
-                    stack.set(ModDataComponents.CLAY_MOB_TEAM_COMPONENT.get(), team.key().location());
-                },
-                () -> ErrorHandler.INSTANCE.error("Failed to set a Random Team Component for " + stack)
+                team -> setClayMobTeam(stack, team),
+                () -> ClaySoldiersCommon.ERROR_HANDLER.error("Failed to set a Random Team Component for " + stack)
         );
     }
 }

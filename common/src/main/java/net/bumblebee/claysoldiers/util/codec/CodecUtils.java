@@ -11,14 +11,14 @@ import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.util.EffectHolder;
-import net.minecraft.ResourceLocationException;
+import net.minecraft.IdentifierException;
 import net.minecraft.core.Holder;
 import net.minecraft.core.RegistrationInfo;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.ExtraCodecs;
 import net.minecraft.world.effect.MobEffect;
 import org.jetbrains.annotations.Nullable;
@@ -140,7 +140,7 @@ public final class CodecUtils {
                         holder -> registry.get(holder)
                                 .map(DataResult::success)
                                 .orElseGet(() -> DataResult.error(() -> "Unknown registry key in " + registry.key() + ": " + holder)),
-                        p_325513_ -> p_325513_.key().location()
+                        p_325513_ -> p_325513_.key().identifier()
                 );
         return ExtraCodecs.overrideLifecycle(
                 codec, p_325514_ -> registry.registrationInfo(p_325514_.key()).map(RegistrationInfo::lifecycle).orElse(Lifecycle.experimental())
@@ -153,38 +153,38 @@ public final class CodecUtils {
                 : DataResult.error(() -> "Unregistered holder in " + registry.key() + ": " + holder);
     }
 
-    private static final Codec<ResourceLocation> CODEC_DEFAULT_MOD_ID = Codec.STRING.comapFlatMap(CodecUtils::read, CodecUtils::fromStringResourceLocation).stable();
+    private static final Codec<Identifier> CODEC_DEFAULT_MOD_ID = Codec.STRING.comapFlatMap(CodecUtils::read, CodecUtils::fromStringIdentifier).stable();
 
-    private static DataResult<ResourceLocation> read(String input) {
+    private static DataResult<Identifier> read(String input) {
         try {
             return DataResult.success(parse(input));
-        } catch (ResourceLocationException resourcelocationexception) {
-            return DataResult.error(() -> "Not a valid resource location: " + input + " " + resourcelocationexception.getMessage());
+        } catch (IdentifierException Identifierexception) {
+            return DataResult.error(() -> "Not a valid resource location: " + input + " " + Identifierexception.getMessage());
         }
     }
 
     /**
-     * Parses a {@code ResourceLocation} from the given String, if no namespace is present,
+     * Parses a {@code Identifier} from the given String, if no namespace is present,
      * {@link ClaySoldiersCommon#MOD_ID MOD_ID} will be used instead.
      * @param input the {@code String} to parse
-     * @return the parsed {@code ResourceLocation}
+     * @return the parsed {@code Identifier}
      */
-    public static ResourceLocation parse(String input) {
+    public static Identifier parse(String input) {
         int i = input.indexOf(':');
         if (i >= 0) {
             String path = input.substring(i + 1);
             if (i != 0) {
                 String modId = input.substring(0, i);
-                return ResourceLocation.fromNamespaceAndPath(modId, path);
+                return Identifier.fromNamespaceAndPath(modId, path);
             } else {
-                return ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, path);
+                return Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, path);
             }
         } else {
-            return ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, input);
+            return Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, input);
         }
     }
 
-    private static String fromStringResourceLocation(ResourceLocation location) {
+    private static String fromStringIdentifier(Identifier location) {
         if (location.getNamespace().equals(ClaySoldiersCommon.MOD_ID)) {
             return location.getPath();
         }

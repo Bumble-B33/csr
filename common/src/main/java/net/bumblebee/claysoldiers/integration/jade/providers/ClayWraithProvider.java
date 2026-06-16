@@ -8,7 +8,7 @@ import net.bumblebee.claysoldiers.integration.jade.JadeRegistry;
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 public enum ClayWraithProvider implements CommonEntityProvider<ClayWraithEntity>, CommonEntityServerAppender<ClayWraithEntity> {
     INSTANCE;
@@ -46,7 +46,7 @@ public enum ClayWraithProvider implements CommonEntityProvider<ClayWraithEntity>
     }
 
     @Override
-    public ResourceLocation getUniqueId() {
+    public Identifier getUniqueId() {
         return JadeRegistry.CLAY_WRAITH;
     }
 

@@ -55,12 +55,12 @@ public abstract class ClaySoldiersItemProvider implements DataProvider {
 
     private void registerAddedItem(ItemLike itemLike) {
         if (!allItems.add(itemLike.asItem())) {
-            LOGGER.error("Added {} to DataMap twice", itemLike.asItem());
+            ClaySoldiersCommon.ERROR_HANDLER.warn("Added %s to DataMap twice".formatted(itemLike.asItem()));
         }
     }
     private void registerAddedItemTag(TagKey<Item> tag) {
         if (!allTags.add(tag)) {
-            LOGGER.error("Added {} to DataMap twice", tag);
+            ClaySoldiersCommon.ERROR_HANDLER.warn("Added %s to DataMap twice".formatted(tag));
         }
     }
 
@@ -126,13 +126,14 @@ public abstract class ClaySoldiersItemProvider implements DataProvider {
     }
 
     private void warnHoldableEffect(String name, SoldierHoldableEffect effect, ItemTagHolder[] types) {
-        effect.getRemovalConditions().forEach(r -> {
-            if (r.getChance() <= 0) {
-                ClaySoldiersCommon.LOGGER.warn("DataMap: Building {} with a RemovalCondition with chance 0", name);
-            }
-        });
+        try {
+            effect.validate();
+        } catch (IllegalStateException e) {
+            ClaySoldiersCommon.ERROR_HANDLER.warn("DataMap (%s): %s".formatted(name, e.getMessage()));
+        }
+
         if (!effect.slots().isEmpty() && types.length == 0) {
-            ClaySoldiersCommon.LOGGER.warn("DataMap: {} has no SoldierItemTypes but can be equipped.", name);
+            ClaySoldiersCommon.LOGGER.warn("DataMap ({}): has no SoldierItemTypes but can be equipped.", name);
 
         }
     }

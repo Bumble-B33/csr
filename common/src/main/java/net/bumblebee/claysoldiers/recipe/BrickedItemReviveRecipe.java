@@ -1,9 +1,11 @@
 package net.bumblebee.claysoldiers.recipe;
 
+import com.mojang.serialization.MapCodec;
 import net.bumblebee.claysoldiers.init.ModItems;
 import net.bumblebee.claysoldiers.init.ModRecipes;
 import net.bumblebee.claysoldiers.item.BrickedItem;
-import net.minecraft.core.HolderLookup;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.*;
@@ -17,13 +19,12 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class BrickedItemReviveRecipe extends CustomRecipe {
+    public static final BrickedItemReviveRecipe INSTANCE = new BrickedItemReviveRecipe();
+    public static final MapCodec<BrickedItemReviveRecipe> CODEC = MapCodec.unit(INSTANCE);
+    public static final StreamCodec<RegistryFriendlyByteBuf, BrickedItemReviveRecipe> STREAM_CODEC = StreamCodec.unit(INSTANCE);
+
     @Nullable
     private PlacementInfo placementInfo;
-
-    public BrickedItemReviveRecipe(CraftingBookCategory pCategory) {
-        super(pCategory);
-    }
-
 
     @Override
     public boolean matches(CraftingInput input, Level level) {
@@ -51,7 +52,7 @@ public class BrickedItemReviveRecipe extends CustomRecipe {
     }
 
     @Override
-    public ItemStack assemble(CraftingInput input, HolderLookup.Provider provider) {
+    public ItemStack assemble(CraftingInput input) {
         for (int i = 0; i < input.size(); i++) {
             ItemStack itemAtI = input.getItem(i);
             if (!itemAtI.isEmpty()) {

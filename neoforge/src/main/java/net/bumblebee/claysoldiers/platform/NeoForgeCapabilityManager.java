@@ -1,9 +1,11 @@
 package net.bumblebee.claysoldiers.platform;
 
+import net.bumblebee.claysoldiers.block.chipassembler.ChipEnergyStorage;
 import net.bumblebee.claysoldiers.block.hamsterwheel.HamsterWheelBlockEntity;
-import net.bumblebee.claysoldiers.block.hamsterwheel.IHamsterWheelEnergyStorage;
+import net.bumblebee.claysoldiers.block.hamsterwheel.HamsterWheelEnergyStorage;
+import net.bumblebee.claysoldiers.cap.HamsterWheelNeoForgeEnergy;
 import net.bumblebee.claysoldiers.cap.NeoForgeBlockStorageCapability;
-import net.bumblebee.claysoldiers.cap.NeoForgeEnergy;
+import net.bumblebee.claysoldiers.cap.NeoForgeChipAssemblerEnergy;
 import net.bumblebee.claysoldiers.capability.AssignableWorksiteCapability;
 import net.bumblebee.claysoldiers.capability.BlueprintRequestHandler;
 import net.bumblebee.claysoldiers.capability.IBlockCache;
@@ -16,6 +18,7 @@ import net.neoforged.neoforge.capabilities.BlockCapabilityCache;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NonNull;
 
 public class NeoForgeCapabilityManager extends AbstractCapabilityManger {
     @ApiStatus.Internal
@@ -23,8 +26,13 @@ public class NeoForgeCapabilityManager extends AbstractCapabilityManger {
     }
 
     @Override
-    public IHamsterWheelEnergyStorage createEnergyStorage(HamsterWheelBlockEntity hamsterWheelBlockEntity) {
-        return new NeoForgeEnergy(hamsterWheelBlockEntity);
+    public HamsterWheelEnergyStorage createEnergyStorage(HamsterWheelBlockEntity hamsterWheelBlockEntity) {
+        return new HamsterWheelNeoForgeEnergy(hamsterWheelBlockEntity);
+    }
+
+    @Override
+    public ChipEnergyStorage createEnergyChipStorage() {
+        return new NeoForgeChipAssemblerEnergy();
     }
 
     @Override
@@ -52,6 +60,11 @@ public class NeoForgeCapabilityManager extends AbstractCapabilityManger {
         public @Nullable BlueprintRequestHandler getCapability() {
             return cache.getCapability();
         }
+
+        @Override
+        public @NonNull String toString() {
+            return "Cache: %s".formatted(getCapability());
+        }
     }
 
     private record NeoForgePoiCache(BlockCapabilityCache<AssignableWorksiteCapability, Void> cache) implements IBlockCache<AssignableWorksiteCapability> {
@@ -63,6 +76,11 @@ public class NeoForgeCapabilityManager extends AbstractCapabilityManger {
         @Override
         public @Nullable AssignableWorksiteCapability getCapability() {
             return cache.getCapability();
+        }
+
+        @Override
+        public @NonNull String toString() {
+            return "Cache: %s".formatted(getCapability());
         }
     }
 }

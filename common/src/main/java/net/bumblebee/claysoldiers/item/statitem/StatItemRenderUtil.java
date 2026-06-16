@@ -7,7 +7,7 @@ import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.ItemInHandRenderer;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.player.AvatarRenderer;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.player.PlayerModelPart;
@@ -51,9 +51,7 @@ public final class StatItemRenderUtil {
         ItemInHandRenderer r =  Minecraft.getInstance().gameRenderer.itemInHandRenderer;
         r.renderItem(Minecraft.getInstance().player, stack, arm == HumanoidArm.RIGHT ? ItemDisplayContext.FIRST_PERSON_RIGHT_HAND : ItemDisplayContext.FIRST_PERSON_LEFT_HAND, poseStack, nodeCollector, packedLight);
 
-
         poseStack.popPose();
-
     }
 
     private static void renderPlayerArm(PoseStack poseStack, SubmitNodeCollector nodeCollector, int packedLight, float equippedProgress, float swingProgress, HumanoidArm arm) {
@@ -76,13 +74,13 @@ public final class StatItemRenderUtil {
         poseStack.mulPose(Axis.YP.rotationDegrees(f * -135.0F));
         poseStack.translate(f * 5.6F, 0.0F, 0.0F);
         AvatarRenderer<AbstractClientPlayer> avatarrenderer = Minecraft.getInstance().getEntityRenderDispatcher().getPlayerRenderer(abstractclientplayer);
-        ResourceLocation resourcelocation = abstractclientplayer.getSkin().body().texturePath();
+        Identifier Identifier = abstractclientplayer.getSkin().body().texturePath();
         if (flag) {
             avatarrenderer.renderRightHand(
-                    poseStack, nodeCollector, packedLight, resourcelocation, abstractclientplayer.isModelPartShown(PlayerModelPart.RIGHT_SLEEVE)
+                    poseStack, nodeCollector, packedLight, Identifier, abstractclientplayer.isModelPartShown(PlayerModelPart.RIGHT_SLEEVE)
             );
         } else {
-            avatarrenderer.renderLeftHand(poseStack, nodeCollector, packedLight, resourcelocation, abstractclientplayer.isModelPartShown(PlayerModelPart.LEFT_SLEEVE));
+            avatarrenderer.renderLeftHand(poseStack, nodeCollector, packedLight, Identifier, abstractclientplayer.isModelPartShown(PlayerModelPart.LEFT_SLEEVE));
         }
     }
 

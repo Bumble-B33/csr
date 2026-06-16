@@ -3,6 +3,7 @@ package net.bumblebee.claysoldiers.entity.common.soldier.status;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 
+@FunctionalInterface
 public interface SoldierStatusHolder {
     /**
      * Returns the display name of the Status of this StatusHolder.

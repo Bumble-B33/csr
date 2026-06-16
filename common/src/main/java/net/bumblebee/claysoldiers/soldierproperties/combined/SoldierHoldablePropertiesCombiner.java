@@ -41,7 +41,6 @@ public class SoldierHoldablePropertiesCombiner implements SoldierPropertyMapRead
         specialProperties.put(TEAM_SLOT_NAME, new PredicatePropertiesPair(ClayPredicates.ConstantPredicate.getAlwaysTruePredicate(), SoldierPropertyMap.EMPTY, TEAM_SLOT_NAME));
         specialProperties.put(VEHICLES_SLOT_NAME, new PredicatePropertiesPair(ClayPredicates.ConstantPredicate.getAlwaysTruePredicate(), SoldierPropertyMap.EMPTY, VEHICLES_SLOT_NAME));
         specialProperties.put(BASE_SLOT_NAME, new PredicatePropertiesPair(ClayPredicates.ConstantPredicate.getAlwaysTruePredicate(), SoldierPropertyMap.EMPTY, BASE_SLOT_NAME));
-
     }
 
     private void addSpecialProperty(String key, SoldierPropertyMapReader properties, @Nullable ClayPredicate<?> predicate) {

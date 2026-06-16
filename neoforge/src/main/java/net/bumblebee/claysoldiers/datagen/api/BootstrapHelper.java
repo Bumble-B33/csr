@@ -6,8 +6,8 @@ import net.bumblebee.claysoldiers.team.ClayMobTeam;
 import net.bumblebee.claysoldiers.util.color.ColorHelper;
 import net.minecraft.core.Registry;
 import net.minecraft.data.worldgen.BootstrapContext;
+import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 
 
@@ -33,7 +33,7 @@ public abstract class BootstrapHelper<T> {
     protected abstract void gather();
 
     protected ResourceKey<T> createKey(String name) {
-        return ResourceKey.create(registry, ResourceLocation.fromNamespaceAndPath(modId, name));
+        return ResourceKey.create(registry, Identifier.fromNamespaceAndPath(modId, name));
     }
 
     public abstract static class Blueprint extends BootstrapHelper<BlueprintData> {
@@ -41,7 +41,7 @@ public abstract class BootstrapHelper<T> {
             super(context,ModRegistries.BLUEPRINTS,  modId);
         }
 
-        protected void register(String key, ResourceLocation structureLocation, String name, float marking) {
+        protected void register(String key, Identifier structureLocation, String name, float marking) {
             register(key, new BlueprintData(structureLocation, name, marking));
         }
     }

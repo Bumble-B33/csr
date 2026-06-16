@@ -3,10 +3,10 @@ package net.bumblebee.claysoldiers.entity.common.horse;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.datamap.horse.ClayHorseSlot;
 import net.bumblebee.claysoldiers.entity.common.ClayMobRideableEntity;
-import net.bumblebee.claysoldiers.entity.goal.horse.ClayHorseRandomStandGoal;
 import net.bumblebee.claysoldiers.entity.common.inventory.ClayMobInventory;
 import net.bumblebee.claysoldiers.entity.common.variant.ClayHorseVariants;
 import net.bumblebee.claysoldiers.entity.common.variant.VariantHolder;
+import net.bumblebee.claysoldiers.entity.goal.horse.ClayHorseRandomStandGoal;
 import net.bumblebee.claysoldiers.init.ModParticles;
 import net.bumblebee.claysoldiers.init.ModTags;
 import net.bumblebee.claysoldiers.item.itemeffectholder.HorseWearableItemStack;
@@ -72,7 +72,6 @@ public abstract class AbstractClayHorse extends ClayMobRideableEntity implements
         super(pEntityType, pLevel);
         this.setCanPickUpLoot(true);
         this.inventory = (ClayMobInventory<ClayHorseSlot, HorseWearableItemStack>) equipment;
-
     }
 
     @Override
@@ -455,7 +454,7 @@ public abstract class AbstractClayHorse extends ClayMobRideableEntity implements
     @Override
     public void tick() {
         super.tick();
-        if (level().isClientSide() && tickCount % 20 == 0 && !getHorn().isEmpty()) {
+        if (level().isClientSide() && tickCount % 100 == 0 && !getHorn().isEmpty()) {
             spawnParticleAround(ModParticles.SMALL_HAPPY_PARTICLE.get());
         }
     }

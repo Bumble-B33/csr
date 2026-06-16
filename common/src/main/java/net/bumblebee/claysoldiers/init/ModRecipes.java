@@ -5,33 +5,56 @@ import net.bumblebee.claysoldiers.recipe.BrickedItemReviveRecipe;
 import net.bumblebee.claysoldiers.recipe.ClaySoldierCookingRecipe;
 import net.bumblebee.claysoldiers.recipe.ClaySoldierCraftingRecipe;
 import net.bumblebee.claysoldiers.recipe.ShearBladeRecipe;
+import net.bumblebee.claysoldiers.recipe.chip.AddonChipRecipe;
+import net.bumblebee.claysoldiers.recipe.chip.BasicChipAssemblyRecipe;
+import net.bumblebee.claysoldiers.recipe.chip.ChipAssemblyRecipe;
 import net.minecraft.world.item.crafting.*;
 
 import java.util.function.Supplier;
 
 public final class ModRecipes {
     public static final Supplier<RecipeSerializer<ClaySoldierCraftingRecipe>> CLAY_SOLDIER_CRAFTING = ClaySoldiersCommon.PLATFORM.registerRecipe("clay_soldier_crafting",
-            () -> new CustomRecipe.Serializer<>(ClaySoldierCraftingRecipe::new)
+            () -> new RecipeSerializer<>(ClaySoldierCraftingRecipe.CODEC, ClaySoldierCraftingRecipe.STREAM_CODEC)
     );
     public static final Supplier<RecipeSerializer<BrickedItemReviveRecipe>> CLAY_SOLDIER_REVIVING = ClaySoldiersCommon.PLATFORM.registerRecipe("clay_soldier_reviving",
-            () -> new CustomRecipe.Serializer<>(BrickedItemReviveRecipe::new)
+            () -> new RecipeSerializer<>(BrickedItemReviveRecipe.CODEC, BrickedItemReviveRecipe.STREAM_CODEC)
     );
     public static final Supplier<RecipeSerializer<ShearBladeRecipe>> SHEAR_BLADE_CRAFTING = ClaySoldiersCommon.PLATFORM.registerRecipe("shear_blade_crafting",
-            () -> new CustomRecipe.Serializer<>(ShearBladeRecipe::new)
+            () -> new RecipeSerializer<>(ShearBladeRecipe.CODEC, ShearBladeRecipe.STREAM_CODEC)
     );
 
     public static final Supplier<RecipeSerializer<SmeltingRecipe>> CLAY_SOLDIER_SMELTING = ClaySoldiersCommon.PLATFORM.registerRecipe("clay_soldier_smelting",
-            () -> new AbstractCookingRecipe.Serializer<>((pGroup, pCategory, pIngredient, pResult, pExperience, pCookingTime) -> ClaySoldierCookingRecipe.smelting(), 100)
-    );
-    public static final Supplier<RecipeSerializer<BlastingRecipe>> CLAY_SOLDIER_BLASTING = ClaySoldiersCommon.PLATFORM.registerRecipe("clay_soldier_blasting",
-            () -> new AbstractCookingRecipe.Serializer<>((pGroup, pCategory, pIngredient, pResult, pExperience, pCookingTime) -> ClaySoldierCookingRecipe.blasting(), 50)
+            () -> ClaySoldierCookingRecipe.serializer(ClaySoldierCookingRecipe.smelting())
     );
     public static final Supplier<RecipeSerializer<CampfireCookingRecipe>> CLAY_SOLDIER_CAMPFIRE = ClaySoldiersCommon.PLATFORM.registerRecipe("clay_soldier_campfire",
-            () -> new AbstractCookingRecipe.Serializer<>((pGroup, pCategory, pIngredient, pResult, pExperience, pCookingTime) -> ClaySoldierCookingRecipe.campfire(), 200)
+            () -> ClaySoldierCookingRecipe.serializer(ClaySoldierCookingRecipe.campfire())
     );
     public static final Supplier<RecipeSerializer<SmokingRecipe>> CLAY_SOLDIER_SMOKING = ClaySoldiersCommon.PLATFORM.registerRecipe("clay_soldier_smoking",
-            () -> new AbstractCookingRecipe.Serializer<>((pGroup, pCategory, pIngredient, pResult, pExperience, pCookingTime) -> ClaySoldierCookingRecipe.smoking(), 300)
+            () -> ClaySoldierCookingRecipe.serializer(ClaySoldierCookingRecipe.smoking())
     );
+    public static final Supplier<RecipeSerializer<BlastingRecipe>> CLAY_SOLDIER_BLASTING = ClaySoldiersCommon.PLATFORM.registerRecipe("clay_soldier_blasting",
+            () -> ClaySoldierCookingRecipe.serializer(ClaySoldierCookingRecipe.blasting())
+    );
+
+    public static final RecipeBookCategory CHIP_ASSEMBLY = ClaySoldiersCommon.PLATFORM.registerRecipeBookCategory("chip_assembly", new RecipeBookCategory());
+    public static final RecipeBookCategory ADDON_ASSEMBLY = ClaySoldiersCommon.PLATFORM.registerRecipeBookCategory("addon_assembly", new RecipeBookCategory());
+    public static final RecipeBookCategory MISC_ASSEMBLY = ClaySoldiersCommon.PLATFORM.registerRecipeBookCategory("misc_assembly", new RecipeBookCategory());
+
+
+    public static final RecipeType<ChipAssemblyRecipe> CHIP_ASSEMBLY_TYPE = ClaySoldiersCommon.PLATFORM.registerRecipeType("chip_assembly", new RecipeType<>() {
+        @Override
+        public String toString() {
+            return "csr:chip_assembly";
+        }
+    });
+
+    public static final Supplier<RecipeSerializer<BasicChipAssemblyRecipe>> CHIP_ASSEMBLY_SERIALIZER = ClaySoldiersCommon.PLATFORM.registerRecipe("chip_assembly",
+            () -> new RecipeSerializer<>(BasicChipAssemblyRecipe.CODEC, BasicChipAssemblyRecipe.STREAM_CODEC));
+
+    public static final Supplier<RecipeSerializer<AddonChipRecipe>> ADDON_CHIP_SERIALIZER = ClaySoldiersCommon.PLATFORM.registerRecipe("addon_chip",
+            () -> new RecipeSerializer<>(AddonChipRecipe.CODEC, AddonChipRecipe.STREAM_CODEC)
+    );
+
 
     private ModRecipes() {
     }

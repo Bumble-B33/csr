@@ -5,11 +5,10 @@ import net.bumblebee.claysoldiers.claypoifunction.ClayPoiSource;
 import net.bumblebee.claysoldiers.claysoldierpredicate.ClaySoldierInventoryQuery;
 import net.bumblebee.claysoldiers.entity.common.ClayMobEntity;
 import net.bumblebee.claysoldiers.entity.common.soldier.AbstractClaySoldierEntity;
-import net.bumblebee.claysoldiers.init.ModCriterions;
+import net.bumblebee.claysoldiers.init.ModCritirions;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
-import net.minecraft.world.entity.item.ItemEntity;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class SoldierPoiWithSource<T> {
@@ -21,9 +20,7 @@ public abstract class SoldierPoiWithSource<T> {
         this.poi = poi;
         this.source = source;
     }
-    public static SoldierPoiWithSource<ItemEntity> getPoiFromItem(ItemEntity itemEntity) {
-        return new SoldierPoiWithItem(itemEntity);
-    }
+
     @Nullable
     public SoldierPoi getPoi() {
         return poi;
@@ -35,7 +32,7 @@ public abstract class SoldierPoiWithSource<T> {
         if (poi != null && stillValid(soldier)) {
             var createdSource = createPoiSource(source);
             if (createdSource.getOwner() instanceof ServerPlayer serverPlayer) {
-                ModCriterions.SOLDIER_POI_USE_TRIGGER.get().trigger(serverPlayer, getType());
+                ModCritirions.SOLDIER_POI_USE_TRIGGER.get().trigger(serverPlayer, getType());
             }
             poi.performEffect(soldier, createdSource);
             animateEffect(soldier);

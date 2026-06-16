@@ -2,6 +2,7 @@ package net.bumblebee.claysoldiers.entity.goal.workgoal;
 
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
 
 public interface IWorkGoal {
     String STATUS_LANG_KEY = "clay_soldier_work.%s.status.%s";
@@ -16,22 +17,14 @@ public interface IWorkGoal {
     /**
      * Returns whether this goal requires the {@code ClaySoldier} to carry items.
      */
-    default boolean workRequiresItemCarrying() {
+    default boolean workRequiresItemCarrying(ItemStack stack) {
         return false;
     }
     /**
      * Returns whether this goal requires the {@code ClaySoldier} to pick up items on the ground.
      */
-    default boolean workRequiresItemPickUp() {
+    default boolean workRequiresItemPickUp(ItemStack stack) {
         return false;
-    }
-
-    /**
-     * Returns the status id of this goal.
-     * The returned value should be between [0, 7].
-     */
-    default byte getStatus() {
-        return 0;
     }
 
     /**

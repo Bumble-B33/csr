@@ -4,15 +4,15 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.entity.client.renderstates.ClayHorseRenderState;
 import net.minecraft.client.model.geom.EntityModelSet;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.RenderLayerParent;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 public class ClayHorseHornRenderLayer extends RenderLayer<ClayHorseRenderState, ClayHorseModel> {
-    private static final ResourceLocation HORN_LOCATION = ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "textures/entity/clay_horse/horn.png");
+    private static final Identifier HORN_LOCATION = Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "textures/entity/clay_horse/horn.png");
     private final ClayHorseHornModel model;
 
 
@@ -27,6 +27,6 @@ public class ClayHorseHornRenderLayer extends RenderLayer<ClayHorseRenderState, 
         if (!clayHorseRenderState.hasHorn) {
             return;
         }
-        nodeCollector.submitModel(model, clayHorseRenderState, poseStack, RenderType.entitySolid(HORN_LOCATION), packedLight, OverlayTexture.NO_OVERLAY, clayHorseRenderState.outlineColor, null);
+        nodeCollector.submitModel(model, clayHorseRenderState, poseStack, RenderTypes.entitySolid(HORN_LOCATION), packedLight, OverlayTexture.NO_OVERLAY, clayHorseRenderState.outlineColor, null);
     }
 }

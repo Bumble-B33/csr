@@ -47,18 +47,32 @@ public class ModItemTagProvider extends BlockTagCopyingItemTagProvider {
 
         this.addItemToTags(ModItems.CLAY_DISRUPTOR.get(), ItemTags.DURABILITY_ENCHANTABLE, ItemTags.VANISHING_ENCHANTABLE, Tags.Items.TOOLS);
         this.addItemToTags(ModItems.TERRACOTTA_DISRUPTOR.get(), ItemTags.DURABILITY_ENCHANTABLE, ItemTags.VANISHING_ENCHANTABLE, Tags.Items.TOOLS);
+        this.tag(ModTags.Items.STAT_ITEM).add(ModItems.STATOMETER.get());
+        this.tag(ModTags.Items.CLAY_GOGGLES_ITEM).add(ModItems.CLAY_GOGGLES.get());
 
 
         this.tag(ModTags.Items.ACCESSORIES_FACE).add(ModItems.CLAY_GOGGLES.get());
         this.tag(ModTags.Items.ACCESSORIES_HAT).add(ModItems.CLAY_SOLDIER.get());
         this.tag(ModTags.Items.ACCESSORIES_BELT).add(ModItems.STATOMETER.get());
 
-        ModCuriosDataProvider.generateTags((t, i) -> this.tag(t).add(i));
+        ModCuriosDataProvider.addTags(this::tag);
 
         this.tag(Tags.Items.MELEE_WEAPON_TOOLS).add(ModItems.SHEAR_BLADE.get(), ModItems.SHARPENED_STICK.get());
         this.tag(ItemTags.SHARP_WEAPON_ENCHANTABLE).add(ModItems.SHEAR_BLADE.get(), ModItems.SHARPENED_STICK.get());
         this.tag(ItemTags.DURABILITY_ENCHANTABLE).add(ModItems.SHEAR_BLADE.get(), ModItems.SHARPENED_STICK.get());
         this.tag(ItemTags.FIRE_ASPECT_ENCHANTABLE).add(ModItems.SHEAR_BLADE.get());
+
+        this.tag(ModTags.Items.CHIP).add(
+                ModItems.BLANK_CHIP.get(),
+                ModItems.COMBAT_CHIP.get(),
+                ModItems.POI_CHIP.get(),
+                ModItems.DIG_CHIP.get(),
+                ModItems.BREAK_CROPS_CHIP.get(),
+                ModItems.PLACE_SEEDS_CHIP.get(),
+                ModItems.PICK_UP_ITEMS_CHIP.get(),
+                ModItems.FISHING_CHIP.get(),
+                ModItems.BLUEPRINT_CHIP.get()
+        );
     }
 
     @SafeVarargs

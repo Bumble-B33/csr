@@ -6,15 +6,16 @@ import com.mojang.serialization.DataResult;
 import com.mojang.serialization.Decoder;
 import com.mojang.serialization.JsonOps;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
+import net.bumblebee.claysoldiers.block.chipassembler.ChipEnergyStorage;
 import net.bumblebee.claysoldiers.block.hamsterwheel.HamsterWheelBlockEntity;
-import net.bumblebee.claysoldiers.block.hamsterwheel.IHamsterWheelEnergyStorage;
+import net.bumblebee.claysoldiers.block.hamsterwheel.HamsterWheelEnergyStorage;
 import net.bumblebee.claysoldiers.capability.*;
 import net.bumblebee.claysoldiers.datamap.SoldierHoldableEffect;
 import net.bumblebee.claysoldiers.item.itemeffectholder.ItemStackWithEffect;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.FileToIdConverter;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
@@ -63,7 +64,10 @@ public abstract class AbstractCapabilityManger extends SimpleJsonResourceReloadL
         return ifEnabledOrNull(Types.THROW, stack, ThrowableItemCapability.THROWABLE_ITEM_MAP.get(stack.getItem()));
     }
 
-    public abstract IHamsterWheelEnergyStorage createEnergyStorage(HamsterWheelBlockEntity hamsterWheelBlockEntity);
+    public abstract HamsterWheelEnergyStorage createEnergyStorage(HamsterWheelBlockEntity hamsterWheelBlockEntity);
+
+    public abstract ChipEnergyStorage createEnergyChipStorage();
+
 
     private <T> @Nullable T ifEnabledOrNull(Types type, ItemStack stack, T cap) {
         return Objects.requireNonNullElse(ENABLED_MAP.get(type).get(stack.getItem()), new EnabledHolder()).isEnabled() ? cap : null;
@@ -91,7 +95,7 @@ public abstract class AbstractCapabilityManger extends SimpleJsonResourceReloadL
 
 
     @Override
-    protected void apply(Map<ResourceLocation, JsonElement> jsonElementMap, ResourceManager resourceManager, ProfilerFiller profilerFiller) {
+    protected void apply(Map<Identifier, JsonElement> jsonElementMap, ResourceManager resourceManager, ProfilerFiller profilerFiller) {
         registerCapabilities();
         jsonElementMap.forEach((path, jsonElement) -> {
             if (path.getPath().equals(FILE_NAME)) {

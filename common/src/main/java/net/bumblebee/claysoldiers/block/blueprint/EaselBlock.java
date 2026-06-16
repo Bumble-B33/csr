@@ -1,26 +1,21 @@
 package net.bumblebee.claysoldiers.block.blueprint;
 
 import com.mojang.serialization.MapCodec;
-import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.blueprint.BlueprintData;
-import net.bumblebee.claysoldiers.init.ModDataComponents;
+import net.bumblebee.claysoldiers.blueprint.BlueprintRequestResult;
 import net.bumblebee.claysoldiers.init.ModItems;
-import net.bumblebee.claysoldiers.init.ModRegistries;
 import net.bumblebee.claysoldiers.item.TestItem;
+import net.bumblebee.claysoldiers.item.blueprint.BlueprintItem;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.flag.FeatureFlagSet;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.BaseEntityBlock;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Mirror;
-import net.minecraft.world.level.block.Rotation;
+import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
@@ -44,11 +39,6 @@ public class EaselBlock extends BaseEntityBlock {
     }
 
     @Override
-    public boolean isEnabled(FeatureFlagSet enabledFeatures) {
-        return ClaySoldiersCommon.COMMON_HOOKS.isBlueprintEnabled(enabledFeatures);
-    }
-
-    @Override
     protected MapCodec<? extends EaselBlock> codec() {
         return CODEC;
     }
@@ -64,34 +54,45 @@ public class EaselBlock extends BaseEntityBlock {
     }
 
     @Override
-    protected InteractionResult useItemOn(ItemStack pStack, BlockState pState, Level pLevel, BlockPos pPos, Player pPlayer, InteractionHand pHand, BlockHitResult pHitResult) {
+    protected InteractionResult useItemOn(ItemStack stack, BlockState pState, Level pLevel, BlockPos pPos, Player player, InteractionHand hand, BlockHitResult pHitResult) {
         var easeBlockEntity = ((EaselBlockEntity) Objects.requireNonNull(pLevel.getBlockEntity(pPos)));
-        if ((ModItems.TEST_ITEM.is(pStack))) {
+        if (ModItems.TEST_ITEM.is(stack)) {
             TestItem.log((EaselBlockEntity) pLevel.getBlockEntity(pPos), ((EaselBlockEntity) pLevel.getBlockEntity(pPos)).getInfoState());
-            return InteractionResult.SUCCESS_SERVER;
+            return InteractionResult.SUCCESS;
         }
 
-        if (pStack.isEmpty()) {
+        if (stack.isEmpty()) {
             return InteractionResult.PASS;
         }
 
-        BlueprintData bluePrintData = pLevel.registryAccess().lookupOrThrow(ModRegistries.BLUEPRINTS).getValue(pStack.get(ModDataComponents.BLUEPRINT_DATA.get()));
+        BlueprintData bluePrintData = BlueprintItem.getData(stack, player.registryAccess());
 
         if (bluePrintData != null && bluePrintData.isValid()) {
             easeBlockEntity.setBlueprintData(bluePrintData);
-            return InteractionResult.SUCCESS_SERVER;
+            return InteractionResult.SUCCESS;
         }
 
         if (easeBlockEntity.hasBlueprintData()) {
             if (!pLevel.isClientSide()) {
-                var placeResult = easeBlockEntity.tryPlacingSoldier(pStack, pPlayer);
+                BlueprintRequestResult placeResult = easeBlockEntity.tryPlacingSoldier(stack, player);
                 if (placeResult.isSuccess()) {
-                    if (!pPlayer.isCreative()) {
-                        pStack.shrink(1);
+                    if (!player.isCreative()) {
+                        stack.shrink(1);
+                        if (placeResult.hasRemainder()) {
+                            ItemStack remainder = placeResult.getRemainder();
+                            if (stack.isEmpty()) {
+                                player.setItemInHand(hand, remainder);
+                                return InteractionResult.SUCCESS_SERVER.heldItemTransformedTo(remainder);
+                            } else {
+                                player.addItem(remainder);
+                            }
+                        }
+
                     }
                 }
+                return InteractionResult.SUCCESS_SERVER;
             }
-            return InteractionResult.SUCCESS_SERVER;
+            return InteractionResult.CONSUME;
         }
         return InteractionResult.FAIL;
     }
@@ -135,5 +136,8 @@ public class EaselBlock extends BaseEntityBlock {
         pBuilder.add(FACING);
     }
 
-
+    @Override
+    protected RenderShape getRenderShape(BlockState state) {
+        return RenderShape.INVISIBLE;
+    }
 }

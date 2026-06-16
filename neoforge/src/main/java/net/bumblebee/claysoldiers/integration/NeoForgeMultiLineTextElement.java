@@ -2,7 +2,7 @@ package net.bumblebee.claysoldiers.integration;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
 import org.jetbrains.annotations.Nullable;
@@ -34,7 +34,7 @@ public class NeoForgeMultiLineTextElement extends Element {
     }
 
     @Override
-    public void render(GuiGraphics guiGraphics, int mouseX, int mousey, float partialTick) {
+    public void extractRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mousey, float partialTick) {
         for (int i = 0; i < lines.length; i++) {
             DisplayHelper.INSTANCE.drawText(guiGraphics, lines[i], this.getX(), this.getY() + ((1 + font.lineHeight) * i), IThemeHelper.get().getNormalColor());
         }

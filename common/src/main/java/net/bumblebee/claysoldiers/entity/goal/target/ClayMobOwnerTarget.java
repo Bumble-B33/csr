@@ -29,7 +29,7 @@ public class ClayMobOwnerTarget extends TargetGoal {
                 int i = owner.getLastHurtMobTimestamp();
                 return i != this.timestamp
                         && this.canAttack(this.ownerLastHurt, TargetingConditions.DEFAULT)
-                        && clayMob.wantsToAttack(this.ownerLastHurt, owner);
+                        && clayMob.wantsToAttackCommanded(this.ownerLastHurt, owner);
             }
         } else {
             return false;

@@ -1,13 +1,16 @@
 package net.bumblebee.claysoldiers.item.claymobspawn;
 
+import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.entity.common.ClayMobEntity;
 import net.bumblebee.claysoldiers.entity.common.variant.NameableVariant;
 import net.bumblebee.claysoldiers.entity.common.variant.VariantHolder;
-import net.bumblebee.claysoldiers.init.ModCriterions;
+import net.bumblebee.claysoldiers.init.ModCritirions;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponentMap;
+import net.minecraft.core.dispenser.BlockSource;
+import net.minecraft.core.dispenser.DefaultDispenseItemBehavior;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
@@ -21,11 +24,13 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.Spawner;
+import net.minecraft.world.level.block.DispenserBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.gameevent.GameEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NonNull;
 
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -38,6 +43,8 @@ import java.util.function.Supplier;
  * @param <T> the Entity to spawn
  */
 public abstract class MultiSpawnItem<T extends Entity> extends Item {
+    private static final DispenseBehavior INSTANCE = new DispenseBehavior();
+
     public MultiSpawnItem(Properties pProperties) {
         super(pProperties);
     }
@@ -52,7 +59,7 @@ public abstract class MultiSpawnItem<T extends Entity> extends Item {
         return new MultiSpawnItem<>(properties) {
 
             @Override
-            public EntityType<T> getType() {
+            public @NonNull EntityType<T> getType() {
                 return entityType.get();
             }
 
@@ -92,24 +99,29 @@ public abstract class MultiSpawnItem<T extends Entity> extends Item {
      * @param count the amountRequired to spawn
      * @return the amountRequired spawned
      */
-    public int spawnWithCount(ItemStack doll, UseOnContext pContext, int count) {
-        if (!isValid(doll, pContext.getLevel(), pContext.getPlayer()) || count <= 0) {
+    public int spawnWithCount(ItemStack doll, UseOnContext context, int count) {
+        return spawnWithCount(doll, context.getLevel(), context.getPlayer(), context.getClickedPos(), context.getClickedFace(), count);
+    }
+
+    private int spawnWithCount(ItemStack doll,
+                               Level level,
+                               @Nullable Player player,
+                               BlockPos blockpos,
+                                Direction direction,
+                               int count) {
+        if (!isValid(doll, level, player) || count <= 0) {
             return -1;
         }
-        Level level = pContext.getLevel();
         if (!(level instanceof ServerLevel serverLevel)) {
             return 0;
         } else {
-            BlockPos blockpos = pContext.getClickedPos();
-            Direction direction = pContext.getClickedFace();
             BlockState blockstate = level.getBlockState(blockpos);
             BlockEntity blockEntity = level.getBlockEntity(blockpos);
             if (blockEntity instanceof Spawner spawner) {
                 spawner.setEntityId(this.getType(), level.getRandom());
                 level.sendBlockUpdated(blockpos, blockstate, blockstate, 3);
-                level.gameEvent(pContext.getPlayer(), GameEvent.BLOCK_CHANGE, blockpos);
+                level.gameEvent(player, GameEvent.BLOCK_CHANGE, blockpos);
                 return 1;
-
             } else {
                 BlockPos updatedBlockPos;
                 if (blockstate.getCollisionShape(level, blockpos).isEmpty()) {
@@ -123,21 +135,23 @@ public abstract class MultiSpawnItem<T extends Entity> extends Item {
                 for (int i = 0; i < count;i++) {
                     if (entitytype.spawn(
                             serverLevel,
-                            modifyBeforeSpawn(doll.copyWithCount(1), pContext.getPlayer()),
+                            modifyBeforeSpawn(doll.copyWithCount(1), player),
                             updatedBlockPos,
                             EntitySpawnReason.SPAWN_ITEM_USE,
                             true,
                             !Objects.equals(blockpos, updatedBlockPos) && direction == Direction.UP) != null) {
-                        level.gameEvent(pContext.getPlayer(), GameEvent.ENTITY_PLACE, blockpos);
+                        level.gameEvent(player, GameEvent.ENTITY_PLACE, blockpos);
                     }
                 }
-                if (pContext.getPlayer() instanceof ServerPlayer serverPlayer) {
-                    ModCriterions.MULTI_SPAWN_ITEM_USE_TRIGGER.get().trigger(serverPlayer, getType(), count);
+                if (player instanceof ServerPlayer serverPlayer) {
+                    ModCritirions.MULTI_SPAWN_ITEM_USE_TRIGGER.get().trigger(serverPlayer, getType(), count);
                 }
             }
             return count;
         }
     }
+
+
 
     /**
      * Called before the {@link T Entity} is spawned.
@@ -150,7 +164,7 @@ public abstract class MultiSpawnItem<T extends Entity> extends Item {
     /**
      * @return the {@link EntityType<T> EntityType} to spawn
      */
-    public abstract EntityType<T> getType();
+    public abstract @NotNull EntityType<T> getType();
 
     /**
      * The {@link T Entity} is modified with the returned consumer
@@ -179,5 +193,29 @@ public abstract class MultiSpawnItem<T extends Entity> extends Item {
      */
     public ItemStack recreateStackFromPouch(DataComponentMap data, HolderLookup.Provider registries) {
         return getDefaultInstance();
+    }
+
+    public static <T extends Entity> void registerDispenseBehavior(MultiSpawnItem<T> item) {
+        DispenserBlock.registerBehavior(item, INSTANCE);
+    }
+
+    private static class DispenseBehavior extends DefaultDispenseItemBehavior {
+        public ItemStack execute(BlockSource source, ItemStack dispensed) {
+            Direction direction = source.state().getValue(DispenserBlock.FACING);
+
+            if (dispensed.getItem() instanceof MultiSpawnItem<?> multiSpawnItem) {
+                try {
+                    multiSpawnItem.spawnWithCount(dispensed, source.level(), null, source.pos(), direction, 1);
+                } catch (Exception e) {
+                    ClaySoldiersCommon.ERROR_HANDLER.warn("Error while dispensing Multi Spawn Item from dispenser at %s. Error: %s".formatted(source.pos(), e.getMessage()));
+                    return ItemStack.EMPTY;
+                }
+
+                dispensed.shrink(1);
+                source.level().gameEvent(null, GameEvent.ENTITY_PLACE, source.pos());
+            }
+
+            return dispensed;
+        }
     }
 }

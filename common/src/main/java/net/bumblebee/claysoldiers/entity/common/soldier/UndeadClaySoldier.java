@@ -38,16 +38,6 @@ public abstract class UndeadClaySoldier extends AbstractClaySoldierEntity {
     }
 
     @Override
-    public void aiStep() {
-        boolean sunBurnTick = this.isSunBurnTick() && this.getItemBySlot(SoldierEquipmentSlot.HEAD).isEmpty();
-        if (sunBurnTick) {
-            this.igniteForSeconds(6.0F);
-        }
-
-        super.aiStep();
-    }
-
-    @Override
     protected int decreaseAirSupply(int pCurrentAir) {
         return pCurrentAir;
     }

@@ -9,7 +9,7 @@ import net.bumblebee.claysoldiers.entity.common.horse.AbstractClayHorse;
 import net.bumblebee.claysoldiers.entity.common.horse.ClayHorseEntity;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.EntityAttachment;
 
 public class ClayHorseRenderer extends MobRenderer<AbstractClayHorse, ClayHorseRenderState, ClayHorseModel> {
@@ -17,13 +17,13 @@ public class ClayHorseRenderer extends MobRenderer<AbstractClayHorse, ClayHorseR
     public ClayHorseRenderer(EntityRendererProvider.Context pContext) {
         super(pContext, new ClayHorseModel(pContext.bakeLayer(ClayHorseModel.LAYER_LOCATION)), 0.75F * SCALE);
         this.addLayer(new ClayHorseArmorLayer(this, pContext.getModelSet(), pContext.getEquipmentAssets()));
-        this.addLayer(new ClayMobStatusRenderlayer<>(this, pContext.getEntityRenderDispatcher(), h -> h.isInSittingPose, h -> h.shouldShowWorkStatus, h -> h.workStatus, h -> h.statusAttachmentPoint));
+        this.addLayer(new ClayMobStatusRenderlayer<>(this, h -> h.isInSittingPose, h -> h.shouldShowWorkStatus, h -> h.workStatus, h -> h.statusAttachmentPoint));
         this.addLayer(new ClayHorseHornRenderLayer(this, pContext.getModelSet()));
         this.addLayer(SlimeRootLayer.ofClayHorse(this, pContext.getItemModelResolver()));
     }
 
     @Override
-    public ResourceLocation getTextureLocation(ClayHorseRenderState clayHorseRenderState) {
+    public Identifier getTextureLocation(ClayHorseRenderState clayHorseRenderState) {
         return clayHorseRenderState.variant.getTextureLocation();
     }
 

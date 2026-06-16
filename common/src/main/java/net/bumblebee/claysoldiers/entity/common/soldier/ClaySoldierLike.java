@@ -33,14 +33,14 @@ public interface ClaySoldierLike {
                 return null;
             } else {
                 copyBasePropertiesTo(convertTo, true);
-                applyEffect.accept(convertTo);
-
                 asClayMob().level().addFreshEntity(convertTo);
                 if (asClayMob().isPassenger()) {
                     Entity entity = asClayMob().getVehicle();
                     asClayMob().stopRiding();
                     convertTo.startRiding(entity, true, false);
                 }
+                applyEffect.accept(convertTo);
+
 
                 asClayMob().discard();
                 return convertTo;

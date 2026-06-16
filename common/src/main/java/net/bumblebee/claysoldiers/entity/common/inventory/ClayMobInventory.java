@@ -34,7 +34,7 @@ public class ClayMobInventory<S, T> extends EntityEquipment {
     @Override
     public void clear() {
         super.clear();
-        this.effectMap.replaceAll((p_401733_, p_401734_) -> empty);
+        this.effectMap.replaceAll((_, _) -> empty);
     }
 
     @Override

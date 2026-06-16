@@ -2,6 +2,7 @@ package net.bumblebee.claysoldiers.init;
 
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.block.blueprint.EaselBlockEntity;
+import net.bumblebee.claysoldiers.block.chipassembler.ChipAssemblerBlockEntity;
 import net.bumblebee.claysoldiers.block.hamsterwheel.HamsterWheelBlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 
@@ -14,6 +15,10 @@ public final class ModBlockEntities {
 
     public static final Supplier<BlockEntityType<EaselBlockEntity>> EASEL_BLOCK_ENTITY =
             ClaySoldiersCommon.PLATFORM.registerBlockEntity("easel_block_entity", EaselBlockEntity::new, List.of(ModBlocks.EASEL_BLOCK));
+
+    public static final Supplier<BlockEntityType<ChipAssemblerBlockEntity>> CHIP_ASSEMBLER_BLOCK_ENTITY =
+            ClaySoldiersCommon.PLATFORM.registerBlockEntity("chip_assembler_block_entity", ChipAssemblerBlockEntity::new, List.of(ModBlocks.CHIP_ASSEMBLER));
+
 
     public static void init() {
 

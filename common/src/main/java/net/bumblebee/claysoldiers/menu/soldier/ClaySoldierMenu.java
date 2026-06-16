@@ -24,15 +24,15 @@ public class ClaySoldierMenu extends AbstractClayMobMenu<AbstractClaySoldierEnti
         this.inventoryYOffset = 28;
         initPlayerInventory(inv);
         if (claySoldier != null) {
-            addSlot(new ClaySoldierSlot(SoldierEquipmentSlot.MAINHAND, claySoldier, 26, 90));
-            addSlot(new ClaySoldierSlot(SoldierEquipmentSlot.OFFHAND, claySoldier, 59, 90));
-            addSlot(new ClaySoldierSlot(SoldierEquipmentSlot.HEAD, claySoldier, 8, 18));
-            addSlot(new ClaySoldierSlot(SoldierEquipmentSlot.CHEST, claySoldier, 8, 36));
-            addSlot(new ClaySoldierSlot(SoldierEquipmentSlot.LEGS, claySoldier, 8, 54));
-            addSlot(new ClaySoldierSlot(SoldierEquipmentSlot.FEET, claySoldier, 8, 72));
-            addSlot(new ClaySoldierSlot(SoldierEquipmentSlot.CAPE, claySoldier, 77, 36));
-            addSlot(new ClaySoldierSlot(SoldierEquipmentSlot.BACKPACK, claySoldier, 77, 54));
-            addSlot(new ClaySoldierSlot(SoldierEquipmentSlot.BACKPACK_PASSIVE, claySoldier, 77, 72));
+            addSlot(new ClaySoldierMenuSlot(SoldierEquipmentSlot.MAINHAND, claySoldier, 26, 90));
+            addSlot(new ClaySoldierMenuSlot(SoldierEquipmentSlot.OFFHAND, claySoldier, 59, 90));
+            addSlot(new ClaySoldierMenuSlot(SoldierEquipmentSlot.HEAD, claySoldier, 8, 18));
+            addSlot(new ClaySoldierMenuSlot(SoldierEquipmentSlot.CHEST, claySoldier, 8, 36));
+            addSlot(new ClaySoldierMenuSlot(SoldierEquipmentSlot.LEGS, claySoldier, 8, 54));
+            addSlot(new ClaySoldierMenuSlot(SoldierEquipmentSlot.FEET, claySoldier, 8, 72));
+            addSlot(new ClaySoldierMenuSlot(SoldierEquipmentSlot.CAPE, claySoldier, 77, 36));
+            addSlot(new ClaySoldierMenuSlot(SoldierEquipmentSlot.BACKPACK, claySoldier, 77, 54));
+            addSlot(new ClaySoldierMenuSlot(SoldierEquipmentSlot.BACKPACK_PASSIVE, claySoldier, 77, 72));
         }
     }
 

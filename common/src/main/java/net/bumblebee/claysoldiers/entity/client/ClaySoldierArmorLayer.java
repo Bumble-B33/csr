@@ -5,20 +5,21 @@ import net.bumblebee.claysoldiers.datamap.SoldierEquipmentSlot;
 import net.bumblebee.claysoldiers.datamap.armor.SoldierWearableEffect;
 import net.bumblebee.claysoldiers.entity.client.renderstates.AbstractClaySoldierRenderState;
 import net.bumblebee.claysoldiers.item.itemeffectholder.ItemStackWithEffect;
-import net.minecraft.Util;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.Sheets;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.ArmorModelSet;
 import net.minecraft.client.renderer.entity.RenderLayerParent;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
+import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.EquipmentAssetManager;
 import net.minecraft.client.resources.model.EquipmentClientInfo;
+import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Util;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.equipment.EquipmentAsset;
 import net.minecraft.world.item.equipment.EquipmentAssets;
@@ -43,7 +44,7 @@ public class ClaySoldierArmorLayer extends RenderLayer<AbstractClaySoldierRender
     }
     private final ArmorModelSet<ClaySoldierModel> armorModelSet;
     private final EquipmentAssetManager equipmentAssets;
-    private final Function<LayerTextureKey, ResourceLocation> layerTextureLookup;
+    private final Function<LayerTextureKey, Identifier> layerTextureLookup;
     private final Function<TrimSpriteKey, TextureAtlasSprite> trimSpriteLookup;
 
     public ClaySoldierArmorLayer(RenderLayerParent<AbstractClaySoldierRenderState, ClaySoldierModel> pRenderer, ArmorModelSet<ClaySoldierModel> armorModelSet, TextureAtlas atlasManager, EquipmentAssetManager equipmentAssets) {
@@ -79,7 +80,7 @@ public class ClaySoldierArmorLayer extends RenderLayer<AbstractClaySoldierRender
         int key = 1;
         if (wearableEffect.shouldRenderArmor()) {
             int color = claySoldier.offsetColor;
-            if (!wearableEffect.isAffectedByOffsetColor() || color == -1) {
+            if (!wearableEffect.isAffectedByOffsetColor() || !claySoldier.hasOffsetColor) {
                 color = wearableEffect.getColorHelper().getColor(claySoldier.id, claySoldier.ageInTicks);
             }
 
@@ -126,12 +127,12 @@ public class ClaySoldierArmorLayer extends RenderLayer<AbstractClaySoldierRender
             boolean shouldRenderFoil = foil;
 
             for (EquipmentClientInfo.Layer equipmentclientinfo$layer : list) {
-                ResourceLocation resourcelocation = this.layerTextureLookup.apply(new LayerTextureKey(layerType, equipmentclientinfo$layer));
+                Identifier Identifier = this.layerTextureLookup.apply(new LayerTextureKey(layerType, equipmentclientinfo$layer));
 
-                nodeCollector.order(j++).submitModel(armorModel, renderState, poseStack, RenderType.armorCutoutNoCull(resourcelocation), packedLight, OverlayTexture.NO_OVERLAY, color, null, renderState.outlineColor, null);
+                nodeCollector.order(j++).submitModel(armorModel, renderState, poseStack, RenderTypes.armorCutoutNoCull(Identifier), packedLight, OverlayTexture.NO_OVERLAY, color, null, renderState.outlineColor, null);
 
                 if (shouldRenderFoil) {
-                    nodeCollector.order(j++).submitModel(armorModel, renderState, poseStack, RenderType.armorEntityGlint(), packedLight, OverlayTexture.NO_OVERLAY, color, null, renderState.outlineColor, null);
+                    nodeCollector.order(j++).submitModel(armorModel, renderState, poseStack, RenderTypes.armorEntityGlint(), packedLight, OverlayTexture.NO_OVERLAY, color, null, renderState.outlineColor, null);
                 }
 
                 shouldRenderFoil = false;
@@ -162,7 +163,7 @@ public class ClaySoldierArmorLayer extends RenderLayer<AbstractClaySoldierRender
 
     public record TrimSpriteKey(ArmorTrim trim, EquipmentClientInfo.LayerType layerType,
                                 ResourceKey<EquipmentAsset> equipmentAssetId) {
-        public ResourceLocation spriteId() {
+        public Identifier spriteId() {
             return this.trim.layerAssetId(this.layerType.trimAssetPrefix(), this.equipmentAssetId);
         }
     }

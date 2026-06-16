@@ -25,7 +25,7 @@ public class NeoForgeDataMapGetter implements IDataMapGetter {
 
     @Override
     public @Nullable SoldierHoldableEffect getEffect(ItemStack stack) {
-        return stack.getItemHolder().getData(ModDataMaps.SOLDIER_HOLDABLE);
+        return stack.typeHolder().getData(ModDataMaps.SOLDIER_HOLDABLE);
     }
 
     @Override
@@ -35,12 +35,12 @@ public class NeoForgeDataMapGetter implements IDataMapGetter {
 
     @Override
     public @Nullable SoldierMultiWearable getArmor(ItemStack stack) {
-        return stack.getItemHolder().getData(ModDataMaps.SOLDIER_ARMOR);
+        return stack.typeHolder().getData(ModDataMaps.SOLDIER_ARMOR);
     }
 
     @Override
     public @Nullable SoldierPoi getItemPoi(ItemStack stack) {
-        return stack.getItemHolder().getData(ModDataMaps.SOLDIER_ITEM_POI);
+        return stack.typeHolder().getData(ModDataMaps.SOLDIER_ITEM_POI);
     }
 
     @Override
@@ -69,10 +69,5 @@ public class NeoForgeDataMapGetter implements IDataMapGetter {
 
     public static void setBySlot(Map<SoldierEquipmentSlot, List<Item>> map) {
         bySlot = map;
-    }
-
-
-    public static String getBySlotMap() {
-        return bySlot.toString();
     }
 }

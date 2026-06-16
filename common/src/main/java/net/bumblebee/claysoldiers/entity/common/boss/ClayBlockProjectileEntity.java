@@ -2,10 +2,11 @@ package net.bumblebee.claysoldiers.entity.common.boss;
 
 import net.bumblebee.claysoldiers.entity.client.ClientClaySoldierEntity;
 import net.bumblebee.claysoldiers.entity.common.soldier.AbstractClaySoldierEntity;
-import net.bumblebee.claysoldiers.init.ModCriterions;
+import net.bumblebee.claysoldiers.init.ModCritirions;
 import net.bumblebee.claysoldiers.init.ModDamageTypes;
 import net.bumblebee.claysoldiers.init.ModEntityTypes;
 import net.bumblebee.claysoldiers.init.ModRegistries;
+import net.bumblebee.claysoldiers.item.claymobspawn.ClaySoldierSpawnItem;
 import net.bumblebee.claysoldiers.team.ClayMobTeam;
 import net.bumblebee.claysoldiers.team.ClayMobTeamManger;
 import net.minecraft.core.Holder;
@@ -16,12 +17,12 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
-import net.minecraft.world.entity.projectile.AbstractHurtingProjectile;
+import net.minecraft.world.entity.projectile.hurtingprojectile.AbstractHurtingProjectile;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.level.Level;
@@ -32,6 +33,7 @@ import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -99,7 +101,7 @@ public class ClayBlockProjectileEntity extends AbstractHurtingProjectile {
             compound.putInt(PIERCE_TAG, pierceCount);
         }
         if (hasClayTeam()) {
-            compound.store(SOLDIER_TEAM_ID_TAG, ResourceLocation.CODEC, getClayTeam().key().location());
+            compound.store(SOLDIER_TEAM_ID_TAG, ClayMobTeam.KEY_CODEC, getClayTeam().key());
         }
         compound.putInt(LIFETIME_TAG, lifeTime);
         if (this.firedFromWeapon != null) {
@@ -113,7 +115,7 @@ public class ClayBlockProjectileEntity extends AbstractHurtingProjectile {
         setBlockSize(Math.max(0.2f, compound.getFloatOr(BLOCK_SIZE_TAG, 1f)));
         setPierceCount(compound.getIntOr(PIERCE_TAG, 0));
 
-        compound.read(SOLDIER_TEAM_ID_TAG, ResourceLocation.CODEC).ifPresent(this::setClayTeam);
+        compound.read(SOLDIER_TEAM_ID_TAG, ClayMobTeam.KEY_CODEC).ifPresent(this::setClayTeam);
         lifeTime = compound.getIntOr(LIFETIME_TAG, 20*7);
 
         firedFromWeapon = compound.read(WEAPON_TAG, ItemStack.CODEC).orElse(null);
@@ -158,7 +160,7 @@ public class ClayBlockProjectileEntity extends AbstractHurtingProjectile {
     private void onHitEffect(@Nullable HitResult hitResult, boolean forceDelete) {
         if (!level().isClientSide()) {
             if (getOwner() instanceof ServerPlayer serverPlayer) {
-                ModCriterions.HIT_WITH_CLAY_BLOCK_TRIGGER.get().trigger(
+                ModCritirions.HIT_WITH_CLAY_BLOCK_TRIGGER.get().trigger(
                         serverPlayer,
                         hitResult instanceof EntityHitResult entityHitResult ? entityHitResult.getEntity() : null,
                         getClientSoldier() != null,
@@ -192,10 +194,10 @@ public class ClayBlockProjectileEntity extends AbstractHurtingProjectile {
         AbstractClaySoldierEntity soldier = ModEntityTypes.CLAY_SOLDIER_ENTITY.get().create(level, EntitySpawnReason.MOB_SUMMONED);
         if (soldier != null) {
             Vec3 pos = position();
-            var team = getClayTeam().key().location();
+            var team = getClayTeam();
             soldier.setClayTeamType(team);
             soldier.setPos(pos);
-            soldier.setSpawnedFrom(ClayMobTeamManger.createStackForTeam(team, level.registryAccess()), false);
+            soldier.setSpawnedFrom(ClaySoldierSpawnItem.createStack(team), false);
             soldier.snapTo(pos, this.getYRot(), this.getXRot());
             soldier.yHeadRot = soldier.getYRot();
             soldier.yBodyRot = soldier.getYRot();
@@ -272,10 +274,10 @@ public class ClayBlockProjectileEntity extends AbstractHurtingProjectile {
         this.firedFromWeapon = weapon;
     }
 
-    public void setClayTeam(ResourceLocation id) {
-        ClayMobTeamManger.getOptional(id, registryAccess()).ifPresentOrElse(
+    public void setClayTeam(ResourceKey<ClayMobTeam> id) {
+        ClayMobTeamManger.get(id, registryAccess()).ifPresentOrElse(
                 team -> entityData.set(SOLDIER_TEAM_ID,
-                        registryAccess().lookupOrThrow(ModRegistries.CLAY_MOB_TEAMS).getId(team)),
+                        registryAccess().lookupOrThrow(ModRegistries.CLAY_MOB_TEAMS).getId(team.value())),
                 () -> LOGGER.error("Error Setting Team {} for Clay Block Projectile", id)
         );
     }
@@ -284,10 +286,10 @@ public class ClayBlockProjectileEntity extends AbstractHurtingProjectile {
         return entityData.get(SOLDIER_TEAM_ID) >= 0;
     }
 
-    @Nullable
+    @NotNull
     private Holder.Reference<ClayMobTeam> getClayTeam() {
         var reg = registryAccess().lookupOrThrow(ModRegistries.CLAY_MOB_TEAMS);
-        return reg.get(entityData.get(SOLDIER_TEAM_ID)).orElse(null);
+        return reg.get(entityData.get(SOLDIER_TEAM_ID)).orElse(ClayMobTeamManger.getDefault(level().registryAccess()));
     }
 
     @Nullable

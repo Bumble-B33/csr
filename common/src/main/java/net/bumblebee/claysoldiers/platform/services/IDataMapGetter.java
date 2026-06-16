@@ -56,6 +56,10 @@ public interface IDataMapGetter {
         return ClayHorseItemMap.get(item);
     }
 
+    default ClayHorseWearableProperties getHorseArmor(ItemStack item) {
+        return getHorseArmor(item.getItem());
+    }
+
     @Nullable
     SoldierVehicleProperties getVehicleProperties(EntityType<?> type);
 
@@ -64,11 +68,13 @@ public interface IDataMapGetter {
 
     static <T> void warnHoldable(Map<T, SoldierHoldableEffect> dataMap, BiPredicate<T, TagKey<Item>> isTagged) {
         dataMap.forEach((k, effect) -> {
-            effect.getRemovalConditions().forEach(r -> {
-                if (r.getChance() <= 0) {
-                    ClaySoldiersCommon.LOGGER.warn("DataMap: {} has a RemovalCondition({}) with chance 0", k, r.getDisplayName().getString());
-                }
-            });
+            try {
+                effect.validate();
+            } catch (IllegalStateException e) {
+                ClaySoldiersCommon.LOGGER.warn("DataMap: {} Error: {}", k, e.getMessage());
+
+            }
+
             if (!isTagged.test(k, ModTags.Items.SOLDIER_HOLDABLE)) {
                 ClaySoldiersCommon.LOGGER.warn("DataMap: {} is not tagged with {}", k, ModTags.Items.SOLDIER_HOLDABLE);
             }

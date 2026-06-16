@@ -12,7 +12,7 @@ public class BrickedClaySoldierItem extends BrickedItem {
     public static final String ORIGINAL_DISPLAY_NAME = "bricked_item." + ClaySoldiersCommon.MOD_ID + ".original";
 
     public BrickedClaySoldierItem(Properties pProperties) {
-        super(pProperties.component(ModDataComponents.CLAY_MOB_TEAM_COMPONENT.get(), ClayMobTeamManger.DEFAULT_TYPE));
+        super(pProperties);
     }
 
     @Override

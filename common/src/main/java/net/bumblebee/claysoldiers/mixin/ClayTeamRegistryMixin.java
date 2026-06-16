@@ -1,9 +1,9 @@
 package net.bumblebee.claysoldiers.mixin;
 
+import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.init.ModRegistries;
 import net.bumblebee.claysoldiers.team.ClayMobTeam;
 import net.bumblebee.claysoldiers.team.ClayMobTeamManger;
-import net.bumblebee.claysoldiers.util.ErrorHandler;
 import net.minecraft.core.MappedRegistry;
 import net.minecraft.core.Registry;
 import org.spongepowered.asm.mixin.Mixin;
@@ -22,7 +22,7 @@ public abstract class ClayTeamRegistryMixin<T> implements Registry<T> {
             try {
                 ClayMobTeamManger.registerDefault((Registry<ClayMobTeam>) this);
             } catch (RuntimeException e) {
-                ErrorHandler.INSTANCE.handle("Error mixin ClayMobTeamRegistry" , e);
+                ClaySoldiersCommon.ERROR_HANDLER.error("Error mixin ClayMobTeamRegistry" , e);
             }
         }
     }

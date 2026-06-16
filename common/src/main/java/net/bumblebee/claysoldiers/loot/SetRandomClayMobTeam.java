@@ -2,12 +2,10 @@ package net.bumblebee.claysoldiers.loot;
 
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.bumblebee.claysoldiers.init.ModLootTables;
 import net.bumblebee.claysoldiers.item.claymobspawn.ClaySoldierSpawnItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.storage.loot.LootContext;
 import net.minecraft.world.level.storage.loot.functions.LootItemConditionalFunction;
-import net.minecraft.world.level.storage.loot.functions.LootItemFunctionType;
 import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
 
 import java.util.List;
@@ -20,8 +18,9 @@ public class SetRandomClayMobTeam extends LootItemConditionalFunction {
         super(predicates);
     }
 
-    public LootItemFunctionType<SetRandomClayMobTeam> getType() {
-        return ModLootTables.RANDOM_CLAY_SOLDIER_TEAM.get();
+    @Override
+    public MapCodec<? extends LootItemConditionalFunction> codec() {
+        return CODEC;
     }
 
     public ItemStack run(ItemStack stack, LootContext context) {

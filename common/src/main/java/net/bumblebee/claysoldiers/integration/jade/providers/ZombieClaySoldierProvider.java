@@ -11,7 +11,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 public enum ZombieClaySoldierProvider implements CommonEntityProvider<ZombieClaySoldierEntity>, CommonEntityServerAppender<ZombieClaySoldierEntity> {
     INSTANCE;
@@ -47,7 +47,7 @@ public enum ZombieClaySoldierProvider implements CommonEntityProvider<ZombieClay
     }
 
     @Override
-    public ResourceLocation getUniqueId() {
+    public Identifier getUniqueId() {
         return JadeRegistry.ZOMBIE_CLAY_SOLDIER;
     }
 

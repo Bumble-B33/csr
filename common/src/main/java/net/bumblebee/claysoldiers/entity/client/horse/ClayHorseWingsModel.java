@@ -8,12 +8,12 @@ import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.client.model.geom.builders.*;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 
 public class ClayHorseWingsModel extends EntityModel<ClayHorseRenderState> {
     public static final ModelLayerLocation LAYER_LOCATION =
-            new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_horse_wings"), "main");
+            new ModelLayerLocation(Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_horse_wings"), "main");
 
     private static final float SCALE = ClayHorseEntity.SCALE;
     private static final CubeDeformation SHRINK_DEFORMATION = new CubeDeformation(SCALE, 0, SCALE);

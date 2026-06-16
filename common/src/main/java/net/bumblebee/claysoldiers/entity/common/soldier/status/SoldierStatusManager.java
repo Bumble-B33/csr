@@ -1,6 +1,7 @@
 package net.bumblebee.claysoldiers.entity.common.soldier.status;
 
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
+import net.bumblebee.claysoldiers.entity.common.programmable.ProgrammableClaySoldierEntity;
 import net.bumblebee.claysoldiers.entity.common.soldier.AbstractClaySoldierEntity;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
@@ -18,10 +19,17 @@ public class SoldierStatusManager implements SoldierStatusHolder {
         this.statuses = statuses;
     }
 
-    public static SoldierStatusManager initDefault(AbstractClaySoldierEntity soldier, Supplier<SoldierStatusHolder> workStatus) {
+    public static SoldierStatusManager initDefault(AbstractClaySoldierEntity soldier) {
         return new SoldierStatusManager(List.of(
                 () -> createSittingStatus(soldier),
-                workStatus,
+                () -> createCombatOwnerAndPoiStatus(soldier)
+        ));
+    }
+
+    public static SoldierStatusManager initProgrammable(ProgrammableClaySoldierEntity soldier) {
+        return new SoldierStatusManager(List.of(
+                () -> createSittingStatus(soldier),
+                () -> (() -> soldier.getInstalledModule().getWorkStatusDisplayName(soldier)),
                 () -> createCombatOwnerAndPoiStatus(soldier)
         ));
     }

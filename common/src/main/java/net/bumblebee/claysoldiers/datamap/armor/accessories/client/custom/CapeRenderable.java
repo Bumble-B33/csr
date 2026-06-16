@@ -6,8 +6,8 @@ import net.bumblebee.claysoldiers.datamap.armor.accessories.client.IAccessoryRen
 import net.bumblebee.claysoldiers.datamap.armor.accessories.client.RenderableAccessory;
 import net.bumblebee.claysoldiers.datamap.armor.accessories.custom.CapeAccessoryData;
 import net.bumblebee.claysoldiers.entity.client.renderstates.AbstractClaySoldierRenderState;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.resources.model.EquipmentClientInfo;
 import net.minecraft.core.component.DataComponents;
@@ -30,7 +30,7 @@ public class CapeRenderable implements RenderableAccessory<CapeAccessoryData> {
                         renderedFrom.getCapeModel(),
                         renderState,
                         pPoseStack,
-                        RenderType.entitySolid(data.textureLocation()),
+                        RenderTypes.entitySolid(data.textureLocation()),
                         pPackedLight,
                         OverlayTexture.NO_OVERLAY,
                         getCapeColor(data, claySoldier),

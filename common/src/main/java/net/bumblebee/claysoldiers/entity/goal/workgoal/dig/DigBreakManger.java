@@ -1,7 +1,7 @@
 package net.bumblebee.claysoldiers.entity.goal.workgoal.dig;
 
+import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.entity.common.soldier.AbstractClaySoldierEntity;
-import net.bumblebee.claysoldiers.util.ErrorHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.BlockTags;
@@ -66,8 +66,9 @@ public class DigBreakManger {
      *
      * @param pos    the pos of the block
      * @param entity the Clay Soldier breaking the block
+     * @param optional only unregisters the pos if it exists
      */
-    public void unregisterPos(BlockPos pos, AbstractClaySoldierEntity entity) {
+    public void unregisterPos(BlockPos pos, AbstractClaySoldierEntity entity, boolean optional) {
         var breakData = getBreakData(entity.level(), pos);
         if (breakData != null) {
             breakData.removeEntity(entity);
@@ -76,7 +77,9 @@ public class DigBreakManger {
                 entity.level().destroyBlockProgress(entity.getId(), pos, -1);
             }
         } else {
-            ErrorHandler.INSTANCE.debug("Trying to unregister an Entity for a Empty BreakData");
+            if (!optional) {
+                ClaySoldiersCommon.ERROR_HANDLER.warn("Trying to unregister an Entity for a Empty BreakData");
+            }
         }
     }
 
@@ -91,7 +94,7 @@ public class DigBreakManger {
     public int increaseBreakProgress(BlockPos pos, Level level) {
         BreakData breakData = getBreakData(level, pos);
         if (breakData == null) {
-            ErrorHandler.INSTANCE.error("Trying to break a block with non existing break data");
+            ClaySoldiersCommon.ERROR_HANDLER.warn("Trying to break a block with non existing break data");
             return -2;
         }
         var state = level.getBlockState(pos);
@@ -128,11 +131,14 @@ public class DigBreakManger {
         if (state.is(BlockTags.INCORRECT_FOR_IRON_TOOL)) {
             return 8;
         }
-        if (state.is(BlockTags.INCORRECT_FOR_GOLD_TOOL)) {
-            return 4;
+        if (state.is(BlockTags.INCORRECT_FOR_COPPER_TOOL)) {
+            return 6;
         }
         if (state.is(BlockTags.INCORRECT_FOR_STONE_TOOL)) {
             return 4;
+        }
+        if (state.is(BlockTags.INCORRECT_FOR_GOLD_TOOL)) {
+            return 3;
         }
         if (state.is(BlockTags.INCORRECT_FOR_WOODEN_TOOL)) {
             return 2;
@@ -167,7 +173,7 @@ public class DigBreakManger {
 
         public void removeEntity(AbstractClaySoldierEntity entity) {
             if (!working.remove(entity)) {
-                ErrorHandler.INSTANCE.debug("Tried removing non existing entity from BreakData");
+                ClaySoldiersCommon.ERROR_HANDLER.warn("Tried removing non existing entity from BreakData");
             }
             if (anyEntity == entity.getId() && !working.isEmpty()) {
                 anyEntity = working.iterator().next().getId();
@@ -175,7 +181,11 @@ public class DigBreakManger {
         }
 
         public int size() {
-            return working.stream().map(s -> s.allProperties().getBreakingPower() + 1).filter(b -> b >=  1).reduce(0, Integer::sum);
+            return working.stream().map(this::getBreakingPower).filter(b -> b >=  1).reduce(0, Integer::sum);
+        }
+
+        private int getBreakingPower(AbstractClaySoldierEntity soldier) {
+            return soldier.allProperties().getBreakingPower() + 1;
         }
 
         public boolean isEmpty() {

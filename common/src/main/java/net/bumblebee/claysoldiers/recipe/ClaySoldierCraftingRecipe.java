@@ -1,13 +1,15 @@
 package net.bumblebee.claysoldiers.recipe;
 
+import com.mojang.serialization.MapCodec;
 import net.bumblebee.claysoldiers.init.ModItems;
 import net.bumblebee.claysoldiers.init.ModRecipes;
 import net.bumblebee.claysoldiers.item.claymobspawn.ClaySoldierSpawnItem;
+import net.bumblebee.claysoldiers.team.ClayMobTeam;
 import net.bumblebee.claysoldiers.team.ClayMobTeamManger;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.CraftingBookCategory;
 import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.crafting.CustomRecipe;
 import net.minecraft.world.item.crafting.RecipeSerializer;
@@ -18,9 +20,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ClaySoldierCraftingRecipe extends CustomRecipe {
+    public static final ClaySoldierCraftingRecipe INSTANCE = new ClaySoldierCraftingRecipe();
+    public static final MapCodec<ClaySoldierCraftingRecipe> CODEC = MapCodec.unit(INSTANCE);
+    public static final StreamCodec<RegistryFriendlyByteBuf, ClaySoldierCraftingRecipe> STREAM_CODEC = StreamCodec.unit(INSTANCE);
 
-    public ClaySoldierCraftingRecipe(CraftingBookCategory pCategory) {
-        super(pCategory);
+    public ClaySoldierCraftingRecipe() {
     }
 
     @Override
@@ -48,10 +52,9 @@ public class ClaySoldierCraftingRecipe extends CustomRecipe {
     }
 
     @Override
-    public ItemStack assemble(CraftingInput input, HolderLookup.Provider provider) {
-        ItemStack soldierPuppet = ModItems.CLAY_SOLDIER.get().getDefaultInstance();
+    public ItemStack assemble(CraftingInput input) {
         int count = 0;
-        ResourceLocation id = null;
+        ResourceKey<ClayMobTeam> id = null;
 
         for (int i = 0; i < input.size(); i++) {
             ItemStack itemAtI = input.getItem(i);
@@ -63,9 +66,7 @@ public class ClaySoldierCraftingRecipe extends CustomRecipe {
 
         }
         if (count > 0 && id != null) {
-            ClaySoldierSpawnItem.setClayMobTeam(soldierPuppet, id, provider);
-            soldierPuppet.setCount(count);
-            return soldierPuppet;
+            return ClaySoldierSpawnItem.createStackUnchecked(id, count);
         }
         throw new IllegalStateException("Crafting: Tried Crafting a Clay Soldier without a team item");
     }

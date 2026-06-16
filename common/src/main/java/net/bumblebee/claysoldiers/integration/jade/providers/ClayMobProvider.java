@@ -10,7 +10,7 @@ import net.bumblebee.claysoldiers.soldierproperties.types.BreathHoldPropertyType
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import java.util.function.BiConsumer;
 
@@ -21,7 +21,7 @@ public enum ClayMobProvider implements CommonEntityProvider<ClayMobEntity> {
 
     @Override
     public void appendTooltip(ClayMobEntity entity, CommonTooltipHelper tooltip, boolean detail, CompoundTag tag) {
-        if (entity.getType().is(ModTags.EntityTypes.CLAY_BOSS)) {
+        if (entity.is(ModTags.EntityTypes.CLAY_BOSS)) {
             return;
         }
 
@@ -38,7 +38,7 @@ public enum ClayMobProvider implements CommonEntityProvider<ClayMobEntity> {
     }
 
     @Override
-    public ResourceLocation getUniqueId() {
+    public Identifier getUniqueId() {
         return JadeRegistry.CLAY_MOB;
     }
 

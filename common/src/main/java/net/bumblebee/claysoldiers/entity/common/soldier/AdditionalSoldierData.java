@@ -51,7 +51,7 @@ public final class AdditionalSoldierData {
         ValueInput input = TagValueInput.create(ClaySoldiersCommon.PROBLEM_REPORTER, soldier.registryAccess(), tag);
         soldier.convertToSoldier(soldierType(), (newSoldier) -> {
             newSoldier.readItemPersistentData(input);
-            newSoldier.setClayTeamType(soldier.getClayTeamType());
+            newSoldier.setClayTeamType(soldier.getClayTeamHolder());
             newSoldier.onConversion(soldier, input, cause);
         });
     }

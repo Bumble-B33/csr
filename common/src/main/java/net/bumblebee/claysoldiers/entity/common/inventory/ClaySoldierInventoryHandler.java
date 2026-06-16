@@ -18,14 +18,16 @@ public interface ClaySoldierInventoryHandler extends ClaySoldierInventoryQuery, 
      * replacing the current one.
      */
     @Override
-    void setItemSlot(SoldierEquipmentSlot slot, ItemStack stack);
+    default void setItemSlot(SoldierEquipmentSlot slot, ItemStack stack) {
+        setItemSlot(slot, new ItemStackWithEffect(stack));
+    }
 
     /**
      * Sets the given {@code ItemStack} in the given {@code Slot},
      * replacing the current one.
      */
     @Override
-    void setItemSlot(SoldierEquipmentSlot pSlot, ItemStackWithEffect pStack);
+    void setItemSlot(SoldierEquipmentSlot slot, ItemStackWithEffect stack);
 
     /**
      * Returns the item in the given slot.
@@ -34,7 +36,7 @@ public interface ClaySoldierInventoryHandler extends ClaySoldierInventoryQuery, 
     ItemStackWithEffect getItemBySlot(SoldierEquipmentSlot slot);
 
     @Override
-    Iterable<ItemStack> getAllSlots();
+    Iterable<ItemStackWithEffect> getAllSlots();
 
     /**
      * Set the given ItemStack in the given slot if it is isEmpty

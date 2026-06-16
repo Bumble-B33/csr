@@ -7,10 +7,10 @@ import net.bumblebee.claysoldiers.datamap.armor.accessories.client.IAccessoryRen
 import net.bumblebee.claysoldiers.datamap.armor.accessories.client.RenderableAccessory;
 import net.bumblebee.claysoldiers.datamap.armor.accessories.custom.TextureAccessoryData;
 import net.bumblebee.claysoldiers.entity.client.renderstates.AbstractClaySoldierRenderState;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.HumanoidArm;
 
@@ -37,7 +37,7 @@ public class ShieldRenderable implements RenderableAccessory<TextureAccessoryDat
     }
 
 
-    private void renderArmWithShield(IAccessoryRenderLayer renderLayer, AbstractClaySoldierRenderState claySoldier, HumanoidArm pArm, PoseStack pPoseStack, SubmitNodeCollector pBuffer, int pPackedLight, ResourceLocation textureLocation) {
+    private void renderArmWithShield(IAccessoryRenderLayer renderLayer, AbstractClaySoldierRenderState claySoldier, HumanoidArm pArm, PoseStack pPoseStack, SubmitNodeCollector pBuffer, int pPackedLight, Identifier textureLocation) {
         pPoseStack.pushPose();
         renderLayer.getSoldierModel().translateToHand(claySoldier, pArm, pPoseStack);
         boolean leftHand = pArm == HumanoidArm.LEFT;
@@ -57,14 +57,14 @@ public class ShieldRenderable implements RenderableAccessory<TextureAccessoryDat
 
     }
 
-    private void renderShieldModel(IAccessoryRenderLayer renderLayer, AbstractClaySoldierRenderState claySoldier, PoseStack pPoseStack, SubmitNodeCollector pBuffer, int pPackedLight, ResourceLocation textureLocation) {
+    private void renderShieldModel(IAccessoryRenderLayer renderLayer, AbstractClaySoldierRenderState claySoldier, PoseStack pPoseStack, SubmitNodeCollector pBuffer, int pPackedLight, Identifier textureLocation) {
         pPoseStack.pushPose();
         pPoseStack.scale(1.0F, -1.0F, -1.0F);
         pBuffer.submitModel(
                 renderLayer.getShieldModel(),
                 claySoldier,
                 pPoseStack,
-                RenderType.entitySolid(textureLocation),
+                RenderTypes.entitySolid(textureLocation),
                 pPackedLight,
                 OverlayTexture.NO_OVERLAY,
                 -1,

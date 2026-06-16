@@ -2,19 +2,19 @@ package net.bumblebee.claysoldiers.networking;
 
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.entity.common.ClayMobEntity;
-import net.bumblebee.claysoldiers.platform.services.INetworkManger;
+import net.bumblebee.claysoldiers.platform.services.NetworkManger;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.NotNull;
 
 public class ClayMobItemBreakParticles implements IClientPayload {
-    public static final Type<ClayMobItemBreakParticles> ID = new Type<>(ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_mob_item_break_particle"));
+    public static final Type<ClayMobItemBreakParticles> ID = new Type<>(Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_mob_item_break_particle"));
 
     private final int entity;
     private final Item stack;
@@ -45,7 +45,7 @@ public class ClayMobItemBreakParticles implements IClientPayload {
     }
 
     @Override
-    public void handleClient(INetworkManger.PayloadContext context) {
+    public void handleClient(NetworkManger.PayloadContext context) {
         Level level = context.player().level();
         Entity entity = level.getEntity(getEntity());
         if (entity instanceof ClayMobEntity clayMob) {

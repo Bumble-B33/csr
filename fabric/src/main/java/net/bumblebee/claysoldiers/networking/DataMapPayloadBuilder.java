@@ -15,8 +15,8 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
@@ -45,7 +45,7 @@ public class DataMapPayloadBuilder<H, T> {
     private final BiConsumer<Map<Holder<H>, T>, Level> clientEffect;
 
     private DataMapPayloadBuilder(String name, StreamCodec<RegistryFriendlyByteBuf, Map<Holder<H>, T>> streamCodec, BiConsumer<Map<Holder<H>, T>, Level> clientEffect) {
-        this.id = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, name));
+        this.id = new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, name));
         this.clientEffect = clientEffect;
         this.streamCodec = streamCodec.map(Payload::new, p -> p.map);
     }
@@ -73,7 +73,7 @@ public class DataMapPayloadBuilder<H, T> {
     }
 
     private void register() {
-        PayloadTypeRegistry.playS2C().register(id, streamCodec);
+        PayloadTypeRegistry.clientboundPlay().register(id, streamCodec);
     }
 
     public void registerReceiver() {

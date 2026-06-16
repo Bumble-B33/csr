@@ -7,6 +7,7 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.attribute.EnvironmentAttributes;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -35,10 +36,10 @@ public class VampireClaySoldierEntity extends UndeadClaySoldier implements Vampi
     }
 
     @Override
-    public void addAdditionalSaveData(ValueOutput output) {
-        super.addAdditionalSaveData(output);
+    public void addAdditionalSaveData(ValueOutput valueOutput) {
+        super.addAdditionalSaveData(valueOutput);
         if (isAlpha()) {
-            output.putBoolean(ALPHA_TAG, true);
+            valueOutput.putBoolean(ALPHA_TAG, true);
         }
     }
 
@@ -86,7 +87,7 @@ public class VampireClaySoldierEntity extends UndeadClaySoldier implements Vampi
 
     @Override
     public float getNightPower() {
-        return (level().getMoonBrightness() + 1) * 1.5f;
+        return VampiricClayMob.getPowerForMoonPhase(level().environmentAttributes().getValue(EnvironmentAttributes.MOON_PHASE, this.blockPosition()));
     }
 
     @Override

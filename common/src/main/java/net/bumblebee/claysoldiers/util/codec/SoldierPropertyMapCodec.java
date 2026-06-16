@@ -5,11 +5,11 @@ import com.google.common.collect.ImmutableMap;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.datafixers.util.Unit;
 import com.mojang.serialization.*;
+import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.soldierproperties.SoldierProperty;
 import net.bumblebee.claysoldiers.soldierproperties.SoldierPropertyMap;
 import net.bumblebee.claysoldiers.soldierproperties.SoldierPropertyType;
 import net.bumblebee.claysoldiers.soldierproperties.SoldierPropertyTypes;
-import net.bumblebee.claysoldiers.util.ErrorHandler;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -61,12 +61,13 @@ public class SoldierPropertyMapCodec implements Codec<SoldierPropertyMap> {
                 (r1, r2) -> r1.apply2stable((u1, u2) -> u1, r2)
         );
 
+
         final List<? extends SoldierProperty<?>> elements = read.build().entrySet()
                 .stream().map(entry -> createProperty(entry.getKey(), entry.getValue().get()))
                 .filter(p -> {
                     var shouldIgnore = toIgnore.contains(p.type());
                     if (shouldIgnore) {
-                        ErrorHandler.INSTANCE.error("Parsing a Soldier Property (%s), that should be ignored by the Codec".formatted(p));
+                        ClaySoldiersCommon.ERROR_HANDLER.error("Parsing a Soldier Property (%s), that should be ignored by the Codec".formatted(p));
                     }
                     return !shouldIgnore;
                 })

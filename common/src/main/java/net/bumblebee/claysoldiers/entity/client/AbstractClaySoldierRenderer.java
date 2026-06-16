@@ -7,7 +7,6 @@ import net.bumblebee.claysoldiers.entity.client.accesories.AccessoryRenderLayer;
 import net.bumblebee.claysoldiers.entity.client.renderstates.AbstractClaySoldierRenderState;
 import net.bumblebee.claysoldiers.entity.client.renderstates.ClayMobRenderState;
 import net.bumblebee.claysoldiers.entity.common.soldier.AbstractClaySoldierEntity;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.ArmorModelSet;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
@@ -17,7 +16,8 @@ import net.minecraft.client.renderer.entity.layers.CustomHeadLayer;
 import net.minecraft.client.renderer.entity.layers.ItemInHandLayer;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
-import net.minecraft.client.renderer.state.CameraRenderState;
+import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -28,6 +28,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraft.world.item.ItemStack;
 
 public abstract class AbstractClaySoldierRenderer extends HumanoidMobRenderer<AbstractClaySoldierEntity, AbstractClaySoldierRenderState, ClaySoldierModel> {
     public static final float SCALE = AbstractClaySoldierEntity.DEFAULT_SCALE;
@@ -35,7 +36,6 @@ public abstract class AbstractClaySoldierRenderer extends HumanoidMobRenderer<Ab
     protected AbstractClaySoldierRenderer(EntityRendererProvider.Context context, ClaySoldierModel model) {
         super(context, model, model, 0.5f * SCALE, new CustomHeadLayer.Transforms(SCALE, SCALE, SCALE));
         this.layers.removeIf(layer -> layer.getClass() == CustomHeadLayer.class || layer.getClass() == ItemInHandLayer.class);
-
         this.addLayer(new ClaySoldierArmorLayer(this,
                 ArmorModelSet.bake(new ArmorModelSet<>(
                         ClaySoldierModel.HELMET_LAYER_LOCATION,
@@ -48,7 +48,7 @@ public abstract class AbstractClaySoldierRenderer extends HumanoidMobRenderer<Ab
         ));
         this.addLayer(SlimeRootLayer.ofSoldier(this, context.getItemModelResolver()));
         this.addLayer(new AccessoryRenderLayer(this, context.getModelSet(), context.getEquipmentAssets(), context.getPlayerSkinRenderCache()));
-        this.addLayer(new ClayMobStatusRenderlayer<>(this, context.getEntityRenderDispatcher(), e -> e.isInSittingPose, s -> s.shouldShowStatus, s -> s.workStatus, s -> s.statusAttachmentPoint));
+        this.addLayer(new ClayMobStatusRenderlayer<>(this, e -> e.isInSittingPose, s -> s.shouldShowStatus, s -> s.workStatus, s -> s.statusAttachmentPoint));
         this.addLayer(new WaxedRenderLayer<>(this));
         this.addLayer(new ClaySoldierItemInHandLayer(this));
     }
@@ -82,7 +82,6 @@ public abstract class AbstractClaySoldierRenderer extends HumanoidMobRenderer<Ab
         pPoseStack.translate(0.0F, -1.501F, 0.0F);
 
 
-
         boolean bodyVisible = this.isBodyVisible(claySoldier);
         boolean isInvisible = !bodyVisible;
         RenderType rendertype = this.getRenderType(claySoldier, bodyVisible, isInvisible, claySoldier.appearsGlowing());
@@ -101,13 +100,13 @@ public abstract class AbstractClaySoldierRenderer extends HumanoidMobRenderer<Ab
             }
         }
 
-        submitCarried(claySoldier, pPoseStack, nodeCollector, claySoldier.lightLevel, OverlayTexture.NO_OVERLAY);
+        submitCarried(claySoldier, pPoseStack, nodeCollector, claySoldier.lightCoords, OverlayTexture.NO_OVERLAY);
 
         pPoseStack.popPose();
         pPoseStack.popPose();
 
         if (claySoldier.nameTag != null) {
-            submitNameTag(claySoldier, pPoseStack, nodeCollector, cameraRenderState);
+            submitNameDisplay(claySoldier, pPoseStack, nodeCollector, cameraRenderState);
         }
 
 
@@ -128,8 +127,8 @@ public abstract class AbstractClaySoldierRenderer extends HumanoidMobRenderer<Ab
         claySoldierRenderState.hasShieldInOffhand = claySoldierEntity.hasShieldInHand(InteractionHand.OFF_HAND);
         claySoldierRenderState.hasShieldInMainHand = claySoldierEntity.hasShieldInHand(InteractionHand.MAIN_HAND);
 
-        claySoldierRenderState.carriedItemStack = claySoldierEntity.getCarriedStack();
-        this.itemModelResolver.updateForLiving(claySoldierRenderState.carriedItemRenderState, claySoldierRenderState.carriedItemStack, ItemDisplayContext.FIXED, claySoldierEntity);
+        this.itemModelResolver.updateForLiving(claySoldierRenderState.carriedItemRenderState, claySoldierEntity.getCarriedStack(), ItemDisplayContext.FIXED, claySoldierEntity);
+        claySoldierRenderState.renderCarried = true;
 
         claySoldierRenderState.ridingPose = claySoldierEntity.getRidingPose();
         claySoldierRenderState.id = claySoldierEntity.getId();
@@ -144,6 +143,7 @@ public abstract class AbstractClaySoldierRenderer extends HumanoidMobRenderer<Ab
         claySoldierRenderState.swelling = claySoldierEntity.getSwelling(partialTick);
 
         claySoldierRenderState.offsetColor = claySoldierEntity.getOffsetColor().getColor(claySoldierEntity, partialTick);
+        claySoldierRenderState.hasOffsetColor = claySoldierEntity.hasOffsetColor();
 
         claySoldierRenderState.allProperties = claySoldierEntity.allProperties();
 
@@ -152,7 +152,7 @@ public abstract class AbstractClaySoldierRenderer extends HumanoidMobRenderer<Ab
         claySoldierRenderState.veryAngry = claySoldierEntity.isVeryAngry();
 
         claySoldierRenderState.setUpInventory(claySoldierEntity);
-        claySoldierRenderState.fallFlyingTimeInTicks = (float)claySoldierEntity.getFallFlyingTicks() + partialTick;
+        claySoldierRenderState.fallFlyingTimeInTicks = (float) claySoldierEntity.getFallFlyingTicks() + partialTick;
         AbstractClaySoldierRenderState.extractCloakState(claySoldierEntity, claySoldierRenderState, partialTick);
         AbstractClaySoldierRenderState.extractAccessoryRenderState(claySoldierEntity, claySoldierRenderState, itemModelResolver);
     }
@@ -176,19 +176,23 @@ public abstract class AbstractClaySoldierRenderer extends HumanoidMobRenderer<Ab
     }
 
     private void submitCarried(AbstractClaySoldierRenderState soldier, PoseStack pPoseStack, SubmitNodeCollector nodeCollector, int pPackedLight, int pPackedOverleay) {
-        if (!soldier.carriedItemRenderState.isEmpty()) {
-            pPoseStack.pushPose();
-            pPoseStack.translate(0, -0.55, 0);
-
-            pPoseStack.mulPose(Axis.YP.rotationDegrees(135F));
-            pPoseStack.mulPose(Axis.XP.rotationDegrees(90F));
-
-            pPoseStack.scale(1.5f, 1.5f, 1.5f);
-
-            soldier.carriedItemRenderState.submit(pPoseStack, nodeCollector, pPackedLight, pPackedOverleay, 0);
-            pPoseStack.popPose();
-
+        if (!soldier.renderCarried || soldier.carriedItemRenderState.isEmpty()) {
+            return;
         }
+
+
+        pPoseStack.pushPose();
+        pPoseStack.translate(0, -0.55, 0);
+
+        pPoseStack.mulPose(Axis.YP.rotationDegrees(135F));
+        pPoseStack.mulPose(Axis.XP.rotationDegrees(90F));
+
+        pPoseStack.scale(1.5f, 1.5f, 1.5f);
+
+        soldier.carriedItemRenderState.submit(pPoseStack, nodeCollector, pPackedLight, pPackedOverleay, 0);
+        pPoseStack.popPose();
+
+
     }
 
     private void scaleExplode(AbstractClaySoldierRenderState claySoldier, PoseStack pPoseStack) {
@@ -237,14 +241,14 @@ public abstract class AbstractClaySoldierRenderer extends HumanoidMobRenderer<Ab
         }
 
         @Override
-        protected void submitArmWithItem(AbstractClaySoldierRenderState renderState, ItemStackRenderState stackRenderState, HumanoidArm arm, PoseStack poseStack, SubmitNodeCollector nodeCollector, int packedLight) {
+        protected void submitArmWithItem(AbstractClaySoldierRenderState renderState, ItemStackRenderState stackRenderState, ItemStack itemStack, HumanoidArm arm, PoseStack poseStack, SubmitNodeCollector nodeCollector, int packedLight) {
             if (arm == HumanoidArm.LEFT && renderState.offhandOccupied) {
                 return;
             }
             if (arm == HumanoidArm.RIGHT && renderState.mainhandOccupied) {
                 return;
             }
-            super.submitArmWithItem(renderState, stackRenderState, arm, poseStack, nodeCollector, packedLight);
+            super.submitArmWithItem(renderState, stackRenderState, itemStack, arm, poseStack, nodeCollector, packedLight);
         }
     }
 }

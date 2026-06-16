@@ -8,10 +8,11 @@ import net.bumblebee.claysoldiers.init.ModTags;
 import net.bumblebee.claysoldiers.soldierproperties.SoldierProperty;
 import net.bumblebee.claysoldiers.soldierproperties.SoldierPropertyMap;
 import net.bumblebee.claysoldiers.soldierproperties.SoldierPropertyTypes;
+import net.bumblebee.claysoldiers.team.ClayMobTeam;
 import net.bumblebee.claysoldiers.team.ClayMobTeamManger;
-import net.minecraft.Util;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.util.RandomSource;
+import net.minecraft.util.Util;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,11 +41,13 @@ public enum ClaySoldierBossEquipment {
         this((boss, weight, team, waxed) -> {
             boss.setBaseProperties(baseProperties.get());
             if (team == null) {
-                team = Util.getRandomSafe(
-                        boss.registryAccess().lookupOrThrow(ModRegistries.CLAY_MOB_TEAMS).keySet().stream().filter(t -> !t.equals(ClayMobTeamManger.NO_TEAM_TYPE)).toList(), boss.getRandom()
-                ).orElse(ClayMobTeamManger.DEFAULT_TYPE);
+                var key = Util.getRandomSafe(
+                        boss.registryAccess().lookupOrThrow(ModRegistries.CLAY_MOB_TEAMS).entrySet().stream().map(Map.Entry::getKey).filter(t -> !t.equals(ClayMobTeamManger.NO_TEAM_KEY)).toList(), boss.getRandom()
+                ).orElse(ClayMobTeamManger.DEFAULT_KEY);
+                boss.setClayTeamType(key);
+            } else {
+                boss.setClayTeamType(team);
             }
-            boss.setClayTeamType(team);
             equipment.forEach((slot, item) -> boss.setItemSlot(slot, item.get()));
             boss.setWaxed(waxed);
             boss.setBossAI(bossAI.get());
@@ -55,7 +58,7 @@ public enum ClaySoldierBossEquipment {
         this.generator = generator;
     }
 
-    public void setUp(BossClaySoldierEntity boss, int weight, @Nullable ResourceLocation team, boolean waxed) {
+    public void setUp(BossClaySoldierEntity boss, int weight, @Nullable ResourceKey<ClayMobTeam> team, boolean waxed) {
         generator.setUp(boss, weight, team, waxed);
     }
 
@@ -63,9 +66,9 @@ public enum ClaySoldierBossEquipment {
         RandomSource random = boss.getRandom();
 
 
-        ResourceLocation team = Util.getRandomSafe(
-                boss.registryAccess().lookupOrThrow(ModRegistries.CLAY_MOB_TEAMS).keySet().stream().filter(t -> !t.equals(ClayMobTeamManger.NO_TEAM_TYPE)).toList(), random
-        ).orElse(ClayMobTeamManger.DEFAULT_TYPE);
+        ResourceKey<ClayMobTeam> team = Util.getRandomSafe(
+                boss.registryAccess().lookupOrThrow(ModRegistries.CLAY_MOB_TEAMS).entrySet().stream().map(Map.Entry::getKey).filter(t -> !t.equals(ClayMobTeamManger.NO_TEAM_KEY)).toList(), random
+        ).orElse(ClayMobTeamManger.DEFAULT_KEY);
 
 
         boss.setBossAI(Util.getRandom(List.of(ModBossBehaviours.VAMPIRE, ModBossBehaviours.DEFAULT, ModBossBehaviours.ZOMBIE), random).get());
@@ -106,6 +109,6 @@ public enum ClaySoldierBossEquipment {
     }
 
     private interface SetupFunction {
-        void setUp(BossClaySoldierEntity boss, int weight, @Nullable ResourceLocation team, boolean waxed);
+        void setUp(BossClaySoldierEntity boss, int weight, @Nullable ResourceKey<ClayMobTeam> team, boolean waxed);
     }
 }

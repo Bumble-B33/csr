@@ -1,17 +1,15 @@
 package net.bumblebee.claysoldiers.entity.client.programmable;
 
-import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.entity.client.ClaySoldierModel;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.client.model.geom.builders.*;
-import net.minecraft.resources.ResourceLocation;
 
 import java.util.Set;
 
 public class ClaySoldierChipModel extends ClaySoldierModel {
-    public static final ModelLayerLocation LAYER_LOCATION = new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_soldier"), "chip");
+    public static final ModelLayerLocation LAYER_LOCATION = createLayerLocation("chip");
     public static final String CHIP_NAME = "chip";
 
 

@@ -14,7 +14,7 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.core.RegistrySetBuilder;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.PackOutput;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Items;
 import net.neoforged.neoforge.common.data.DatapackBuiltinEntriesProvider;
 
@@ -31,7 +31,6 @@ public class ModDatapackProvider extends DatapackBuiltinEntriesProvider {
     public static final String LARGE_HOUSE_LANG = LANGUAGE_PREFIX + "large_house";
     private final String name;
 
-
     public ModDatapackProvider(PackOutput output, RegistrySetBuilder builder, CompletableFuture<HolderLookup.Provider> registries, String name) {
         super(output, registries, builder, Collections.singleton(ClaySoldiersCommon.MOD_ID));
         this.name = name;
@@ -40,10 +39,6 @@ public class ModDatapackProvider extends DatapackBuiltinEntriesProvider {
     @Override
     public String getName() {
         return super.getName() + name;
-    }
-
-    public static ModDatapackProvider builtin(PackOutput output, CompletableFuture<HolderLookup.Provider> registries) {
-        return new ModDatapackProvider(output, BUILDER_BUILTIN, registries, "builtin");
     }
 
     public static ModDatapackProvider datapack(PackOutput output, CompletableFuture<HolderLookup.Provider> registries) {
@@ -56,17 +51,18 @@ public class ModDatapackProvider extends DatapackBuiltinEntriesProvider {
         BUILDER_BUILTIN.add(ModRegistries.BLUEPRINTS, (context) -> new BootstrapHelper.Blueprint(context, ClaySoldiersCommon.MOD_ID) {
             @Override
             protected void gather() {
-                register("small_house", ResourceLocation.withDefaultNamespace("village/plains/houses/plains_small_house_1"), SMALL_HOUSE_LANG, 0);
-                register("small_farm", ResourceLocation.withDefaultNamespace("village/plains/houses/plains_small_farm_1"), SMALL_FARM_LANG, 0.5f);
-                register("large_house", ResourceLocation.withDefaultNamespace("village/plains/houses/plains_medium_house_1"), LARGE_HOUSE_LANG, 1f);
+                register("small_house", Identifier.withDefaultNamespace("village/plains/houses/plains_small_house_1"), SMALL_HOUSE_LANG, 0);
+                register("small_farm", Identifier.withDefaultNamespace("village/plains/houses/plains_small_farm_1"), SMALL_FARM_LANG, 0.5f);
+                register("large_house", Identifier.withDefaultNamespace("village/plains/houses/plains_medium_house_1"), LARGE_HOUSE_LANG, 1f);
             }
         });
+
         BUILDER.add(ModRegistries.SOLDIER_ITEM_TYPES, DefaultSoldierItemTypes::registerAll);
         BUILDER.add(ModRegistries.CLAY_MOB_TEAMS, context -> new BootstrapHelper.ClayTeam(context, ClaySoldiersCommon.MOD_ID) {
             @Override
             protected void gather() {
-                register(ClayMobTeamManger.DEFAULT_TYPE.getPath(), ClayMobTeam.of("Normal", ColorHelper.EMPTY).build());
-                register(ClayMobTeamManger.NO_TEAM_TYPE.getPath(), ClayMobTeam.of("No Team", ColorHelper.EMPTY).allowFriendlyFire().disableTaming().build());
+                register(ClayMobTeamManger.DEFAULT_KEY, ClayMobTeam.of("Normal", ColorHelper.CLAY_COLOR).build());
+                register(ClayMobTeamManger.NO_TEAM_KEY, ClayMobTeam.of("No Team", ColorHelper.CLAY_COLOR).allowFriendlyFire().disableTaming().build());
 
                 register("white", "White", 16383998, Items.WHITE_DYE);
                 register("orange", "Orange", 16351261, Items.ORANGE_DYE);

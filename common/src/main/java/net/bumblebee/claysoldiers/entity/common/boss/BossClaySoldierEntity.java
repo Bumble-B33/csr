@@ -3,13 +3,13 @@ package net.bumblebee.claysoldiers.entity.common.boss;
 import com.mojang.serialization.Codec;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.entity.common.ClayMobEntity;
+import net.bumblebee.claysoldiers.entity.common.soldier.AbstractClaySoldierEntity;
+import net.bumblebee.claysoldiers.entity.common.soldier.status.SoldierStatusHolder;
 import net.bumblebee.claysoldiers.entity.goal.ClaySodlierBreathAirGoal;
 import net.bumblebee.claysoldiers.entity.goal.ClaySoldierMeleeAttackGoal;
 import net.bumblebee.claysoldiers.entity.goal.target.ClaySoldierNearestTargetGoal;
-import net.bumblebee.claysoldiers.entity.goal.workgoal.WorkSelectorGoal;
-import net.bumblebee.claysoldiers.entity.common.soldier.AbstractClaySoldierEntity;
-import net.bumblebee.claysoldiers.entity.common.soldier.status.SoldierStatusHolder;
 import net.bumblebee.claysoldiers.init.ModBossBehaviours;
+import net.bumblebee.claysoldiers.init.ModEntitySerializers;
 import net.bumblebee.claysoldiers.init.ModRegistries;
 import net.bumblebee.claysoldiers.init.ModTags;
 import net.bumblebee.claysoldiers.networking.spawnpayloads.ClayBossSpawnPayload;
@@ -21,13 +21,15 @@ import net.bumblebee.claysoldiers.soldierproperties.customproperties.AttackTypeP
 import net.minecraft.advancements.CriteriaTriggers;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.UUIDUtil;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.syncher.EntityDataAccessor;
-import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerBossEvent;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.BossEvent;
 import net.minecraft.world.DifficultyInstance;
@@ -57,10 +59,11 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
 import java.util.*;
-import java.util.function.Consumer;
 
 public class BossClaySoldierEntity extends AbstractClaySoldierEntity {
-    private static final EntityDataAccessor<Byte> BOSS_TYPE = SynchedEntityData.defineId(BossClaySoldierEntity.class, EntityDataSerializers.BYTE);
+    private static final EntityDataAccessor<BossTypes> BOSS_TYPE = SynchedEntityData.defineId(BossClaySoldierEntity.class, ModEntitySerializers.BOSS_TYPES);
+    private static final EntityDataAccessor<Optional<BossClaySoldierBehaviour>> BOSS_BEHAVIOUR = SynchedEntityData.defineId(BossClaySoldierEntity.class, ModEntitySerializers.BOSS_BEHAVIOUR);
+
 
     private static final Logger LOGGER = ClaySoldiersCommon.LOGGER;
     private static final String BASE_PROPERTIES_TAG = "baseProperties";
@@ -89,21 +92,27 @@ public class BossClaySoldierEntity extends AbstractClaySoldierEntity {
     private int phaseCompleted = 0;
     private int nextMinionGlow = 0;
 
-    public BossClaySoldierEntity(EntityType<? extends BossClaySoldierEntity> pEntityType, Level pLevel) {
-        super(pEntityType, pLevel, AttackTypeProperty.BOSS, s -> EMPTY);
+    public BossClaySoldierEntity(EntityType<? extends BossClaySoldierEntity> entityType, Level level) {
+        super(entityType, level, AttackTypeProperty.BOSS, s -> EMPTY);
         this.otherPlayerDamage = (w, e) -> w ? 0.9f : 1f;
         this.defaultDamage = (w, e) -> w ? 0.9f : 1f;
         this.clayDamage = (w, e) -> w ? 0.25f : 0.5f;
-        this.bossEvent = new ServerBossEvent(this.getDisplayName(), BossEvent.BossBarColor.WHITE, BossEvent.BossBarOverlay.PROGRESS);
+        this.bossEvent = new ServerBossEvent(Mth.createInsecureUUID(level.getRandom()), this.getDisplayName(), BossEvent.BossBarColor.WHITE, BossEvent.BossBarOverlay.PROGRESS);
         this.baseProperties = new SoldierPropertyCombinedMap();
     }
 
     public void setBossAI(@NotNull BossClaySoldierBehaviour bossAI) {
-        if (this.bossAI != null || bossAI == null) {
-            throw new IllegalStateException("Cannot set Boss Ai twice");
+        if (level().isClientSide()) {
+            this.bossAI = bossAI;
+            this.bossAI.setUpBoss(this, bossEvent);
+        } else {
+            if ((this.bossAI != null || bossAI == null)) {
+                throw new IllegalStateException("Cannot set Boss Ai twice");
+            }
+            this.bossAI = bossAI;
+            this.bossAI.setUpBoss(this, bossEvent);
+            ClaySoldiersCommon.NETWORK_MANGER.sendToPlayersTrackingEntity(this, new ClayBossSpawnPayload(this));
         }
-        this.bossAI = bossAI;
-        this.bossAI.setUpBoss(this, bossEvent);
     }
 
     @NotNull
@@ -111,40 +120,52 @@ public class BossClaySoldierEntity extends AbstractClaySoldierEntity {
         return Objects.requireNonNull(bossAI, "Boss AI not initialized");
     }
 
+    public Optional<BossClaySoldierBehaviour> getOptionalBossAI(boolean required) {
+        if (bossAI == null && required) {
+            ClaySoldiersCommon.ERROR_HANDLER.warn("Boss AI not initialized");
+        }
+        return Optional.ofNullable(bossAI);
+    }
+
+    @Override
+    public void sendSpawnPayload(ServerPlayer tracking) {
+        super.sendSpawnPayload(tracking);
+        if (bossAI != null) {
+            ClaySoldiersCommon.NETWORK_MANGER.sendToPlayer(tracking, new ClayBossSpawnPayload(this));
+        }
+    }
+
+
     public static AttributeSupplier bossAttributes() {
-        return Mob.createMobAttributes()
+        return AbstractClaySoldierEntity.createSoldierAttributes()
                 .add(Attributes.MAX_HEALTH, 40.0D)
                 .add(Attributes.ARMOR, 5D)
-                .add(Attributes.ATTACK_DAMAGE, 2.5f)
-                .add(Attributes.ATTACK_SPEED, 0.1D)
-                .add(Attributes.MOVEMENT_SPEED, 0.3D)
                 .add(Attributes.FOLLOW_RANGE, 24.0)
                 .add(Attributes.KNOCKBACK_RESISTANCE, 0.6)
-                .add(Attributes.TEMPT_RANGE)
                 .build();
     }
 
 
     @Override
-    public void addAdditionalSaveData(ValueOutput output) {
-        super.addAdditionalSaveData(output);
+    public void addAdditionalSaveData(ValueOutput valueOutput) {
+        super.addAdditionalSaveData(valueOutput);
 
         if (!baseProperties.isEmpty()) {
-            writeBasePropertiesToTag(baseProperties, output);
+            writeBasePropertiesToTag(baseProperties, valueOutput);
         }
-        output.store(TYPE_TAG, BossTypes.CODEC, getBossType());
+        valueOutput.store(TYPE_TAG, BossTypes.CODEC, getBossType());
 
-        writeBossAIToTag(getBossAI(), output);
+        getOptionalBossAI(true).ifPresent(s -> writeBossAIToTag(s, valueOutput));
 
         if (minionOwner != null) {
-            output.store(MINION_OWNER_TAG, UUIDUtil.CODEC, minionOwner.getUUID());
+            valueOutput.store(MINION_OWNER_TAG, UUIDUtil.CODEC, minionOwner.getUUID());
         }
         if (minions != null) {
-            output.store(MINIONS_TAG, UUIDUtil.CODEC.listOf(), minions.stream().map(Entity::getUUID).toList());
+            valueOutput.store(MINIONS_TAG, UUIDUtil.CODEC.listOf(), minions.stream().map(Entity::getUUID).toList());
         }
 
         if (phaseCompleted > 0) {
-            output.putInt(PHASE_COMPLETED_TAG, phaseCompleted);
+            valueOutput.putInt(PHASE_COMPLETED_TAG, phaseCompleted);
         }
     }
 
@@ -178,8 +199,8 @@ public class BossClaySoldierEntity extends AbstractClaySoldierEntity {
 
     }
 
-    private boolean readAndSetBossAI(ValueInput pCompound) {
-        var ai = pCompound.read(BOSS_AI_TAG, BossClaySoldierBehaviour.CODEC);
+    private boolean readAndSetBossAI(ValueInput input) {
+        var ai = input.read(BOSS_AI_TAG, BossClaySoldierBehaviour.CODEC);
         if (ai.isPresent()) {
             setBossAI(ai.orElseThrow());
             return true;
@@ -188,16 +209,16 @@ public class BossClaySoldierEntity extends AbstractClaySoldierEntity {
         }
     }
 
-    public static void writeBossAIToTag(BossClaySoldierBehaviour ai, ValueOutput pCompound) {
-        pCompound.store(BOSS_AI_TAG, BossClaySoldierBehaviour.CODEC, ai);
+    public static void writeBossAIToTag(BossClaySoldierBehaviour ai, ValueOutput output) {
+        output.store(BOSS_AI_TAG, BossClaySoldierBehaviour.CODEC, ai);
     }
 
-    public static void writeBasePropertiesToTag(SoldierPropertyMap properties, ValueOutput compound) {
-        compound.store(BASE_PROPERTIES_TAG, SoldierPropertyMap.CODEC_FOR_NON_ITEM, properties);
+    public static void writeBasePropertiesToTag(SoldierPropertyMap properties, ValueOutput output) {
+        output.store(BASE_PROPERTIES_TAG, SoldierPropertyMap.CODEC_FOR_NON_ITEM, properties);
     }
 
-    private void readAndSetBasePropertiesFromTag(ValueInput compound) {
-        compound.read(BASE_PROPERTIES_TAG, SoldierPropertyMap.CODEC_FOR_NON_ITEM).ifPresent(this::setBaseProperties);
+    private void readAndSetBasePropertiesFromTag(ValueInput input) {
+        input.read(BASE_PROPERTIES_TAG, SoldierPropertyMap.CODEC_FOR_NON_ITEM).ifPresent(this::setBaseProperties);
     }
 
     @Override
@@ -215,7 +236,8 @@ public class BossClaySoldierEntity extends AbstractClaySoldierEntity {
     @Override
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
         super.defineSynchedData(builder);
-        builder.define(BOSS_TYPE, (byte) BossTypes.NORMAL.ordinal());
+        builder.define(BOSS_TYPE, BossTypes.NORMAL);
+        builder.define(BOSS_BEHAVIOUR, Optional.empty());
     }
 
     @Override
@@ -242,19 +264,8 @@ public class BossClaySoldierEntity extends AbstractClaySoldierEntity {
     }
 
     @Override
-    protected WorkSelectorGoal getOrCreateWorkSelectorGoal() {
-        return new WorkSelectorGoal(this, List.of());
-    }
-
-    @Override
     public @Nullable UUID getClayTeamOwnerUUID() {
         return null;
-    }
-
-    @Override
-    public void sendSpawnPayload(ServerPlayer tracking) {
-        ClaySoldiersCommon.NETWORK_MANGER.sendToPlayer(tracking, new ClayBossSpawnPayload(this));
-        super.sendSpawnPayload(tracking);
     }
 
     // Bossbar
@@ -379,14 +390,17 @@ public class BossClaySoldierEntity extends AbstractClaySoldierEntity {
     }
 
     public @NotNull BossClaySoldierEntity.BossTypes getBossType() {
-        return BossTypes.values()[this.entityData.get(BOSS_TYPE)];
+        return this.entityData.get(BOSS_TYPE);
     }
 
     public void setBossType(@NotNull BossClaySoldierEntity.BossTypes type) {
-        if (level().isClientSide() || !getBossAI().isAllowed(type)) {
-            return;
-        }
-        this.entityData.set(BOSS_TYPE, (byte) type.ordinal());
+        getOptionalBossAI(true).ifPresent(s -> {
+            if (level().isClientSide() || !s.isAllowed(type)) {
+                return;
+            }
+            this.entityData.set(BOSS_TYPE, type);
+        });
+
     }
 
     @Override
@@ -402,7 +416,7 @@ public class BossClaySoldierEntity extends AbstractClaySoldierEntity {
     }
 
     @Override
-    public void performRangedAttack(@NotNull LivingEntity target, float pVelocity) {
+    public void performRangedAttack(@NotNull LivingEntity target, float velocity) {
         performRangedAttack(target.getX(), target.getY() + (double) target.getEyeHeight() * 0.5, target.getZ(), 0.75f);
     }
 
@@ -521,11 +535,11 @@ public class BossClaySoldierEntity extends AbstractClaySoldierEntity {
 
     @Override
     public void die(DamageSource damageSource) {
-        if (!getBossAI().shouldDie(this)) {
+        if (!getOptionalBossAI(true).map(s -> s.shouldDie(this)).orElse(true)) {
             return;
         }
         super.die(damageSource);
-        getBossAI().onDeath(this, damageSource);
+        getOptionalBossAI(true).ifPresent(s -> s.onDeath(this, damageSource));
     }
 
     protected boolean isUndead() {
@@ -595,7 +609,10 @@ public class BossClaySoldierEntity extends AbstractClaySoldierEntity {
     public List<String> getInfoState() {
         var list = super.getInfoState();
         list.add(String.format("Boss Type: %s", getBossType()));
-        list.add(String.format("Boss AI: %s", ModRegistries.BOSS_CLAY_SOLDIER_BEHAVIOURS_REGISTRY.getKey(getBossAI())));
+        getOptionalBossAI(false).ifPresentOrElse(
+                s -> list.add(String.format("Boss AI: %s", ModRegistries.BOSS_CLAY_SOLDIER_BEHAVIOURS_REGISTRY.getKey(s))),
+                () -> list.add(String.format("Boss AI: Not Initialized"))
+        );
         list.add(String.format("Base Properties: %s", baseProperties));
         if (!level().isClientSide()) {
             getMinionOwner();
@@ -607,16 +624,32 @@ public class BossClaySoldierEntity extends AbstractClaySoldierEntity {
         return list;
     }
 
+    @Override
+    public boolean showInStatDisplay() {
+        return false;
+    }
+
     public enum BossTypes implements StringRepresentable {
-        NORMAL("normal", event -> event.setColor(BossEvent.BossBarColor.BLUE)),
-        ZOMBIE("zombie", event -> event.setColor(BossEvent.BossBarColor.GREEN)),
-        VAMPIRE("vampire", event -> event.setDarkenScreen(true).setColor(BossEvent.BossBarColor.RED));
+        NORMAL("normal"),
+        ZOMBIE("zombie"),
+        VAMPIRE("vampire");
 
         public static final Codec<BossTypes> CODEC = StringRepresentable.fromEnum(BossTypes::values);
+        public static final StreamCodec<FriendlyByteBuf, BossTypes> STREAM_CODEC = new StreamCodec<FriendlyByteBuf, BossTypes>() {
+            @Override
+            public BossTypes decode(FriendlyByteBuf friendlyByteBuf) {
+                return friendlyByteBuf.readEnum(BossTypes.class);
+            }
+
+            @Override
+            public void encode(FriendlyByteBuf o, BossTypes bossTypes) {
+                o.writeEnum(bossTypes);
+            }
+        };
 
         private final String serializedName;
 
-        BossTypes(String serializedName, Consumer<BossEvent> modifyBossEvent) {
+        BossTypes(String serializedName) {
             this.serializedName = serializedName;
         }
 

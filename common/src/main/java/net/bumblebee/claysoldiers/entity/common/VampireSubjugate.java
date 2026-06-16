@@ -34,7 +34,7 @@ public interface VampireSubjugate {
             return false;
         }
         var owner = getVampOwner();
-        return owner != null && owner.equals(vampire);
+        return owner != null && owner.is(vampire);
     }
 
     /**

@@ -3,15 +3,17 @@ package net.bumblebee.claysoldiers.blueprint;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
+import net.bumblebee.claysoldiers.blueprint.plan.BlueprintPlan;
+import net.bumblebee.claysoldiers.blueprint.plan.ServerBlueprintPlan;
 import net.bumblebee.claysoldiers.blueprint.templates.BaseImmutableTemplate;
-import net.bumblebee.claysoldiers.blueprint.templates.BlueprintPlan;
-import net.bumblebee.claysoldiers.blueprint.templates.ServerBlueprintPlan;
+import net.bumblebee.claysoldiers.blueprint.templates.ImmutableTemplate;
 import net.bumblebee.claysoldiers.init.ModRegistries;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.shapes.VoxelShape;
@@ -23,13 +25,15 @@ import java.util.Optional;
 public final class BlueprintData {
     private static final String BLUEPRINT_DATA_TAG = "BlueprintData";
     public static final Codec<BlueprintData> JSON_CODEC = RecordCodecBuilder.create(in -> in.group(
-            ResourceLocation.CODEC.fieldOf("location").forGetter(BlueprintData::location),
+            Identifier.CODEC.fieldOf("location").forGetter(BlueprintData::structureLocation),
             Codec.STRING.fieldOf("name").forGetter(BlueprintData::name),
             Codec.FLOAT.optionalFieldOf("marking", 0f).forGetter(BlueprintData::marking)
             ).apply(in, BlueprintData::new)
     );
+    public static final Codec<ResourceKey<BlueprintData>> KEY_CODEC = ResourceKey.codec(ModRegistries.BLUEPRINTS);
 
-    private final ResourceLocation location;
+
+    private final Identifier structureLocation;
     private final String name;
     private final float marking;
     private BaseImmutableTemplate template;
@@ -38,8 +42,8 @@ public final class BlueprintData {
     private boolean valid = false;
     private Holder.Reference<BlueprintData> reference;
 
-    public BlueprintData(ResourceLocation location, String name, float marking) {
-        this.location = location;
+    public BlueprintData(Identifier structureLocation, String name, float marking) {
+        this.structureLocation = structureLocation;
         this.name = name;
         this.marking = marking;
     }
@@ -52,6 +56,10 @@ public final class BlueprintData {
 
     public void bindStructure(BaseImmutableTemplate template) {
         if (template == null) {
+            return;
+        }
+        if (this.template instanceof ImmutableTemplate) {
+            ClaySoldiersCommon.ERROR_HANDLER.debug("Trying to override. Template");
             return;
         }
 
@@ -67,8 +75,8 @@ public final class BlueprintData {
         return valid;
     }
 
-    public Optional<ServerBlueprintPlan> createServerPlan() {
-        return valid ? template.createServer() : Optional.empty();
+    public Optional<ServerBlueprintPlan> createServerPlan(ServerLevel level) {
+        return valid ? template.createServer(level) : Optional.empty();
     }
 
     public Optional<BlueprintPlan> createClientPlan() {
@@ -78,25 +86,25 @@ public final class BlueprintData {
     public void save(ValueOutput tag, HolderLookup.Provider registries) {
         registries.lookupOrThrow(ModRegistries.BLUEPRINTS).listElements().filter(h -> h.value().equals(this)).findAny()
                 .ifPresentOrElse(
-                        holder -> tag.store(BLUEPRINT_DATA_TAG, ResourceLocation.CODEC, holder.key().location()),
+                        holder -> tag.store(BLUEPRINT_DATA_TAG, KEY_CODEC, holder.key()),
                         () -> ClaySoldiersCommon.LOGGER.error("Error Loading Blueprint Data from Tag"));
     }
 
     @Nullable
     public static BlueprintData load(ValueInput tag, HolderLookup.Provider pRegistries) {
-        var key = tag.read(BLUEPRINT_DATA_TAG, ResourceLocation.CODEC);
+        Optional<ResourceKey<BlueprintData>> key = tag.read(BLUEPRINT_DATA_TAG, KEY_CODEC);
         if (key.isEmpty()) {
             return null;
         }
-        var holder = pRegistries.lookupOrThrow(ModRegistries.BLUEPRINTS).get(ResourceKey.create(ModRegistries.BLUEPRINTS, key.orElseThrow()));
+        Optional<Holder.Reference<BlueprintData>> holder = pRegistries.lookupOrThrow(ModRegistries.BLUEPRINTS).get(key.orElseThrow());
         if (holder.isEmpty()) {
             ClaySoldiersCommon.LOGGER.error("Tried Loading Blueprint Data that does not exist {}", key);
         }
-        return holder.map(Holder.Reference::value).orElse(null);
+        return holder.map(Holder::value).orElse(null);
     }
 
-    public ResourceLocation location() {
-        return location;
+    public Identifier structureLocation() {
+        return structureLocation;
     }
 
     public String name() {
@@ -126,18 +134,18 @@ public final class BlueprintData {
         if (obj == this) return true;
         if (obj == null || obj.getClass() != this.getClass()) return false;
         var that = (BlueprintData) obj;
-        return Objects.equals(this.location, that.location) &&
+        return Objects.equals(this.structureLocation, that.structureLocation) &&
                 Objects.equals(this.name, that.name);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(location, name);
+        return Objects.hash(structureLocation, name);
     }
 
     @Override
     public String toString() {
-        return "BlueprintData[%s, %s, %s, %s, %s]".formatted(name, location.getPath(),
+        return "BlueprintData[%s, %s, %s, %s, %s]".formatted(name, structureLocation.getPath(),
                 (valid ? "Valid" : "Invalid"),
                 (template == null ? "NoTemplate" : template.toShortString()),
                 (voxelShape == null ? "NoShape" : "WithShape")

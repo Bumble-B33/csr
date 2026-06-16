@@ -1,19 +1,20 @@
 package net.bumblebee.claysoldiers.soldieritemtypes;
 
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.init.ModRegistries;
-import net.minecraft.Util;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.RandomSource;
+import net.minecraft.util.Util;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.NotNull;
@@ -26,11 +27,23 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 public class SoldierItemType {
-    public static final Codec<SoldierItemType> CODEC = RecordCodecBuilder.create(in -> in.group(
-            TagKey.codec(Registries.ITEM).fieldOf("tag").forGetter(s -> s.tag),
+    private static final Codec<SoldierItemType> UNVALIDATED_CODEC = RecordCodecBuilder.create(in -> in.group(
+            TagKey.codec(Registries.ITEM).optionalFieldOf("tag").forGetter(SoldierItemType::tag),
             ModRegistries.ITEM_GENERATORS_REGISTRY.byNameCodec().fieldOf("generator").forGetter(s -> s.generator),
             Codec.STRING.optionalFieldOf("name", "").forGetter(s -> s.name)
-    ).apply(in, SoldierItemType::new));
+    ).apply(in, (t, g, n) -> new SoldierItemType(t.orElse(null), g, n)));
+
+    public static final Codec<SoldierItemType> CODEC = UNVALIDATED_CODEC.validate(s -> {
+        if (s.tag == null) {
+            ClaySoldiersCommon.ERROR_HANDLER.warn("Cannot Generate Soldier Item Type with empty Tag");
+            return DataResult.error(() -> "Cannot Generate Soldier Item Type with empty Tag");
+        } else {
+            return DataResult.success(s);
+        }
+    });
+
+    public static final Codec<SoldierItemType> SYNC_CODEC = Codec.STRING.xmap(SoldierItemType::createEmpty, s -> s.name);
+
     public static final String LANG = "clay_soldier_item_type";
     private static final Logger LOGGER = ClaySoldiersCommon.LOGGER;
 
@@ -40,6 +53,7 @@ public class SoldierItemType {
     private static Runnable postTagLoad = null;
     private static List<Generator> types;
 
+    @Nullable
     private final TagKey<Item> tag;
     private final ItemGenerator generator;
     private List<WeightedItem> available;
@@ -47,13 +61,26 @@ public class SoldierItemType {
     private String descriptionId;
     private final String name;
 
-    public SoldierItemType(TagKey<Item> tag, ItemGenerator generator) {
+    public SoldierItemType(@NotNull TagKey<Item> tag, ItemGenerator generator) {
         this(tag, generator, "");
     }
-    public SoldierItemType(TagKey<Item> tag, ItemGenerator generator, String name) {
+    private SoldierItemType(@Nullable TagKey<Item> tag, ItemGenerator generator, String name) {
         this.tag = tag;
         this.generator = generator;
         this.name = name;
+    }
+    private SoldierItemType(String name) {
+        this.tag = null;
+        this.generator = ItemGenerator.EMPTY;
+        this.name = name;
+    }
+
+    private Optional<TagKey<Item>> tag() {
+        return Optional.ofNullable(tag);
+    }
+
+    private static SoldierItemType createEmpty(String name) {
+        return new SoldierItemType(name);
     }
 
     public static void onDataMapLoad(@NotNull Runnable runnable) {
@@ -84,13 +111,22 @@ public class SoldierItemType {
         }
     }
 
-    private static void postTagLoad(Stream< SoldierItemType> all) {
+    private static void postTagLoad(Stream<SoldierItemType> all) {
         ClaySoldiersCommon.LOGGER.info("Post Tag Loaded");
         types = all.filter(s -> !s.available.isEmpty() && s.generator.limitedBy() != ItemGenerator.Limit.ZERO).map(SoldierItemType::asGenerator).toList();
     }
 
+
+
     public void onTagLoad(Function<TagKey<Item>, Optional<HolderSet.Named<Item>>> tagGetter) {
+        if (tag == null) {
+            ClaySoldiersCommon.ERROR_HANDLER.warn("SoldierItemTyp: Tag load with null Tag");
+            available = List.of();
+            return;
+        }
+
         var opt = tagGetter.apply(tag);
+
 
         opt.ifPresentOrElse(
                 holderSet -> {
@@ -152,7 +188,8 @@ public class SoldierItemType {
         }
         return descriptionId != null ? Component.translatable(descriptionId) : Component.literal("[unregistered]");
     }
-    public void onRegister(ResourceLocation id) {
+
+    public void onRegister(Identifier id) {
         descriptionId = Util.makeDescriptionId(LANG, id);
     }
 }

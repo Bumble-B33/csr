@@ -1,10 +1,11 @@
 package net.bumblebee.claysoldiers.init;
 
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
+import net.bumblebee.claysoldiers.claysoldierchips.ClaySoldierChip;
 import net.bumblebee.claysoldiers.integration.ExternalMods;
 import net.bumblebee.claysoldiers.soldierproperties.SoldierPropertyType;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.entity.EntityType;
@@ -22,7 +23,6 @@ public final class ModTags {
         public static final TagKey<Item> SOLDIER_ARMOR = create("clay_soldier_armor");
         public static final TagKey<Item> SOLDIER_BOSS_EQUIPPABLE = create("clay_boss_equippable");
         public static final TagKey<Item> SOLDIER_THROWABLE_HARMFUL = create("clay_soldier_head_throwable");
-
 
         public static final TagKey<Item> BASIC = create("clay_soldier_items/basic");
         public static final TagKey<Item> RANGED = create("clay_soldier_items/ranged");
@@ -48,11 +48,16 @@ public final class ModTags {
 
         public static final TagKey<Item> SOLDIER_SLINGSHOT_ENCHANTABLE = create("enchantable/clay_soldier_slingshot");
 
+        public static final TagKey<Item> STAT_ITEM = create("clay_soldier_stato_meter");
+        public static final TagKey<Item> CLAY_GOGGLES_ITEM = commonTag("clay_goggles");
+
         public static final TagKey<Item> DYES = commonTag("dyes");
         public static final TagKey<Item> GLASS_PANES = commonTag("glass_panes");
         public static final TagKey<Item> GLASS_PANES_COLORLESS = commonTag("glass_panes/colorless");
         public static final TagKey<Item> GAME_MASTER_ITEM = commonTag("game_master_items");
         public static final TagKey<Item> INGOTS_COPPER = commonTag("ingots/copper");
+
+        public static final TagKey<Item> CHIP = create("clay_soldier_chip");
 
 
         public static final TagKey<Item> WRENCH = commonTag("tools/wrench");
@@ -61,8 +66,6 @@ public final class ModTags {
         public static final TagKey<Item> ACCESSORIES_HAT = create(ExternalMods.ACCESSORIES.getName(), "hat");
         public static final TagKey<Item> ACCESSORIES_BELT = create(ExternalMods.ACCESSORIES.getName(), "belt");
 
-        public static final TagKey<Item> CURIOS_HEAD = create(ExternalMods.CURIOS.getName(), "head");
-
         private static TagKey<Item> create(String location) {
             return create(ClaySoldiersCommon.MOD_ID, location);
         }
@@ -70,7 +73,7 @@ public final class ModTags {
             return create("c", name);
         }
         private static TagKey<Item> create(String modId, String name) {
-            return TagKey.create(Registries.ITEM, ResourceLocation.fromNamespaceAndPath(modId, name));
+            return TagKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath(modId, name));
         }
     }
 
@@ -78,7 +81,7 @@ public final class ModTags {
         public static final TagKey<Block> BLUEPRINT_BLACK_LISTED = create("blueprint_blacklisted");
 
         private static TagKey<Block> create(String location) {
-            return TagKey.create(Registries.BLOCK, ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, location));
+            return TagKey.create(Registries.BLOCK, Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, location));
         }
     }
 
@@ -86,7 +89,7 @@ public final class ModTags {
         public static final TagKey<DamageType> CLAY_SOLDIER_DAMAGE = create("clay_soldier_damage");
 
         private static TagKey<DamageType> create(String name) {
-            return TagKey.create(Registries.DAMAGE_TYPE, ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, name));
+            return TagKey.create(Registries.DAMAGE_TYPE, Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, name));
         }
     }
 
@@ -96,7 +99,7 @@ public final class ModTags {
 
 
         private static TagKey<EntityType<?>> create(String name) {
-            return TagKey.create(Registries.ENTITY_TYPE, ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, name));
+            return TagKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, name));
         }
     }
 
@@ -104,7 +107,7 @@ public final class ModTags {
         public static final TagKey<Enchantment> SOLDIER_SLINGSHOT_EXCLUSIVE = create("clay_soldier_slingshot_exclusive");
 
         private static TagKey<Enchantment> create(String name) {
-            return TagKey.create(Registries.ENCHANTMENT, ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, name));
+            return TagKey.create(Registries.ENCHANTMENT, Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, name));
         }
     }
 
@@ -112,7 +115,7 @@ public final class ModTags {
         public static final TagKey<SoldierPropertyType<?>> REQUIRES_OWNER = create("requires_owner");
 
         private static TagKey<SoldierPropertyType<?>> create(String name) {
-            return TagKey.create(ModRegistries.SOLDIER_PROPERTY_TYPES, ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, name));
+            return TagKey.create(ModRegistries.SOLDIER_PROPERTY_TYPES, Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, name));
         }
     }
 
@@ -120,7 +123,15 @@ public final class ModTags {
         public static final TagKey<PoiType> SOLDIER_CONTAINER = create("soldier_container");
 
         private static TagKey<PoiType> create(String name) {
-            return TagKey.create(Registries.POINT_OF_INTEREST_TYPE, ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, name));
+            return TagKey.create(Registries.POINT_OF_INTEREST_TYPE, Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, name));
+        }
+    }
+
+    public static final class ClaySoldierChips {
+        public static final TagKey<ClaySoldierChip.Type<?>> REQUIRES_POI_POS = create("requires_poi_pos");
+
+        private static TagKey<ClaySoldierChip.Type<?>> create(String name) {
+            return TagKey.create(ModRegistries.CLAY_SOLDIER_MODULES, Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, name));
         }
     }
 }

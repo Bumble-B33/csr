@@ -1,15 +1,14 @@
 package net.bumblebee.claysoldiers.menu.horse;
 
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
-import net.bumblebee.claysoldiers.datamap.horse.ClayHorseItemMap;
 import net.bumblebee.claysoldiers.entity.common.ClayMobEntity;
 import net.bumblebee.claysoldiers.entity.common.horse.AbstractClayHorse;
 import net.bumblebee.claysoldiers.menu.AbstractClayMobScreen;
 import net.bumblebee.claysoldiers.util.ComponentFormating;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 
@@ -17,7 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ClayHorseScreen extends AbstractClayMobScreen<AbstractClayHorse, ClayHorseMenu> {
-    private static final ResourceLocation HORSE_INVENTORY_LOCATION = ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "textures/gui/container/clay_horse_inventory.png");
+    private static final Identifier HORSE_INVENTORY_LOCATION = Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "textures/gui/container/clay_horse_inventory.png");
     public static final String CLAY_RIDER_TEAM_LABEL = "gui.label." + ClaySoldiersCommon.MOD_ID + ".rider_clay_team";
 
 
@@ -27,7 +26,7 @@ public class ClayHorseScreen extends AbstractClayMobScreen<AbstractClayHorse, Cl
     }
 
     @Override
-    protected void renderBg(GuiGraphics pGuiGraphics, float pPartialTick, int pMouseX, int pMouseY) {
+    public void extractBackground(GuiGraphicsExtractor pGuiGraphics, int pMouseX, int pMouseY, float partialTick) {
         int x = (this.width - this.imageWidth) / 2;
         int y = (this.height - this.imageHeight) / 2;
 
@@ -36,11 +35,9 @@ public class ClayHorseScreen extends AbstractClayMobScreen<AbstractClayHorse, Cl
         renderSource(pGuiGraphics, x + 26, y + 18, x + 78, y + 70, 51, 0.25F, pMouseX, pMouseY);
     }
 
-
     @Override
-    public void render(GuiGraphics pGuiGraphics, int pMouseX, int pMouseY, float pPartialTick) {
-        super.render(pGuiGraphics, pMouseX, pMouseY, pPartialTick);
-        this.renderTooltip(pGuiGraphics, pMouseX, pMouseY);
+    public void extractRenderState(GuiGraphicsExtractor pGuiGraphics, int pMouseX, int pMouseY, float pPartialTick) {
+        super.extractRenderState(pGuiGraphics, pMouseX, pMouseY, pPartialTick);
     }
 
     @Override
@@ -52,8 +49,8 @@ public class ClayHorseScreen extends AbstractClayMobScreen<AbstractClayHorse, Cl
     }
 
     @Override
-    protected void renderSpecialTooltip(GuiGraphics pGuiGraphics, ItemStack stack, int mouseX, int mouseY) {
-        var clayHorseProperties = ClayHorseItemMap.get(stack);
+    protected void renderSpecialTooltip(GuiGraphicsExtractor pGuiGraphics, ItemStack stack, int mouseX, int mouseY) {
+        var clayHorseProperties = ClaySoldiersCommon.DATA_MAP.getHorseArmor(stack);
         if (clayHorseProperties == null) {
             return;
         }

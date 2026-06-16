@@ -16,7 +16,6 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 public final class ModItemGenerators {
-    private static final NonNullList<ItemStack> EMPTY = NonNullList.withSize(0, ItemStack.EMPTY);
     private static final ItemGenerator DEFAULT_GENERATOR = new ItemGenerator() {
         @Override
         public Limit limitedBy() {
@@ -152,7 +151,7 @@ public final class ModItemGenerators {
 
             @Override
             public NonNullList<ItemStack> generateForTag(List<WeightedItem> available, int count, RandomSource random) {
-                return EMPTY;
+                return EMPTY_LIST;
             }
 
             @Override

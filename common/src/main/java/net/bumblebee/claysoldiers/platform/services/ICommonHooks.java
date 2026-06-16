@@ -6,8 +6,7 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.flag.FeatureFlagSet;
-import net.minecraft.world.level.GameRules;
+import net.minecraft.world.level.gamerules.GameRules;
 
 import java.util.OptionalInt;
 
@@ -22,11 +21,6 @@ public interface ICommonHooks {
     OptionalInt openMenu(Player serverPlayer, MenuProvider menuProvider, int extraData);
 
     default boolean canEntityGrief(ServerLevel level, Entity livingEntity) {
-        return level.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING);
+        return level.getGameRules().get(GameRules.MOB_GRIEFING);
     }
-
-    boolean isBlueprintEnabled(FeatureFlagSet set);
-
-    long getHamsterWheelSpeed();
-
 }

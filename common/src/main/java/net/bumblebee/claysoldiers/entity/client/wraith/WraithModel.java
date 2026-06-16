@@ -9,15 +9,15 @@ import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.client.model.geom.builders.*;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.HumanoidArm;
 
-public class WraithModel extends EntityModel<ClayWraithRenderState> implements ArmedModel {
+public class WraithModel extends EntityModel<ClayWraithRenderState> implements ArmedModel<ClayWraithRenderState> {
     public static final ModelLayerLocation LAYER_LOCATION =
-            new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "wraith_clay_soldier"), "main");
+            new ModelLayerLocation(Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "wraith_clay_soldier"), "main");
     private final ModelPart root;
     private final ModelPart body;
     private final ModelPart rightArm;
@@ -27,7 +27,7 @@ public class WraithModel extends EntityModel<ClayWraithRenderState> implements A
     private final ModelPart head;
 
     public WraithModel(ModelPart pRoot) {
-        super(pRoot.getChild("root"), RenderType::entityTranslucentEmissive);
+        super(pRoot.getChild("root"), RenderTypes::entityTranslucentEmissive);
         this.root = pRoot.getChild("root");
         this.body = this.root.getChild("body");
         this.rightArm = this.body.getChild("right_arm");
@@ -79,21 +79,21 @@ public class WraithModel extends EntityModel<ClayWraithRenderState> implements A
     }
 
     @Override
-    public void setupAnim(ClayWraithRenderState p_362388_) {
-        super.setupAnim(p_362388_);
-        this.head.yRot = p_362388_.yRot * (float) (Math.PI / 180.0);
-        this.head.xRot = p_362388_.xRot * (float) (Math.PI / 180.0);
-        float f = Mth.cos(p_362388_.ageInTicks * 5.5F * (float) (Math.PI / 180.0)) * 0.1F;
+    public void setupAnim(ClayWraithRenderState clayWraithRenderState) {
+        super.setupAnim(clayWraithRenderState);
+        this.head.yRot = clayWraithRenderState.yRot * (float) (Math.PI / 180.0);
+        this.head.xRot = clayWraithRenderState.xRot * (float) (Math.PI / 180.0);
+        float f = Mth.cos(clayWraithRenderState.ageInTicks * 5.5F * (float) (Math.PI / 180.0)) * 0.1F;
         this.rightArm.zRot = (float) (Math.PI / 5) + f;
         this.leftArm.zRot = -((float) (Math.PI / 5) + f);
-        if (p_362388_.isCharging) {
+        if (clayWraithRenderState.isCharging) {
             this.body.xRot = 0.0F;
-            this.setArmsCharging(!p_362388_.rightHandItem.isEmpty(), !p_362388_.leftHandItem.isEmpty(), f);
+            this.setArmsCharging(!clayWraithRenderState.rightHandItemStack.isEmpty(), !clayWraithRenderState.leftHandItemStack.isEmpty(), f);
         } else {
             this.body.xRot = (float) (Math.PI / 20);
         }
 
-        this.leftWing.yRot = 1.0995574F + Mth.cos(p_362388_.ageInTicks * 45.836624F * (float) (Math.PI / 180.0)) * (float) (Math.PI / 180.0) * 16.2F;
+        this.leftWing.yRot = 1.0995574F + Mth.cos(clayWraithRenderState.ageInTicks * 45.836624F * (float) (Math.PI / 180.0)) * (float) (Math.PI / 180.0) * 16.2F;
         this.rightWing.yRot = -this.leftWing.yRot;
         this.leftWing.xRot = 0.47123888F;
         this.leftWing.zRot = -0.47123888F;
@@ -126,7 +126,7 @@ public class WraithModel extends EntityModel<ClayWraithRenderState> implements A
 
 
     @Override
-    public void translateToHand(EntityRenderState entityRenderState, HumanoidArm humanoidArm, PoseStack poseStack) {
+    public void translateToHand(ClayWraithRenderState entityRenderState, HumanoidArm humanoidArm, PoseStack poseStack) {
         boolean flag = humanoidArm == HumanoidArm.RIGHT;
         ModelPart modelpart = flag ? this.rightArm : this.leftArm;
         this.root.translateAndRotate(poseStack);

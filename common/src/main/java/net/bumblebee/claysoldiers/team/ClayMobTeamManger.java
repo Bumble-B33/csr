@@ -1,19 +1,16 @@
 package net.bumblebee.claysoldiers.team;
 
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
-import net.bumblebee.claysoldiers.init.ModItems;
 import net.bumblebee.claysoldiers.init.ModRegistries;
-import net.bumblebee.claysoldiers.item.claymobspawn.ClaySoldierSpawnItem;
 import net.bumblebee.claysoldiers.util.color.ColorHelper;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
+import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,134 +20,82 @@ import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
 
 public class ClayMobTeamManger {
-    public static final ResourceLocation DEFAULT_TYPE = ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "normal");
-    public static final ResourceLocation NO_TEAM_TYPE = ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "no_team");
-    private static final ClayMobTeam DEFAULT = ClayMobTeam.of("Normal", ColorHelper.EMPTY).build();
-    private static final ClayMobTeam NO_TEAM = ClayMobTeam.of("NoTeam", ColorHelper.EMPTY).allowFriendlyFire().disableTaming().build();
+    private static final Identifier DEFAULT_TYPE = Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "normal");
+    private static final Identifier NO_TEAM_TYPE = Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "no_team");
 
-    private static final Map<Item, ResourceLocation> FROM_ITEM_MAP = new HashMap<>();
+    public static final ResourceKey<ClayMobTeam> DEFAULT_KEY = ResourceKey.create(ModRegistries.CLAY_MOB_TEAMS, DEFAULT_TYPE);
+    public static final ResourceKey<ClayMobTeam> NO_TEAM_KEY = ResourceKey.create(ModRegistries.CLAY_MOB_TEAMS, NO_TEAM_TYPE);
+
+    private static final ClayMobTeam DEFAULT = ClayMobTeam.of("Normal", ColorHelper.CLAY_COLOR).build();
+    private static final ClayMobTeam NO_TEAM = ClayMobTeam.of("NoTeam", ColorHelper.CLAY_COLOR).allowFriendlyFire().disableTaming().build();
+
+    private static final Map<Item, ResourceKey<ClayMobTeam>> FROM_ITEM_MAP = new HashMap<>();
 
     public static final Logger LOGGER = LoggerFactory.getLogger("Clay Soldiers Team Manger");
 
     public static final ClayMobTeam ERROR = new ErrorClayMobTeam();
 
-    /**
-     * Creates a new {@code ClayMobTeamReference}.
-     * @param key the key of the team
-     * @param ifInValid executed when the given does not belong to a valid team.
-     * @return a {@code ClayMobTeamReference} with the given key
-     */
-    public static IClayMobTeamReference getReferenceOrDefault(ResourceLocation key, RegistryAccess access, Runnable ifInValid) {
-        var holder = access.lookupOrThrow(ModRegistries.CLAY_MOB_TEAMS).get(key);
-        if (holder.isPresent()) {
-            return new ClayMobTeamReference(holder.orElseThrow());
-        }
-        ifInValid.run();
-        return new ClayMobTeamReference(getDefault(access));
-    }
-
-    private record ClayMobTeamReference(Holder.Reference<ClayMobTeam> base) implements IClayMobTeamReference {
-        @Override
-        public @NotNull ClayMobTeam value() {
-            return base.value();
-        }
-
-        @Override
-        public @NotNull ResourceLocation key() {
-            return base.key().location();
-        }
-    }
-
     public static Holder.Reference<ClayMobTeam> getDefault(HolderLookup.Provider access) {
-        return access.lookupOrThrow(ModRegistries.CLAY_MOB_TEAMS).get(ResourceKey.create(ModRegistries.CLAY_MOB_TEAMS, DEFAULT_TYPE)).orElseThrow();
+        return access.get(DEFAULT_KEY).orElseThrow();
     }
 
-    public static Stream<ResourceLocation> getAllKeys(HolderLookup.Provider registryAccess) {
-        return registryAccess.lookupOrThrow(ModRegistries.CLAY_MOB_TEAMS).listElementIds().map(ResourceKey::location);
+    public static Stream<Holder.Reference<ClayMobTeam>> getAll(HolderLookup.Provider registryAccess) {
+        return registryAccess.lookupOrThrow(ModRegistries.CLAY_MOB_TEAMS).listElements();
     }
 
-    @NotNull
-    public static ClayMobTeam getFromKeyAssumeValid(ResourceLocation key, RegistryAccess access) {
-        return Objects.requireNonNull(access.lookupOrThrow(ModRegistries.CLAY_MOB_TEAMS).getValue(key), "Tried accessing invalid team");
+    public static Optional<Holder.Reference<ClayMobTeam>> get(ResourceKey<ClayMobTeam> key, HolderLookup.Provider registryAccess) {
+        return registryAccess.lookupOrThrow(ModRegistries.CLAY_MOB_TEAMS).get(key);
     }
 
-    /**
-     * Returns the {@code ClayMobTeam} associated with the given key. Returns {@code null} if the key is not associated with any team.
-     * @param key the key of the team.
-     * @return the {@code ClayMobTeam} associated with the given key
-     */
-    @Nullable
-    public static ClayMobTeam getFromKey(ResourceLocation key, RegistryAccess registryAccess) {
-        return registryAccess.lookupOrThrow(ModRegistries.CLAY_MOB_TEAMS).getValue(key);
-    }
-
-    public static Optional<ClayMobTeam> getOptional(ResourceLocation key, HolderLookup.Provider registryAccess) {
-        return registryAccess.lookupOrThrow(ModRegistries.CLAY_MOB_TEAMS).get(create(key)).map(Holder::value);
-    }
-
-    public static Optional<Holder.Reference<ClayMobTeam>> getHolder(@Nullable ResourceLocation key, HolderLookup.Provider registryAccess) {
+    public static Holder.Reference<ClayMobTeam> getOrDefault(@Nullable ResourceKey<ClayMobTeam> key, HolderLookup.Provider registryAccess) {
         if (key == null) {
-            return Optional.empty();
+            return getDefault(registryAccess);
         }
-        return registryAccess.lookupOrThrow(ModRegistries.CLAY_MOB_TEAMS).get(ResourceKey.create(ModRegistries.CLAY_MOB_TEAMS, key));
+        return registryAccess.lookupOrThrow(ModRegistries.CLAY_MOB_TEAMS).get(key).orElse(getDefault(registryAccess));
     }
-
 
     /**
      * Returns whether this key is for a valid team.
      */
-    public static boolean isValidTeam(@NotNull ResourceLocation key, RegistryAccess access) {
+    public static boolean isValidTeam(@NotNull ResourceKey<ClayMobTeam> key, RegistryAccess access) {
         return access.lookupOrThrow(ModRegistries.CLAY_MOB_TEAMS).containsKey(key);
     }
 
     @NotNull
-    public static ClayMobTeam getFromKeyOrError(@NotNull ResourceLocation key, HolderLookup.Provider access) {
+    public static ClayMobTeam getFromKeyOrError(@Nullable ResourceKey<ClayMobTeam> key, @Nullable HolderLookup.Provider access) {
         if (access == null || key == null) {
             return ERROR;
         }
         return access.lookup(ModRegistries.CLAY_MOB_TEAMS)
-                .map(r -> r.get(ResourceKey.create(ModRegistries.CLAY_MOB_TEAMS, key)).map(Holder::value).orElse(ERROR)).orElse(ERROR);
-    }
-
-    /**
-     * Creates a new {@link ModItems#CLAY_SOLDIER Clay Soldier Puppet} with the give {@code ClayMobTeam}.
-     *
-     * @param id the id of the team
-     * @return a new {@link ModItems#CLAY_SOLDIER Clay Soldier Puppet}
-     */
-    public static ItemStack createStackForTeam(ResourceLocation id, HolderLookup.Provider registries) {
-        ItemStack stack = ModItems.CLAY_SOLDIER.get().getDefaultInstance();
-        ClaySoldierSpawnItem.setClayMobTeam(stack, id, registries);
-        return stack;
+                .map(r -> r.get(key).map(Holder::value).orElse(ERROR)).orElse(ERROR);
     }
 
     /**
      * Returns a team id associated with the given item.
      */
     @Nullable
-    public static ResourceLocation getFromItem(Item item) {
+    public static ResourceKey<ClayMobTeam> getFromItem(Item item) {
         return FROM_ITEM_MAP.get(item);
     }
 
-    public static void appendFromItemMap(@Nullable Item item, ResourceLocation location) {
+    public static void appendFromItemMap(@Nullable Item item, Identifier location) {
         if (item == null) {
             return;
         }
 
-        FROM_ITEM_MAP.put(item, location);
+        FROM_ITEM_MAP.put(item, create(location));
     }
 
     @UnmodifiableView
-    public static Map<Item, ResourceLocation> getFromItemMap() {
+    public static Map<Item, ResourceKey<ClayMobTeam>> getFromItemMap() {
         return Map.copyOf(FROM_ITEM_MAP);
     }
 
-    private static ResourceKey<ClayMobTeam> create(ResourceLocation location) {
+    private static ResourceKey<ClayMobTeam> create(Identifier location) {
         return ResourceKey.create(ModRegistries.CLAY_MOB_TEAMS, location);
     }
 
@@ -171,13 +116,13 @@ public class ClayMobTeamManger {
 
         //Todo test
 
-        if (registry.get(DEFAULT_TYPE).isEmpty()) {
-            Registry.register(registry, DEFAULT_TYPE, DEFAULT);
+        if (registry.get(DEFAULT_KEY).isEmpty()) {
+            Registry.register(registry, DEFAULT_KEY, DEFAULT);
             defaultType = true;
         }
-        var noTeam = registry.get(NO_TEAM_TYPE);
+        var noTeam = registry.get(NO_TEAM_KEY);
         if (noTeam.isEmpty()) {
-            Registry.register(registry, NO_TEAM_TYPE, NO_TEAM);
+            Registry.register(registry, NO_TEAM_KEY, NO_TEAM);
             noTeamType = true;
         } else {
             if (!noTeam.orElseThrow().value().isFriendlyFireAllowed()) {
@@ -189,9 +134,9 @@ public class ClayMobTeamManger {
         }
 
         if (noTeamType && defaultType) {
-            LOGGER.info("Registered {} and {} as they were not present", DEFAULT_TYPE, NO_TEAM_TYPE);
+            LOGGER.info("Registered {} and {} as they were not present", DEFAULT_KEY.identifier(), NO_TEAM_KEY.identifier());
         } else if (noTeamType || defaultType) {
-            LOGGER.info("Registered {} as it was not present", noTeamType ? NO_TEAM_TYPE : DEFAULT_TYPE);
+            LOGGER.info("Registered {} as it was not present", noTeamType ? NO_TEAM_KEY.identifier() : DEFAULT_KEY.identifier());
         }
     }
 }

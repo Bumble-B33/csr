@@ -1,10 +1,10 @@
 package net.bumblebee.claysoldiers.init;
 
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
-import net.minecraft.Util;
+import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.util.Util;
 import net.minecraft.world.item.equipment.ArmorMaterial;
 import net.minecraft.world.item.equipment.ArmorType;
 import net.minecraft.world.item.equipment.EquipmentAsset;
@@ -13,9 +13,9 @@ import net.minecraft.world.item.equipment.EquipmentAssets;
 import java.util.EnumMap;
 
 public final class ModArmorMaterials {
-    public static final ResourceKey<EquipmentAsset> CLAY_GOGGLES_ID = ResourceKey.create(EquipmentAssets.ROOT_ID, ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_goggles"));
-    public static final ResourceKey<EquipmentAsset> MUSHROOM_HELMET_ID = ResourceKey.create(EquipmentAssets.ROOT_ID, ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "red_mushroom"));
-    public static final ResourceKey<EquipmentAsset> SHULKER_HELMET_ID = ResourceKey.create(EquipmentAssets.ROOT_ID, ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "shulker_shell"));
+    public static final ResourceKey<EquipmentAsset> CLAY_GOGGLES_ID = ResourceKey.create(EquipmentAssets.ROOT_ID, Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_goggles"));
+    public static final ResourceKey<EquipmentAsset> MUSHROOM_HELMET_ID = ResourceKey.create(EquipmentAssets.ROOT_ID, Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "red_mushroom"));
+    public static final ResourceKey<EquipmentAsset> SHULKER_HELMET_ID = ResourceKey.create(EquipmentAssets.ROOT_ID, Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "shulker_shell"));
 
     public static final ArmorMaterial CLAY_ARMOR_MATERIAL = new ArmorMaterial(
                     5,

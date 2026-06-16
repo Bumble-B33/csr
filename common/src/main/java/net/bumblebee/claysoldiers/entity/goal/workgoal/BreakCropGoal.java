@@ -1,6 +1,7 @@
 package net.bumblebee.claysoldiers.entity.goal.workgoal;
 
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
+import net.bumblebee.claysoldiers.claysoldierchips.ClayMobWorkAccess;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.core.particles.BlockParticleOption;
@@ -21,35 +22,32 @@ import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.function.Supplier;
-
 public class BreakCropGoal extends MoveToBlockGoal implements IWorkGoal {
     public static final String BREAK_CROPS_LANG = JOB_LANG_KEY.formatted(ClaySoldiersCommon.MOD_ID, "breaking_crops");
     public static final String CROP_BREAK_DISALLOWED = JOB_LANG_KEY.formatted(ClaySoldiersCommon.MOD_ID, "breaking_crops.disallowed");
     private int ticksSinceReachedGoal;
     private static final int WAIT_AFTER_BLOCK_FOUND = 20;
+    private static final byte BREAKING_BLOCK_STATUS = 0;
     private static final byte CANT_BREAK_BLOCK_STATUS = 1;
-    private byte status = 0;
-    private final Supplier<WorkSelectorGoal> workSelector;
+    private final ClayMobWorkAccess workAccess;
 
-    public BreakCropGoal(PathfinderMob pMob, double pSpeedModifier, int pSearchRange, Supplier<WorkSelectorGoal> workSelector) {
-        super(pMob, pSpeedModifier, pSearchRange, 2);
-        this.workSelector = workSelector;
+    public BreakCropGoal(PathfinderMob mob, ClayMobWorkAccess workAccess, double speedModifier, SearchRange searchRange) {
+        super(mob, speedModifier, searchRange.horizontalRange(), searchRange.verticalRange());
+        this.workAccess = workAccess;
+    }
+
+    public BreakCropGoal(PathfinderMob mob, ClayMobWorkAccess workAccess, SearchRange searchRange) {
+        this(mob, workAccess, 1, searchRange);
     }
 
     @Override
     public boolean canUse() {
         if (!ClaySoldiersCommon.COMMON_HOOKS.canEntityGrief(getServerLevel(this.mob.level()), this.mob)) {
-            if (status != CANT_BREAK_BLOCK_STATUS) {
-                status = CANT_BREAK_BLOCK_STATUS;
-                workSelector.get().onWorkStatusChange();
-            }
+            workAccess.setDataWorkStatus(CANT_BREAK_BLOCK_STATUS);
             return false;
         }
-        if (status != 0) {
-            status = 0;
-            workSelector.get().onWorkStatusChange();
-        }
+        workAccess.setDataWorkStatus(BREAKING_BLOCK_STATUS);
+
 
         if (this.nextStartTick > 0) {
             this.nextStartTick--;
@@ -140,10 +138,10 @@ public class BreakCropGoal extends MoveToBlockGoal implements IWorkGoal {
         level.destroyBlock(pPos, true, mob);
     }
 
-    public void playDestroyProgressSound(LevelAccessor pLevel, BlockPos pPos) {
+    public void playDestroyProgressSound(LevelAccessor level, BlockPos pos) {
     }
 
-    public void playBreakSound(Level pLevel, BlockPos pPos) {
+    public void playBreakSound(Level level, BlockPos pos) {
     }
 
     @Nullable
@@ -186,11 +184,6 @@ public class BreakCropGoal extends MoveToBlockGoal implements IWorkGoal {
     @Override
     public Component getDisplayName() {
         return Component.translatable(BREAK_CROPS_LANG);
-    }
-
-    @Override
-    public byte getStatus() {
-        return status;
     }
 
     @Override

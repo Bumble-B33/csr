@@ -1,19 +1,16 @@
 package net.bumblebee.claysoldiers.datagen;
 
+import net.bumblebee.claysoldiers.ClaySoldiersNeoForge;
 import net.bumblebee.claysoldiers.init.*;
 import net.bumblebee.claysoldiers.loot.SetRandomClayMobTeam;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderLookup;
-import net.minecraft.core.HolderOwner;
-import net.minecraft.core.HolderSet;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.PackOutput;
 import net.minecraft.data.loot.BlockLootSubProvider;
 import net.minecraft.data.loot.LootTableProvider;
 import net.minecraft.data.loot.LootTableSubProvider;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.util.Unit;
-import net.minecraft.world.entity.EquipmentSlotGroup;
 import net.minecraft.world.flag.FeatureFlags;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.enchantment.Enchantment;
@@ -21,7 +18,6 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.storage.loot.LootPool;
 import net.minecraft.world.level.storage.loot.LootTable;
 import net.minecraft.world.level.storage.loot.entries.LootItem;
-import net.minecraft.world.level.storage.loot.functions.SetComponentsFunction;
 import net.minecraft.world.level.storage.loot.functions.SetEnchantmentsFunction;
 import net.minecraft.world.level.storage.loot.functions.SetItemCountFunction;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
@@ -54,11 +50,12 @@ public class ModLootTableProvider extends LootTableProvider {
             dropSelf(ModBlocks.HAMSTER_WHEEL_BLOCK.get());
             dropSelf(ModBlocks.EASEL_BLOCK.get());
             dropSelf(ModBlocks.ESCRITOIRE_BLOCK.get());
+            dropSelf(ModBlocks.CHIP_ASSEMBLER.get());
         }
 
         @Override
         protected Iterable<Block> getKnownBlocks() {
-            return List.of(ModBlocks.HAMSTER_WHEEL_BLOCK.get(), ModBlocks.EASEL_BLOCK.get(), ModBlocks.ESCRITOIRE_BLOCK.get());
+            return ClaySoldiersNeoForge.BLOCKS.getEntries().stream().map(s -> (Block) s.get()).toList();
         }
     }
 
@@ -93,7 +90,6 @@ public class ModLootTableProvider extends LootTableProvider {
                                             .apply(SetItemCountFunction.setCount(UniformGenerator.between(1f, 2f)))
                                     )
                                     .add(LootItem.lootTableItem(ModItems.CLAY_SOLDIER)
-                                            .apply(SetComponentsFunction.setComponent(ModDataComponents.CLAY_MOB_RANDOM_TEAM_COMPONENT.get(), Unit.INSTANCE))
                                             .setWeight(8)
                                             .apply(SetItemCountFunction.setCount(UniformGenerator.between(3f, 7f)))
                                             .apply(SetRandomClayMobTeam.of())
@@ -184,27 +180,6 @@ public class ModLootTableProvider extends LootTableProvider {
     }
 
     public static Holder.Reference<Enchantment> createForSlingShot(HolderLookup.Provider lookup) {
-        return new FakeHolder(lookup, ModEnchantments.SOLDIER_PROJECTILE, Enchantment.enchantment(
-                Enchantment.definition(
-                        HolderSet.empty(),
-                        2,
-                        1,
-                        Enchantment.constantCost(20),
-                        Enchantment.constantCost(50),
-                        4,
-                        EquipmentSlotGroup.ANY
-                )
-        ).build(ModEnchantments.SOLDIER_PROJECTILE.location()));
-    }
-
-    private static class FakeHolder extends Holder.Reference<Enchantment> {
-        public FakeHolder(HolderLookup.Provider lookup, ResourceKey<Enchantment> key, Enchantment value) {
-            super(Type.STAND_ALONE, lookup.lookupOrThrow(Registries.ENCHANTMENT), key, value);
-        }
-
-        @Override
-        public boolean canSerializeIn(HolderOwner<Enchantment> owner) {
-            return true;
-        }
+        return lookup.lookupOrThrow(Registries.ENCHANTMENT).getOrThrow(ModEnchantments.SOLDIER_PROJECTILE);
     }
 }

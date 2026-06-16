@@ -1,27 +1,26 @@
 package net.bumblebee.claysoldiers.networking;
 
 import io.netty.buffer.ByteBuf;
-import net.bumblebee.claysoldiers.ClaySoldierFabric;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
-import net.bumblebee.claysoldiers.platform.FabricCommonHooks;
+import net.bumblebee.claysoldiers.platform.FabricConfig;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
-public record ConfigSyncPayload(boolean blueprintEnabled, long hamsterWheelSpeed) implements CustomPacketPayload {
-    public static final Type<ConfigSyncPayload> ID = new Type<>(ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "blueprint_config"));
+public record ConfigSyncPayload(long hamsterWheelSpeed, boolean shearBladeRecipeEnabled) implements CustomPacketPayload {
+    public static final Type<ConfigSyncPayload> ID = new Type<>(Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "blueprint_config"));
     public static final StreamCodec<ByteBuf, ConfigSyncPayload> STREAM_CODEC = StreamCodec.composite(
-            ByteBufCodecs.BOOL, ConfigSyncPayload::blueprintEnabled,
             ByteBufCodecs.VAR_LONG, ConfigSyncPayload::hamsterWheelSpeed,
+            ByteBufCodecs.BOOL, ConfigSyncPayload::shearBladeRecipeEnabled,
             ConfigSyncPayload::new
     );
 
     public void handleClient(ClientPlayNetworking.Context context) {
-        FabricCommonHooks.setBlueprintEnabled(blueprintEnabled);
-        ClaySoldierFabric.hamsterWheelSpeed = hamsterWheelSpeed;
-        ClaySoldiersCommon.LOGGER.info("Config: Blueprint Feature is {} on client", (blueprintEnabled ? "enabled" : "disabled"));
+        FabricConfig.hamsterWheelSpeed = hamsterWheelSpeed;
+        FabricConfig.setShearBladeRecipeEnabled(shearBladeRecipeEnabled);;
+        FabricConfig.logConfig("On Client Receive", true);
     }
 
     @Override

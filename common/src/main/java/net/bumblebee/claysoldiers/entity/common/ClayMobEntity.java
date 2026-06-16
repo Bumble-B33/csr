@@ -3,14 +3,17 @@ package net.bumblebee.claysoldiers.entity.common;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.capability.AssignableWorksiteCapability;
 import net.bumblebee.claysoldiers.capability.IBlockCache;
-import net.bumblebee.claysoldiers.entity.goal.UseAssignedPoiGoal;
 import net.bumblebee.claysoldiers.entity.common.soldier.status.SoldierStatusManager;
+import net.bumblebee.claysoldiers.entity.goal.UseAssignedPoiGoal;
 import net.bumblebee.claysoldiers.init.*;
 import net.bumblebee.claysoldiers.item.BrickedItemHolder;
 import net.bumblebee.claysoldiers.item.ClayBrushItem;
 import net.bumblebee.claysoldiers.item.TestItem;
 import net.bumblebee.claysoldiers.soldierpoi.SoldierPoiWithItem;
-import net.bumblebee.claysoldiers.team.*;
+import net.bumblebee.claysoldiers.team.ClayMobTeamManger;
+import net.bumblebee.claysoldiers.team.TeamHolder;
+import net.bumblebee.claysoldiers.team.loyalty.TeamLoyaltyManger;
+import net.bumblebee.claysoldiers.team.loyalty.TeamPlayerData;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ItemParticleOption;
@@ -21,7 +24,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -46,10 +48,7 @@ import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -79,7 +78,6 @@ public abstract class ClayMobEntity extends PathfinderMob implements TeamHolder,
     protected static final byte SPAWN_HEARTS_EVENT = 78;
     protected static final byte SPAWN_ANGRY_EVENT = 79;
     protected static final byte SPAWN_HAPPY_EVENT = 80;
-    private static final Logger log = LoggerFactory.getLogger(ClayMobEntity.class);
 
     protected DamageCalculator inWallDamage = (w, e) -> w ? 0.5f : 1;
     protected DamageCalculator ownerDamage = (w, e) -> 100;
@@ -98,9 +96,6 @@ public abstract class ClayMobEntity extends PathfinderMob implements TeamHolder,
     private IBlockCache<AssignableWorksiteCapability> poiPosCapability;
 
     private boolean orderedToSit = false;
-
-    @Nullable
-    private IClayMobTeamReference cachedTeam = null;
 
     @Nullable
     public TeamPlayerData teamPlayerData = null;
@@ -272,7 +267,7 @@ public abstract class ClayMobEntity extends PathfinderMob implements TeamHolder,
     /**
      * Set the {@code ItemStack} this ClayMob was spawned from.
      *
-     * @param spawnedFrom the {@code ItemStack} the clay-mab was spawned from
+     * @param spawnedFrom   the {@code ItemStack} the clay-mab was spawned from
      * @param allowDropping whether {@code spawnedFrom} should be dropped on death
      */
     public void setSpawnedFrom(ItemStack spawnedFrom, boolean allowDropping) {
@@ -294,7 +289,7 @@ public abstract class ClayMobEntity extends PathfinderMob implements TeamHolder,
     }
 
     @Override
-    protected AABB getAttackBoundingBox() {
+    protected AABB getAttackBoundingBox(double horizontalExpansion) {
         Entity vehicle = this.getVehicle();
         AABB aabb;
         double attackReach = isSlimeRooted() ? getDefaultAttackReach() * 0.7D : getDefaultAttackReach();
@@ -334,9 +329,9 @@ public abstract class ClayMobEntity extends PathfinderMob implements TeamHolder,
     }
 
     public static void dropSpawnedFrom(ServerLevel level, ItemStack spawnedFrom, Consumer<ItemStack> spawnInWorld, boolean alwaysDrop, boolean onFire) {
-        float chance = alwaysDrop ? 1f : level.getGameRules().getInt(ClaySoldiersCommon.CLAY_SOLDIER_DROP_RULE) / 100f;
+        float chance = alwaysDrop ? 1f : ClaySoldiersCommon.CONFIG.getServerConfig().soldierDropSelf();
 
-        if (chance >= level.random.nextFloat()) {
+        if (chance >= level.getRandom().nextFloat()) {
             if (onFire && spawnedFrom.getItem() instanceof BrickedItemHolder brickedItemHolder) {
                 spawnInWorld.accept(brickedItemHolder.getBrickedItem(spawnedFrom));
             } else {
@@ -354,7 +349,7 @@ public abstract class ClayMobEntity extends PathfinderMob implements TeamHolder,
         return false;
     }
 
-    public boolean canMountEntity(LivingEntity livingEntity, ServerLevel serverLevel) {
+    public boolean canMountEntity(LivingEntity mount, ServerLevel serverLevel) {
         return false;
     }
 
@@ -364,7 +359,7 @@ public abstract class ClayMobEntity extends PathfinderMob implements TeamHolder,
      * @return whether this ClayMob can be killed by a Clay Mob Kill Item
      */
     public boolean canBeKilledByDisruptor(ServerLevel level, ServerPlayer player) {
-        var owner = TeamLoyaltyManger.getTeamPlayerData(level).getPlayerForTeam(this.getClayTeamType());
+        var owner = TeamLoyaltyManger.getTeamPlayerData(level).getPlayerForTeam(this.getClayTeamKey());
         return owner == null || owner.is(player);
     }
 
@@ -389,7 +384,7 @@ public abstract class ClayMobEntity extends PathfinderMob implements TeamHolder,
             vec31 = vec31.xRot(-this.getXRot() * (float) (Math.PI / 180.0));
             vec31 = vec31.yRot(-this.getYRot() * (float) (Math.PI / 180.0));
             vec31 = vec31.add(this.getX(), this.getEyeY(), this.getZ());
-            this.level().addParticle(new ItemParticleOption(ParticleTypes.ITEM, pStack), vec31.x, vec31.y, vec31.z, vec3.x, vec3.y + 0.05, vec3.z);
+            this.level().addParticle(new ItemParticleOption(ParticleTypes.ITEM, pStack.getItem()), vec31.x, vec31.y, vec31.z, vec3.x, vec3.y + 0.05, vec3.z);
         }
     }
 
@@ -445,16 +440,16 @@ public abstract class ClayMobEntity extends PathfinderMob implements TeamHolder,
                 TestItem.log(this, getInfoState());
             }
 
-            return InteractionResult.SUCCESS_SERVER;
+            return InteractionResult.SUCCESS;
         }
 
         if (pPlayer.isShiftKeyDown()) {
             if (!level().isClientSide()) {
                 if (openMenuScreen(pPlayer).isPresent()) {
-                    return InteractionResult.CONSUME;
+                    return InteractionResult.SUCCESS_SERVER;
                 }
             }
-            return InteractionResult.SUCCESS_SERVER;
+            return InteractionResult.CONSUME;
 
         }
         ItemStack itemInHand = pPlayer.getItemInHand(pHand);
@@ -462,34 +457,34 @@ public abstract class ClayMobEntity extends PathfinderMob implements TeamHolder,
         var mode = ClayBrushItem.getMode(itemInHand);
         if (mode != null && isOwnedBy(pPlayer)) {
             clayBrushEffect(mode, itemInHand, pPlayer);
-            return InteractionResult.SUCCESS_SERVER;
+            return InteractionResult.SUCCESS;
         }
 
         if (isClayFood(itemInHand)) {
 
             if (level().isClientSide()) {
-                this.playSound(SoundEvents.GENERIC_EAT.value(), 1f ,1f);
+                this.playSound(SoundEvents.GENERIC_EAT.value(), 1f, 1f);
                 spawnParticleAround(ModParticles.SMALL_HEART_PARTICLE.get());
             } else if (pPlayer instanceof ServerPlayer serverPlayer) {
-                ModCriterions.FEED_CLAY_SOLDIER_TRIGGER.get().triggerFood(serverPlayer, itemInHand);
+                ModCritirions.FEED_CLAY_SOLDIER_TRIGGER.get().triggerFood(serverPlayer, itemInHand);
             }
             this.heal(getMaxHealth());
             itemInHand.consume(1, pPlayer);
 
-            return InteractionResult.SUCCESS_SERVER;
+            return InteractionResult.SUCCESS;
         }
 
         if (itemInHand.is(ModTags.Items.CLAY_WAX)) {
             setWaxed(true);
             if (level().isClientSide()) {
-                this.playSound(SoundEvents.HONEYCOMB_WAX_ON, 1f ,1f);
+                this.playSound(SoundEvents.HONEYCOMB_WAX_ON, 1f, 1f);
                 spawnParticleAround(ModParticles.SMALL_WAXED_PARTICLE.get());
             } else if (pPlayer instanceof ServerPlayer serverPlayer) {
-                ModCriterions.FEED_CLAY_SOLDIER_TRIGGER.get().triggerWax(serverPlayer, itemInHand);
+                ModCritirions.FEED_CLAY_SOLDIER_TRIGGER.get().triggerWax(serverPlayer, itemInHand);
             }
             itemInHand.consume(1, pPlayer);
 
-            return InteractionResult.SUCCESS_SERVER;
+            return InteractionResult.SUCCESS;
         }
 
         return super.mobInteract(pPlayer, pHand);
@@ -509,7 +504,7 @@ public abstract class ClayMobEntity extends PathfinderMob implements TeamHolder,
             if (!level().isClientSide()) {
                 tryToSit(player, !this.isOrderedToSit());
                 if (player instanceof ServerPlayer serverPlayer) {
-                    ModCriterions.CLAY_BRUSH_COMMAND_TRIGGER.get().trigger(serverPlayer, mode);
+                    ModCritirions.CLAY_BRUSH_COMMAND_TRIGGER.get().trigger(serverPlayer, mode);
                 }
             }
 
@@ -519,7 +514,7 @@ public abstract class ClayMobEntity extends PathfinderMob implements TeamHolder,
             if (!level().isClientSide() && player instanceof ServerPlayer serverPlayer) {
                 setPoiPos(ClayBrushItem.getPoiPos(itemInHand));
                 if (poiPos != null) {
-                    ModCriterions.CLAY_BRUSH_COMMAND_TRIGGER.get().trigger(serverPlayer, mode);
+                    ModCritirions.CLAY_BRUSH_COMMAND_TRIGGER.get().trigger(serverPlayer, mode);
                 }
                 serverPlayer.sendSystemMessage(getPoiSetDisplayName(), true);
 
@@ -546,7 +541,7 @@ public abstract class ClayMobEntity extends PathfinderMob implements TeamHolder,
     /**
      * Orders this {@code ClayMob} to sit.
      *
-     * @param player the player giving the order or {@code null} if this order was not given from a player.
+     * @param player  the player giving the order or {@code null} if this order was not given from a player.
      * @param sitting whether to sit or get up
      */
     protected void tryToSit(@Nullable Player player, boolean sitting) {
@@ -574,35 +569,24 @@ public abstract class ClayMobEntity extends PathfinderMob implements TeamHolder,
     }
 
 
-    @Override
-    public @NotNull ClayMobTeam getClayTeam() {
-        ResourceLocation team = getClayTeamType();
-        if (cachedTeam == null || !cachedTeam.isValidForKey(team)) {
-            cachedTeam = ClayMobTeamManger.getReferenceOrDefault(team, registryAccess(), () -> {
-                ClayMobTeamManger.LOGGER.error("{} has a Team ({}) that does not exist anymore", this.getClass().getSimpleName(), team);
-                setClayTeamType(ClayMobTeamManger.DEFAULT_TYPE);
-            });
-        }
-
-        return cachedTeam == null ? ClayMobTeamManger.ERROR : cachedTeam.value();
-    }
 
     @Override
     public @Nullable UUID getClayTeamOwnerUUID() {
         return getCachedTeamOwner().map(TeamPlayerData.PlayerData::getUUID).orElse(null);
     }
 
+    @Nullable
     public Component getOwnerDisplayName() {
         return getCachedTeamOwner().map(TeamPlayerData.PlayerData::getLastDisplayName).orElse(null);
     }
 
-    private Optional<TeamPlayerData.PlayerData> getCachedTeamOwner() {
+    protected Optional<TeamPlayerData.PlayerData> getCachedTeamOwner() {
         if (teamPlayerData == null) {
             setPlayerTeamData(level());
         }
         if (teamPlayerData != null) {
             if (lastOwnerChange < 0 || lastOwnerChange <= teamPlayerData.lastChangeTime()) {
-                cachedTeamOwner = teamPlayerData.getPlayerForTeam(getClayTeamType());
+                cachedTeamOwner = teamPlayerData.getPlayerForTeam(getClayTeamKey());
                 lastOwnerChange = teamPlayerData.lastChangeTime();
             }
         }
@@ -619,7 +603,7 @@ public abstract class ClayMobEntity extends PathfinderMob implements TeamHolder,
             return false;
         }
 
-        return teamPlayerData != null && teamPlayerData.putPlayerIfAbsent(getClayTeamType(), player);
+        return teamPlayerData != null && teamPlayerData.putPlayerIfAbsent(getClayTeamKey(), player);
     }
 
     @Override
@@ -693,6 +677,7 @@ public abstract class ClayMobEntity extends PathfinderMob implements TeamHolder,
 
     /**
      * Tries to teleport this {@code ClayMob} to its owner.
+     *
      * @return whether the teleport was successful.
      */
     public boolean tryToTeleportToOwner() {
@@ -722,7 +707,7 @@ public abstract class ClayMobEntity extends PathfinderMob implements TeamHolder,
         if (!this.canTeleportTo(new BlockPos(x, y, z), moving)) {
             return false;
         } else {
-            moving.teleportTo((double)x + 0.5, y, (double)z + 0.5);
+            moving.teleportTo((double) x + 0.5, y, (double) z + 0.5);
             moving.getNavigation().stop();
             return true;
         }
@@ -793,6 +778,7 @@ public abstract class ClayMobEntity extends PathfinderMob implements TeamHolder,
 
     /**
      * Sets a new PoiPos.
+     *
      * @param pos the new PoiPos
      */
     public void setPoiPos(@Nullable BlockPos pos) {
@@ -822,7 +808,7 @@ public abstract class ClayMobEntity extends PathfinderMob implements TeamHolder,
     /**
      * @return whether this {@code ClayMob} has a PoiPos.
      */
-    protected boolean hasPoiPos() {
+    public boolean hasPoiPos() {
         return entityData.get(HAS_POI_POS);
     }
 
@@ -855,12 +841,12 @@ public abstract class ClayMobEntity extends PathfinderMob implements TeamHolder,
         List<String> info = new ArrayList<>(4);
 
         info.add("TeamPlayerData: " + teamPlayerData);
-        info.add("CachedTeam: " + cachedTeam);
         info.add("Owner: " + (cachedTeamOwner == null ? "Null" : cachedTeamOwner));
-        info.add("PoiPos: " + poiPos + " PoiCap: " + poiPosCapability);
+        info.add("PoiPos: " + getPoiPos() + " PoiCap: " + poiPosCapability);
         info.add("Active Goals:");
         goalSelector.getAvailableGoals().stream().filter(WrappedGoal::isRunning).map(g -> g.getGoal().getClass().getSimpleName()).forEach(c -> info.add(" - " + c));
 
+        info.add("Target: " + getTarget());
         return info;
     }
 
@@ -870,16 +856,15 @@ public abstract class ClayMobEntity extends PathfinderMob implements TeamHolder,
     public abstract boolean showInStatDisplay();
 
     @Override
-    public void getStatDisplay(List<Component> list, LivingEntity livingEntity) {
+    public void getStatDisplay(List<Component> list, LivingEntity viewer) {
         list.add(this.getDisplayName());
 
         list.add(CommonComponents.space().append(Component.translatable(StatInfoDisplay.HEALTH, this.getHealth(), this.getMaxHealth()).withStyle(ChatFormatting.GRAY)));
         list.add(CommonComponents.space().append(Component.translatable(StatInfoDisplay.ARMOR, this.getArmorValue()).withStyle(ChatFormatting.GRAY)));
-        if (!getClayTeamType().equals(ClayMobTeamManger.NO_TEAM_TYPE)) {
+        if (!getClayTeamKey().equals(ClayMobTeamManger.NO_TEAM_KEY)) {
             list.add(CommonComponents.space().append(Component.translatable(StatInfoDisplay.TEAM, getClayTeam().getDisplayNameWithColor(c -> c.getColor(this, 0))).withStyle(ChatFormatting.GRAY)));
         }
         getCachedTeamOwner().ifPresent(owner -> list.add(CommonComponents.space().append(Component.translatable(StatInfoDisplay.OWNER, owner.getLastDisplayName())).withStyle(ChatFormatting.GRAY)));
-        list.add(CommonComponents.space().append(Component.translatable(StatInfoDisplay.ARMOR, this.getArmorValue()).withStyle(ChatFormatting.GRAY)));
     }
 
     @FunctionalInterface

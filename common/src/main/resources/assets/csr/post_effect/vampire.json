@@ -4,7 +4,8 @@
   },
   "passes": [
     {
-      "program": "minecraft:post/color_convolve",
+      "vertex_shader": "minecraft:core/screenquad",
+      "fragment_shader": "minecraft:post/color_convolve",
       "inputs": [
         {
           "sampler_name": "In",
@@ -12,23 +13,29 @@
         }
       ],
       "output": "swap",
-      "uniforms": [
-        {
-          "name": "RedMatrix",
-          "values": [ 0.3, 0.59, 0.11 ]
-        },
-        {
-          "name": "GreenMatrix",
-          "values": [ 0.0, 0.0, 0.0 ]
-        },
-        {
-          "name": "BlueMatrix",
-          "values": [ 0.0, 0.0, 0.0 ]
-        }
-      ]
+      "uniforms": {
+        "ColorConfig": [
+          {
+            "name": "RedMatrix",
+            "type": "vec3",
+            "value": [ 0.3, 0.59, 0.11 ]
+          },
+          {
+            "name": "GreenMatrix",
+            "type": "vec3",
+            "value": [ 0.0, 0.0, 0.0 ]
+          },
+          {
+            "name": "BlueMatrix",
+            "type": "vec3",
+            "value": [ 0.0, 0.0, 0.0 ]
+          }
+        ]
+      }
     },
     {
-      "program": "minecraft:post/bits",
+      "vertex_shader": "minecraft:core/screenquad",
+      "fragment_shader": "minecraft:post/bits",
       "inputs": [
         {
           "sampler_name": "In",
@@ -36,16 +43,20 @@
         }
       ],
       "output": "minecraft:main",
-      "uniforms": [
-        {
-          "name": "Resolution",
-          "values": [ 16.0 ]
-        },
-        {
-          "name": "MosaicSize",
-          "values": [ 4.0 ]
-        }
-      ]
+      "uniforms": {
+        "BitsConfig": [
+          {
+            "name": "Resolution",
+            "type": "float",
+            "value": 16.0
+          },
+          {
+            "name": "MosaicSize",
+            "type": "float",
+            "value": 4.0
+          }
+        ]
+      }
     }
   ]
 }

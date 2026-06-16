@@ -2,7 +2,7 @@ package net.bumblebee.claysoldiers.mixin;
 
 import com.mojang.brigadier.context.CommandContext;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
-import net.bumblebee.claysoldiers.commands.ClaySoldierCommands;
+import net.bumblebee.claysoldiers.init.ModCommands;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.chat.Component;
@@ -20,9 +20,9 @@ public abstract class DefaultDataPackCommandMixin {
         try {
             if (cir.getReturnValue().getId().contains(ClaySoldiersCommon.CSR_DEFAULT_DATA_PACK_PATH)) {
                 if (enabling) {
-                    context.getSource().sendSuccess(() -> Component.translatable(ClaySoldierCommands.ENABLING_DATAPACK).withStyle(ChatFormatting.YELLOW), false);
+                    context.getSource().sendSuccess(() -> Component.translatable(ModCommands.ENABLING_DATAPACK).withStyle(ChatFormatting.YELLOW), false);
                 } else {
-                    context.getSource().sendSuccess(() -> Component.translatable(ClaySoldierCommands.DISABLING_DATAPACK).withStyle(ChatFormatting.YELLOW), false);
+                    context.getSource().sendSuccess(() -> Component.translatable(ModCommands.DISABLING_DATAPACK).withStyle(ChatFormatting.YELLOW), false);
                 }
             }
         } catch (RuntimeException e) {

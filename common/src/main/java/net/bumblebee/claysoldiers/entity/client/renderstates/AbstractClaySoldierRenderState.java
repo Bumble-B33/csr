@@ -11,14 +11,16 @@ import net.bumblebee.claysoldiers.entity.common.boss.BossClaySoldierEntity;
 import net.bumblebee.claysoldiers.entity.common.soldier.AbstractClaySoldierEntity;
 import net.bumblebee.claysoldiers.item.itemeffectholder.ItemStackWithEffect;
 import net.bumblebee.claysoldiers.soldierproperties.SoldierPropertyMapReader;
+import net.bumblebee.claysoldiers.util.color.ColorHelper;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
+import net.minecraft.client.renderer.entity.state.FishingHookRenderState;
 import net.minecraft.client.renderer.item.ItemModelResolver;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemDisplayContext;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumMap;
@@ -33,8 +35,8 @@ public class AbstractClaySoldierRenderState extends ClayMobRenderState {
     public boolean isFallingWithGlider;
     public boolean veryAngry;
     public SoldierEquipmentSlot gliderSlot;
-    public ItemStack carriedItemStack;
     public final ItemStackRenderState carriedItemRenderState = new ItemStackRenderState();
+    public boolean renderCarried;
     public AbstractClaySoldierEntity.RidingPose ridingPose;
     public int id;
     public int skinVariantId;
@@ -47,15 +49,19 @@ public class AbstractClaySoldierRenderState extends ClayMobRenderState {
 
 
     public boolean isNightForVampire = false;
-    public int previousTeamColor = -1;
+    public int previousTeamColor = ColorHelper.DEFAULT_CLAY_COLOR;
+    public boolean hasPreviousTeamColor = false;
+
     @Nullable
     public BossClaySoldierEntity.BossTypes bossType = null;
     @Nullable
-    public ResourceLocation moduleTexture = null;
+    public Identifier moduleTexture = null;
 
     public SoldierPropertyMapReader allProperties;
 
     public int offsetColor;
+    public boolean hasOffsetColor;
+
     private final Map<SoldierEquipmentSlot, ItemStackWithEffect> inventory = new EnumMap<>(SoldierEquipmentSlot.class);
 
     public float capeFlap;
@@ -64,8 +70,14 @@ public class AbstractClaySoldierRenderState extends ClayMobRenderState {
 
     public float swelling;
 
-
     public AccessoryRenderState accessoryRenderState;
+    public Pose pose;
+
+    public boolean isFishingAnker;
+    public boolean isFishing = false;
+    public Vec3 fishingHookDis = Vec3.ZERO;
+    public FishingHookRenderState fishingHookRenderState = new FishingHookRenderState();
+    public boolean isFishingHookEnchanted = false;
 
     public boolean hasShieldInHand(InteractionHand hand) {
         return hand == InteractionHand.MAIN_HAND ? hasShieldInMainHand : hasShieldInOffhand;
@@ -151,5 +163,13 @@ public class AbstractClaySoldierRenderState extends ClayMobRenderState {
             return null;
         }
         return stackWithEffect.wearableEffectMap();
+    }
+
+    public enum Pose {
+        DEFAULT,
+        ZOMBIE_ARMS,
+        SITTING,
+        RIDING,
+        FISHING
     }
 }

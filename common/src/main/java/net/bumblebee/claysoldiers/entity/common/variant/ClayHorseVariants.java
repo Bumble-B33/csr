@@ -3,16 +3,16 @@ package net.bumblebee.claysoldiers.entity.common.variant;
 import com.google.common.collect.Maps;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.item.claymobspawn.MultiSpawnItem;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import java.util.EnumMap;
 import java.util.function.Supplier;
 
 public enum ClayHorseVariants implements NameableVariant {
-    CAKE(0,"cake", 0xE81D1D, ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "textures/entity/clay_horse/cake.png")),
-    GRASS(1,"grass", 0x81B052, ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "textures/entity/clay_horse/grass.png")),
-    SNOW(2,"snow", 0xD7E1E1, ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "textures/entity/clay_horse/snow.png")),
-    MYCELIUM(3,"mycelium", 0x6F6262, ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "textures/entity/clay_horse/mycelium.png"));
+    CAKE(0,"cake", 0xE81D1D, Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "textures/entity/clay_horse/cake.png")),
+    GRASS(1,"grass", 0x81B052, Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "textures/entity/clay_horse/grass.png")),
+    SNOW(2,"snow", 0xD7E1E1, Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "textures/entity/clay_horse/snow.png")),
+    MYCELIUM(3,"mycelium", 0x6F6262, Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "textures/entity/clay_horse/mycelium.png"));
 
     public static final EnumMap<ClayHorseVariants, Supplier<MultiSpawnItem<?>>> CLAY_HORSE_ITEM_BY_VARIANT = Maps.newEnumMap(ClayHorseVariants.class);
     public static final EnumMap<ClayHorseVariants, Supplier<MultiSpawnItem<?>>> CLAY_PEGASUS_ITEM_BY_VARIANT = Maps.newEnumMap(ClayHorseVariants.class);
@@ -21,9 +21,9 @@ public enum ClayHorseVariants implements NameableVariant {
     private final int id;
     private final String name;
     private final int pouchColor;
-    private final ResourceLocation textureLocation;
+    private final Identifier textureLocation;
 
-    ClayHorseVariants(int id, String name, int pouchColor, ResourceLocation textureLocation) {
+    ClayHorseVariants(int id, String name, int pouchColor, Identifier textureLocation) {
         this.id = id;
         this.name = name;
         this.pouchColor = pouchColor;
@@ -44,7 +44,7 @@ public enum ClayHorseVariants implements NameableVariant {
         return name;
     }
 
-    public ResourceLocation getTextureLocation() {
+    public Identifier getTextureLocation() {
         return textureLocation;
     }
 

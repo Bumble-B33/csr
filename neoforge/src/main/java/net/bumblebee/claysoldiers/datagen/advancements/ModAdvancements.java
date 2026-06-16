@@ -1,36 +1,45 @@
 package net.bumblebee.claysoldiers.datagen.advancements;
 
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
-import net.bumblebee.claysoldiers.advancements.*;
+import net.bumblebee.claysoldiers.advancements.entity.BossClaySoldierSubPredicate;
+import net.bumblebee.claysoldiers.advancements.entity.PropertyClaySoldierSubPredicate;
+import net.bumblebee.claysoldiers.advancements.trigger.*;
 import net.bumblebee.claysoldiers.block.hamsterwheel.HamsterWheelBlockEntity;
-import net.bumblebee.claysoldiers.datagen.ModRecipeProvider;
+import net.bumblebee.claysoldiers.claysoldierchips.addon.ClaySoldierChipAddons;
+import net.bumblebee.claysoldiers.claysoldierchips.work.FishingChip;
+import net.bumblebee.claysoldiers.datagen.recipe.ModRecipeProvider;
 import net.bumblebee.claysoldiers.datamap.SoldierEquipmentSlot;
-import net.bumblebee.claysoldiers.entity.goal.UseAssignedPoiGoal;
 import net.bumblebee.claysoldiers.entity.common.variant.ClayHorseVariants;
+import net.bumblebee.claysoldiers.entity.goal.UseAssignedPoiGoal;
 import net.bumblebee.claysoldiers.init.*;
 import net.bumblebee.claysoldiers.item.ClayBrushItem;
 import net.bumblebee.claysoldiers.item.blueprint.BlueprintItem;
+import net.bumblebee.claysoldiers.item.chip.ClaySoldierChipItem;
 import net.bumblebee.claysoldiers.soldierproperties.SoldierPropertyTypes;
 import net.bumblebee.claysoldiers.soldierproperties.customproperties.AttackTypeProperty;
 import net.minecraft.advancements.*;
-import net.minecraft.advancements.critereon.*;
+import net.minecraft.advancements.criterion.*;
 import net.minecraft.core.HolderGetter;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.component.DataComponentPatch;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.data.advancements.AdvancementSubProvider;
+import net.minecraft.data.PackOutput;
+import net.minecraft.data.advancements.AdvancementProvider;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.clock.ClockTimeMarkers;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ItemStackTemplate;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
-public class ModAdvancements implements AdvancementSubProvider {
+public class ModAdvancements {
     private static final String TITLE_BASE = "advancements." + ClaySoldiersCommon.MOD_ID + ".clay_soldiers.%s.title";
     private static final String DESCRIPTION_BASE = "advancements." + ClaySoldiersCommon.MOD_ID + ".clay_soldiers.%s.description";
 
@@ -71,9 +80,6 @@ public class ModAdvancements implements AdvancementSubProvider {
     public static final String ROYALTY_TITLE = TITLE_BASE.formatted("royalty");
     public static final String ROYALTY_DESCRIPTION = DESCRIPTION_BASE.formatted("royalty");
 
-    public static final String WORKER_TITLE = TITLE_BASE.formatted("worker");
-    public static final String WORKER_DESCRIPTION = DESCRIPTION_BASE.formatted("worker");
-
     public static final String LOYALTY_TITLE = TITLE_BASE.formatted("loyalty");
     public static final String LOYALTY_DESCRIPTION = DESCRIPTION_BASE.formatted("loyalty");
 
@@ -88,9 +94,6 @@ public class ModAdvancements implements AdvancementSubProvider {
 
     public static final String CHEST_TITLE = TITLE_BASE.formatted("chest");
     public static final String CHEST_DESCRIPTION = DESCRIPTION_BASE.formatted("chest");
-
-    public static final String WORK_TITLE = TITLE_BASE.formatted("work");
-    public static final String WORK_DESCRIPTION = DESCRIPTION_BASE.formatted("work");
 
     public static final String POI_USE_TITLE = TITLE_BASE.formatted("poi_use");
     public static final String POI_USE_DESCRIPTION = DESCRIPTION_BASE.formatted("poi_use");
@@ -119,34 +122,47 @@ public class ModAdvancements implements AdvancementSubProvider {
     public static final String BLUEPRINT_TITLE = TITLE_BASE.formatted("blueprint");
     public static final String BLUEPRINT_DESCRIPTION = DESCRIPTION_BASE.formatted("blueprint");
 
+
+    public static final String BLUEPRINT_CHIP_TITLE = TITLE_BASE.formatted("blueprint_chip");
+    public static final String BLUEPRINT_CHIP_DESCRIPTION = DESCRIPTION_BASE.formatted("blueprint_chip");
+
     public static final String HOUSE_TITLE = TITLE_BASE.formatted("house");
     public static final String HOUSE_DESCRIPTION = DESCRIPTION_BASE.formatted("house");
 
     public static final String SOLDIER_ON_HEAD_TITLE = TITLE_BASE.formatted("soldier_on_head");
     public static final String SOLDIER_ON_HEAD_DESCRIPTION = DESCRIPTION_BASE.formatted("soldier_on_head");
 
-    public static ResourceLocation SOLDIER_ID = getSaveLocation("soldier");
-    public static ResourceLocation LOYALTY_ID = getSaveLocation("loyalty");
+
+    public static final String CHIP_TITLE = TITLE_BASE.formatted("chip");
+    public static final String CHIP_DESCRIPTION = DESCRIPTION_BASE.formatted("chip");
+
+    public static final String PROGRAMMABLE_TITLE = TITLE_BASE.formatted("programmable");
+    public static final String PROGRAMMABLE_DESCRIPTION = DESCRIPTION_BASE.formatted("programmable");
+
+    public static final String CHIP_ADDON_TITLE = TITLE_BASE.formatted("chip_addon");
+    public static final String CHIP_ADDON_DESCRIPTION = DESCRIPTION_BASE.formatted("chip_addon");
 
 
+    public static Identifier SOLDIER_ID = getSaveLocation("soldier");
+    public static Identifier LOYALTY_ID = getSaveLocation("loyalty");
+    public static Identifier CHIP_ID = getSaveLocation("chip");
 
-    @Override
-    public void generate(HolderLookup.Provider provider, Consumer<AdvancementHolder> saver) {
+
+    public static void generate(HolderLookup.Provider provider, Consumer<AdvancementHolder> saver) {
         HolderGetter<EntityType<?>> entityTypeHolderGetter = provider.lookupOrThrow(Registries.ENTITY_TYPE);
         HolderGetter<Item> itemRegistry = provider.lookupOrThrow(Registries.ITEM);
 
-        ItemStack clayBrushItemPoi = ModItems.CLAY_BRUSH.get().getDefaultInstance();
-        clayBrushItemPoi.set(ModDataComponents.CLAY_BRUSH_MODE.get(), ClayBrushItem.Mode.POI);
+        ItemStackTemplate clayBrushItemPoi = new ItemStackTemplate(ModItems.CLAY_BRUSH.get(),
+                DataComponentPatch.builder().set(ModDataComponents.CLAY_BRUSH_MODE.get(), ClayBrushItem.Mode.POI).build());
 
-        ItemStack clayBrushItemWork = ModItems.CLAY_BRUSH.get().getDefaultInstance();
-        clayBrushItemWork.set(ModDataComponents.CLAY_BRUSH_MODE.get(), ClayBrushItem.Mode.WORK);
+        ItemStackTemplate chipWithAddon = ClaySoldierChipItem.createTemplate(ModItems.FISHING_CHIP.asItem(), FishingChip.create(ClaySoldierChipAddons.NO_BREAK_ADDON, ClaySoldierChipAddons.FISH_TREASURE_ADDON));
 
         var root = new Advancement.Builder()
                 .display(
-                        new ItemStack(Items.CLAY_BALL),
+                        Items.CLAY_BALL,
                         Component.translatable(ROOT_TITLE),
                         Component.translatable(ROOT_DESCRIPTION),
-                        ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "textures/gui/advancements/backgrounds/clay.png"),
+                        Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "gui/advancements/backgrounds/clay"),
                         AdvancementType.TASK,
                         true,
                         false,
@@ -160,7 +176,7 @@ public class ModAdvancements implements AdvancementSubProvider {
 
         var soldier = new Advancement.Builder()
                 .display(
-                        new ItemStack(ModItems.CLAY_SOLDIER.get()),
+                        ModItems.CLAY_SOLDIER.get(),
                         Component.translatable(SOLDIER_TITLE),
                         Component.translatable(SOLDIER_DESCRIPTION),
                         null,
@@ -176,7 +192,7 @@ public class ModAdvancements implements AdvancementSubProvider {
 
         var bricked = new Advancement.Builder()
                 .display(
-                        new ItemStack(ModItems.BRICKED_CLAY_SOLDIER.get()),
+                        ModItems.BRICKED_CLAY_SOLDIER.get(),
                         Component.translatable(BRICKED_TITLE),
                         Component.translatable(BRICKED_DESCRIPTION),
                         null,
@@ -192,9 +208,9 @@ public class ModAdvancements implements AdvancementSubProvider {
 
         var revive = new Advancement.Builder()
                 .display(
-                        new ItemStack(Items.GHAST_TEAR),
+                        Items.GHAST_TEAR,
                         Component.translatable(REVIVE_TITLE),
-                        Component.translatable(REVIVE_DESCRIPTION, Items.GHAST_TEAR.getName()),
+                        Component.translatable(REVIVE_DESCRIPTION, Component.translatable(Items.GHAST_TEAR.getDescriptionId())),
                         null,
                         AdvancementType.TASK,
                         true,
@@ -209,7 +225,7 @@ public class ModAdvancements implements AdvancementSubProvider {
 
         var disruptor = new Advancement.Builder()
                 .display(
-                        new ItemStack(ModItems.CLAY_DISRUPTOR.get()),
+                        ModItems.CLAY_DISRUPTOR.get(),
                         Component.translatable(DISRUPTOR_TITLE),
                         Component.translatable(DISRUPTOR_DESCRIPTION),
                         null,
@@ -225,7 +241,7 @@ public class ModAdvancements implements AdvancementSubProvider {
 
         var waxed_soldier = new Advancement.Builder()
                 .display(
-                        new ItemStack(Items.HONEYCOMB),
+                        Items.HONEYCOMB,
                         Component.translatable(WAXED_TITLE),
                         Component.translatable(WAXED_DESCRIPTION),
                         null,
@@ -241,7 +257,7 @@ public class ModAdvancements implements AdvancementSubProvider {
 
         var battle = new Advancement.Builder()
                 .display(
-                        new ItemStack(ModItems.CLAY_SOLDIER.get()),
+                        ModItems.CLAY_SOLDIER.get(),
                         Component.translatable(BATTLE_TITLE),
                         Component.translatable(BATTLE_DESCRIPTION),
                         null,
@@ -257,7 +273,7 @@ public class ModAdvancements implements AdvancementSubProvider {
 
         var food = new Advancement.Builder()
                 .display(
-                        new ItemStack(ModItems.CLAY_COOKIE.get()),
+                        ModItems.CLAY_COOKIE.get(),
                         Component.translatable(FOOD_TITLE),
                         Component.translatable(FOOD_DESCRIPTION),
                         null,
@@ -274,7 +290,7 @@ public class ModAdvancements implements AdvancementSubProvider {
 
         var equipment = new Advancement.Builder()
                 .display(
-                        new ItemStack(Items.STICK),
+                        Items.STICK,
                         Component.translatable(EQUIPMENT_TITLE),
                         Component.translatable(EQUIPMENT_DESCRIPTION),
                         null,
@@ -294,7 +310,7 @@ public class ModAdvancements implements AdvancementSubProvider {
 
         var armor = new Advancement.Builder()
                 .display(
-                        new ItemStack(Items.LEATHER),
+                        Items.LEATHER,
                         Component.translatable(ARMOR_TITLE),
                         Component.translatable(ARMOR_DESCRIPTION),
                         null,
@@ -313,7 +329,7 @@ public class ModAdvancements implements AdvancementSubProvider {
                 .save(saver, getSaveLocation("armor"));
         var weapon = new Advancement.Builder()
                 .display(
-                        new ItemStack(ModItems.SHEAR_BLADE.get()),
+                        ModItems.SHEAR_BLADE.get(),
                         Component.translatable(WEAPON_TITLE),
                         Component.translatable(WEAPON_DESCRIPTION),
                         null,
@@ -333,7 +349,7 @@ public class ModAdvancements implements AdvancementSubProvider {
 
         var makeAKingBuilder = new Advancement.Builder()
                 .display(
-                        new ItemStack(Items.GOLD_INGOT),
+                        Items.GOLD_INGOT,
                         Component.translatable(ROYALTY_TITLE),
                         Component.translatable(ROYALTY_DESCRIPTION),
                         null,
@@ -362,7 +378,7 @@ public class ModAdvancements implements AdvancementSubProvider {
 
         var loyalty = new Advancement.Builder()
                 .display(
-                        new ItemStack(Items.EMERALD),
+                        Items.EMERALD,
                         Component.translatable(LOYALTY_TITLE),
                         Component.translatable(LOYALTY_DESCRIPTION),
                         null,
@@ -378,7 +394,7 @@ public class ModAdvancements implements AdvancementSubProvider {
 
         var clayBrush = new Advancement.Builder()
                 .display(
-                        new ItemStack(ModItems.CLAY_BRUSH.get()),
+                        ModItems.CLAY_BRUSH.get(),
                         Component.translatable(COMMAND_TITLE),
                         Component.translatable(COMMAND_DESCRIPTION),
                         null,
@@ -392,33 +408,7 @@ public class ModAdvancements implements AdvancementSubProvider {
                 .addCriterion("clay_soldier_sit", ClayBrushCommandTrigger.create(ClayBrushItem.Mode.COMMAND))
                 .save(saver, getSaveLocation("clay_soldier_sit"));
 
-        var workerBuilder = new Advancement.Builder()
-                .display(
-                        new ItemStack(Items.WHEAT),
-                        Component.translatable(WORKER_TITLE),
-                        Component.translatable(WORKER_DESCRIPTION),
-                        null,
-                        AdvancementType.GOAL,
-                        false,
-                        false,
-                        false
-                )
-                .parent(loyalty)
-                .rewards(AdvancementRewards.Builder.experience(200))
-                .requirements(AdvancementRequirements.Strategy.OR);
 
-        for (AttackTypeProperty attackTypeProperty : AttackTypeProperty.values()) {
-            if (!attackTypeProperty.isSupportive()) {
-                continue;
-            }
-            workerBuilder.addCriterion(attackTypeProperty.getSerializedName(), PickedUpItemTrigger.TriggerInstance.thrownItemPickedUpByEntity(
-                    ContextAwarePredicate.create(),
-                    Optional.empty(),
-                    Optional.of(EntityPredicate.wrap(EntityPredicate.Builder.entity().of(entityTypeHolderGetter, ModEntityTypes.CLAY_SOLDIER_ENTITY.get()).subPredicate(PropertyClaySoldierSubPredicate.hasProperty(SoldierPropertyTypes.ATTACK_TYPE.get().createProperty(attackTypeProperty)))))
-            ));
-        }
-
-        var worker = workerBuilder.save(saver, getSaveLocation("worker"));
 
 
         var clayBrushPoi = new Advancement.Builder()
@@ -450,7 +440,7 @@ public class ModAdvancements implements AdvancementSubProvider {
                 )
                 .parent(clayBrushPoi)
                 .rewards(AdvancementRewards.Builder.experience(100))
-                .addCriterion("hamster", UseAssignedWorksiteTrigger.of().setType(HamsterWheelBlockEntity.WORKSITE_ID).setTime(MinMaxBounds.Ints.between(13000, 23000)).build())
+                .addCriterion("hamster", UseAssignedWorksiteTrigger.of().setType(HamsterWheelBlockEntity.WORKSITE_ID).setTime(ClockTimeMarkers.MIDNIGHT).build())
                 .save(saver, getSaveLocation("hamster"));
 
         var chest = new Advancement.Builder()
@@ -469,25 +459,9 @@ public class ModAdvancements implements AdvancementSubProvider {
                 .addCriterion("chest", UseAssignedWorksiteTrigger.of().setType(UseAssignedPoiGoal.STORAGE_WORKSITE_ID).setTimesUsed(MinMaxBounds.Ints.atLeast(SoldierEquipmentSlot.values().length)).build())
                 .save(saver, getSaveLocation("chest"));
 
-        var clayBrushWork = new Advancement.Builder()
-                .display(
-                        clayBrushItemWork,
-                        Component.translatable(WORK_TITLE),
-                        Component.translatable(WORK_DESCRIPTION),
-                        null,
-                        AdvancementType.TASK,
-                        true,
-                        false,
-                        false
-                )
-                .parent(worker)
-                .rewards(AdvancementRewards.Builder.experience(100))
-                .addCriterion("clay_soldier_work", ClayBrushCommandTrigger.create(ClayBrushItem.Mode.WORK))
-                .save(saver, getSaveLocation("clay_soldier_work"));
-
         var flint = new Advancement.Builder()
                 .display(
-                        Items.FLINT.getDefaultInstance(),
+                        Items.FLINT,
                         Component.translatable(POI_USE_TITLE),
                         Component.translatable(POI_USE_DESCRIPTION),
                         null,
@@ -503,7 +477,7 @@ public class ModAdvancements implements AdvancementSubProvider {
 
         var spawnClayBoss = new Advancement.Builder()
                 .display(
-                        Items.EGG.getDefaultInstance(),
+                        Items.EGG,
                         Component.translatable(BOSS_TITLE),
                         Component.translatable(BOSS_DESCRIPTION),
                         null,
@@ -519,7 +493,7 @@ public class ModAdvancements implements AdvancementSubProvider {
 
         var clayStaff = new Advancement.Builder()
                 .display(
-                        ModItems.CLAY_STAFF.get().getDefaultInstance(),
+                        ModItems.CLAY_STAFF.get(),
                         Component.translatable(STAFF_TITLE),
                         Component.translatable(STAFF_DESCRIPTION),
                         null,
@@ -542,7 +516,7 @@ public class ModAdvancements implements AdvancementSubProvider {
 
         var clayPouch = new Advancement.Builder()
                 .display(
-                        ModItems.CLAY_POUCH.get().getDefaultInstance(),
+                        ModItems.CLAY_POUCH.get(),
                         Component.translatable(POUCH_TITLE),
                         Component.translatable(POUCH_DESCRIPTION),
                         null,
@@ -558,7 +532,7 @@ public class ModAdvancements implements AdvancementSubProvider {
 
         var staffEnchant = new Advancement.Builder()
                 .display(
-                        ModItems.CLAY_SOLDIER.get().getDefaultInstance(),
+                        ModItems.CLAY_SOLDIER.get(),
                         Component.translatable(BOOK_TITLE),
                         Component.translatable(BOOK_DESCRIPTION),
                         null,
@@ -578,7 +552,7 @@ public class ModAdvancements implements AdvancementSubProvider {
 
         var horseBuilder = new Advancement.Builder()
                 .display(
-                        new ItemStack(ModItems.GRASS_HORSE.get()),
+                        ModItems.GRASS_HORSE.get(),
                         Component.translatable(HORSE_TITLE),
                         Component.translatable(HORSE_DESCRIPTION),
                         null,
@@ -596,7 +570,7 @@ public class ModAdvancements implements AdvancementSubProvider {
         var horse = horseBuilder.save(saver, getSaveLocation("horse"));
         var pegasusBuilder = new Advancement.Builder()
                 .display(
-                        new ItemStack(ModItems.GRASS_PEGASUS.get()),
+                        ModItems.GRASS_PEGASUS.get(),
                         Component.translatable(PEGASUS_TITLE),
                         Component.translatable(PEGASUS_DESCRIPTION),
                         null,
@@ -617,7 +591,7 @@ public class ModAdvancements implements AdvancementSubProvider {
 
         var soldierOnHead = new Advancement.Builder()
                 .display(
-                        ModItems.CLAY_SOLDIER.get().getDefaultInstance(),
+                        ModItems.CLAY_SOLDIER.get(),
                         Component.translatable(SOLDIER_ON_HEAD_TITLE),
                         Component.translatable(SOLDIER_ON_HEAD_DESCRIPTION),
                         null,
@@ -630,15 +604,65 @@ public class ModAdvancements implements AdvancementSubProvider {
                 .rewards(AdvancementRewards.Builder.experience(10))
                 .addCriterion("equip", ClaySoldierOnHeadTrigger.create())
                 .save(saver, getSaveLocation("clay_soldier_on_head"));
+
+        var chip = new Advancement.Builder()
+                .display(
+                        ModItems.BLANK_CHIP,
+                        Component.translatable(CHIP_TITLE),
+                        Component.translatable(CHIP_DESCRIPTION),
+                        null,
+                        AdvancementType.GOAL,
+                        false,
+                        false,
+                        false
+                )
+                .parent(soldier)
+                .rewards(AdvancementRewards.Builder.experience(20))
+                .addCriterion("craft_chip", RecipeCraftedTrigger.TriggerInstance.craftedItem(ModRecipeProvider.CLAY_SOLDIER_CHIP))
+                .save(saver, CHIP_ID);
+
+        var programmable = new Advancement.Builder()
+                .display(
+                        ModItems.FISHING_CHIP,
+                        Component.translatable(PROGRAMMABLE_TITLE),
+                        Component.translatable(PROGRAMMABLE_DESCRIPTION),
+                        null,
+                        AdvancementType.GOAL,
+                        false,
+                        false,
+                        false
+                )
+                .parent(chip)
+                .rewards(AdvancementRewards.Builder.experience(200))
+                .addCriterion("use_chip", FeedItemClaySoldierTrigger.ofChip().build())
+                .save(saver, getSaveLocation("programmable"));
+
+        var addon = new Advancement.Builder()
+                .display(
+                        chipWithAddon,
+                        Component.translatable(CHIP_ADDON_TITLE),
+                        Component.translatable(CHIP_ADDON_DESCRIPTION),
+                        null,
+                        AdvancementType.GOAL,
+                        false,
+                        false,
+                        false
+                )
+                .parent(programmable)
+                .rewards(AdvancementRewards.Builder.experience(200))
+                .addCriterion("add_addon", RecipeCraftedTrigger.TriggerInstance.craftedItem(ModRecipeProvider.CLAY_SOLDIER_CHIP_ADD_ADDON))
+                .save(saver, getSaveLocation("addon"));
     }
 
     public static void generateForBlueprint(HolderLookup.Provider provider, Consumer<AdvancementHolder> saver) {
-        ItemStack blueprintStack = ModItems.BLUEPRINT.get().getDefaultInstance();
-        blueprintStack.set(ModDataComponents.BLUEPRINT_ITEM_DATA, new BlueprintItem.BlueprintItemData(0.1f));
+        ItemStackTemplate blueprintStack = new ItemStackTemplate(ModItems.BLUEPRINT.get(), DataComponentPatch.builder()
+                .set(ModDataComponents.BLUEPRINT_ITEM_DATA.get(), new BlueprintItem.BlueprintItemData(0.1f))
+                .build());
+
 
         var page = new Advancement.Builder()
                 .display(
-                        ModItems.BLUEPRINT_PAGE.get().getDefaultInstance(),
+                        ModItems.BLUEPRINT_PAGE.get(),
                         Component.translatable(BLUEPRINT_PAGE_TITLE),
                         Component.translatable(BLUEPRINT_PAGE_DESCRIPTION),
                         null,
@@ -647,10 +671,26 @@ public class ModAdvancements implements AdvancementSubProvider {
                         false,
                         false
                 )
-                .parent(Advancement.Builder.advancement().build(LOYALTY_ID))
+                .parent(Advancement.Builder.advancement().build(CHIP_ID))
                 .rewards(AdvancementRewards.Builder.experience(10))
                 .addCriterion("page", RecipeCraftedTrigger.TriggerInstance.craftedItem(ModRecipeProvider.BLUEPRINT_PAGE))
                 .save(saver, getSaveLocation("blueprint_page"));
+
+        var blueprintChip = new Advancement.Builder()
+                .display(
+                        ModItems.BLUEPRINT_CHIP,
+                        Component.translatable(BLUEPRINT_CHIP_TITLE),
+                        Component.translatable(BLUEPRINT_CHIP_DESCRIPTION),
+                        null,
+                        AdvancementType.TASK,
+                        true,
+                        false,
+                        false
+                )
+                .parent(page)
+                .rewards(AdvancementRewards.Builder.experience(20))
+                .addCriterion("blueprint_chip", RecipeCraftedTrigger.TriggerInstance.craftedItem(ModRecipeProvider.CLAY_SOLDIER_BLUEPRINT_CHIP))
+                .save(saver, getSaveLocation("blueprint_chip"));
 
         var blueprint = new Advancement.Builder()
                 .display(
@@ -663,10 +703,13 @@ public class ModAdvancements implements AdvancementSubProvider {
                         false,
                         false
                 )
-                .parent(page)
+                .parent(blueprintChip)
                 .rewards(AdvancementRewards.Builder.experience(10))
                 .addCriterion("page", InventoryChangeTrigger.TriggerInstance.hasItems(ModItems.BLUEPRINT.get()))
                 .save(saver, getSaveLocation("blueprint"));
+
+
+
 
         var house = new Advancement.Builder()
                 .display(
@@ -685,7 +728,14 @@ public class ModAdvancements implements AdvancementSubProvider {
                 .save(saver, getSaveLocation("house"));
     }
 
-    private static ResourceLocation getSaveLocation(String name) {
-        return ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "%s/%s".formatted("clay_soldiers", name));
+    private static Identifier getSaveLocation(String name) {
+        return Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "%s/%s".formatted("clay_soldiers", name));
+    }
+
+    public static AdvancementProvider createProvider(PackOutput packOutput, CompletableFuture<HolderLookup.Provider> registries) {
+        return new AdvancementProvider(packOutput, registries, List.of(
+                ModAdvancements::generate,
+                ModAdvancements::generateForBlueprint
+        ));
     }
 }

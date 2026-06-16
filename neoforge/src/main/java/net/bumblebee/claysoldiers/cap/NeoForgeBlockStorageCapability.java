@@ -87,5 +87,15 @@ public class NeoForgeBlockStorageCapability implements IBlockCache<IBlockStorage
                 }
             }
         }
+
+        @Override
+        public String toString() {
+            return "SA{" + itemHandler + '}';
+        }
+    }
+
+    @Override
+    public String toString() {
+        return "NStorageCapability{" + cache + '}';
     }
 }

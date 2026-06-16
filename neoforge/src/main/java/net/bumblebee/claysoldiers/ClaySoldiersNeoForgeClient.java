@@ -1,7 +1,7 @@
 package net.bumblebee.claysoldiers;
 
 import net.bumblebee.claysoldiers.init.ModMenuTypes;
-import net.bumblebee.claysoldiers.init.ModParticles;
+import net.bumblebee.claysoldiers.init.ModRecipes;
 import net.bumblebee.claysoldiers.integration.ExternalMods;
 import net.bumblebee.claysoldiers.integration.accessories.ModAccessoryRenderers;
 import net.bumblebee.claysoldiers.integration.curios.ModCuriosRenderers;
@@ -9,12 +9,12 @@ import net.bumblebee.claysoldiers.menu.escritoire.EscritoireScreen;
 import net.bumblebee.claysoldiers.menu.horse.ClayHorseScreen;
 import net.bumblebee.claysoldiers.menu.info.StatOverlay;
 import net.bumblebee.claysoldiers.menu.soldier.ClaySoldierScreen;
-import net.bumblebee.claysoldiers.particles.ScaledParticleProviderAdapter;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.particle.GlowParticle;
-import net.minecraft.client.particle.HeartParticle;
-import net.minecraft.client.particle.SuspendedTownParticle;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.client.particle.ParticleProvider;
+import net.minecraft.client.particle.SpriteSet;
+import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.core.particles.ParticleType;
+import net.minecraft.resources.Identifier;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
@@ -26,6 +26,8 @@ import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
+
+import java.util.function.Function;
 
 
 @Mod(value = ClaySoldiersCommon.MOD_ID, dist = Dist.CLIENT)
@@ -46,10 +48,9 @@ public class ClaySoldiersNeoForgeClient {
         modEventBus.addListener(this::registerModalLayers);
 
         modEventBus.addListener(this::registerSpecialModelRenderer);
-        modEventBus.addListener(this::registerSpecialBlockRenderer);
         modEventBus.addListener(this::registerGuiOverlay);
 
-
+        NeoForge.EVENT_BUS.addListener(this::onRecipeReceived);
         NeoForge.EVENT_BUS.addListener(this::itemTooltipEvent);
 
         ExternalMods.CURIOS.ifLoaded(() -> () -> new ModCuriosRenderers(modEventBus));
@@ -74,11 +75,14 @@ public class ClaySoldiersNeoForgeClient {
         ClaySoldiersClient.registerEntityInsideShader(event::register);
     }
     private void registerParticles(RegisterParticleProvidersEvent event) {
-        event.registerSpriteSet(ModParticles.SMALL_HEART_PARTICLE.get(), pSprites -> new ScaledParticleProviderAdapter(new HeartParticle.Provider(pSprites), 0.35f));
-        event.registerSpriteSet(ModParticles.SMALL_ANGRY_PARTICLE.get(), pSprites -> new ScaledParticleProviderAdapter(new HeartParticle.AngryVillagerProvider(pSprites), 0.35f));
-        event.registerSpriteSet(ModParticles.SMALL_HAPPY_PARTICLE.get(), pSprites -> new ScaledParticleProviderAdapter(new SuspendedTownParticle.HappyVillagerProvider(pSprites), 1.1f));
-        event.registerSpriteSet(ModParticles.SMALL_WAXED_PARTICLE.get(), pSprites -> new ScaledParticleProviderAdapter(new GlowParticle.WaxOnProvider(pSprites), 0.5f));
+        ClaySoldiersClient.registerParticles(new ClaySoldiersClient.ParticleRegistration() {
+            @Override
+            public <T extends ParticleOptions> void registerSpriteSet(ParticleType<T> type, Function<SpriteSet, ParticleProvider<T>> engine) {
+                event.registerSpriteSet(type, engine::apply);
+            }
+        });
     }
+
     private void registerMenuScreen(RegisterMenuScreensEvent event) {
         event.register(ModMenuTypes.CLAY_SOLDIER_MENU.get(), ClaySoldierScreen::new);
         event.register(ModMenuTypes.CLAY_HORSE_MENU.get(), ClayHorseScreen::new);
@@ -100,18 +104,20 @@ public class ClaySoldiersNeoForgeClient {
         ClaySoldiersClient.registerModalLayers(event::registerLayerDefinition);
     }
 
-    private void registerSpecialBlockRenderer(final RegisterSpecialBlockModelRendererEvent event) {
-        ClaySoldiersClient.registerSpecialBlockModelRenderer(event::register);
-    }
-
     private void registerSpecialModelRenderer(final RegisterSpecialModelRendererEvent event) {
         ClaySoldiersClient.registerSpecialItemModelRenderer(event::register);
     }
 
     private void registerGuiOverlay(final RegisterGuiLayersEvent event) {
         event.registerBelow(VanillaGuiLayers.CAMERA_OVERLAYS,
-                ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "stats_overlay"),
+                Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "stats_overlay"),
                 (guiGraphics, deltaTracker) -> StatOverlay.getInstance().render(guiGraphics, deltaTracker.getGameTimeDeltaTicks())
         );
+    }
+
+    private void onRecipeReceived(final RecipesReceivedEvent event) {
+        if (event.getRecipeTypes().contains(ModRecipes.CHIP_ASSEMBLY_TYPE)) {
+            ClaySoldiersCommon.setClientRecipes(event.getRecipeMap().byType(ModRecipes.CHIP_ASSEMBLY_TYPE));
+        }
     }
 }

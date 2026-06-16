@@ -6,9 +6,7 @@ import java.util.function.Supplier;
 
 public enum ExternalMods {
     ACCESSORIES("accessories"),
-    CURIOS("curios"),
-    CREATE("create"),
-    SBL("smartbrainlib");
+    CURIOS("curios");
 
     private final String name;
 
@@ -28,9 +26,5 @@ public enum ExternalMods {
         if (isLoaded()) {
             action.get().run();
         }
-    }
-
-    public <T> T ifLoadedOrElse(Supplier<T> loaded, T notLoaded) {
-        return isLoaded() ? loaded.get() : notLoaded;
     }
 }

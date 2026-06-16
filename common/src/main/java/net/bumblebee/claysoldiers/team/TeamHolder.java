@@ -1,7 +1,8 @@
 package net.bumblebee.claysoldiers.team;
 
 import net.bumblebee.claysoldiers.entity.common.ClayMobEntity;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.core.Holder;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityReference;
 import net.minecraft.world.entity.LivingEntity;
@@ -17,25 +18,21 @@ import java.util.UUID;
  * This interface represents any entity that belongs to a {@code ClayMobTeam}.
  */
 public interface TeamHolder extends OwnableEntity {
+    @NotNull
+    Holder.Reference<ClayMobTeam> getClayTeamHolder();
 
-    /**
-     * Returns the {@code ClayMobTeam} of this {@code TeamHolder}.
-     * If the {@code ClayMobTeam} was an invalid, the {@link ClayMobTeamManger#DEFAULT_TYPE Default Team} is set as the new {@code ClayMobTeam} and returned.
-     * @return the {@code ClayMobTeam} of this {@code TeamHolder}
-     */
-    @NotNull ClayMobTeam getClayTeam();
+    @NotNull
+    ResourceKey<ClayMobTeam> getClayTeamKey();
 
-    /**
-     * Returns the {@code ClayMobTeamId} of this {@code TeamHolder}.
-     * @return the {@code ClayMobTeamId} of this {@code TeamHolder}
-     */
-    ResourceLocation getClayTeamType();
+    default @NotNull ClayMobTeam getClayTeam() {
+        return getClayTeamHolder().value();
+    }
 
-    /**
-     * Sets the {@code ClayMobTeamId} to the given one, if this {@code TeamHolder} can change teams.
-     * @param type the new team
-     */
-    default void setClayTeamType(ResourceLocation type) {}
+    default void setClayTeamType(ResourceKey<ClayMobTeam> type) {
+    }
+
+    default void setClayTeamType(Holder.Reference<ClayMobTeam> type) {
+    }
 
     /**
      * @return whether this {@code TeamHolder} belongs to any team that cooperates.
@@ -53,7 +50,7 @@ public interface TeamHolder extends OwnableEntity {
         if (hasNoTeam() || teamHolder.hasNoTeam()) {
             return true;
         }
-        return !getClayTeam().equals(teamHolder.getClayTeam());
+        return !getClayTeamHolder().is(teamHolder.getClayTeamHolder());
     }
 
     /**
@@ -68,7 +65,7 @@ public interface TeamHolder extends OwnableEntity {
         if (hasNoTeam() || teamHolder.hasNoTeam()) {
             return false;
         }
-        return getClayTeam().equals(teamHolder.getClayTeam());
+        return getClayTeamHolder().is(teamHolder.getClayTeamHolder());
     }
 
 
@@ -97,9 +94,9 @@ public interface TeamHolder extends OwnableEntity {
 
     /**
      * Returns whether this {@code TeamHolder} wants to attack the give target.
-     * This is usually called when {@code TeamHolder} is commanded to attack by his owner
+     * This is the case when they have not the same by the same owner
      */
-    default boolean wantsToAttack(LivingEntity target, LivingEntity owner) {
+    default boolean wantsToAttackCommanded(LivingEntity target, LivingEntity owner) {
         if (target instanceof ClayMobEntity clayMobEntity) {
             return !owner.equals(clayMobEntity.getClayTeamOwner());
         }

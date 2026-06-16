@@ -3,15 +3,21 @@ package net.bumblebee.claysoldiers.blueprint.templates;
 import com.google.common.collect.Lists;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.logging.LogUtils;
+import net.bumblebee.claysoldiers.ClaySoldiersCommon;
+import net.bumblebee.claysoldiers.blueprint.BlueprintStateFilter;
+import net.bumblebee.claysoldiers.blueprint.BlueprintUtil;
+import net.bumblebee.claysoldiers.blueprint.plan.BlueprintBlockInfoList;
+import net.bumblebee.claysoldiers.blueprint.plan.BlueprintItemCountMap;
+import net.bumblebee.claysoldiers.blueprint.plan.ServerBlueprintPlan;
 import net.minecraft.commands.arguments.blocks.BlockStateParser;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Holder;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.Vec3i;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtUtils;
-import net.minecraft.world.item.Item;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.EmptyBlockGetter;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.JigsawBlockEntity;
@@ -19,22 +25,23 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BedPart;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
-import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 import net.minecraft.world.phys.shapes.BooleanOp;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
 
 public class ImmutableTemplate extends BaseImmutableTemplate {
     private static final Logger LOGGER = LogUtils.getLogger();
     private final List<StructureTemplate.StructureBlockInfo> blockInfoList;
 
-    protected ImmutableTemplate(List<StructureTemplate.StructureBlockInfo> blockInfoList, Map<Item, Integer> itemCountMap, Vec3i size, VoxelShape shape) {
+    protected ImmutableTemplate(List<StructureTemplate.StructureBlockInfo> blockInfoList, BlueprintItemCountMap.Immutable itemCountMap, Vec3i size, VoxelShape shape) {
         super(itemCountMap, size, shape);
         this.blockInfoList = blockInfoList;
     }
@@ -53,35 +60,34 @@ public class ImmutableTemplate extends BaseImmutableTemplate {
      * Creates a new {@link ServerBlueprintPlan}. The template should not modify {@link #blockInfoList} in any way.
      */
     @Override
-    public Optional<ServerBlueprintPlan> createServer() {
-        return Optional.of(new ServerBlueprintPlan(size, blockInfoList));
+    public Optional<ServerBlueprintPlan> createServer(ServerLevel serverLevel) {
+        return Optional.of(new ServerBlueprintPlan(size, BlueprintBlockInfoList.fromStructureInfoList(blockInfoList), serverLevel.registryAccess()));
     }
 
-    @Override
-    public Optional<BlueprintPlan> createClient() {
-        return Optional.empty();
-    }
-
-    public static ImmutableTemplate create(HolderLookup<Block> pBlockGetter, CompoundTag pTag, Collection<Holder<Block>> blackListedBlocks) {
-        ListTag blockListTag = pTag.getListOrEmpty(StructureTemplate.BLOCKS_TAG);
+    public static ImmutableTemplate create(HolderLookup.Provider registries, CompoundTag tag) {
+        ListTag blockListTag = tag.getListOrEmpty(StructureTemplate.BLOCKS_TAG);
         List<StructureTemplate.StructureBlockInfo> blockInfoList;
+        HolderLookup<Block> blockLookup = registries.lookupOrThrow(Registries.BLOCK);
 
-        Optional<ListTag> pallets = pTag.getList(StructureTemplate.PALETTE_LIST_TAG);
+        Optional<ListTag> pallets = tag.getList(StructureTemplate.PALETTE_LIST_TAG);
         if (pallets.isPresent()) {
 
-            blockInfoList = loadPallet(pBlockGetter, pallets.orElseThrow().getListOrEmpty(0), blockListTag, blackListedBlocks);
+            blockInfoList = loadPallet(blockLookup, pallets.orElseThrow().getListOrEmpty(0), blockListTag, BlueprintUtil.FILTER);
 
             LOGGER.warn("Clay Soldiers: Structure containing more than one Pallet. Using the first one");
         } else {
-            blockInfoList = loadPallet(pBlockGetter, pTag.getListOrEmpty(StructureTemplate.PALETTE_TAG), blockListTag, blackListedBlocks);
+            blockInfoList = loadPallet(blockLookup, tag.getListOrEmpty(StructureTemplate.PALETTE_TAG), blockListTag, BlueprintUtil.FILTER);
+        }
+        BlueprintItemCountMap.Immutable neededItems = BlueprintUtil.getNeededItemsFromInfo(blockInfoList);
+        if (neededItems.getNumberOfItems() != blockInfoList.size()) {
+            ClaySoldiersCommon.ERROR_HANDLER.warn("Blueprint Structure Size does not match needed items.");
         }
 
-
-        return new ImmutableTemplate(blockInfoList, BlueprintUtil.getNeededItemsFromInfo(blockInfoList, StructureTemplate.StructureBlockInfo::state), BlueprintUtil.getSizeFromTag(pTag), buildShape(blockInfoList));
+        return new ImmutableTemplate(blockInfoList, neededItems, BlueprintUtil.getSizeFromTag(tag), buildShape(blockInfoList));
     }
 
 
-    public static List<StructureTemplate.StructureBlockInfo> loadPallet(HolderLookup<Block> pBlockGetter, ListTag pPaletteTag, ListTag pBlocksTag, Collection<Holder<Block>> blackListedBlocks) {
+    public static List<StructureTemplate.StructureBlockInfo> loadPallet(HolderLookup<Block> pBlockGetter, ListTag pPaletteTag, ListTag pBlocksTag, BlueprintStateFilter filter) {
         BlueprintUtil.SimplePalette structuretemplate$simplepalette = new BlueprintUtil.SimplePalette();
 
         for (int i = 0; i < pPaletteTag.size(); i++) {
@@ -118,7 +124,7 @@ public class ImmutableTemplate extends BaseImmutableTemplate {
             StructureTemplate.StructureBlockInfo blockInfo = new StructureTemplate.StructureBlockInfo(
                     blockpos, blockState, nbt
             );
-            addToLists(blockInfo, normalBlocks, blockWithNbt, blockWithSpecialShape, pBlockGetter, blackListedBlocks);
+            addToLists(blockInfo, normalBlocks, blockWithNbt, blockWithSpecialShape, pBlockGetter, filter);
 
         });
 
@@ -129,14 +135,11 @@ public class ImmutableTemplate extends BaseImmutableTemplate {
 
     private static void addToLists(StructureTemplate.StructureBlockInfo blockInfo, List<StructureTemplate.StructureBlockInfo> pNormalBlocks,
                             List<StructureTemplate.StructureBlockInfo> pBlocksWithNbt, List<StructureTemplate.StructureBlockInfo> pBlocksWithSpecialShape,
-                                   HolderLookup<Block> lookup, Collection<Holder<Block>> blackListedBlocks
+                                   HolderLookup<Block> lookup, BlueprintStateFilter filter
     ) {
-        var updatedBlockInfo = updateBlockInfo(blockInfo, lookup);
-        if (updatedBlockInfo == null) {
-            return;
-        }
 
-        if (blackListedBlocks.stream().anyMatch(blockHolder -> updatedBlockInfo.state().is(blockHolder))) {
+        var updatedBlockInfo = setFinalState(blockInfo, lookup);
+        if (filter.isIllegal(updatedBlockInfo.state())) {
             return;
         }
 
@@ -149,13 +152,7 @@ public class ImmutableTemplate extends BaseImmutableTemplate {
         }
     }
 
-
-    @Nullable
-    private static StructureTemplate.StructureBlockInfo updateBlockInfo(StructureTemplate.StructureBlockInfo info, HolderLookup<Block> pBlockGetter) {
-        return filterIllegalStates(setFinalState(info, pBlockGetter));
-    }
-
-    private static StructureTemplate.StructureBlockInfo setFinalState(StructureTemplate.StructureBlockInfo info, HolderLookup<Block> pBlockGetter) {
+    private static StructureTemplate.StructureBlockInfo setFinalState(StructureTemplate.StructureBlockInfo info, HolderLookup<Block> blockGetter) {
         if (info.nbt() == null) {
             return info;
         }
@@ -167,7 +164,7 @@ public class ImmutableTemplate extends BaseImmutableTemplate {
         try {
             return new StructureTemplate.StructureBlockInfo(
                     info.pos(),
-                    BlockStateParser.parseForBlock(pBlockGetter, finalState, true).blockState(),
+                    BlockStateParser.parseForBlock(blockGetter, finalState, true).blockState(),
                     info.nbt()
             );
         } catch (CommandSyntaxException commandsyntaxexception) {
@@ -204,18 +201,7 @@ public class ImmutableTemplate extends BaseImmutableTemplate {
         return state.getCollisionShape(EmptyBlockGetter.INSTANCE, pos, CollisionContext.empty()).singleEncompassing();
     }
 
-    @Nullable
-    private static StructureTemplate.StructureBlockInfo filterIllegalStates(StructureTemplate.StructureBlockInfo info) {
-        var state = info.state();
-        if (isIllegalSate(state, BlockStateProperties.DOUBLE_BLOCK_HALF, DoubleBlockHalf.UPPER)) return null;
-        if (isIllegalSate(state, BlockStateProperties.BED_PART, BedPart.HEAD)) return null;
 
-        return info;
-    }
-
-    private static <T extends Comparable<T>> boolean isIllegalSate(BlockState state, Property<T> property, T when) {
-        return when.equals(state.getOptionalValue(property).orElse(null));
-    }
 
     private static List<StructureTemplate.StructureBlockInfo> buildInfoList(List<StructureTemplate.StructureBlockInfo> pNormalBlocks,
                                                                             List<StructureTemplate.StructureBlockInfo> pBlocksWithNbt, List<StructureTemplate.StructureBlockInfo> pBlocksWithSpecialShape
@@ -233,6 +219,10 @@ public class ImmutableTemplate extends BaseImmutableTemplate {
         list.addAll(pBlocksWithSpecialShape);
         list.addAll(pBlocksWithNbt);
         list = list.stream().filter(blockInfo -> !blockInfo.state().isAir()).toList();
+
         return list;
     }
+
+
+
 }

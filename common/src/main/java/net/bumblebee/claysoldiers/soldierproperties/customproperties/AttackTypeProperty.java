@@ -17,13 +17,14 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.ToIntFunction;
 
 public enum AttackTypeProperty implements StringRepresentable, KeyableTranslatableProperty {
     NORMAL("normal", true, true, true, AttackTypeProperty::shouldAttackClaySoldier, null),
-    PACIFIST("pacifist", false, true, true, (s, t) -> false, ChatFormatting.WHITE),
+    PACIFIST("pacifist", false, true, true, (_, _) -> false, ChatFormatting.WHITE),
     AGGRESSIVE("aggressive", true, false, false, AttackTypeProperty::canSeeTarget, ChatFormatting.DARK_RED),
     SUPPORT("support", false, true, true, AttackTypeProperty::healerPredicate, ChatFormatting.GREEN),
     KING("king", true, false, true, AttackTypeProperty::royaltyPredicate, ChatFormatting.GOLD),
@@ -41,14 +42,14 @@ public enum AttackTypeProperty implements StringRepresentable, KeyableTranslatab
         }
 
         @Override
-        public Component getAnimatedDisplayName(LivingEntity livingEntity) {
+        public Component getAnimatedDisplayName(@NotNull LivingEntity livingEntity) {
             return Component.translatable(translatableKey()).withStyle(getAnimatedStyle(livingEntity));
         }
     },
     BOSS("boss", true, false, false, null, ChatFormatting.WHITE) {
         @Override
         public boolean canAttack(AbstractClaySoldierEntity attacker, LivingEntity target) {
-            if (target.getType().is(ModTags.EntityTypes.CLAY_BOSS)) {
+            if (target.is(ModTags.EntityTypes.CLAY_BOSS)) {
                 return false;
             }
             return target instanceof Player || target instanceof ClayMobEntity;
@@ -63,7 +64,7 @@ public enum AttackTypeProperty implements StringRepresentable, KeyableTranslatab
         }
 
         @Override
-        public Component getAnimatedDisplayName(LivingEntity livingEntity) {
+        public Component getAnimatedDisplayName(@NotNull LivingEntity livingEntity) {
             return Component.translatable(translatableKey()).withStyle(getAnimatedStyle(livingEntity));
         }
     },
@@ -82,7 +83,7 @@ public enum AttackTypeProperty implements StringRepresentable, KeyableTranslatab
         }
 
         @Override
-        public Component getAnimatedDisplayName(LivingEntity livingEntity) {
+        public Component getAnimatedDisplayName(@NotNull LivingEntity livingEntity) {
             return Component.translatable(translatableKey()).withStyle(getAnimatedStyle(livingEntity));
         }
     };
@@ -145,10 +146,6 @@ public enum AttackTypeProperty implements StringRepresentable, KeyableTranslatab
      */
     public boolean isSupportive() {
         return this == SUPPORT;
-    }
-
-    public boolean canWork() {
-        return this == PACIFIST;
     }
 
     public boolean canBeRevived() {

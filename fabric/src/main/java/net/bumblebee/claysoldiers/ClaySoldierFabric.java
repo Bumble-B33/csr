@@ -2,23 +2,22 @@ package net.bumblebee.claysoldiers;
 
 import com.mojang.serialization.Codec;
 import net.bumblebee.claysoldiers.block.blueprint.EaselBlockEntity;
+import net.bumblebee.claysoldiers.block.chipassembler.ChipAssemblerBlockEntity;
 import net.bumblebee.claysoldiers.block.hamsterwheel.BatteryProperty;
 import net.bumblebee.claysoldiers.block.hamsterwheel.HamsterWheelBlockEntity;
 import net.bumblebee.claysoldiers.blueprint.BlueprintManager;
 import net.bumblebee.claysoldiers.capability.AssignableWorksiteCapability;
 import net.bumblebee.claysoldiers.capability.BlueprintRequestHandler;
-import net.bumblebee.claysoldiers.commands.ClaySoldierCommands;
 import net.bumblebee.claysoldiers.commands.ColorHelperArgumentType;
-import net.bumblebee.claysoldiers.commands.DefaultedResourceLocationArgument;
 import net.bumblebee.claysoldiers.datamap.FabricDataMapLoader;
-import net.bumblebee.claysoldiers.init.ModBlockEntities;
+import net.bumblebee.claysoldiers.init.*;
 import net.bumblebee.claysoldiers.integration.ExternalMods;
 import net.bumblebee.claysoldiers.integration.accessories.ModAccessories;
 import net.bumblebee.claysoldiers.networking.ConfigSyncPayload;
 import net.bumblebee.claysoldiers.networking.DataMapPayloadBuilder;
 import net.bumblebee.claysoldiers.platform.FabricCapabilityManger;
-import net.bumblebee.claysoldiers.platform.FabricCommonHooks;
-import net.bumblebee.claysoldiers.platform.FabricNetworkManger;
+import net.bumblebee.claysoldiers.platform.FabricConfig;
+import net.bumblebee.claysoldiers.platform.services.IConfig;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.ArgumentTypeRegistry;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
@@ -28,24 +27,24 @@ import net.fabricmc.fabric.api.event.registry.DynamicRegistries;
 import net.fabricmc.fabric.api.event.registry.DynamicRegistrySetupCallback;
 import net.fabricmc.fabric.api.lookup.v1.block.BlockApiLookup;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry;
-import net.fabricmc.fabric.api.resource.ResourcePackActivationType;
+import net.fabricmc.fabric.api.object.builder.v1.entity.FabricEntityDataRegistry;
+import net.fabricmc.fabric.api.recipe.v1.sync.RecipeSynchronization;
 import net.fabricmc.fabric.api.resource.v1.ResourceLoader;
-import net.fabricmc.fabric.impl.resource.loader.ResourceManagerHelperImpl;
+import net.fabricmc.fabric.api.resource.v1.pack.PackActivationType;
+import net.fabricmc.fabric.impl.resource.ResourceLoaderImpl;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.commands.synchronization.SingletonArgumentInfo;
-import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.Registry;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.resources.PreparableReloadListener;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NonNull;
 import team.reborn.energy.api.EnergyStorage;
 
 import java.util.concurrent.CompletableFuture;
@@ -53,18 +52,14 @@ import java.util.concurrent.Executor;
 import java.util.function.BiConsumer;
 
 public class ClaySoldierFabric implements ModInitializer {
-    private static final ResourceLocation BLUEPRINT_ID = ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "csr_blueprint");
-    public static final ResourceLocation BLUEPRINT_PACK_ID = ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, ClaySoldiersCommon.BLUEPRINT_PACK_PATH);
-    public static final ResourceLocation CSR_DEFAULT_PACK_ID = ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, ClaySoldiersCommon.CSR_DEFAULT_DATA_PACK_PATH);
+    private static final Identifier BLUEPRINT_ID = Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "csr_blueprint");
+    public static final Identifier CSR_DEFAULT_PACK_ID = Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, ClaySoldiersCommon.CSR_DEFAULT_DATA_PACK_PATH);
 
 
     public static final BlockApiLookup<BlueprintRequestHandler, Void> BLUEPRINT_REQUEST_HANDLER_LOOKUP =
-            BlockApiLookup.get(ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "blueprint_request_handler"), BlueprintRequestHandler.class, Void.class);
+            BlockApiLookup.get(Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "blueprint_request_handler"), BlueprintRequestHandler.class, Void.class);
     public static final BlockApiLookup<AssignableWorksiteCapability, Void> ASSIGNABLE_POI_LOOKUP =
-            BlockApiLookup.get(ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "assignable_poi_capability"), AssignableWorksiteCapability.class, Void.class);
-
-    public static long hamsterWheelCapacity = 3000;
-    public static long hamsterWheelSpeed = 3;
+            BlockApiLookup.get(Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "assignable_poi_capability"), AssignableWorksiteCapability.class, Void.class);
 
     private final ClaySoldiersCommon.BlueprintTagLoad blueprintTagLoader = new ClaySoldiersCommon.BlueprintTagLoad();
 
@@ -72,39 +67,28 @@ public class ClaySoldierFabric implements ModInitializer {
     public void onInitialize() {
         ClaySoldiersCommon.init();
 
-        FabricNetworkManger.forEachClient(data -> {
-            PayloadTypeRegistry.playS2C().register(data.id(), data.codec());
+        ModRegistries.register(r -> {
+        });
+        RecipeSynchronization.synchronizeRecipeSerializer(ModRecipes.CHIP_ASSEMBLY_SERIALIZER.get());
+
+
+        ClaySoldiersCommon.NETWORK_MANGER.forEach(data -> {
+            PayloadTypeRegistry.clientboundPlay().register(data.id(), data.codec());
         });
 
         DataMapPayloadBuilder.registerAll();
-        PayloadTypeRegistry.playS2C().register(ConfigSyncPayload.ID, ConfigSyncPayload.STREAM_CODEC);
+        PayloadTypeRegistry.clientboundPlay().register(ConfigSyncPayload.ID, ConfigSyncPayload.STREAM_CODEC);
 
-        ResourceLoader.get(PackType.SERVER_DATA).registerReloader(FabricCapabilityManger.ID, new FabricCapabilityManger());
-        ResourceLoader.get(PackType.SERVER_DATA).registerReloader(FabricDataMapLoader.ID, new ReloadListenerWithProvider<>(new FabricDataMapLoader(), FabricDataMapLoader::setProvider));
-        ResourceLoader.get(PackType.SERVER_DATA).registerReloader(BLUEPRINT_ID, new BlueprintManager(blueprintTagLoader));
+        ResourceLoader.get(PackType.SERVER_DATA).registerReloadListener(FabricCapabilityManger.ID, new FabricCapabilityManger());
+        ResourceLoader.get(PackType.SERVER_DATA).registerReloadListener(FabricDataMapLoader.ID, new ReloadListenerWithProvider<>(new FabricDataMapLoader(), FabricDataMapLoader::setProvider));
+        ResourceLoader.get(PackType.SERVER_DATA).registerReloadListener(BLUEPRINT_ID, new BlueprintManager(blueprintTagLoader));
 
-        //ResourceManagerHelper.get(PackType.SERVER_DATA).registerReloadListener(BLUEPRINT_ID, new BlueprintManager(blueprintTagLoad));
-        //ResourceManagerHelper.get(PackType.SERVER_DATA).registerReloadListener(new FabricCapabilityManger());
-        //ResourceManagerHelper.get(PackType.SERVER_DATA).registerReloadListener(BLUEPRINT_ID, provider ->
-        //);
-
-        boolean blueprintPack = ResourceManagerHelperImpl.registerBuiltinResourcePack(
-                BLUEPRINT_PACK_ID,
-                ClaySoldiersCommon.CSR_DATA_PACK_LOCATION + "/" + ClaySoldiersCommon.BLUEPRINT_PACK_PATH,
-                FabricLoader.getInstance().getModContainer(ClaySoldiersCommon.MOD_ID).orElseThrow(),
-                Component.translatable(ClaySoldiersCommon.BLUEPRINT_DATA_PACK_LANG),
-                ResourcePackActivationType.NORMAL
-        );
-        if (!blueprintPack) {
-            ClaySoldiersCommon.LOGGER.error("Blueprint Pack count not be loaded");
-        }
-
-        if (!ResourceManagerHelperImpl.registerBuiltinResourcePack(
+        if (!ResourceLoaderImpl.registerBuiltinPack(
                 CSR_DEFAULT_PACK_ID,
                 ClaySoldiersCommon.CSR_DATA_PACK_LOCATION + "/" + ClaySoldiersCommon.CSR_DEFAULT_DATA_PACK_PATH,
                 FabricLoader.getInstance().getModContainer(ClaySoldiersCommon.MOD_ID).orElseThrow(),
                 Component.translatable(ClaySoldiersCommon.CSR_DEFAULT_DATA_PACK_LANG),
-                ResourcePackActivationType.DEFAULT_ENABLED
+                PackActivationType.DEFAULT_ENABLED
         )) {
             ClaySoldiersCommon.LOGGER.error("CSR Default Pack count not be loaded");
         }
@@ -114,9 +98,9 @@ public class ClaySoldierFabric implements ModInitializer {
         ServerLifecycleEvents.SYNC_DATA_PACK_CONTENTS.register((player, joined) -> {
             ClaySoldiersCommon.playerJoinedServer(player, !joined);
 
-            if (!player.connection.connection.isMemoryConnection()) {
+            if (!ClaySoldiersCommon.NETWORK_MANGER.isMemoryConnection(player)) {
                 if (joined) {
-                    ServerPlayNetworking.send(player, new ConfigSyncPayload(FabricCommonHooks.isBlueprintEnabled(), hamsterWheelSpeed));
+                    ClaySoldiersCommon.sendWhenChannel(player, FabricConfig.createSyncPayload(), false);
                 }
                 FabricDataMapLoader.sentPayloadsToClient(player);
             }
@@ -124,13 +108,12 @@ public class ClaySoldierFabric implements ModInitializer {
 
         ServerLifecycleEvents.SERVER_STARTED.register(m -> {
             ClaySoldiersCommon.serverStartedEvent(m);
-            FabricCommonHooks.setBlueprintEnabled(m.getPackRepository().getSelectedIds().contains(BLUEPRINT_PACK_ID.toString()));
-            ClaySoldiersCommon.LOGGER.info(FabricCommonHooks.isBlueprintEnabled() ? "Loaded BlueprintDataPack" : "Not loaded BlueprintDataPack");
+            FabricConfig.logConfig("Server Start", false);
 
             ClaySoldiersCommon.LOGGER.info("Loaded Datamaps: {}", FabricDataMapLoader.getLoadedDataMapsWithSize());
         });
 
-        ClaySoldiersCommon.registerDynamicRegistry(new ClaySoldiersCommon.DynamicRegistryEvent() {
+        ModRegistries.registerDynamicRegistry(new ClaySoldiersCommon.DynamicRegistryEvent() {
             @Override
             public <T> void register(ResourceKey<Registry<T>> registry, Codec<T> codec, @Nullable Codec<T> synced, @Nullable ClaySoldiersCommon.RegistryRegisteredCallBack<T> callback) {
                 if (synced == null) {
@@ -152,76 +135,88 @@ public class ClaySoldierFabric implements ModInitializer {
         });
 
         ArgumentTypeRegistry.registerArgumentType(
-                ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "color_helper"),
+                Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "color_helper"),
                 ColorHelperArgumentType.class,
                 SingletonArgumentInfo.contextFree(ColorHelperArgumentType::colorArgumentType)
         );
 
-        ArgumentTypeRegistry.registerArgumentType(
-                ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "all_clay_mob_teams"),
-                DefaultedResourceLocationArgument.AllClayMobTeam.class,
-                SingletonArgumentInfo.contextAware(DefaultedResourceLocationArgument::all)
-        );
-
-        ArgumentTypeRegistry.registerArgumentType(
-                ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "soldier_item_types"),
-                DefaultedResourceLocationArgument.SoldierItemType.class,
-                SingletonArgumentInfo.contextAware(DefaultedResourceLocationArgument::itemType)
-        );
-
         CommandRegistrationCallback.EVENT.register((commandDispatcher, commandBuildContext, commandSelection) -> {
-            ClaySoldierCommands.register(commandDispatcher, commandBuildContext);
+            ModCommands.register(commandDispatcher, commandBuildContext);
         });
+
+        ModEntitySerializers.register((id, s) -> {
+            FabricEntityDataRegistry.register(Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, id), s);
+        });
+
+        ClaySoldiersCommon.registerDispenseBehavior();
 
         ExternalMods.ACCESSORIES.ifLoaded(() -> ModAccessories::init);
 
-        EnergyStorage.SIDED.registerForBlockEntities(new BlockApiLookup.BlockEntityApiProvider<>() {
-            @Override
-            public @Nullable EnergyStorage find(BlockEntity blockEntity, Direction context) {
-                var en = HamsterWheelBlockEntity.getEnergyStorage(blockEntity, context);
-                return en == null ? null : (EnergyStorage) en;
-            }
+        EnergyStorage.SIDED.registerForBlockEntities((blockEntity, context) -> {
+            var en = HamsterWheelBlockEntity.getEnergyStorage(blockEntity, context);
+            return en == null ? null : (EnergyStorage) en;
         }, ModBlockEntities.HAMSTER_WHEEL_BLOCK_ENTITY.get());
 
-        BLUEPRINT_REQUEST_HANDLER_LOOKUP.registerForBlockEntities(new BlockApiLookup.BlockEntityApiProvider<>() {
-            @Override
-            public @Nullable BlueprintRequestHandler find(BlockEntity blockEntity, Void context) {
-                return blockEntity instanceof EaselBlockEntity easelBlockEntity ? easelBlockEntity.getBlueprintRequestHandler() : null;
+        EnergyStorage.SIDED.registerForBlockEntities((blockEntity, context) -> {
+            if (blockEntity instanceof ChipAssemblerBlockEntity chipAssembler) {
+                return (EnergyStorage) chipAssembler.getEnergyStorage(context);
             }
-        }, ModBlockEntities.EASEL_BLOCK_ENTITY.get());
-        ASSIGNABLE_POI_LOOKUP.registerForBlockEntities(new BlockApiLookup.BlockEntityApiProvider<>() {
-            @Override
-            public @Nullable AssignableWorksiteCapability find(BlockEntity blockEntity, Void context) {
-                return blockEntity instanceof HamsterWheelBlockEntity wheel ? wheel.getPoiCap() : null;
-            }
-        }, ModBlockEntities.HAMSTER_WHEEL_BLOCK_ENTITY.get());
+            return null;
+        }, ModBlockEntities.CHIP_ASSEMBLER_BLOCK_ENTITY.get());
+
+        BLUEPRINT_REQUEST_HANDLER_LOOKUP.registerForBlockEntities((blockEntity, _) -> blockEntity instanceof EaselBlockEntity easelBlockEntity ? easelBlockEntity.getBlueprintRequestHandler() : null, ModBlockEntities.EASEL_BLOCK_ENTITY.get());
+        ASSIGNABLE_POI_LOOKUP.registerForBlockEntities((blockEntity, _) -> blockEntity instanceof HamsterWheelBlockEntity wheel ? wheel.getPoiCap() : null, ModBlockEntities.HAMSTER_WHEEL_BLOCK_ENTITY.get());
 
 
         SimpleConfigFabric config = SimpleConfigFabric.of(ClaySoldiersCommon.MOD_ID).provider(namespace ->
                 """
                         # Whether the Inventory of a clay soldier can be edited via the menu. May cause loss of items.
-                        claySoldierMenuModify=false
-                        # Hamster Wheel Capacity
-                        hamsterWheelCapacity=3000
-                        # Hamster Wheel Generation Speed
-                        hamsterWheelSpeed=1
-                        """).request();
+                        %s=false
+                        # Hamster Wheel Energy Capacity
+                        %s=3000
+                        # Hamster Wheel Energy Generation Speed
+                        %s=1
+                        # Enable/Disabled the Recipe to craft Shear Blades from Shears
+                        %s=true
+                        # Whether Clay Soldiers should drop their Inventory on death
+                        %s=true
+                        # Chance for Clay Soldiers to drop them self
+                        %s=0.5f
+                        # When true Chips can only be installed into Clay Soldiers loyal to the player
+                        %s=true
+                        """.formatted(
+                        IConfig.SOLDIER_MODIFY_MENU_KEY,
+                        IConfig.HAMSTER_WHEEL_CAPACITY_KEY,
+                        IConfig.HAMSTER_WHEEL_SPEED_KEY,
+                        IConfig.SHEAR_BLADE_RECIPE_KEY,
+                        IConfig.SOLDIER_DROP_INVENTORY_KEY,
+                        IConfig.SOLDIER_DROP_SELF_KEY,
+                        IConfig.CHIP_REQUIRES_LOYALTY_KEY
+                )).request();
 
         if (config.isBroken()) {
             ClaySoldiersCommon.LOGGER.error("CSR Config: An Error occurred loading the {} Config File {}", ClaySoldiersCommon.MOD_ID, config);
         } else {
             ClaySoldiersCommon.LOGGER.info("CSR Config: Successfully loaded on Server: {}", config.configValues());
         }
-        ClaySoldiersCommon.claySolderMenuModify = config.getBoolean("claySoldierMenuModify", false);
-        hamsterWheelCapacity = config.getPositiveLong("hamsterWheelCapacity", 3000, BatteryProperty.getMaxSupportedEnergy());
-        hamsterWheelSpeed = config.getPositiveLong("hamsterWheelSpeed", 3, Long.MAX_VALUE);
+
+        FabricConfig.init(
+                config.getPositiveLong(IConfig.HAMSTER_WHEEL_CAPACITY_KEY, 3000, BatteryProperty.getMaxSupportedEnergy()),
+                config.getPositiveLong(IConfig.HAMSTER_WHEEL_SPEED_KEY, 3, Long.MAX_VALUE),
+                config.getBoolean(IConfig.SOLDIER_MODIFY_MENU_KEY, false),
+                config.getBoolean(IConfig.SHEAR_BLADE_RECIPE_KEY, true),
+                config.getFloatPercent(IConfig.SOLDIER_DROP_INVENTORY_KEY, 0.5f),
+                config.getBoolean(IConfig.SOLDIER_DROP_SELF_KEY, true),
+                config.getBoolean(IConfig.CHIP_REQUIRES_LOYALTY_KEY, true)
+        );
     }
 
-    record ReloadListenerWithProvider<T extends SimpleJsonResourceReloadListener<?>>(T resourceReloadListener, BiConsumer<T, HolderLookup.Provider> providerSetter) implements PreparableReloadListener {
+    record ReloadListenerWithProvider<T extends SimpleJsonResourceReloadListener<?>>(T resourceReloadListener,
+                                                                                     BiConsumer<T, HolderLookup.Provider> providerSetter) implements PreparableReloadListener {
 
         @Override
-        public CompletableFuture<Void> reload(SharedState sharedState, Executor exectutor, PreparationBarrier barrier, Executor applyExectutor) {
-            providerSetter.accept(resourceReloadListener, sharedState.get(ResourceLoader.RELOADER_REGISTRY_LOOKUP_KEY));
+        public @NonNull CompletableFuture<Void> reload(SharedState sharedState, @NonNull Executor exectutor, @NonNull PreparationBarrier barrier, @NonNull Executor applyExectutor) {
+            providerSetter.accept(resourceReloadListener, sharedState.get(ResourceLoader.REGISTRY_LOOKUP_KEY));
             return resourceReloadListener.reload(sharedState, exectutor, barrier, applyExectutor);
         }
     }

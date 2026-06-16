@@ -184,6 +184,22 @@ public class SimpleConfigFabric {
         });
     }
 
+    public float getFloatPercent(String key, float def) {
+        return getConfig(key, def, val -> {
+            try {
+                float value = Float.parseFloat(val);
+                if (value < 0) {
+                    return OptionalWithError.empty(value + " is not positive using the default %s");
+                } else if (value > 1) {
+                    return OptionalWithError.partial(1f, value + " is to big using the max: " + 1);
+                }
+                return OptionalWithError.of(value);
+            } catch (NumberFormatException e) {
+                return OptionalWithError.empty(val + " cannot be parsed as long using the default %s");
+            }
+        });
+    }
+
     private <T> T getConfig(String key, T def, Function<String, OptionalWithError<T>> getValue) {
         String val = config.get(key);
         if (val != null) {

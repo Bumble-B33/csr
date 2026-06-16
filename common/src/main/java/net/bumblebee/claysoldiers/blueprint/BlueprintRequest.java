@@ -2,6 +2,7 @@ package net.bumblebee.claysoldiers.blueprint;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.Items;
 
 public class BlueprintRequest {
     private final Item item;
@@ -13,6 +14,9 @@ public class BlueprintRequest {
         this.item = item;
         this.pos = pos;
         this.start = start;
+        if (item == Items.AIR) {
+            throw new IllegalStateException("Item Cannot be air");
+        }
     }
 
     public long getStart() {
@@ -69,7 +73,7 @@ public class BlueprintRequest {
          */
         FINISHED,
         /**
-         * The Request got cancelled, the Item has not been placed down. The request should not be attempted to fulfill
+         * The Request got canceled, the Item has not been placed down. The request should not be attempted to fulfill
          */
         CANCELLED;
     }

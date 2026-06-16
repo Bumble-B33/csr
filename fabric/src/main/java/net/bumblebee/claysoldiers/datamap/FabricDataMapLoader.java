@@ -12,7 +12,6 @@ import net.bumblebee.claysoldiers.platform.services.IDataMapGetter;
 import net.bumblebee.claysoldiers.soldieritemtypes.SoldierItemType;
 import net.bumblebee.claysoldiers.soldierpoi.SoldierPoi;
 import net.bumblebee.claysoldiers.soldierproperties.SoldierVehicleProperties;
-import net.bumblebee.claysoldiers.util.ErrorHandler;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderLookup;
@@ -21,9 +20,8 @@ import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.FileToIdConverter;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.server.packs.resources.PreparableReloadListener;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
 import net.minecraft.tags.TagLoader;
@@ -39,7 +37,7 @@ import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 
-public class FabricDataMapLoader extends SimpleJsonResourceReloadListener<JsonElement> implements PreparableReloadListener {
+public class FabricDataMapLoader extends SimpleJsonResourceReloadListener<JsonElement> {
     private static final String PATH = "data_maps";
     private static final String HOLDABLE_PATH = "item/soldier_holdable";
     private static final String WEARABLE_PATH = "item/soldier_wearable";
@@ -47,7 +45,7 @@ public class FabricDataMapLoader extends SimpleJsonResourceReloadListener<JsonEl
     private static final String BLOCK_POI_PATH = "block/soldier_poi";
     private static final String ENTITY_VEHICLE_PROPERTIES_PATH = "entity_type/soldier_vehicle_properties";
 
-    public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "csr_items");
+    public static final Identifier ID = Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "csr_items");
     private static final Logger LOGGER = ClaySoldiersCommon.LOGGER;
 
     public static final Map<Holder<Item>, SoldierHoldableEffect> SOLDIER_HOLDABLE_MAP = new HashMap<>();
@@ -81,7 +79,7 @@ public class FabricDataMapLoader extends SimpleJsonResourceReloadListener<JsonEl
     }
 
     @Override
-    protected void apply(Map<ResourceLocation, JsonElement> object, ResourceManager resourceManager, ProfilerFiller profiler) {
+    protected void apply(Map<Identifier, JsonElement> object, ResourceManager resourceManager, ProfilerFiller profiler) {
         if (provider == null) {
             LOGGER.error("FabricDataMapGetter load Error: Lookup is null");
             return;
@@ -90,13 +88,13 @@ public class FabricDataMapLoader extends SimpleJsonResourceReloadListener<JsonEl
         loadItems(object, resourceManager);
         var removed = removeEmpty(SOLDIER_WEARABLE_MAP, SoldierMultiWearable::isEmpty);
         if (!removed.isEmpty()) {
-            ErrorHandler.INSTANCE.error("Removed %s Wearable Properties, because they where empty.".formatted(removed));
+            ClaySoldiersCommon.ERROR_HANDLER.error("Removed %s Wearable Properties, because they where empty.".formatted(removed));
         }
         SoldierItemType.onDataMapLoad(() -> {
             provider.lookupOrThrow(ModRegistries.SOLDIER_ITEM_TYPES).listElements().forEach(h -> h.value().afterDataMapLoad());
         });
 
-        TagLoader<Holder<Item>> itemTagLoader = new TagLoader<>((resourceLocation, bl) -> BuiltInRegistries.ITEM.get(resourceLocation), Registries.tagsDirPath(Registries.ITEM));
+        TagLoader<Holder<Item>> itemTagLoader = new TagLoader<>((Identifier, bl) -> BuiltInRegistries.ITEM.get(Identifier), Registries.tagsDirPath(Registries.ITEM));
         var mappedItemTagLoader = itemTagLoader.build(itemTagLoader.load(resourceManager));
 
 
@@ -113,9 +111,9 @@ public class FabricDataMapLoader extends SimpleJsonResourceReloadListener<JsonEl
         });
     }
 
-    private void loadItems(Map<ResourceLocation, JsonElement> object, ResourceManager resourceManager) {
+    private void loadItems(Map<Identifier, JsonElement> object, ResourceManager resourceManager) {
         TagLoader<Holder<Item>> itemTagLoader = new TagLoader<>(TagLoader.ElementLookup.fromFrozenRegistry(BuiltInRegistries.ITEM), Registries.tagsDirPath(Registries.ITEM));
-        Map<ResourceLocation, List<Holder<Item>>> mappedItemTagLoader = itemTagLoader.build(itemTagLoader.load(resourceManager));
+        Map<Identifier, List<Holder<Item>>> mappedItemTagLoader = itemTagLoader.build(itemTagLoader.load(resourceManager));
 
         TagLoader<Holder<Block>> blockTagLoader = new TagLoader<>(TagLoader.ElementLookup.fromFrozenRegistry(BuiltInRegistries.BLOCK), Registries.tagsDirPath(Registries.BLOCK));
         var mappedBlockTagLoader = blockTagLoader.build(blockTagLoader.load(resourceManager));
@@ -141,7 +139,7 @@ public class FabricDataMapLoader extends SimpleJsonResourceReloadListener<JsonEl
     }
 
     private static <T, H> void loadMap(JsonElement jsonElement, Codec<DataMap<H, T>> dataMapCodec,
-                                       Map<ResourceLocation, List<Holder<H>>> tagLoader, Map<Holder<H>, T> staticMap, ResourceLocation name) {
+                                       Map<Identifier, List<Holder<H>>> tagLoader, Map<Holder<H>, T> staticMap, Identifier name) {
         Map<Holder<H>, T> replaceMap = new HashMap<>();
         staticMap.clear();
 
@@ -175,7 +173,7 @@ public class FabricDataMapLoader extends SimpleJsonResourceReloadListener<JsonEl
     }
 
     private record DataMap<H, T>(Map<ExtraCodecs.TagOrElementLocation, T> data, boolean replace, Registry<H> registry) {
-        public void forEach(Map<ResourceLocation, List<Holder<H>>> tagLookup, BiConsumer<Holder<H>, T> addMap, BiConsumer<Holder<H>, T> replaceMap, ResourceLocation description) {
+        public void forEach(Map<Identifier, List<Holder<H>>> tagLookup, BiConsumer<Holder<H>, T> addMap, BiConsumer<Holder<H>, T> replaceMap, Identifier description) {
             data.forEach((key, value) -> {
                 var entry = replace ? replaceMap : addMap;
                 if (key.tag()) {

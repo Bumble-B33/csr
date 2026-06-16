@@ -306,6 +306,9 @@ public class SoldierPropertyMap implements SoldierPropertyMapReader {
         public Builder setBreakingPower(int breakingPower) {
             return addProperty(SoldierPropertyTypes.BREAKING_POWER, breakingPower);
         }
+        public Builder setLuck(float luck) {
+            return addProperty(SoldierPropertyTypes.LUCK, luck);
+        }
 
         public Builder addUnitProperty(Supplier<UnitPropertyType> unit) {
             return addProperty(unit, UnitProperty.INSTANCE);

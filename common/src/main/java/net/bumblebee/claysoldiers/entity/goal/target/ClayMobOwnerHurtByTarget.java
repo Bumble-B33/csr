@@ -25,7 +25,7 @@ public class ClayMobOwnerHurtByTarget extends TargetGoal {
             this.ownerLastHurtBy = owner.getLastHurtByMob();
             int lastHurtByMobTimestamp = owner.getLastHurtByMobTimestamp();
             return lastHurtByMobTimestamp != this.timestamp && this.canAttack(this.ownerLastHurtBy, TargetingConditions.DEFAULT)
-                    && clayMob.wantsToAttack(ownerLastHurtBy, owner);
+                    && clayMob.wantsToAttackCommanded(ownerLastHurtBy, owner);
         } else {
             return false;
         }

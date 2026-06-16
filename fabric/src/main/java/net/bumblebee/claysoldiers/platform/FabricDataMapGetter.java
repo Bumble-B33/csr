@@ -35,7 +35,7 @@ public class FabricDataMapGetter implements IDataMapGetter {
 
     @Override
     public @Nullable SoldierHoldableEffect getEffect(ItemStack stack) {
-        return SOLDIER_HOLDABLE_MAP.get(stack.getItemHolder());
+        return SOLDIER_HOLDABLE_MAP.get(stack.typeHolder());
     }
 
     @Override
@@ -45,12 +45,12 @@ public class FabricDataMapGetter implements IDataMapGetter {
 
     @Override
     public @Nullable SoldierMultiWearable getArmor(ItemStack stack) {
-        return SOLDIER_WEARABLE_MAP.get(stack.getItemHolder());
+        return SOLDIER_WEARABLE_MAP.get(stack.typeHolder());
     }
 
     @Override
     public @Nullable SoldierPoi getItemPoi(ItemStack stack) {
-        return SOLDIER_ITEM_POI_MAP.get(stack.getItemHolder());
+        return SOLDIER_ITEM_POI_MAP.get(stack.typeHolder());
     }
 
     @Override

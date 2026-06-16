@@ -1,9 +1,14 @@
 package net.bumblebee.claysoldiers.claypoifunction;
 
+import net.bumblebee.claysoldiers.util.color.ColorHelper;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.*;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,18 +38,24 @@ public interface ClayPoiSource {
         return getItemStack() != null ? getItemStack().getItem() : null;
     }
 
-    default int getBlockItemMapColor() {
+    default ColorHelper getBlockItemMapColor() {
         if (getItem() instanceof BlockItem blockItemMapColor) {
-            return 0xFF000000 | blockItemMapColor.getBlock().defaultMapColor().col;
+            return ColorHelper.color(blockItemMapColor.getBlock().defaultMapColor().col);
         }
-        return -1;
+        return ColorHelper.EMPTY;
     }
 
-    default int getDyeItemColor() {
-        if (getItem() instanceof DyeItem dyeItem) {
-            return dyeItem.getDyeColor().getTextColor();
+    default ColorHelper getDyeItemColor() {
+        var stack = getItemStack();
+        if (stack == null) {
+            return ColorHelper.EMPTY;
         }
-        return -1;
+
+        var dyeColor = getItemStack().get(DataComponents.DYE);
+        if (dyeColor != null) {
+            return ColorHelper.color(dyeColor.getFireworkColor());
+        }
+        return ColorHelper.EMPTY;
     }
 
     /**

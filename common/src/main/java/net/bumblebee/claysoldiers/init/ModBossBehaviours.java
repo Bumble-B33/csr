@@ -9,8 +9,8 @@ import net.bumblebee.claysoldiers.soldierproperties.SoldierPropertyTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.util.Mth;
@@ -83,7 +83,7 @@ public final class ModBossBehaviours {
                         }
 
                     })
-                    .setBossEvent((boss, bar) -> bar.setColor(BossEvent.BossBarColor.RED))
+                    .setBossEvent((boss, bar) -> bar.setDarkenScreen(true).setColor(BossEvent.BossBarColor.RED))
                     .build());
 
     public static final Supplier<BossClaySoldierBehaviour> ZOMBIE = ClaySoldiersCommon.PLATFORM.registerClayBossBehaviour("zombie",
@@ -157,14 +157,14 @@ public final class ModBossBehaviours {
 
 
             minion.snapTo(
-                    boss.position().x + (level.random.nextFloat()),
+                    boss.position().x + (level.getRandom().nextFloat()),
                     boss.position().y,
-                    boss.position().z + (level.random.nextFloat()),
-                    Mth.wrapDegrees(level.random.nextFloat() * 360.0F),
+                    boss.position().z + (level.getRandom().nextFloat()),
+                    Mth.wrapDegrees(level.getRandom().nextFloat() * 360.0F),
                     0);
             minion.yHeadRot = minion.getYRot();
             minion.yBodyRot = minion.getYRot();
-            minion.setClayTeamType(boss.getClayTeamType());
+            minion.setClayTeamType(boss.getClayTeamHolder());
             minions.add(minion);
 
             level.addFreshEntity(minion);
@@ -173,7 +173,7 @@ public final class ModBossBehaviours {
     }
 
     private static ResourceKey<LootTable> createBossLootTable(String name) {
-        return ResourceKey.create(Registries.LOOT_TABLE, ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "boss_clay_soldier/%s".formatted(name)));
+        return ResourceKey.create(Registries.LOOT_TABLE, Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "boss_clay_soldier/%s".formatted(name)));
     }
 
     public static void init() {

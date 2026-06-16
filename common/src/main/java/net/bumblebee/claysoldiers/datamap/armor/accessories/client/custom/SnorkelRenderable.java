@@ -5,8 +5,8 @@ import net.bumblebee.claysoldiers.datamap.armor.accessories.client.AccessoryRend
 import net.bumblebee.claysoldiers.datamap.armor.accessories.client.IAccessoryRenderLayer;
 import net.bumblebee.claysoldiers.datamap.armor.accessories.client.RenderableAccessory;
 import net.bumblebee.claysoldiers.datamap.armor.accessories.custom.TextureAccessoryData;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 
 public class SnorkelRenderable implements RenderableAccessory<TextureAccessoryData> {
@@ -18,7 +18,7 @@ public class SnorkelRenderable implements RenderableAccessory<TextureAccessoryDa
                 renderedFrom.getSnorkelModel(),
                 claySoldier.renderStateFrom,
                 pPoseStack,
-                RenderType.entitySolid(data.textureLocation()),
+                RenderTypes.entitySolid(data.textureLocation()),
                 pPackedLight,
                 OverlayTexture.NO_OVERLAY,
                 0,

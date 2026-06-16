@@ -1,24 +1,25 @@
 package net.bumblebee.claysoldiers.blueprint.templates;
 
-import com.google.common.collect.ImmutableMap;
 import io.netty.buffer.ByteBuf;
+import net.bumblebee.claysoldiers.blueprint.plan.BlueprintItemCountMap;
+import net.bumblebee.claysoldiers.blueprint.plan.BlueprintPlan;
+import net.bumblebee.claysoldiers.blueprint.plan.ClientBlueprintPlan;
+import net.bumblebee.claysoldiers.blueprint.plan.ServerBlueprintPlan;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.world.item.Item;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.shapes.BooleanOp;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import org.jetbrains.annotations.UnmodifiableView;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 public class BaseImmutableTemplate {
@@ -37,32 +38,30 @@ public class BaseImmutableTemplate {
     );
 
     public static final StreamCodec<RegistryFriendlyByteBuf, BaseImmutableTemplate> STREAM_CODEC = StreamCodec.composite(
-            ByteBufCodecs.map(HashMap::new, ByteBufCodecs.registry(Registries.ITEM), ByteBufCodecs.VAR_INT), BaseImmutableTemplate::getItemCountMap,
+            BlueprintItemCountMap.STREAM_CODEC, s -> s.itemCountMap,
             BlockPos.STREAM_CODEC.map(b -> b, BlockPos::new), BaseImmutableTemplate::getSize,
             VOXEL_SHAPE_STREAM_CODEC, BaseImmutableTemplate::getShape,
             BaseImmutableTemplate::new
     );
     protected final Vec3i size;
-    private final Map<Item, Integer> itemCountMap;
-    private final List<ItemStack> neededItems;
+    private final BlueprintItemCountMap.Immutable itemCountMap;
+    @Nullable
+    private List<ItemStack> neededItems;
     private final VoxelShape shape;
     private final int totalNeededItems;
 
-    public BaseImmutableTemplate(Map<Item, Integer> itemCountMap, Vec3i size, VoxelShape shape) {
+    public BaseImmutableTemplate(BlueprintItemCountMap.Immutable itemCountMap, Vec3i size, VoxelShape shape) {
         this.size = size;
-        this.itemCountMap = ImmutableMap.copyOf(itemCountMap);
+        this.itemCountMap = itemCountMap;
         this.shape = shape;
-        this.neededItems = BlueprintUtil.itemMapToList(itemCountMap);
-        this.totalNeededItems = itemCountMap.values().stream().reduce(0, Integer::sum);
+        this.totalNeededItems = itemCountMap.getNumberOfItems();
     }
 
-    public List<ItemStack> getNeededItems() {
+    public List<ItemStack> getNeededItems(LevelReader levelReader) {
+        if (neededItems == null) {
+            this.neededItems = itemCountMap.asList();
+        }
         return neededItems;
-    }
-
-    @UnmodifiableView
-    private Map<Item, Integer> getItemCountMap() {
-        return itemCountMap;
     }
 
     protected int totalNeededItems() {
@@ -88,11 +87,11 @@ public class BaseImmutableTemplate {
         return shape;
     }
 
-    public Optional<ServerBlueprintPlan> createServer() {
+    public Optional<ServerBlueprintPlan> createServer(ServerLevel serverLevel) {
         return Optional.empty();
     }
 
     public Optional<BlueprintPlan> createClient() {
-        return Optional.of(new ClientBlueprintPlan(new HashMap<>(itemCountMap), this.size));
+        return Optional.of(new ClientBlueprintPlan(itemCountMap, this.size));
     }
 }

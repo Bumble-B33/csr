@@ -8,7 +8,7 @@
     "${mod_author}"
   ],
   "contact": {
-    "homepage": "https://bumble-b33.github.io/csr-wiki/",
+    "homepage": "${wiki_link}",
     "sources": "https://github.com/bumble-b33/csr"
   },
   "license": "${license}",
@@ -35,7 +35,6 @@
     "java": ">=${java_version}"
   },
   "recommends": {
-    "smartbrainlib": ">=${sbl_version}"
   },
   "suggests": {
     "accessories": ">=${accessories_version}"

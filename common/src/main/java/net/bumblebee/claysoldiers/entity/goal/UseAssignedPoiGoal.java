@@ -9,7 +9,7 @@ import net.bumblebee.claysoldiers.datamap.SoldierSlotCallback;
 import net.bumblebee.claysoldiers.entity.common.ClayMobEntity;
 import net.bumblebee.claysoldiers.entity.common.soldier.AbstractClaySoldierEntity;
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.item.ItemStack;
@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Set;
 
 public class UseAssignedPoiGoal extends Goal {
-    public static final ResourceLocation STORAGE_WORKSITE_ID = ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "storage");
+    public static final Identifier STORAGE_WORKSITE_ID = Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "storage");
     private static final int MAX_WAIT_BEFORE_NEXT_ATTEMPT = 200;
     private final ClayMobEntity clayMob;
     private final double speedModifier;
@@ -206,7 +206,7 @@ public class UseAssignedPoiGoal extends Goal {
         }
 
         @Override
-        public ResourceLocation descriptionId() {
+        public Identifier descriptionId() {
             return STORAGE_WORKSITE_ID;
         }
     }

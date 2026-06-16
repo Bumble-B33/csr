@@ -21,6 +21,7 @@ public class ZombieClaySoldierRenderer extends ClaySoldierRenderer {
     public void extractRenderState(AbstractClaySoldierEntity claySoldierEntity, AbstractClaySoldierRenderState claySoldierRenderState, float partialTick) {
         super.extractRenderState(claySoldierEntity, claySoldierRenderState, partialTick);
         if (claySoldierEntity instanceof ZombieClaySoldierEntity zombie) {
+            claySoldierRenderState.hasPreviousTeamColor = !zombie.getPreviousTeam().getColor().isEmpty();
             claySoldierRenderState.previousTeamColor = zombie.getPreviousTeam().getColor(claySoldierEntity, partialTick);
         }
     }
@@ -35,6 +36,6 @@ public class ZombieClaySoldierRenderer extends ClaySoldierRenderer {
 
     @Override
     protected int getVariantForColor(AbstractClaySoldierRenderState claySoldier) {
-        return claySoldier.previousTeamColor != -1 ? claySoldier.previousTeamColor : super.getVariantForColor(claySoldier);
+        return claySoldier.hasPreviousTeamColor ? claySoldier.previousTeamColor : super.getVariantForColor(claySoldier);
     }
 }

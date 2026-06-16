@@ -5,19 +5,20 @@ import com.mojang.logging.LogUtils;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.entity.common.soldier.AbstractClaySoldierEntity;
 import net.bumblebee.claysoldiers.init.ModEntityTypes;
+import net.bumblebee.claysoldiers.item.claymobspawn.ClaySoldierSpawnItem;
 import net.bumblebee.claysoldiers.soldierproperties.customproperties.AttackTypeProperty;
 import net.bumblebee.claysoldiers.team.ClayMobTeam;
 import net.bumblebee.claysoldiers.team.ClayMobTeamManger;
 import net.bumblebee.claysoldiers.util.color.ColorHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.SubmitNodeCollector;
-import net.minecraft.client.renderer.state.CameraRenderState;
+import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.WalkAnimationState;
@@ -28,6 +29,7 @@ import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 
 import java.util.Locale;
@@ -46,20 +48,20 @@ public class ClientClaySoldierEntity extends AbstractClaySoldierEntity {
     public final WalkAnimationState fakeWalkState;
 
 
-    private ClientClaySoldierEntity(EntityType<? extends AbstractClaySoldierEntity> pEntityType, BlockPos pos, WalkAnimationState fakeWalkState, Holder.Reference<ClayMobTeam> clayMobTeamId) {
-        super(pEntityType, Minecraft.getInstance().level, AttackTypeProperty.NORMAL);
+    private ClientClaySoldierEntity(EntityType<? extends AbstractClaySoldierEntity> entityType, BlockPos pos, WalkAnimationState fakeWalkState, Holder.Reference<ClayMobTeam> clayMobTeamId) {
+        super(entityType, Minecraft.getInstance().level, AttackTypeProperty.NORMAL);
         this.fakeWalkState = fakeWalkState;
         this.clayMobTeamId = clayMobTeamId;
-        this.renderer = createRenderer(pEntityType, this);
+        this.renderer = createRenderer(entityType, this);
         setLevelCallback(EntityInLevelCallback.NULL);
         setPosRaw(pos.getX(), pos.getY(), pos.getZ());
     }
 
-    public static ClientClaySoldierEntity create(EntityType<? extends AbstractClaySoldierEntity> type, CompoundTag tag, BlockPos pos, WalkAnimationState state, ResourceLocation id, float size) {
+    public static ClientClaySoldierEntity create(EntityType<? extends AbstractClaySoldierEntity> type, CompoundTag tag, BlockPos pos, WalkAnimationState state, ResourceKey<ClayMobTeam> id, float size) {
         RegistryAccess registryAccess = Minecraft.getInstance().level.registryAccess();
         ValueInput input = TagValueInput.create(ClaySoldiersCommon.PROBLEM_REPORTER, registryAccess, tag);
 
-        var ref = ClayMobTeamManger.getHolder(id, registryAccess).orElse(ClayMobTeamManger.getDefault(registryAccess));
+        var ref = ClayMobTeamManger.get(id, registryAccess).orElse(ClayMobTeamManger.getDefault(registryAccess));
         ClientClaySoldierEntity soldier = new ClientClaySoldierEntity(type, pos, state, ref);
         soldier.waxed = input.getBooleanOr(WAXED_TAG, false);
         soldier.getInventory().load(input);
@@ -85,7 +87,7 @@ public class ClientClaySoldierEntity extends AbstractClaySoldierEntity {
         }
     }
 
-    public void render(float partialTicks, PoseStack poseStack, SubmitNodeCollector buffer, CameraRenderState cameraRenderState) {
+    public void submit(float partialTicks, PoseStack poseStack, SubmitNodeCollector buffer, int packedLight, CameraRenderState cameraRenderState) {
         if (renderer != null) {
             yBodyRotO = 0;
             yBodyRot = 0;
@@ -95,6 +97,7 @@ public class ClientClaySoldierEntity extends AbstractClaySoldierEntity {
             xRotO = 0;
 
             var renderState = renderer.createRenderState(this, partialTicks);
+            renderState.lightCoords = packedLight;
 
             renderState.walkAnimationPos = fakeWalkState.position();
             renderState.walkAnimationSpeed = fakeWalkState.speed();
@@ -132,7 +135,7 @@ public class ClientClaySoldierEntity extends AbstractClaySoldierEntity {
 
     @Override
     public @NotNull ClayMobTeam getClayTeam() {
-        if (ClayMobTeamManger.isValidTeam(clayMobTeamId.key().location(), registryAccess())) {
+        if (ClayMobTeamManger.isValidTeam(clayMobTeamId.key(), registryAccess())) {
             return clayMobTeamId.value();
         }
         clayMobTeamId = ClayMobTeamManger.getDefault(registryAccess());
@@ -141,9 +144,9 @@ public class ClientClaySoldierEntity extends AbstractClaySoldierEntity {
 
     @Override
     public ItemStack getPickResult() {
-        if (ClayMobTeamManger.isValidTeam(clayMobTeamId.key().location(), level().registryAccess())) {
+        if (ClayMobTeamManger.isValidTeam(clayMobTeamId.key(), level().registryAccess())) {
             if (cachedPickResult == null) {
-                this.cachedPickResult = ClayMobTeamManger.createStackForTeam(clayMobTeamId.key().location(), level().registryAccess());
+                this.cachedPickResult = ClaySoldierSpawnItem.createStack(clayMobTeamId);
             }
             return cachedPickResult;
         }
@@ -152,8 +155,13 @@ public class ClientClaySoldierEntity extends AbstractClaySoldierEntity {
     }
 
     @Override
-    public ResourceLocation getClayTeamType() {
-        return clayMobTeamId.key().location();
+    public @NonNull ResourceKey<ClayMobTeam> getClayTeamKey() {
+        return clayMobTeamId.key();
+    }
+
+    @Override
+    public @NotNull Holder.Reference<ClayMobTeam> getClayTeamHolder() {
+        return clayMobTeamId;
     }
 
     @Override
@@ -167,7 +175,7 @@ public class ClientClaySoldierEntity extends AbstractClaySoldierEntity {
     }
 
     @Override
-    public void addAdditionalSaveData(ValueOutput output) {
+    public void addAdditionalSaveData(ValueOutput valueOutput) {
     }
 
     @Override

@@ -1,9 +1,9 @@
 package net.bumblebee.claysoldiers.capability;
 
-import net.bumblebee.claysoldiers.ClaySoldierFabric;
+import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.block.hamsterwheel.HamsterWheelBlock;
 import net.bumblebee.claysoldiers.block.hamsterwheel.HamsterWheelBlockEntity;
-import net.bumblebee.claysoldiers.block.hamsterwheel.IHamsterWheelEnergyStorage;
+import net.bumblebee.claysoldiers.block.hamsterwheel.HamsterWheelEnergyStorage;
 import net.fabricmc.fabric.api.lookup.v1.block.BlockApiCache;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
@@ -15,21 +15,21 @@ import org.jetbrains.annotations.Nullable;
 import team.reborn.energy.api.EnergyStorage;
 import team.reborn.energy.api.base.SimpleEnergyStorage;
 
-public class FabricEnergyStorage extends SimpleEnergyStorage implements IHamsterWheelEnergyStorage {
+public class FabricEnergyStorage extends SimpleEnergyStorage implements HamsterWheelEnergyStorage {
     private final HamsterWheelBlockEntity blockEntity;
     private final FabricViewOnly viewOnly;
     @Nullable
     private BlockApiCache<EnergyStorage, Direction> cached;
 
     public FabricEnergyStorage(HamsterWheelBlockEntity hamsterWheelBlockEntity) {
-        super(0, 0, ClaySoldierFabric.hamsterWheelCapacity);
+        super(0, 0, ClaySoldiersCommon.CONFIG.getCommonConfig().getHamsterWheelEnergyCapacity());
         this.blockEntity = hamsterWheelBlockEntity;
         this.viewOnly = new FabricViewOnly(this);
     }
 
     @Override
     public long getCapacity() {
-        return ClaySoldierFabric.hamsterWheelCapacity * blockEntity.getEnergyCapacityMultiplier();
+        return ClaySoldiersCommon.CONFIG.getCommonConfig().getHamsterWheelEnergyCapacity() * blockEntity.getEnergyCapacityMultiplier();
     }
 
     @Override
@@ -59,7 +59,7 @@ public class FabricEnergyStorage extends SimpleEnergyStorage implements IHamster
 
     @Override
     public void generate(float speed) {
-        long generated = amount + IHamsterWheelEnergyStorage.energyGeneratedPerTick(speed);
+        long generated = amount + HamsterWheelEnergyStorage.energyGeneratedPerTick(speed);
         if (generated < 0) {
             generated = Long.MAX_VALUE;
         }
@@ -69,9 +69,9 @@ public class FabricEnergyStorage extends SimpleEnergyStorage implements IHamster
         }
         Direction direction = blockEntity.getBlockState().getValue(HamsterWheelBlock.FACING);
         if (cached == null) {
-            cached = BlockApiCache.create(EnergyStorage.SIDED, serverLevel, blockEntity.getBlockPos().relative(direction));
+            cached = BlockApiCache.create(EnergyStorage.SIDED, serverLevel, blockEntity.getBlockPos().relative(direction.getOpposite()));
         }
-        var storage = cached.find(direction.getOpposite());
+        var storage = cached.find(direction);
         if (storage != null && storage.supportsInsertion()) {
             try (Transaction transaction = Transaction.openOuter()) {
                 long insertable;
@@ -94,11 +94,11 @@ public class FabricEnergyStorage extends SimpleEnergyStorage implements IHamster
 
     @Override
     public void load(ValueInput tag) {
-        amount = Math.min(ClaySoldierFabric.hamsterWheelCapacity, tag.getLongOr(TAG_KEY, 0));
+        amount = Math.min(ClaySoldiersCommon.CONFIG.getCommonConfig().getHamsterWheelEnergyCapacity(), tag.getLongOr(TAG_KEY, 0));
     }
 
     @Override
-    public IHamsterWheelEnergyStorage asViewOnly() {
+    public HamsterWheelEnergyStorage asViewOnly() {
         return viewOnly;
     }
 
@@ -108,7 +108,7 @@ public class FabricEnergyStorage extends SimpleEnergyStorage implements IHamster
         blockEntity.setChanged();
     }
 
-    private record FabricViewOnly(FabricEnergyStorage storage) implements IHamsterWheelEnergyStorage, EnergyStorage {
+    private record FabricViewOnly(FabricEnergyStorage storage) implements HamsterWheelEnergyStorage, EnergyStorage {
         @Override
         public boolean supportsExtraction() {
             return false;
@@ -143,7 +143,7 @@ public class FabricEnergyStorage extends SimpleEnergyStorage implements IHamster
         }
 
         @Override
-        public IHamsterWheelEnergyStorage asViewOnly() {
+        public HamsterWheelEnergyStorage asViewOnly() {
             return this;
         }
 

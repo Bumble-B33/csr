@@ -4,10 +4,10 @@ import net.bumblebee.claysoldiers.ClaySoldiersClient;
 import net.bumblebee.claysoldiers.entity.common.ClayMobEntity;
 import net.bumblebee.claysoldiers.team.ClayMobTeam;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.entity.state.HumanoidRenderState;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.LightCoordsUtil;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityAttachment;
 import net.minecraft.world.level.LightLayer;
@@ -34,7 +34,7 @@ public class ClayMobRenderState extends HumanoidRenderState {
         clayMobRenderState.isInSittingPose = clayMob.isInSittingPose();
         clayMobRenderState.isWaxed = clayMob.isWaxed();
         clayMobRenderState.isUsingPoi = clayMob.usingPoi();
-        clayMobRenderState.clayTeam = clayMob.getClayTeam();
+        clayMobRenderState.clayTeam = clayMob.getClayTeamHolder().value();
         clayMobRenderState.clayTeamColor = clayMobRenderState.clayTeam.getColor(clayMob, partialTick);
         clayMobRenderState.workStatus = clayMob.getWorkStatus();
         clayMobRenderState.shouldShowStatus = ClayMobRenderState.shouldShowWorkStatus(clayMob);
@@ -46,6 +46,6 @@ public class ClayMobRenderState extends HumanoidRenderState {
         final BlockPos pos = pEntity.getOnPos();
         final int bLight = pEntity.level().getBrightness(LightLayer.BLOCK, pos);
         final int sLight = pEntity.level().getBrightness(LightLayer.SKY, pos);
-        return LightTexture.pack(bLight, sLight);
+        return LightCoordsUtil.pack(bLight, sLight);
     }
 }

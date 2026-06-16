@@ -2,15 +2,15 @@ package net.bumblebee.claysoldiers.integration.jade.providers;
 
 import net.bumblebee.claysoldiers.block.hamsterwheel.HamsterWheelBlock;
 import net.bumblebee.claysoldiers.block.hamsterwheel.HamsterWheelBlockEntity;
+import net.bumblebee.claysoldiers.block.hamsterwheel.HamsterWheelEnergyStorage;
 import net.bumblebee.claysoldiers.block.hamsterwheel.HamsterWheelSoldierData;
-import net.bumblebee.claysoldiers.block.hamsterwheel.IHamsterWheelEnergyStorage;
 import net.bumblebee.claysoldiers.entity.client.ClientClaySoldierEntity;
 import net.bumblebee.claysoldiers.integration.jade.CommonBlockProvider;
 import net.bumblebee.claysoldiers.integration.jade.CommonTooltipHelper;
 import net.bumblebee.claysoldiers.integration.jade.JadeRegistry;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
 
@@ -45,7 +45,7 @@ public enum HamsterWheelBlockProvider implements CommonBlockProvider {
         if (detail && blockEntity.hasEnergyStorage()) {
             long generating = 0;
             if (soldierBlockData != null) {
-                generating = IHamsterWheelEnergyStorage.energyGeneratedPerTick(soldierBlockData.getAdjustedSpeed());
+                generating = HamsterWheelEnergyStorage.energyGeneratedPerTick(soldierBlockData.getAdjustedSpeed());
             }
 
             tooltip.add(Component.translatable(GENERATING, generating));
@@ -53,7 +53,7 @@ public enum HamsterWheelBlockProvider implements CommonBlockProvider {
     }
 
     @Override
-    public ResourceLocation getUniqueId() {
+    public Identifier getUniqueId() {
         return JadeRegistry.HAMSTER_WHEEL_BLOCK;
     }
 

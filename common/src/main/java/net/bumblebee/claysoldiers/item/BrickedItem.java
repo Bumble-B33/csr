@@ -8,6 +8,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.component.TooltipDisplay;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Consumer;
 
@@ -26,7 +27,7 @@ public abstract class BrickedItem extends Item {
     /**
      * @return the display name of the original {@code Item}.
      */
-    public abstract Component getOriginalDisplayName(ItemStack bricked, HolderLookup.Provider registries);
+    public abstract Component getOriginalDisplayName(ItemStack bricked, @Nullable HolderLookup.Provider registries);
 
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay tooltipDisplay, Consumer<Component> tooltipAdder, TooltipFlag flag) {

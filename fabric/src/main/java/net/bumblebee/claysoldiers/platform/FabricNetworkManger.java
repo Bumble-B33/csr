@@ -1,33 +1,15 @@
 package net.bumblebee.claysoldiers.platform;
 
-import net.bumblebee.claysoldiers.platform.services.INetworkManger;
+import net.bumblebee.claysoldiers.platform.services.NetworkManger;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
-
-public class FabricNetworkManger implements INetworkManger {
-    private static final List<PayloadData<? , ?>> PAYLOAD_DATA = new ArrayList<>();
-
-    @SuppressWarnings("unchecked")
-    public static <T extends CustomPacketPayload, C extends RegistryFriendlyByteBuf> void forEachClient(Consumer<PayloadData<T, C>> consumer) {
-        PAYLOAD_DATA.forEach(d -> consumer.accept((PayloadData<T, C>) d));
-    }
-
-    @Override
-    public <T extends CustomPacketPayload, C extends RegistryFriendlyByteBuf> void registerS2CPayload(CustomPacketPayload.Type<T> id, StreamCodec<C, T> codec, BiConsumer<T, PayloadContext> clientHandler) {
-        PAYLOAD_DATA.add(new PayloadData<>(id, codec, clientHandler));
-    }
+public class FabricNetworkManger extends NetworkManger {
 
     @Override
     public void sendToPlayer(ServerPlayer player, CustomPacketPayload payload) {

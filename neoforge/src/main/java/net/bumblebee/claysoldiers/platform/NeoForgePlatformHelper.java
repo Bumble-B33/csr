@@ -1,13 +1,15 @@
 package net.bumblebee.claysoldiers.platform;
 
 import com.mojang.serialization.MapCodec;
+import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.ClaySoldiersNeoForge;
 import net.bumblebee.claysoldiers.claypoifunction.ClayPoiFunction;
 import net.bumblebee.claysoldiers.claypoifunction.ClayPoiFunctionSerializer;
+import net.bumblebee.claysoldiers.claysoldierchips.ClaySoldierChip;
+import net.bumblebee.claysoldiers.claysoldierchips.addon.ClaySoldierChipAddon;
 import net.bumblebee.claysoldiers.claysoldierpredicate.ClayPredicate;
 import net.bumblebee.claysoldiers.claysoldierpredicate.ClayPredicateSerializer;
 import net.bumblebee.claysoldiers.entity.common.boss.BossClaySoldierBehaviour;
-import net.bumblebee.claysoldiers.entity.common.programmable.chips.ClaySoldierChip;
 import net.bumblebee.claysoldiers.init.*;
 import net.bumblebee.claysoldiers.platform.services.IPlatformHelper;
 import net.bumblebee.claysoldiers.soldieritemtypes.ItemGenerator;
@@ -15,7 +17,7 @@ import net.bumblebee.claysoldiers.soldierproperties.SoldierPropertyType;
 import net.bumblebee.claysoldiers.soldierproperties.customproperties.specialattack.SpecialAttack;
 import net.bumblebee.claysoldiers.soldierproperties.customproperties.specialattack.SpecialAttackSerializer;
 import net.minecraft.advancements.CriterionTrigger;
-import net.minecraft.advancements.critereon.EntitySubPredicate;
+import net.minecraft.advancements.criterion.EntitySubPredicate;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
@@ -37,14 +39,14 @@ import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.GameMasterBlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeBookCategory;
 import net.minecraft.world.item.crafting.RecipeSerializer;
-import net.minecraft.world.level.GameRules;
+import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.storage.loot.functions.LootItemFunction;
-import net.minecraft.world.level.storage.loot.functions.LootItemFunctionType;
 import net.neoforged.fml.ModList;
 import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.common.extensions.IMenuTypeExtension;
@@ -83,8 +85,8 @@ public class NeoForgePlatformHelper implements IPlatformHelper {
     }
 
     @Override
-    public <T extends Item> ItemLikeSupplier<T> registerItem(String id, Function<Item.Properties, T> item, Item.Properties properties) {
-        return ItemLikeSupplier.create(ClaySoldiersNeoForge.ITEMS.registerItem(id, item, () -> properties));
+    public <T extends Item> ItemLikeSupplier<T> registerItem(String id, Function<Item.Properties, T> item) {
+        return ItemLikeSupplier.create(ClaySoldiersNeoForge.ITEMS.registerItem(id, item));
     }
 
     @Override
@@ -122,8 +124,20 @@ public class NeoForgePlatformHelper implements IPlatformHelper {
     }
 
     @Override
+    public <T extends RecipeBookCategory> T registerRecipeBookCategory(String name, T category) {
+        ClaySoldiersNeoForge.RECIPE_BOOK_CATEGORIES.register(name, () -> category);
+        return category;
+    }
+
+    @Override
+    public <T extends RecipeType<?>> T registerRecipeType(String name, T type) {
+        ClaySoldiersNeoForge.RECIPE_TYPES.register(name, () -> type);
+        return type;
+    }
+
+    @Override
     public <T extends Recipe<?>> Supplier<RecipeSerializer<T>> registerRecipe(String id, Supplier<RecipeSerializer<T>> recipe) {
-        return ClaySoldiersNeoForge.RECIPE_SERIALIZER.register(id, recipe);
+        return ClaySoldiersNeoForge.RECIPE_SERIALIZERS.register(id, recipe);
     }
 
     @Override
@@ -167,16 +181,6 @@ public class NeoForgePlatformHelper implements IPlatformHelper {
     }
 
     @Override
-    public GameRules.Key<GameRules.IntegerValue> createIntRule(String name, GameRules.Category category, int defaultValue) {
-        return GameRules.register(name, category, GameRules.IntegerValue.create(defaultValue));
-    }
-
-    @Override
-    public GameRules.Key<GameRules.BooleanValue> createBoolRule(String name, GameRules.Category category, boolean defaultValue) {
-        return GameRules.register(name, category, GameRules.BooleanValue.create(defaultValue));
-    }
-
-    @Override
     public <T extends CriterionTrigger<?>> Supplier<T> registerCriterionTrigger(String name, Supplier<T> criterionTrigger) {
         return ClaySoldiersNeoForge.CRITERION_TRIGGERS.register(name, criterionTrigger);
     }
@@ -187,7 +191,13 @@ public class NeoForgePlatformHelper implements IPlatformHelper {
     }
 
     @Override
-    public <T extends LootItemFunction> Supplier<LootItemFunctionType<T>> registerLootItemFunction(String name, Supplier<LootItemFunctionType<T>> lootItemFunction) {
+    public <T extends ClaySoldierChipAddon> T registerClaySoldierChipAddon(String name, T addon) {
+        ClaySoldiersNeoForge.CLAY_SOLDIER_CHIP_ADDONS.register(name, () -> addon);
+        return addon;
+    }
+
+    @Override
+    public <T extends LootItemFunction> Supplier<MapCodec<T>> registerLootItemFunction(String name, Supplier<MapCodec<T>> lootItemFunction) {
         return ClaySoldiersNeoForge.LOOT_ITEM_FUNCTIONS.register(name, lootItemFunction);
     }
 
@@ -236,11 +246,28 @@ public class NeoForgePlatformHelper implements IPlatformHelper {
 
     @Override
     public Holder<PoiType> registerPoiType(ResourceKey<PoiType> id, Supplier<PoiType> poiType) {
-        return ClaySoldiersNeoForge.POI_TYPES.register(id.location().getPath(), poiType);
+        return ClaySoldiersNeoForge.POI_TYPES.register(id.identifier().getPath(), poiType);
     }
 
     @Override
     public DamageSources createClayDamageSources(RegistryAccess registryAccess) {
         return new ClayDamageSources(registryAccess);
+    }
+
+    @Override
+    public CreativeModeTab.DisplayItemsGenerator createGeneratorForAll() {
+        return ((itemDisplayParameters, output) -> {
+            for (Item item : ClaySoldiersCommon.PLATFORM.getAllItems()) {
+                if (item == ModItems.BLUEPRINT.get()) {
+                    ModCreativeTab.modifyBlueprint(output::accept, itemDisplayParameters.holders());
+                } else {
+                    output.accept(item);
+                }
+            }
+            ModCreativeTab.modifySoldierItems(output::accept, itemDisplayParameters.holders());
+            output.accept(
+                    ModItems.createEnchantedBook(itemDisplayParameters.holders(), ModEnchantments.SOLDIER_PROJECTILE, 1)
+            );
+        });
     }
 }

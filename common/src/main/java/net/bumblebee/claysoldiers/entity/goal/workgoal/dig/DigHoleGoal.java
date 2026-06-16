@@ -1,10 +1,9 @@
 package net.bumblebee.claysoldiers.entity.goal.workgoal.dig;
 
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
+import net.bumblebee.claysoldiers.claysoldierchips.ClayMobWorkAccess;
+import net.bumblebee.claysoldiers.entity.common.programmable.ProgrammableClaySoldierEntity;
 import net.bumblebee.claysoldiers.entity.goal.workgoal.AbstractWorkGoal;
-import net.bumblebee.claysoldiers.entity.goal.workgoal.WorkSelectorGoal;
-import net.bumblebee.claysoldiers.entity.common.soldier.AbstractClaySoldierEntity;
-import net.bumblebee.claysoldiers.util.ErrorHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.Level;
@@ -12,7 +11,6 @@ import net.minecraft.world.level.block.Blocks;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.function.Supplier;
 
 public class DigHoleGoal extends AbstractWorkGoal {
     public static final String DIG_LANG = STATUS_LANG_KEY.formatted(ClaySoldiersCommon.MOD_ID, "dig");
@@ -31,7 +29,10 @@ public class DigHoleGoal extends AbstractWorkGoal {
     private StairPosMap stairPosMap;
     private final DigBreakManger digBreakManger;
 
-    public DigHoleGoal(AbstractClaySoldierEntity soldier, Supplier<WorkSelectorGoal> workSelector) {
+    @Nullable
+    private BlockPos breakingPos;
+
+    public DigHoleGoal(ProgrammableClaySoldierEntity soldier, ClayMobWorkAccess workSelector) {
         super(soldier, workSelector, List.of(BREAK_LANG, SEARCHING_LANG, BREAKING_LANG, REQUIRES_POI_LANG, UNBREAKABLE_BLOCK));
         this.level = soldier.level();
         if (!level.isClientSide()) {
@@ -94,7 +95,7 @@ public class DigHoleGoal extends AbstractWorkGoal {
             return lastPoiPos.offset(-2, current.getY() - lastPoiPos.getY() - 1, -2);
         }
         if (nextIndex <= 0) {
-            ErrorHandler.INSTANCE.hide("Something went wrong while trying to find the next block to break");
+            ClaySoldiersCommon.ERROR_HANDLER.warn("Something went wrong while trying to find the next block to break");
         }
 
         int xRelative = nextIndex / 5;
@@ -132,9 +133,9 @@ public class DigHoleGoal extends AbstractWorkGoal {
         resetBreakProgress();
     }
 
-
     private void breakBlock(BlockPos pos) {
         digBreakManger.registerPos(pos, soldier);
+        breakingPos = pos.immutable();
 
         switch (digBreakManger.increaseBreakProgress(pos, level)) {
             case -2: lastPoiPos = null;
@@ -162,13 +163,13 @@ public class DigHoleGoal extends AbstractWorkGoal {
             currentPos = lastPoiPos.offset(-2, 0, -2).mutable();
             stairPosMap = new StairPosMap(lastPoiPos);
         } else {
-            ErrorHandler.INSTANCE.hide("Tried to start digging but has not poi");
+            ClaySoldiersCommon.ERROR_HANDLER.warn("Tried to start digging but has not poi");
         }
     }
 
     private void resetBreakProgress() {
         if (currentPos != null) {
-            digBreakManger.unregisterPos(currentPos, soldier);
+            digBreakManger.unregisterPos(currentPos, soldier, currentPos != breakingPos);
         }
     }
 

@@ -50,8 +50,8 @@ public class HamsterWheelBlock extends BaseEntityBlock {
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> pBuilder) {
-        pBuilder.add(FACING, BATTERY_PROPERTY);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(FACING, BATTERY_PROPERTY);
     }
 
     @Override
@@ -92,7 +92,7 @@ public class HamsterWheelBlock extends BaseEntityBlock {
             return InteractionResult.SUCCESS;
         }
 
-        return InteractionResult.PASS;
+        return InteractionResult.TRY_WITH_EMPTY_HAND;
     }
 
 
@@ -140,7 +140,7 @@ public class HamsterWheelBlock extends BaseEntityBlock {
     @Override
     public @Nullable <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> blockEntityType) {
         return level.isClientSide()
-                ? createTickerHelper(blockEntityType, ModBlockEntities.HAMSTER_WHEEL_BLOCK_ENTITY.get(), (level1, blockPos, blockState, hamsterWheelBlockEntity) -> hamsterWheelBlockEntity.clientTick())
-                : createTickerHelper(blockEntityType, ModBlockEntities.HAMSTER_WHEEL_BLOCK_ENTITY.get(), ((level1, blockPos, blockState, hamsterWheelBlockEntity) -> hamsterWheelBlockEntity.serverTick()));
+                ? createTickerHelper(blockEntityType, ModBlockEntities.HAMSTER_WHEEL_BLOCK_ENTITY.get(), (_, _, _, hamsterWheelBlockEntity) -> hamsterWheelBlockEntity.clientTick())
+                : createTickerHelper(blockEntityType, ModBlockEntities.HAMSTER_WHEEL_BLOCK_ENTITY.get(), ((_, _, _, hamsterWheelBlockEntity) -> hamsterWheelBlockEntity.serverTick()));
     }
 }

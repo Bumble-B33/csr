@@ -2,6 +2,9 @@ package net.bumblebee.claysoldiers.entity.common.boss;
 
 import com.mojang.serialization.Codec;
 import net.bumblebee.claysoldiers.init.ModRegistries;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerBossEvent;
 import net.minecraft.world.damagesource.DamageSource;
@@ -15,6 +18,7 @@ import java.util.function.Predicate;
 
 public class BossClaySoldierBehaviour {
     public static final Codec<BossClaySoldierBehaviour> CODEC = ModRegistries.BOSS_CLAY_SOLDIER_BEHAVIOURS_REGISTRY.byNameCodec();
+    public static final StreamCodec<RegistryFriendlyByteBuf, BossClaySoldierBehaviour> STREAM_CODEC = ByteBufCodecs.registry(ModRegistries.BOSS_CLAY_SOLDIER_BEHAVIOURS);
     @Nullable
     private final ResourceKey<LootTable> deathLoot;
     private final BossClaySoldierEntity.BossTypes initialType;

@@ -2,27 +2,27 @@ package net.bumblebee.claysoldiers.entity.client.boss;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
-import net.bumblebee.claysoldiers.entity.common.boss.ClayBlockProjectileEntity;
 import net.bumblebee.claysoldiers.entity.client.renderstates.ClayBlockProjectileRenderState;
-import net.minecraft.client.model.SkullModel;
-import net.minecraft.client.model.SkullModelBase;
+import net.bumblebee.claysoldiers.entity.common.boss.ClayBlockProjectileEntity;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.client.model.geom.builders.*;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.model.object.skull.SkullModel;
+import net.minecraft.client.model.object.skull.SkullModelBase;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
-import net.minecraft.client.renderer.state.CameraRenderState;
+import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 public class ClayBlockProjectileRenderer extends EntityRenderer<ClayBlockProjectileEntity, ClayBlockProjectileRenderState> {
     public static final ModelLayerLocation LAYER_LOCATION =
-            new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_block_projectile"), "main");
+            new ModelLayerLocation(Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_block_projectile"), "main");
 
-    private static final ResourceLocation TEXTURE_LOCATION = ResourceLocation.withDefaultNamespace("textures/block/clay.png");
+    private static final Identifier TEXTURE_LOCATION = Identifier.withDefaultNamespace("textures/block/clay.png");
     private final SkullModel model;
 
     public ClayBlockProjectileRenderer(EntityRendererProvider.Context context) {
@@ -46,7 +46,7 @@ public class ClayBlockProjectileRenderer extends EntityRenderer<ClayBlockProject
     public void submit(ClayBlockProjectileRenderState renderState, PoseStack poseStack, SubmitNodeCollector nodeCollector, CameraRenderState cameraRenderState) {
         var clientSoldier = renderState.clientClaySoldierEntity;
         if (clientSoldier != null) {
-            clientSoldier.render(renderState.partialRot, poseStack, nodeCollector, cameraRenderState);
+            clientSoldier.submit(renderState.partialRot, poseStack, nodeCollector, renderState.lightCoords, cameraRenderState);
         } else {
             renderBlock(renderState, poseStack, nodeCollector);
         }

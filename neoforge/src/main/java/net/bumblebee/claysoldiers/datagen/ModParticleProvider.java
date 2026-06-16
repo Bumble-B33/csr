@@ -2,7 +2,7 @@ package net.bumblebee.claysoldiers.datagen;
 
 import net.bumblebee.claysoldiers.init.ModParticles;
 import net.minecraft.data.PackOutput;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.neoforge.client.data.ParticleDescriptionProvider;
 
 public class ModParticleProvider extends ParticleDescriptionProvider {
@@ -12,9 +12,9 @@ public class ModParticleProvider extends ParticleDescriptionProvider {
 
     @Override
     protected void addDescriptions() {
-        spriteSet(ModParticles.SMALL_HEART_PARTICLE.get(), ResourceLocation.withDefaultNamespace("heart"));
-        spriteSet(ModParticles.SMALL_ANGRY_PARTICLE.get(), ResourceLocation.withDefaultNamespace("angry"));
-        spriteSet(ModParticles.SMALL_HAPPY_PARTICLE.get(), ResourceLocation.withDefaultNamespace("glint"));
-        spriteSet(ModParticles.SMALL_WAXED_PARTICLE.get(), ResourceLocation.withDefaultNamespace("glow"));
+        spriteSet(ModParticles.SMALL_HEART_PARTICLE.get(), Identifier.withDefaultNamespace("heart"));
+        spriteSet(ModParticles.SMALL_ANGRY_PARTICLE.get(), Identifier.withDefaultNamespace("angry"));
+        spriteSet(ModParticles.SMALL_HAPPY_PARTICLE.get(), Identifier.withDefaultNamespace("glint"));
+        spriteSet(ModParticles.SMALL_WAXED_PARTICLE.get(), Identifier.withDefaultNamespace("glow"));
     }
 }

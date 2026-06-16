@@ -8,14 +8,12 @@ import net.bumblebee.claysoldiers.util.color.ColorHelper;
 import net.minecraft.core.Holder;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
 public interface ClaySoldierInventoryQuery {
     ItemStackWithEffect getItemBySlot(SoldierEquipmentSlot type);
-    Iterable<ItemStack> getAllSlots();
+    Iterable<ItemStackWithEffect> getAllSlots();
     SoldierPropertyMapReader allProperties();
     @Nullable
     MobEffectInstance getMobEffect(Holder<MobEffect> pEffect);
@@ -36,12 +34,6 @@ public interface ClaySoldierInventoryQuery {
      * Returns the {@code AttackType} of the {@code Clay Soldier}.
      */
     AttackTypeProperty getAttackType();
-
-    /**
-     * Calls {@link ColorHelper#getColor(LivingEntity, float)}, with this soldier and the give partialTicks.
-     * Returns the resulting int.
-     */
-    int unpackDynamicColor(ColorHelper color, float partialTicks);
 
     @Nullable Player getClayTeamOwner();
 }

@@ -75,8 +75,7 @@ public interface SoldierPropertyMapReader extends Iterable<SoldierProperty<?>> {
     }
 
     /**
-     * Read
-     * {@link SoldierPropertyType#applyAsInt(Object)}
+     * See {@link SoldierPropertyType#applyAsInt(Object)}
      */
     default <T> int getPropertyValueAsInt(SoldierPropertyType<T> type) {
         return type.applyAsInt(getValueOrDfault(type));
@@ -175,6 +174,9 @@ public interface SoldierPropertyMapReader extends Iterable<SoldierProperty<?>> {
     }
     default int getBreakingPower() {
         return getValueOrDfault(SoldierPropertyTypes.BREAKING_POWER);
+    }
+    default float getLuck() {
+        return getValueOrDfault(SoldierPropertyTypes.LUCK);
     }
 
 

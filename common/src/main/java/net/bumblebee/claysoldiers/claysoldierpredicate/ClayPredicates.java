@@ -2,9 +2,11 @@ package net.bumblebee.claysoldiers.claysoldierpredicate;
 
 import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.datamap.SoldierEquipmentSlot;
+import net.bumblebee.claysoldiers.item.itemeffectholder.ItemStackWithEffect;
 import net.bumblebee.claysoldiers.soldierproperties.SoldierPropertyMapReader;
 import net.bumblebee.claysoldiers.soldierproperties.SoldierPropertyType;
 import net.bumblebee.claysoldiers.soldierproperties.SoldierPropertyTypes;
@@ -24,7 +26,6 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,8 +58,8 @@ public class ClayPredicates {
     }
 
     public static class ConstantPredicate extends ClayPredicate<ConstantPredicate> {
-        private static final Codec<ConstantPredicate> ALWAYS_TRUE_CODEC = Codec.unit(ConstantPredicate::getAlwaysTruePredicate);
-        private static final Codec<ConstantPredicate> HAS_CUSTOM_COLOR_CODEC = Codec.unit(ConstantPredicate::getHasCustomColor);
+        private static final Codec<ConstantPredicate> ALWAYS_TRUE_CODEC = MapCodec.unitCodec(ConstantPredicate::getAlwaysTruePredicate);
+        private static final Codec<ConstantPredicate> HAS_CUSTOM_COLOR_CODEC = MapCodec.unitCodec(ConstantPredicate::getHasCustomColor);
 
         private static ConstantPredicate ALWAYS_TRUE_INSTANCE = null;
         private static ConstantPredicate CUSTOM_COLOR_INSTANCE = null;
@@ -179,7 +180,7 @@ public class ClayPredicates {
             }
 
             if (specialSlot == ItemPredicateSlot.ANY_SLOT) {
-                for (ItemStack stack : soldier.getAllSlots()) {
+                for (ItemStackWithEffect stack : soldier.getAllSlots()) {
                     if (stack.is(item)) {
                         return true;
                     }
@@ -419,7 +420,6 @@ public class ClayPredicates {
                 LogicPredicate::new
         );
 
-
         private final Set<ClayPredicate<?>> list;
         private final LogicComparator comparator;
 
@@ -436,7 +436,6 @@ public class ClayPredicates {
         private LogicComparator getComparator() {
             return comparator;
         }
-
 
         public static LogicPredicate any(Set<ClayPredicate<?>> predicates) {
             return new LogicPredicate(LogicComparator.ANY, predicates);

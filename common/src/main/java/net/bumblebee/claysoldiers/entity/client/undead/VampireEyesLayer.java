@@ -4,20 +4,21 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.entity.client.ClaySoldierModel;
 import net.bumblebee.claysoldiers.entity.client.renderstates.AbstractClaySoldierRenderState;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.RenderLayerParent;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
+import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.ARGB;
 
 import java.util.function.Predicate;
 
 public class VampireEyesLayer extends RenderLayer<AbstractClaySoldierRenderState, ClaySoldierModel> {
-    private static final ResourceLocation EYES_LOCATION = ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "textures/entity/clay_soldier/vampire_eyes.png");
-    private static final RenderType VAMPIRE_EYES = RenderType.entityTranslucentEmissive(EYES_LOCATION);
-    private static final RenderType VAMPIRE_EYES_ACTIVE = RenderType.eyes(EYES_LOCATION);
+    private static final Identifier EYES_LOCATION = Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "textures/entity/clay_soldier/vampire_eyes.png");
+    private static final RenderType VAMPIRE_EYES = RenderTypes.entityTranslucentEmissive(EYES_LOCATION);
+    private static final RenderType VAMPIRE_EYES_ACTIVE = RenderTypes.eyes(EYES_LOCATION);
 
     private final Predicate<AbstractClaySoldierRenderState> shouldEyesGlow;
 

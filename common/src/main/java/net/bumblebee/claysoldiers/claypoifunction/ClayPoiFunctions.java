@@ -12,7 +12,6 @@ import net.bumblebee.claysoldiers.entity.common.soldier.ClaySoldierLike;
 import net.bumblebee.claysoldiers.util.EffectHolder;
 import net.bumblebee.claysoldiers.util.codec.CodecUtils;
 import net.bumblebee.claysoldiers.util.color.ColorHelper;
-import net.minecraft.Util;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
@@ -23,11 +22,14 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.util.StringRepresentable;
+import net.minecraft.util.Util;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ItemStackTemplate;
+import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.storage.TagValueOutput;
 import org.jetbrains.annotations.Nullable;
 
@@ -215,7 +217,7 @@ public final class ClayPoiFunctions {
 
         @Override
         public void accept(ClaySoldierInventorySetter soldier, ClayPoiSource source) {
-            ColorHelper currentColor = ColorHelper.color(colorGetter.getColor(source));
+            ColorHelper currentColor = colorGetter.getColor(source);
             if (currentColor.isEmpty()) {
                 currentColor = this.color;
             }
@@ -244,24 +246,27 @@ public final class ClayPoiFunctions {
 
     public static class SetItem extends ClayPoiFunction<SetItem> {
         public static final Codec<SetItem> CODEC = RecordCodecBuilder.create(in -> in.group(
-                ItemStack.OPTIONAL_CODEC.fieldOf("item").forGetter(s -> s.item),
+                ItemStackTemplate.CODEC.fieldOf("item").forGetter(s -> s.item),
                 SoldierEquipmentSlot.CODEC.optionalFieldOf("slot").forGetter(SetItem::getSlot),
                 SetItemOperation.CODEC.optionalFieldOf("operation", SetItemOperation.DROP).forGetter(s -> s.operation)
         ).apply(in, (item, slot, setItemOperation) -> new SetItem(item, slot.orElse(null), setItemOperation)));
 
         public static final StreamCodec<RegistryFriendlyByteBuf, SetItem> STREAM_CODEC = StreamCodec.composite(
-                ItemStack.OPTIONAL_STREAM_CODEC, s -> s.item,
+                ItemStackTemplate.STREAM_CODEC, s -> s.item,
                 SoldierEquipmentSlot.OPTIONAL_STREAM_CODEC, s -> Optional.ofNullable(s.slot),
                 SetItemOperation.STREAM_CODEC, s -> s.operation,
                 (stack, slot, op) -> new SetItem(stack, slot.orElse(null), op)
         );
 
-        private final ItemStack item;
+        private final ItemStackTemplate item;
+        @Nullable
+        private ItemStack stack;
+
         @Nullable
         private final SoldierEquipmentSlot slot;
         private final SetItemOperation operation;
 
-        private SetItem(ItemStack item, @Nullable SoldierEquipmentSlot slot, SetItemOperation operation) {
+        private SetItem(ItemStackTemplate item, @Nullable SoldierEquipmentSlot slot, SetItemOperation operation) {
             super(SET_ITEM_FUNCTION_SERIALIZER);
             this.item = item;
             this.slot = slot;
@@ -272,32 +277,39 @@ public final class ClayPoiFunctions {
             return Optional.ofNullable(slot);
         }
 
-        public static SetItem replace(ItemStack item, @Nullable SoldierEquipmentSlot slot) {
-            return new SetItem(item, slot, SetItemOperation.REPLACE);
+        public static SetItem replace(ItemLike item, @Nullable SoldierEquipmentSlot slot) {
+            return new SetItem(new ItemStackTemplate(item.asItem()), slot, SetItemOperation.REPLACE);
         }
 
-        public static SetItem drop(ItemStack item, @Nullable SoldierEquipmentSlot slot) {
-            return new SetItem(item, slot, SetItemOperation.DROP);
+        public static SetItem drop(ItemLike item, @Nullable SoldierEquipmentSlot slot) {
+            return new SetItem(new ItemStackTemplate(item.asItem()), slot, SetItemOperation.DROP);
         }
 
         @Override
         public @Nullable Component getDisplayName() {
             if (slot == null) {
-                return Component.translatable(SET_ITEM_FIND_FUNCTION, item.getDisplayName());
+                return Component.translatable(SET_ITEM_FIND_FUNCTION, getStack().getDisplayName());
             }
-            return Component.translatable(SET_ITEM_FUNCTION, item.getDisplayName(), slot.getDisplayName());
+            return Component.translatable(SET_ITEM_FUNCTION, getStack().getDisplayName(), slot.getDisplayName());
+        }
+
+        private ItemStack getStack() {
+            if (stack == null) {
+                stack = item.create();
+            }
+            return stack;
         }
 
         @Override
         public void accept(ClaySoldierInventorySetter soldier, ClayPoiSource ignored) {
             if (slot == null) {
-                var effect = ClaySoldiersCommon.DATA_MAP.getEffect(item);
+                var effect = ClaySoldiersCommon.DATA_MAP.getEffect(getStack());
                 if (effect == null) {
-                    ClaySoldiersCommon.LOGGER.error("Set Item in suitable Slot is only supported for items that can be held by soldiers. {} cannot be held.", item.getItem());
+                    ClaySoldiersCommon.LOGGER.error("Set Item in suitable Slot is only supported for items that can be held by soldiers. {} cannot be held.", item.item().value());
                     return;
                 }
                 for (var possibleSlot : effect.slots()) {
-                    if (soldier.setSlotIfEmpty(possibleSlot, item)) {
+                    if (soldier.setSlotIfEmpty(possibleSlot, getStack())) {
                         if (operation == SetItemOperation.DROP) {
                             soldier.dropItemSlotWithChance(possibleSlot);
 
@@ -312,7 +324,7 @@ public final class ClayPoiFunctions {
                 soldier.dropItemSlotWithChance(slot);
             }
 
-            soldier.setItemSlot(slot, item);
+            soldier.setItemSlot(slot, getStack());
         }
     }
 
@@ -342,7 +354,7 @@ public final class ClayPoiFunctions {
         private static final StreamCodec<RegistryFriendlyByteBuf, ConvertTo> STREAM_CODEC = AdditionalSoldierData.STREAM_CODEC.map(d -> new ConvertTo(d.soldierType(), d.tag()), c -> c.data);
         private final AdditionalSoldierData data;
 
-        public <T extends ClayMobEntity & ClaySoldierLike> ConvertTo(EntityType<T> soldier, CompoundTag tag) {
+        private <T extends ClayMobEntity & ClaySoldierLike> ConvertTo(EntityType<T> soldier, CompoundTag tag) {
             super(CONVERSION_SERIALIZER);
             this.data = new AdditionalSoldierData(soldier, tag);
         }

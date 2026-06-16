@@ -8,10 +8,10 @@ import net.bumblebee.claysoldiers.soldierproperties.SoldierPropertyMapReader;
 import net.bumblebee.claysoldiers.soldierproperties.SoldierPropertyTypes;
 import net.bumblebee.claysoldiers.util.ComponentFormating;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 
@@ -27,35 +27,34 @@ public class ClaySoldierScreen extends AbstractClayMobScreen<AbstractClaySoldier
 
     public static final float REVIVE_SCALE = 0.75f;
 
-    private static final ResourceLocation TEXTURE =
-            ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "textures/gui/container/clay_soldier_inventory.png");
+    private static final Identifier TEXTURE =
+            Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "textures/gui/container/clay_soldier_inventory.png");
 
     public ClaySoldierScreen(ClaySoldierMenu pMenu, Inventory pPlayerInventory, Component pTitle) {
-        super(pMenu, pPlayerInventory, pTitle);
-        this.imageHeight = 192;
+        super(pMenu, pPlayerInventory, pTitle, 176, 192);
         this.teamPropertiesY = 16;
     }
 
     @Override
-    protected void renderBg(GuiGraphics guiGraphics, float pPartialTick, int pMouseX, int pMouseY) {
+    public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
         final int x = (width - imageWidth) / 2;
         final int y = (height - imageHeight) / 2;
-        guiGraphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, x, y, 0, 0, imageWidth, imageHeight+2, 256, 256);
-        renderSource(guiGraphics, x + 26, y + 18, x + 75, y + 78, 60, 0.0625F, pMouseX, pMouseY);
+        graphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, x, y, 0, 0, imageWidth, imageHeight+2, 256, 256);
+        renderSource(graphics, x + 26, y + 18, x + 75, y + 78, 60, 0.0625F, mouseX, mouseY);
+
     }
 
 
     @Override
-    public void render(GuiGraphics pGuiGraphics, int pMouseX, int pMouseY, float pPartialTick) {
-        super.render(pGuiGraphics, pMouseX, pMouseY, pPartialTick);
+    public void extractRenderState(GuiGraphicsExtractor pGuiGraphics, int pMouseX, int pMouseY, float pPartialTick) {
+        super.extractRenderState(pGuiGraphics, pMouseX, pMouseY, pPartialTick);
         if (isHovering(24, 16, 50, 70, pMouseX, pMouseY)) {
             menu.forSourceIfPresent(soldier -> renderProperties(pGuiGraphics, soldier.allProperties(), pMouseX, pMouseY));
         }
-        this.renderTooltip(pGuiGraphics, pMouseX, pMouseY);
     }
 
     @Override
-    protected void renderSpecialTooltip(GuiGraphics pGuiGraphics, ItemStack stack, int mouseX, int mouseY) {
+    protected void renderSpecialTooltip(GuiGraphicsExtractor pGuiGraphics, ItemStack stack, int mouseX, int mouseY) {
         var soldierProperties = ClaySoldiersCommon.DATA_MAP.getEffect(stack);
         if (soldierProperties == null) {
             return;
@@ -75,16 +74,11 @@ public class ClaySoldierScreen extends AbstractClayMobScreen<AbstractClaySoldier
         );
     }
 
-    public void renderProperties(GuiGraphics guiGraphics, SoldierPropertyMapReader properties, int pX, int pY) {
+    public void renderProperties(GuiGraphicsExtractor guiGraphics, SoldierPropertyMapReader properties, int pX, int pY) {
         List<Component> tooltip = new ArrayList<>();
         tooltip.add(Component.translatable(SOLDIER_PROPERTIES).withStyle(ChatFormatting.DARK_GRAY));
         ComponentFormating.formatProperties(tooltip, properties, List.of(SoldierPropertyTypes.ATTACK_TYPE.get()), menu.getSource().orElse(null));
         guiGraphics.setTooltipForNextFrame(font, tooltip, Optional.empty(), pX, pY);
-    }
-
-    @Override
-    protected void renderLabels(GuiGraphics pGuiGraphics, int pMouseX, int pMouseY) {
-        super.renderLabels(pGuiGraphics, pMouseX, pMouseY);
     }
 
     @Override

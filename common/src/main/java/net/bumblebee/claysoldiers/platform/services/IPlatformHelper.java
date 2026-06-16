@@ -3,17 +3,18 @@ package net.bumblebee.claysoldiers.platform.services;
 import com.mojang.serialization.MapCodec;
 import net.bumblebee.claysoldiers.claypoifunction.ClayPoiFunction;
 import net.bumblebee.claysoldiers.claypoifunction.ClayPoiFunctionSerializer;
+import net.bumblebee.claysoldiers.claysoldierchips.ClaySoldierChip;
+import net.bumblebee.claysoldiers.claysoldierchips.addon.ClaySoldierChipAddon;
 import net.bumblebee.claysoldiers.claysoldierpredicate.ClayPredicate;
 import net.bumblebee.claysoldiers.claysoldierpredicate.ClayPredicateSerializer;
 import net.bumblebee.claysoldiers.entity.common.boss.BossClaySoldierBehaviour;
-import net.bumblebee.claysoldiers.entity.common.programmable.chips.ClaySoldierChip;
 import net.bumblebee.claysoldiers.platform.ItemLikeSupplier;
 import net.bumblebee.claysoldiers.soldieritemtypes.ItemGenerator;
 import net.bumblebee.claysoldiers.soldierproperties.SoldierPropertyType;
 import net.bumblebee.claysoldiers.soldierproperties.customproperties.specialattack.SpecialAttack;
 import net.bumblebee.claysoldiers.soldierproperties.customproperties.specialattack.SpecialAttackSerializer;
 import net.minecraft.advancements.CriterionTrigger;
-import net.minecraft.advancements.critereon.EntitySubPredicate;
+import net.minecraft.advancements.criterion.EntitySubPredicate;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
@@ -33,15 +34,15 @@ import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeBookCategory;
 import net.minecraft.world.item.crafting.RecipeSerializer;
-import net.minecraft.world.level.GameRules;
+import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.loot.functions.LootItemFunction;
-import net.minecraft.world.level.storage.loot.functions.LootItemFunctionType;
 
 import java.util.List;
 import java.util.function.BiFunction;
@@ -69,11 +70,7 @@ public interface IPlatformHelper {
         return isDevEnv() ? action.get() : elseValue;
     }
 
-    <T extends Item> ItemLikeSupplier<T> registerItem(String id, Function<Item.Properties, T> item, Item.Properties properties);
-
-    default  <T extends Item> ItemLikeSupplier<T> registerItem(String id, Function<Item.Properties, T> item) {
-        return registerItem(id, item, new Item.Properties());
-    }
+    <T extends Item> ItemLikeSupplier<T> registerItem(String id, Function<Item.Properties, T> item);
 
     default  <T extends Block> ItemLikeSupplier<T> registerBlockWithItem(String id, Function<BlockBehaviour.Properties, T> block, BlockBehaviour.Properties properties) {
         return registerBlockWithItem(id, block, properties, BlockItem::new);
@@ -85,7 +82,6 @@ public interface IPlatformHelper {
     Supplier<SimpleParticleType> registerParticle(String id, Supplier<SimpleParticleType> particleTye);
     <T extends Entity> Supplier<EntityType<T>> registerEntity(String id, Supplier<EntityType<T>> entityType);
     <T> Supplier<DataComponentType<T>> registerDataComponent(String id, Supplier<DataComponentType<T>> dataComponent);
-    <T extends Recipe<?>> Supplier<RecipeSerializer<T>> registerRecipe(String id, Supplier<RecipeSerializer<T>> recipe);
     <T extends AbstractContainerMenu> Supplier<MenuType<T>> registerMenuType(String id, MenuFactory<T> menu);
     <T extends SoldierPropertyType<?>> Supplier<T> registerSoldierProperty(String id, Supplier<T> property);
     <T extends ClayPoiFunction<T>> Supplier<ClayPoiFunctionSerializer<T>> registerClayFunctionSerializer(String id, Supplier<ClayPoiFunctionSerializer<T>> serializer);
@@ -97,14 +93,20 @@ public interface IPlatformHelper {
 
     <T> Registry<T> createRegistry(ResourceKey<Registry<T>> key, boolean synced);
 
-    GameRules.Key<GameRules.IntegerValue> createIntRule(String name, GameRules.Category category, int defaultValue);
-    GameRules.Key<GameRules.BooleanValue> createBoolRule(String name, GameRules.Category category, boolean defaultValue);
     <T extends CriterionTrigger<?>> Supplier<T> registerCriterionTrigger(String name, Supplier<T> criterionTrigger);
     <T extends EntitySubPredicate> Supplier<MapCodec<T>> registerEntitySubPredicate(String name, Supplier<MapCodec<T>> subPredicate);
 
-    <T extends LootItemFunction> Supplier<LootItemFunctionType<T>> registerLootItemFunction(String name, Supplier<LootItemFunctionType<T>> lootItemFunction);
+    <T extends LootItemFunction> Supplier<MapCodec<T>> registerLootItemFunction(String name, Supplier<MapCodec<T>> lootItemFunction);
 
     <T> Supplier<ClaySoldierChip.Type<T>> registerClaySoldierModule(String name, Supplier<ClaySoldierChip.Type<T>> chipType);
+
+    <T extends ClaySoldierChipAddon> T registerClaySoldierChipAddon(String name, T addon);
+
+    <T extends RecipeBookCategory> T registerRecipeBookCategory(String name, T category);
+
+    <T extends RecipeType<?>> T registerRecipeType(String name, T type);
+
+    <T extends Recipe<?>> Supplier<RecipeSerializer<T>> registerRecipe(String id, Supplier<RecipeSerializer<T>> recipe);
 
 
     List<Item> getAllItems();
@@ -115,6 +117,8 @@ public interface IPlatformHelper {
     Holder<PoiType> registerPoiType(ResourceKey<PoiType> id, Supplier<PoiType> poiType);
 
     DamageSources createClayDamageSources(RegistryAccess registryAccess);
+
+    CreativeModeTab.DisplayItemsGenerator createGeneratorForAll();
 
     interface BlockEntityFactory<T extends BlockEntity> {
         T create(BlockPos pos, BlockState state);

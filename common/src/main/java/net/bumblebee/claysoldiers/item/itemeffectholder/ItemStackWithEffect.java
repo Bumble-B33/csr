@@ -6,8 +6,6 @@ import net.bumblebee.claysoldiers.capability.ThrowableItemCapability;
 import net.bumblebee.claysoldiers.datamap.SoldierHoldableEffect;
 import net.bumblebee.claysoldiers.datamap.armor.SoldierMultiWearable;
 import net.bumblebee.claysoldiers.datamap.armor.accessories.SoldierAccessoryKey;
-import net.bumblebee.claysoldiers.soldierproperties.customproperties.AttackTypeProperty;
-import net.bumblebee.claysoldiers.soldierproperties.customproperties.RangedAttackType;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,6 +27,8 @@ public class ItemStackWithEffect extends ItemStackEffectHolder<SoldierHoldableEf
         this(stack, ClaySoldiersCommon.DATA_MAP.getEffect(stack), ClaySoldiersCommon.DATA_MAP.getArmor(stack));
     }
 
+
+
     @Override
     protected SoldierHoldableEffect createEffectOnInitialisation(ItemStack stack) {
         return ClaySoldiersCommon.DATA_MAP.getEffect(stack);
@@ -38,19 +38,6 @@ public class ItemStackWithEffect extends ItemStackEffectHolder<SoldierHoldableEf
         return effect != null && effect.throwable();
     }
 
-    //Todo
-    public boolean throwableTypeMatchAttackType(AttackTypeProperty attackType) {
-        if (effect == null || !effect.throwable()) {
-            return true;
-        }
-        if (attackType.isSupportive()) {
-            return effect.throwableType(RangedAttackType.HELPING);
-        }
-        if (attackType.fightsBack()) {
-            return effect.throwableType(RangedAttackType.HARM);
-        }
-        return true;
-    }
     public boolean isShield() {
         return wearableEffect.getAccessories().get(SoldierAccessoryKey.SHIELD) != null;
     }
@@ -102,6 +89,10 @@ public class ItemStackWithEffect extends ItemStackEffectHolder<SoldierHoldableEf
         } else {
             return new ItemStackWithEffect(stack.copy());
         }
+    }
+
+    public ItemStackWithEffect copyTrusted() {
+        return new ItemStackWithEffect(stack().copy(), effect, wearableEffect);
     }
 
     public int maxSoldierStackSize() {

@@ -1,7 +1,7 @@
 package net.bumblebee.claysoldiers.mixin;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import net.bumblebee.claysoldiers.init.ModItems;
+import net.bumblebee.claysoldiers.init.ModTags;
 import net.bumblebee.claysoldiers.item.statitem.StatItemRenderUtil;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.ItemInHandRenderer;
@@ -20,7 +20,7 @@ public class StatoMeterRendering {
     @Inject(method = "renderArmWithItem", at = @At("HEAD"), cancellable = true)
     private void renderItem(AbstractClientPlayer player, float partialTick, float pitch, InteractionHand hand, float swingProgress, ItemStack item, float equippedProgress, PoseStack poseStack, SubmitNodeCollector nodeCollector, int packedLight, CallbackInfo ci) {
 
-        if (!player.isScoping() && item.is(ModItems.STATOMETER.get())) {
+        if (!player.isScoping() && item.is(ModTags.Items.STAT_ITEM)) {
             boolean isMainhand = hand == InteractionHand.MAIN_HAND;
             HumanoidArm humanoidarm = isMainhand ? player.getMainArm() : player.getMainArm().getOpposite();
             StatItemRenderUtil.renderStatoMeter(poseStack, nodeCollector, packedLight, equippedProgress, humanoidarm, swingProgress, item);

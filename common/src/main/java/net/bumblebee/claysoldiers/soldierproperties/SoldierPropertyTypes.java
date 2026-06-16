@@ -65,6 +65,7 @@ public class SoldierPropertyTypes {
     public static final Supplier<SoldierPropertyType<IEvacuationProperty>> EVACUATION = create("evacuation", IEvacuationProperty.CODEC, IEvacuationProperty.STREAM_CODEC.cast(), IEvacuationProperty.NONE, IEvacuationProperty::toInt, IEvacuationProperty.COMBINER, IEvacuationProperty.DISPLAY_NAME_GETTER);
     public static final Supplier<UnitPropertyType> BOUNCE = create("bounce", new UnitPropertyType());
     public static final Supplier<SoldierPropertyType<Integer>> BREAKING_POWER = create("breaking_power", Codec.INT, ByteBufCodecs.VAR_INT.cast(), 0, INT_AS_INT, INT_COMBINER);
+    public static final Supplier<SoldierPropertyType<Float>> LUCK = create("luck", Codec.FLOAT, ByteBufCodecs.FLOAT.cast(), 0f, FLOAT_AS_INT, FLOAT_COMBINER);
 
 
     public static final Codec<SoldierPropertyType<?>> CODEC = CodecUtils.byNameCodecWithDefaultModId(ModRegistries.SOLDIER_PROPERTY_TYPES_REGISTRY);

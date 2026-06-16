@@ -10,19 +10,22 @@ import net.bumblebee.claysoldiers.init.ModItems;
 import net.bumblebee.claysoldiers.item.blueprint.tooltip.BlueprintTooltip;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.Holder;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.component.TooltipDisplay;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Optional;
 import java.util.function.Consumer;
 
-public class BlueprintItem extends BlueprintPageItem {
+public class BlueprintItem extends Item {
     public static final String DESCRIPTION_ID = "item." + ClaySoldiersCommon.MOD_ID + ".blueprint";
     public static final String DESCRIPTION_ID_WITH_STRUCTURE = DESCRIPTION_ID + "_with_structure";
     public static final String STRUCTURE_NAME_LANG = DESCRIPTION_ID + ".structure_name";
@@ -40,9 +43,9 @@ public class BlueprintItem extends BlueprintPageItem {
         if (!flag.isAdvanced()) {
             return;
         }
-        var dataLoc = stack.get(ModDataComponents.BLUEPRINT_DATA.get());
-        if (dataLoc != null) {
-            tooltipAdder.accept(Component.translatable(STRUCTURE_NAME_LANG, dataLoc.toString()).withStyle(ChatFormatting.DARK_GRAY));
+        var key = stack.get(ModDataComponents.BLUEPRINT_DATA.get());
+        if (key != null) {
+            tooltipAdder.accept(Component.translatable(STRUCTURE_NAME_LANG, key.identifier().toString()).withStyle(ChatFormatting.DARK_GRAY));
         } else {
             tooltipAdder.accept(Component.translatable(BLUEPRINT_INVALID_LANG).withStyle(ChatFormatting.RED));
         }
@@ -65,11 +68,19 @@ public class BlueprintItem extends BlueprintPageItem {
      */
     public static ItemStack createStackFromData(Holder<BlueprintData> holder) {
         ItemStack stack = new ItemStack(ModItems.BLUEPRINT.get());
-        stack.set(ModDataComponents.BLUEPRINT_DATA.get(), holder.unwrapKey().orElseThrow(() -> new IllegalStateException("Cannot create ItemStack for non-register Date: " + holder)).location());
+        stack.set(ModDataComponents.BLUEPRINT_DATA.get(), holder.unwrapKey().orElseThrow(() -> new IllegalStateException("Cannot create ItemStack for non-register Date: " + holder)));
 
         stack.set(DataComponents.ITEM_NAME, Component.translatable(DESCRIPTION_ID_WITH_STRUCTURE, holder.value().getDisplayName()));
         stack.set(ModDataComponents.BLUEPRINT_ITEM_DATA.get(), new BlueprintItemData(holder.value().marking()));
         return stack;
+    }
+
+    public static @Nullable BlueprintData getData(ItemStack item, RegistryAccess registryAccess) {
+        var key = item.get(ModDataComponents.BLUEPRINT_DATA.get());
+        if (key == null) {
+            return null;
+        }
+        return registryAccess.get(key).map(Holder.Reference::value).orElse(null);
     }
 
     public record BlueprintItemData(float marking) {

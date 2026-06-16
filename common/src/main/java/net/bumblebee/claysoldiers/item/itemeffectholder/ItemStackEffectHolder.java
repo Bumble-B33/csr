@@ -23,7 +23,7 @@ public abstract class ItemStackEffectHolder<P> {
     }
 
     /**
-     * Gets the effect of the {@code ItemStack} for initialisation.
+     * Gets the effect of the {@code ItemStack} for initialization.
      * @return the effect of the {@code ItemStack}
      */
     protected abstract P createEffectOnInitialisation(ItemStack stack);

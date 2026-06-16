@@ -14,15 +14,17 @@ import net.minecraft.client.model.geom.builders.CubeListBuilder;
 import net.minecraft.client.model.geom.builders.LayerDefinition;
 import net.minecraft.client.model.geom.builders.MeshDefinition;
 import net.minecraft.client.model.geom.builders.PartDefinition;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.SubmitNodeCollector;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.client.renderer.feature.ItemFeatureRenderer;
+import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
-import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
-import org.joml.Vector3f;
+import org.joml.Vector3fc;
 
-import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class ClayStaffModel extends Model<ClayStaffRenderState> {
@@ -31,18 +33,18 @@ public class ClayStaffModel extends Model<ClayStaffRenderState> {
     private static final float CUBE_Y = -5.5f;
     private static final float SOLDIER_Y = -3f;
 
-    public static final ModelLayerLocation LAYER_LOCATION = new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_staff"), "main");
-    public static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "textures/item/clay_staff_in_hand.png");
+    public static final ModelLayerLocation LAYER_LOCATION = new ModelLayerLocation(Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_staff"), "main");
+    public static final Identifier TEXTURE = Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "textures/item/clay_staff_in_hand.png");
 
-    public static final ModelLayerLocation SOLDIER_LAYER_LOCATION = new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_staff_soldier"), "main");
-    public static final ResourceLocation SOLDIER_TEXTURE = ResourceLocation.withDefaultNamespace("textures/block/clay.png");
-    private static final RenderType DOLL_RENDER_TYPE = RenderType.entityCutout(SOLDIER_TEXTURE);
+    public static final ModelLayerLocation SOLDIER_LAYER_LOCATION = new ModelLayerLocation(Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_staff_soldier"), "main");
+    public static final Identifier SOLDIER_TEXTURE = Identifier.withDefaultNamespace("textures/block/clay.png");
+    private static final RenderType DOLL_RENDER_TYPE = RenderTypes.entityCutout(SOLDIER_TEXTURE);
 
     private final ModelPart cube;
     private final ModelPart doll;
 
     public ClayStaffModel(ModelPart root, ModelPart doll) {
-        super(root, RenderType::entitySolid);
+        super(root, RenderTypes::entitySolid);
         this.cube = root.getChild("cube");
         this.doll = doll;
 
@@ -90,11 +92,22 @@ public class ClayStaffModel extends Model<ClayStaffRenderState> {
 
     }
 
-    public void getExtents(Set<Vector3f> set) {
+    public void getExtents(Consumer<Vector3fc> set) {
         root.getExtentsForGui(new PoseStack(), set);
     }
 
-    public static void renderAsItem(ClayStaffModel model, ItemStack pStack, ItemDisplayContext pDisplayContext, PoseStack poseStack, SubmitNodeCollector nodeCollector, int packedLight, int packedOverlay) {
+    public static ClayStaffRenderState extractRenderState(ItemStack stack) {
+        boolean doll = ClayStaffItem.getEnchantmentLevel(stack, ModEnchantments.SOLDIER_PROJECTILE, Minecraft.getInstance().level.registryAccess()) > 0;
+
+        return new ClayStaffRenderState(
+                false,
+                Math.min(1f, ((float) Minecraft.getInstance().player.getTicksUsingItem()) / ClayStaffItem.getMaxPower(stack, Minecraft.getInstance().level.registryAccess())),
+                doll,
+                ((Minecraft.getInstance().level.getGameTime() + getPartialTick()) % 360) * DEG_2
+        );
+    }
+
+    public static void submitAsItem(ClayStaffModel model, ClayStaffRenderState state, PoseStack poseStack, SubmitNodeCollector nodeCollector, int packedLight, int packedOverlay, boolean foil, int outline) {
         if (model == null) {
             return;
         }
@@ -103,33 +116,37 @@ public class ClayStaffModel extends Model<ClayStaffRenderState> {
         poseStack.scale(1.0F, -1.0F, -1.0F);
 
 
-        boolean doll = ClayStaffItem.getEnchantmentLevel(pStack, ModEnchantments.SOLDIER_PROJECTILE, Minecraft.getInstance().level.registryAccess()) > 0;
-        boolean displayAmmo = pDisplayContext.firstPerson() || pDisplayContext == ItemDisplayContext.THIRD_PERSON_LEFT_HAND || pDisplayContext == ItemDisplayContext.THIRD_PERSON_RIGHT_HAND;
-
-        var renderState = new ClayStaffRenderState(
-                !displayAmmo,
-                 Math.min(1f, ((float) Minecraft.getInstance().player.getTicksUsingItem()) / ClayStaffItem.getMaxPower(pStack, Minecraft.getInstance().level.registryAccess())),
-                doll,
-                ((Minecraft.getInstance().level.getGameTime() + getPartialTick()) % 360) * DEG_2
-        );
-
-        if (doll && displayAmmo) {
-            model.renderDoll(poseStack, nodeCollector, packedLight, packedOverlay);
+        if (state.hasDoll) {
+            model.submitDoll(poseStack, nodeCollector, packedLight, packedOverlay);
 
         }
+        nodeCollector.submitModel(model, state, poseStack, model.renderType(ClayStaffModel.TEXTURE), packedLight, packedOverlay, 0, null);
 
-        nodeCollector.submitModel(model, renderState, poseStack, model.renderType(ClayStaffModel.TEXTURE), packedLight, packedOverlay, 0, null);
+        if (foil) {
+            nodeCollector.order(1)
+                    .submitModel(
+                            model,
+                            state,
+                            poseStack,
+                            ItemFeatureRenderer.getFoilRenderType(model.renderType(ClayStaffModel.TEXTURE), false),
+                            packedLight,
+                            OverlayTexture.NO_OVERLAY,
+                            outline,
+                            null
+                    );
+        }
+
 
         poseStack.popPose();
     }
 
-    public void renderDoll(PoseStack poseStack, SubmitNodeCollector nodeCollector, int packedLight, int packedOverlay) {
+    public void submitDoll(PoseStack poseStack, SubmitNodeCollector nodeCollector, int packedLight, int packedOverlay) {
         ItemStack ammo = ClayStaffItem.getClayStaffAmmo(ClayStaffItem.SOLDIER_PREDICATE, Minecraft.getInstance().player);
         int color = -1;
         if (ammo != null) {
-            var team = ClayMobTeamManger.getFromKey(ammo.get(ModDataComponents.CLAY_MOB_TEAM_COMPONENT.get()), Minecraft.getInstance().level.registryAccess());
-            if (team != null) {
-                color = team.getColor(Minecraft.getInstance().player, getPartialTick());
+            var team = ClayMobTeamManger.get(ammo.get(ModDataComponents.CLAY_MOB_TEAM_COMPONENT.get()), Minecraft.getInstance().level.registryAccess());
+            if (team.isPresent()) {
+                color = team.orElseThrow().value().getColor().getColor(Minecraft.getInstance().player, getPartialTick());
             }
         }
         nodeCollector.submitModelPart(doll, poseStack, DOLL_RENDER_TYPE, packedLight, packedOverlay, null, color, null);

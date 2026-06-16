@@ -5,10 +5,9 @@ import net.bumblebee.claysoldiers.datamap.armor.accessories.client.IAccessoryRen
 import net.bumblebee.claysoldiers.datamap.armor.accessories.client.RenderableAccessoryMap;
 import net.bumblebee.claysoldiers.entity.client.ClaySoldierModel;
 import net.bumblebee.claysoldiers.entity.client.renderstates.AbstractClaySoldierRenderState;
-import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.model.SkullModelBase;
 import net.minecraft.client.model.geom.EntityModelSet;
+import net.minecraft.client.model.object.skull.SkullModelBase;
 import net.minecraft.client.renderer.ItemInHandRenderer;
 import net.minecraft.client.renderer.PlayerSkinRenderCache;
 import net.minecraft.client.renderer.SubmitNodeCollector;
@@ -16,6 +15,7 @@ import net.minecraft.client.renderer.blockentity.SkullBlockRenderer;
 import net.minecraft.client.renderer.entity.RenderLayerParent;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
 import net.minecraft.client.resources.model.EquipmentAssetManager;
+import net.minecraft.util.Util;
 import net.minecraft.world.level.block.SkullBlock;
 import org.jetbrains.annotations.Nullable;
 

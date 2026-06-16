@@ -1,6 +1,6 @@
 plugins {
     id 'multiloader-loader'
-    id 'fabric-loom'
+    id 'net.fabricmc.fabric-loom'
 }
 
 repositories {
@@ -15,44 +15,37 @@ repositories {
         name = "ModMaven"
         url = "https://modmaven.dev"
     }
-    maven {
-        url "https://www.cursemaven.com"
-        content {
-            includeGroup "curse.maven"
+    exclusiveContent {
+        forRepository {
+            maven {
+                name = "Modrinth"
+                url = "https://api.modrinth.com/maven"
+            }
+        }
+        filter {
+            includeGroup "maven.modrinth"
         }
     }
 
     // Accessories
-
-    maven { url 'https://maven.wispforest.io/releases' }
+    /*maven { url 'https://maven.wispforest.io/releases' }
     maven { url 'https://maven.su5ed.dev/releases' }
     maven { url 'https://maven.fabricmc.net' }
-    maven { url 'https://maven.shedaniel.me/' }
-
-    maven {
-        name = "SmartBrainLib (SBL) Maven Repo"
-        url = "https://dl.cloudsmith.io/public/tslat/sbl/maven/"
-    }
+    maven { url 'https://maven.shedaniel.me/' }*/
 }
 
 dependencies {
     minecraft "com.mojang:minecraft:${minecraft_version}"
-    mappings loom.layered {
-        officialMojangMappings()
-        parchment("org.parchmentmc.data:parchment-${parchment_minecraft}:${parchment_version}@zip")
-    }
-    modImplementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
-    modImplementation "net.fabricmc.fabric-api:fabric-api:${fabric_version}"
+    implementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
+    implementation "net.fabricmc.fabric-api:fabric-api:${fabric_version}"
 
-    modImplementation "net.tslat.smartbrainlib:SmartBrainLib-fabric-${sbl_version}"
+    compileOnlyApi("mezz.jei:jei-${minecraft_version}-fabric-api:${jei_version}")
+    runtimeOnly("mezz.jei:jei-${minecraft_version}-fabric:${jei_version}")
 
-    modCompileOnlyApi("mezz.jei:jei-${minecraft_version}-fabric-api:${jei_version}")
-    modRuntimeOnly("mezz.jei:jei-${minecraft_version}-fabric:${jei_version}")
+    implementation("maven.modrinth:jade:${jade_fabric_version}")
 
-    modImplementation "curse.maven:jade-324717:${jade_id_fabric}"
-
-    modCompileOnlyApi("io.wispforest:accessories-fabric:${accessories_version}+${minecraft_version}")
-    include modApi("teamreborn:energy:${fabric_energy_version}")
+    //modCompileOnlyApi("io.wispforest:accessories-fabric:${accessories_version}+${minecraft_version}")
+    api("teamreborn:energy:${fabric_energy_version}")
 }
 
 loom {
@@ -62,9 +55,6 @@ loom {
     //}
     accessWidenerPath = file("src/main/resources/${mod_id}.accesswidener")
 
-    mixin {
-        defaultRefmapName.set("${mod_id}.refmap.json")
-    }
     runs {
         client {
             client()
@@ -77,6 +67,24 @@ loom {
             setConfigName('Fabric Server')
             ideConfigGenerated(true)
             runDir('runs/server')
+        }
+    }
+}
+
+def loaderAttribute = Attribute.of('io.github.mcgradleconventions.loader', String)
+['apiElements', 'runtimeElements', 'sourcesElements', 'javadocElements', 'includeInternal', 'modCompileClasspath'].each { variant ->
+    configurations.named("$variant") {
+        attributes {
+            attribute(loaderAttribute, 'fabric')
+        }
+    }
+}
+sourceSets.configureEach {
+    [it.compileClasspathConfigurationName, it.runtimeClasspathConfigurationName].each { variant->
+        configurations.named("$variant") {
+            attributes {
+                attribute(loaderAttribute, 'fabric')
+            }
         }
     }
 }

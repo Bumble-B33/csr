@@ -3,7 +3,7 @@ package net.bumblebee.claysoldiers.item.disruptor;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.block.ClayMobContainer;
 import net.bumblebee.claysoldiers.entity.common.ClayMobEntity;
-import net.bumblebee.claysoldiers.init.ModCriterions;
+import net.bumblebee.claysoldiers.init.ModCritirions;
 import net.bumblebee.claysoldiers.init.ModDataComponents;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -40,7 +40,7 @@ public class ClayMobKillItem extends Item {
         if (pLevel instanceof ServerLevel serverLevel && player instanceof ServerPlayer serverPlayer && usedHand == InteractionHand.MAIN_HAND) {
             ItemStack itemInHand = player.getItemInHand(usedHand);
             int amountKilled = killSoldiers(itemInHand, serverLevel, player.getOnPos(), serverPlayer);
-            ModCriterions.DISRUPTOR_KILL_TRIGGER.get().trigger(serverPlayer, amountKilled);
+            ModCritirions.DISRUPTOR_KILL_TRIGGER.get().trigger(serverPlayer, amountKilled);
             itemInHand.hurtAndBreak(1, player, usedHand);
 
             return InteractionResult.SUCCESS;

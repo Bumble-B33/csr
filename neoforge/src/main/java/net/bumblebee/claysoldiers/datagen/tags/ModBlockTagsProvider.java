@@ -17,23 +17,16 @@ public class ModBlockTagsProvider extends BlockTagsProvider {
     }
 
     @Override
-    protected void addTags(HolderLookup.Provider pProvider) {
-        tag(BlockTags.NEEDS_STONE_TOOL).add(ModBlocks.HAMSTER_WHEEL_BLOCK.get());
-        tag(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.HAMSTER_WHEEL_BLOCK.get());
+    protected void addTags(HolderLookup.Provider provider) {
+        tag(BlockTags.NEEDS_STONE_TOOL).add(ModBlocks.HAMSTER_WHEEL_BLOCK.get(), ModBlocks.CHIP_ASSEMBLER.get());
+        tag(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.HAMSTER_WHEEL_BLOCK.get(), ModBlocks.CHIP_ASSEMBLER.get());
         tag(BlockTags.MINEABLE_WITH_AXE).add(ModBlocks.ESCRITOIRE_BLOCK.get());
-
 
         tag(ModTags.Blocks.BLUEPRINT_BLACK_LISTED)
                 .addTag(BlockTags.AIR)
-                .add(Blocks.BARRIER,
-                        Blocks.BEDROCK,
-                        Blocks.END_PORTAL,
+                .add(Blocks.END_PORTAL,
                         Blocks.END_PORTAL_FRAME,
                         Blocks.END_GATEWAY,
-                        Blocks.COMMAND_BLOCK,
-                        Blocks.REPEATING_COMMAND_BLOCK,
-                        Blocks.CHAIN_COMMAND_BLOCK,
-                        Blocks.STRUCTURE_BLOCK,
                         Blocks.STRUCTURE_VOID,
                         Blocks.JIGSAW,
                         Blocks.MOVING_PISTON,

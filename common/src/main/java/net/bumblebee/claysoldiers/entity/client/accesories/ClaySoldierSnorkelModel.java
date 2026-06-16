@@ -1,6 +1,5 @@
 package net.bumblebee.claysoldiers.entity.client.accesories;
 
-import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.entity.client.ClaySoldierModel;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
@@ -8,13 +7,11 @@ import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.client.model.geom.builders.CubeListBuilder;
 import net.minecraft.client.model.geom.builders.LayerDefinition;
 import net.minecraft.client.model.geom.builders.MeshDefinition;
-import net.minecraft.resources.ResourceLocation;
 
 import java.util.Set;
 
 public class ClaySoldierSnorkelModel extends ClaySoldierModel {
-    public static final ModelLayerLocation SNORKEL_LAYER_LOCATION =
-            new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_soldier"), "snorkel");
+    public static final ModelLayerLocation SNORKEL_LAYER_LOCATION = createLayerLocation("snorkel");
     public static final String BAMBOO_STICK_NAME = "bamboo_stick";
 
 

@@ -233,7 +233,7 @@ public final class SpecialAttacks {
 
         @Override
         public boolean condition(LivingEntity attacker, Entity target) {
-            return target.getType().is(EntityTypeTags.UNDEAD);
+            return target.is(EntityTypeTags.UNDEAD);
         }
 
         @Override
@@ -250,7 +250,7 @@ public final class SpecialAttacks {
 
         @Override
         public boolean shouldAttackTarget(LivingEntity target) {
-            return target.getType().is(EntityTypeTags.UNDEAD);
+            return target.is(EntityTypeTags.UNDEAD);
         }
 
         @Override

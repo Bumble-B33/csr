@@ -7,7 +7,7 @@ import net.bumblebee.claysoldiers.team.ClayMobTeam;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
 import net.minecraft.client.gui.screens.inventory.tooltip.DefaultTooltipPositioner;
 import net.minecraft.network.chat.Component;
@@ -48,20 +48,23 @@ public class StatOverlay {
         return INSTANCE;
     }
 
-    public void render(GuiGraphics guiGraphics, float partialTick) {
+    public void render(GuiGraphicsExtractor guiGraphics, float partialTick) {
         if (!shouldDisplayStats()) {
             return;
         }
-        renderStats(guiGraphics, partialTick);
-
-        renderCounts(guiGraphics, partialTick);
+        if (ClaySoldiersCommon.CONFIG.getClientConfig().statItemShowStats()) {
+            renderStats(guiGraphics, partialTick);
+        }
+        if (ClaySoldiersCommon.CONFIG.getClientConfig().statItemShowCount()) {
+            renderCounts(guiGraphics, partialTick);
+        }
         tick++;
         if (tick % 4 == 0) {
             ticksSlowed++;
         }
     }
 
-    private void renderCounts(GuiGraphics guiGraphics, float partialTick) {
+    private void renderCounts(GuiGraphicsExtractor guiGraphics, float partialTick) {
         int yAd = y;
         for (var entry : getTeamsAndCount().entrySet()) {
             Component text = entry.getKey().getDisplayName().copy().append(" (" + entry.getValue() + ")");
@@ -69,21 +72,21 @@ public class StatOverlay {
             int width = Math.max(font.width(text) + 6, MIN_WITH);
             int teamColor = 0xFF000000 | entry.getKey().getColor(0, ticksSlowed, partialTick);
 
-            guiGraphics.hLine(x, x + width, yAd, BLACK);
-            guiGraphics.hLine(x, x + width, yAd + boxHeight, BLACK);
+            guiGraphics.horizontalLine(x, x + width, yAd, BLACK);
+            guiGraphics.horizontalLine(x, x + width, yAd + boxHeight, BLACK);
 
-            guiGraphics.vLine(x, yAd, yAd + boxHeight, BLACK);
-            guiGraphics.vLine(x + width, yAd, yAd + boxHeight, BLACK);
+            guiGraphics.verticalLine(x, yAd, yAd + boxHeight, BLACK);
+            guiGraphics.verticalLine(x + width, yAd, yAd + boxHeight, BLACK);
 
             guiGraphics.fill(x + 1, yAd + 1, x + width, yAd + boxHeight, teamColor);
 
-            guiGraphics.drawString(font, text, x + 3, yAd + 3, 0xFFFFFFFF);
+            guiGraphics.text(font, text, x + 3, yAd + 3, 0xFFFFFFFF);
 
             yAd += 2 + boxHeight;
         }
     }
 
-    private void renderStats(GuiGraphics guiGraphics, float partialTicks) {
+    private void renderStats(GuiGraphicsExtractor guiGraphics, float partialTicks) {
         if (Minecraft.getInstance().crosshairPickEntity instanceof StatInfoDisplay infoDisplay) {
             renderStats(guiGraphics, infoDisplay);
             return;
@@ -97,14 +100,14 @@ public class StatOverlay {
         }
     }
 
-    private void renderStats(GuiGraphics guiGraphics, StatInfoDisplay infoDisplay) {
+    private void renderStats(GuiGraphicsExtractor guiGraphics, StatInfoDisplay infoDisplay) {
         int width = Minecraft.getInstance().getWindow().getGuiScaledWidth() / 2;
         int height = Minecraft.getInstance().getWindow().getGuiScaledHeight() / 2;
 
         List<Component> components = new ArrayList<>();
         infoDisplay.getStatDisplay(components, Minecraft.getInstance().player);
 
-        guiGraphics.renderTooltip(
+        guiGraphics.tooltip(
                 font,
                 components.stream().map(c -> ClientTooltipComponent.create(c.getVisualOrderText())).toList(),
                 width,
@@ -132,6 +135,9 @@ public class StatOverlay {
     }
 
     private static boolean shouldDisplayStats() {
+        if (Minecraft.getInstance().options.hideGui) {
+            return false;
+        }
         for (var test : ClaySoldiersCommon.IS_WEARING_STATOMETER) {
             var player = Minecraft.getInstance().player;
             if (test.test(player)) {

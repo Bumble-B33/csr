@@ -1,6 +1,6 @@
 package net.bumblebee.claysoldiers.item.itemeffectholder;
 
-import net.bumblebee.claysoldiers.datamap.horse.ClayHorseItemMap;
+import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.datamap.horse.ClayHorseWearableProperties;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ItemStack;
@@ -23,7 +23,7 @@ public class HorseWearableItemStack extends ItemStackEffectHolder<ClayHorseWeara
 
     @Override
     protected ClayHorseWearableProperties createEffectOnInitialisation(ItemStack stack) {
-        return ClayHorseItemMap.get(stack);
+        return ClaySoldiersCommon.DATA_MAP.getHorseArmor(stack);
     }
 
     @Nullable

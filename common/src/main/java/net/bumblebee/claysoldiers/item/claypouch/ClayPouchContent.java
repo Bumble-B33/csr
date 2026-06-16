@@ -3,7 +3,7 @@ package net.bumblebee.claysoldiers.item.claypouch;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.bumblebee.claysoldiers.blueprint.templates.BlueprintUtil;
+import net.bumblebee.claysoldiers.blueprint.BlueprintUtil;
 import net.bumblebee.claysoldiers.init.ModDataComponents;
 import net.bumblebee.claysoldiers.item.claymobspawn.MultiSpawnItem;
 import net.minecraft.core.HolderLookup;
@@ -27,6 +27,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
+import java.util.stream.Stream;
 
 public class ClayPouchContent implements TooltipComponent {
     public static final int ABSOLUTE_MAX_CAPACITY = 1024;
@@ -144,10 +145,10 @@ public class ClayPouchContent implements TooltipComponent {
         }
     }
 
-    public Iterable<ItemStack> copyItems() {
+    public Stream<ItemStack> copyItems() {
         List<ItemStack> stacks = new ArrayList<>();
         BlueprintUtil.addItemStackToList(stacks, item, count);
-        return stacks;
+        return stacks.stream();
     }
 
     public Optional<DataComponentMap> dataComponents() {

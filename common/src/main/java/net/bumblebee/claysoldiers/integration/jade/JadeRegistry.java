@@ -2,7 +2,7 @@ package net.bumblebee.claysoldiers.integration.jade;
 
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.integration.jade.providers.*;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
 
 import java.util.ArrayList;
@@ -16,16 +16,16 @@ public class JadeRegistry {
     public static final String BASE_LANG = "jade.plugin." + ClaySoldiersCommon.MOD_ID + ".%s.%s";
 
 
-    public static final ResourceLocation CLAY_MOB = ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_mob");
-    public static final ResourceLocation CLAY_SOLDIER = ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_soldier");
-    public static final ResourceLocation ZOMBIE_CLAY_SOLDIER = ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "zombie_clay_soldier");
-    public static final ResourceLocation CLAY_WRAITH = ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_wraith");
-    public static final ResourceLocation VAMPIRE_SOLDIER = ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "vampire_clay_soldier");
+    public static final Identifier CLAY_MOB = Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_mob");
+    public static final Identifier CLAY_SOLDIER = Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_soldier");
+    public static final Identifier ZOMBIE_CLAY_SOLDIER = Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "zombie_clay_soldier");
+    public static final Identifier CLAY_WRAITH = Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_wraith");
+    public static final Identifier VAMPIRE_SOLDIER = Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "vampire_clay_soldier");
 
-    public static final ResourceLocation EASEL_BLOCK = ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "easel_block_storage");
-    public static final ResourceLocation HAMSTER_WHEEL_BLOCK = ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "hamster_wheel");
+    public static final Identifier EASEL_BLOCK = Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "easel_block_storage");
+    public static final Identifier HAMSTER_WHEEL_BLOCK = Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "hamster_wheel");
 
-    public static final ResourceLocation BOSS_CLAY_SOLDIER = ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "boss_clay_soldier");
+    public static final Identifier BOSS_CLAY_SOLDIER = Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "boss_clay_soldier");
 
 
     static {

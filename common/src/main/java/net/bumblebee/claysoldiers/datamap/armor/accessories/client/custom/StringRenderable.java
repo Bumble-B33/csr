@@ -5,8 +5,8 @@ import net.bumblebee.claysoldiers.datamap.armor.accessories.client.AccessoryRend
 import net.bumblebee.claysoldiers.datamap.armor.accessories.client.IAccessoryRenderLayer;
 import net.bumblebee.claysoldiers.datamap.armor.accessories.client.RenderableAccessory;
 import net.bumblebee.claysoldiers.datamap.armor.accessories.custom.TextureAccessoryData;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 
 public class StringRenderable implements RenderableAccessory<TextureAccessoryData> {
     @Override
@@ -15,7 +15,7 @@ public class StringRenderable implements RenderableAccessory<TextureAccessoryDat
                 renderedFrom.getSoldierModel(),
                 claySoldier.renderStateFrom,
                 pPoseStack,
-                RenderType.entityTranslucent(data.textureLocation()),
+                RenderTypes.entityTranslucent(data.textureLocation()),
                 pPackedLight,
                 claySoldier.overlayCords0,
                 claySoldier.outlineColor,

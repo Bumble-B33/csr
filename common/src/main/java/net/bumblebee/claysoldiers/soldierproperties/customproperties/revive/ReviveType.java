@@ -110,15 +110,15 @@ public enum ReviveType implements StringRepresentable, KeyableTranslatableProper
     }
     private static ReviveResult zombieRevive(AbstractClaySoldierEntity toRevive, AbstractClaySoldierEntity reviver, boolean curable) {
         return ReviveResult.zombieOrFail(toRevive.convertToSoldier(ModEntityTypes.ZOMBIE_CLAY_SOLDIER_ENTITY.get(), (convertedTo) -> {
-            convertedTo.setClayTeamType(reviver.getClayTeamType());
-            convertedTo.setPreviousTeam(toRevive.getClayTeamType());
+            convertedTo.setClayTeamType(reviver.getClayTeamHolder());
+            convertedTo.setPreviousTeam(toRevive.getClayTeamHolder());
             convertedTo.setCurable(curable);
         }));
     }
 
     private static ReviveResult medicRevive(ServerLevel level, AbstractClaySoldierEntity toRevive, AbstractClaySoldierEntity reviver) {
         return ReviveResult.soldierOrFail(toRevive.convertToSoldier(ModEntityTypes.CLAY_SOLDIER_ENTITY.get(), (convertedTo) -> {
-            convertedTo.setClayTeamType(reviver.getClayTeamType());
+            convertedTo.setClayTeamType(reviver.getClayTeamHolder());
             convertedTo.setHealth(convertedTo.getMaxHealth() / 2);
         }));
     }

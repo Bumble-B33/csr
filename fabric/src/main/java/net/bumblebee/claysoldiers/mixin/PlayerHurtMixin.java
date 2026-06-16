@@ -1,7 +1,7 @@
 package net.bumblebee.claysoldiers.mixin;
 
+import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.item.claymobspawn.ClaySoldierSpawnItem;
-import net.bumblebee.claysoldiers.util.ErrorHandler;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
@@ -23,7 +23,7 @@ public abstract class PlayerHurtMixin {
                     ClaySoldierSpawnItem.onPlayerHurt(self, livingEntity);
                 }
             } catch (RuntimeException e) {
-                ErrorHandler.INSTANCE.handle("Error mixin Player#hurtServer", e);
+                ClaySoldiersCommon.ERROR_HANDLER.error("Error mixin Player#hurtServer", e);
             }
         }
     }

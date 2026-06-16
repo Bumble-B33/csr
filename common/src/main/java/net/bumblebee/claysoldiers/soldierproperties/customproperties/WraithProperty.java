@@ -13,7 +13,7 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.ExtraCodecs;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -51,7 +51,7 @@ public record WraithProperty(int duration, float damage, List<SpecialAttack<?>> 
     public Consumer<ClayWraithEntity> onSpawnEffect() {
         return wraith -> {
             wraith.getAttributes().addTransientAttributeModifiers(
-                    Multimaps.forMap(Map.of(Attributes.ATTACK_DAMAGE, new AttributeModifier(ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "bonus_damage"), damage, AttributeModifier.Operation.ADD_VALUE)))
+                    Multimaps.forMap(Map.of(Attributes.ATTACK_DAMAGE, new AttributeModifier(Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "bonus_damage"), damage, AttributeModifier.Operation.ADD_VALUE)))
             );
             wraith.setAttackFunctions(attackModifiers);
         };

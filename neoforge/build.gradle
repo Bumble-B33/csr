@@ -18,12 +18,7 @@ repositories {
         name = "ModMaven"
         url = "https://modmaven.dev"
     }
-    maven {
-        url "https://www.cursemaven.com"
-        content {
-            includeGroup "curse.maven"
-        }
-    }
+
 
     maven {
         name = "SmartBrainLib (SBL) Maven Repo"
@@ -42,10 +37,17 @@ repositories {
     maven { url 'https://maven.fabricmc.net' }
     maven { url 'https://maven.shedaniel.me/' }
 
-    // Create
-    maven { url = "https://maven.createmod.net" } // Create, Ponder, Flywheel
-    maven { url = "https://mvn.devos.one/snapshots" } // Registrate
-    maven { url = "https://raw.githubusercontent.com/Fuzss/modresources/main/maven/" } // ForgeConfigAPIPort
+    exclusiveContent {
+        forRepository {
+            maven {
+                name = "Modrinth"
+                url = "https://api.modrinth.com/maven"
+            }
+        }
+        filter {
+            includeGroup "maven.modrinth"
+        }
+    }
 }
 
 neoForge {
@@ -55,10 +57,6 @@ neoForge {
     if (at.exists()) {
         accessTransformers.from(at.absolutePath)
     }
-    parchment {
-        minecraftVersion = parchment_minecraft
-        mappingsVersion = parchment_version
-    }
     runs {
         configureEach {
             systemProperty('neoforge.enabledGameTestNamespaces', mod_id)
@@ -66,13 +64,19 @@ neoForge {
         }
         client {
             client()
+            gameDirectory = this.mkdir(this.file("runs/client"))
         }
         data {
             clientData()
-            programArguments.addAll '--mod', project.mod_id, '--all', '--output', file('../common/src/generated/resources').getAbsolutePath(), '--existing', file('../common/src/main/resources/').getAbsolutePath()
+            gameDirectory = this.mkdir(this.file("runs/data"))
+            // DataGen can be run by - "./gradlew :neoforge:runData" in Terminal.
+            // Specify the modid for data generation, where to output the resulting resource, and where to look for existing resources.
+            programArguments.addAll '--mod', project.mod_id, '--all', '--output', file('../common/src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
         }
         server {
             server()
+            this.file("runs/server").createParentDirectories()
+            gameDirectory = this.mkdir(this.file("runs/server"))
         }
     }
     mods {
@@ -87,25 +91,36 @@ dependencies {
     // at runtime, use the full JEI jar for NeoForge
     runtimeOnly("mezz.jei:jei-${minecraft_version}-neoforge:${jei_version}")
 
-    implementation("curse.maven:jade-324717:${jade_id_neo}")
-    compileOnly("io.wispforest:accessories-neoforge:${accessories_version}+${minecraft_version}")
-    runtimeOnly("io.wispforest:accessories-neoforge:${accessories_version}+${minecraft_version}")
+    implementation("maven.modrinth:jade:${jade_neo_version}")
 
+    //compileOnly("io.wispforest:accessories-neoforge:${accessories_version}+${minecraft_version}")
+    //runtimeOnly("io.wispforest:accessories-neoforge:${accessories_version}+${minecraft_version}")
 
-    implementation "net.tslat.smartbrainlib:SmartBrainLib-neoforge-${sbl_version}"
-
-    // Todo
-    // compileOnly("com.simibubi.create:create-${minecraft_version}:${create_version}:slim") { transitive = false }
-    // compileOnly("net.createmod.ponder:Ponder-NeoForge-${minecraft_version}:${ponder_version}")
-    //compileOnly("dev.engine-room.flywheel:flywheel-neoforge-api-${minecraft_version}:${flywheel_version}")
-    //runtimeOnly("dev.engine-room.flywheel:flywheel-neoforge-${minecraft_version}:${flywheel_version}")
-    // compileOnly("com.tterrag.registrate:Registrate:${registrate_version}")
-
-    // Needed for DataGen or Create Crashes
-    //runtimeOnly("top.theillusivec4.curios:curios-neoforge:${curios_version}")
-    //compileOnly("top.theillusivec4.curios:curios-neoforge:${curios_version}:api")
+    // Needed for DataGen
+    compileOnly "top.theillusivec4.curios:curios-neoforge:${curios_version}:api"
+    runtimeOnly "top.theillusivec4.curios:curios-neoforge:${curios_version}"
 
     //implementation "curse.maven:just-enough-resources-jer-240630:${jer_id_neo}"
 }
 
 sourceSets.main.resources { srcDir 'src/generated/resources' }
+
+// Implement mcgradleconventions loader attribute
+// Implement mcgradleconventions loader attribute
+def loaderAttribute = Attribute.of('io.github.mcgradleconventions.loader', String)
+['apiElements', 'runtimeElements', 'sourcesElements', 'javadocElements'].each { variant ->
+    configurations.named("$variant") {
+        attributes {
+            attribute(loaderAttribute, 'neoforge')
+        }
+    }
+}
+sourceSets.configureEach {
+    [it.compileClasspathConfigurationName, it.runtimeClasspathConfigurationName, it.getTaskName(null, 'jarJar')].each { variant ->
+        configurations.named("$variant") {
+            attributes {
+                attribute(loaderAttribute, 'neoforge')
+            }
+        }
+    }
+}

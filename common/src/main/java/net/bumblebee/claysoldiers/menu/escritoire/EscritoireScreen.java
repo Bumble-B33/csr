@@ -1,13 +1,13 @@
 package net.bumblebee.claysoldiers.menu.escritoire;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
@@ -16,12 +16,12 @@ import net.minecraft.world.item.ItemStack;
 import java.util.List;
 
 public class EscritoireScreen extends AbstractContainerScreen<EscritoireMenu> {
-    private static final ResourceLocation SCROLLER_SPRITE = ResourceLocation.withDefaultNamespace("container/stonecutter/scroller");
-    private static final ResourceLocation SCROLLER_DISABLED_SPRITE = ResourceLocation.withDefaultNamespace("container/stonecutter/scroller_disabled");
-    private static final ResourceLocation RECIPE_SELECTED_SPRITE = ResourceLocation.withDefaultNamespace("container/stonecutter/recipe_selected");
-    private static final ResourceLocation RECIPE_HIGHLIGHTED_SPRITE = ResourceLocation.withDefaultNamespace("container/stonecutter/recipe_highlighted");
-    private static final ResourceLocation RECIPE_SPRITE = ResourceLocation.withDefaultNamespace("container/stonecutter/recipe");
-    private static final ResourceLocation BG_LOCATION = ResourceLocation.withDefaultNamespace("textures/gui/container/stonecutter.png");
+    private static final Identifier SCROLLER_SPRITE = Identifier.withDefaultNamespace("container/stonecutter/scroller");
+    private static final Identifier SCROLLER_DISABLED_SPRITE = Identifier.withDefaultNamespace("container/stonecutter/scroller_disabled");
+    private static final Identifier RECIPE_SELECTED_SPRITE = Identifier.withDefaultNamespace("container/stonecutter/recipe_selected");
+    private static final Identifier RECIPE_HIGHLIGHTED_SPRITE = Identifier.withDefaultNamespace("container/stonecutter/recipe_highlighted");
+    private static final Identifier RECIPE_SPRITE = Identifier.withDefaultNamespace("container/stonecutter/recipe");
+    private static final Identifier BG_LOCATION = Identifier.withDefaultNamespace("textures/gui/container/stonecutter.png");
     private static final int SCROLLER_WIDTH = 12;
     private static final int SCROLLER_HEIGHT = 15;
     private static final int RECIPES_COLUMNS = 4;
@@ -45,18 +45,12 @@ public class EscritoireScreen extends AbstractContainerScreen<EscritoireMenu> {
     }
 
     @Override
-    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        super.render(guiGraphics, mouseX, mouseY, partialTick);
-        this.renderTooltip(guiGraphics, mouseX, mouseY);
-    }
-
-    @Override
-    protected void renderBg(GuiGraphics guiGraphics, float partialTick, int mouseX, int mouseY) {
+    public void extractBackground(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
         int i = this.leftPos;
         int j = this.topPos;
         guiGraphics.blit(RenderPipelines.GUI_TEXTURED, BG_LOCATION, i, j, 0, 0, this.imageWidth, this.imageHeight, 256, 256);
         int k = (int)(41.0F * this.scrollOffs);
-        ResourceLocation scrollBarLocation = this.isScrollBarActive() ? SCROLLER_SPRITE : SCROLLER_DISABLED_SPRITE;
+        Identifier scrollBarLocation = this.isScrollBarActive() ? SCROLLER_SPRITE : SCROLLER_DISABLED_SPRITE;
         guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, scrollBarLocation, i + 119, j + 15 + k, SCROLLER_WIDTH, SCROLLER_HEIGHT);
         int recipeX = this.leftPos + RECIPES_X;
         int recipeY = this.topPos + RECIPES_Y;
@@ -66,8 +60,8 @@ public class EscritoireScreen extends AbstractContainerScreen<EscritoireMenu> {
     }
 
     @Override
-    protected void renderTooltip(GuiGraphics guiGraphics, int x, int y) {
-        super.renderTooltip(guiGraphics, x, y);
+    protected void extractTooltip(GuiGraphicsExtractor guiGraphics, int x, int y) {
+        super.extractTooltip(guiGraphics, x, y);
         if (this.displayRecipes) {
             int i = this.leftPos + RECIPES_X;
             int j = this.topPos + RECIPES_Y;
@@ -85,7 +79,7 @@ public class EscritoireScreen extends AbstractContainerScreen<EscritoireMenu> {
         }
     }
 
-    private void renderRecipes(GuiGraphics guiGraphics, int x, int y, int startIndex) {
+    private void renderRecipes(GuiGraphicsExtractor guiGraphics, int x, int y, int startIndex) {
         List<ItemStack> list = this.menu.getRecipes();
 
         for (int i = this.startIndex; i < startIndex && i < this.menu.getNumRecipes(); i++) {
@@ -93,25 +87,25 @@ public class EscritoireScreen extends AbstractContainerScreen<EscritoireMenu> {
             int k = x + j % 4 * 16;
             int l = j / 4;
             int i1 = y + l * 18 + 2;
-            guiGraphics.renderItem(list.get(i), k, i1);
+            guiGraphics.item(list.get(i), k, i1);
         }
     }
-    private void renderButtons(GuiGraphics guiGraphics, int mouseX, int mouseY, int x, int y, int lastVisibleElementIndex) {
+    private void renderButtons(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, int x, int y, int lastVisibleElementIndex) {
         for (int i = this.startIndex; i < lastVisibleElementIndex && i < this.menu.getNumRecipes(); i++) {
             int j = i - this.startIndex;
             int k = x + j % 4 * 16;
             int l = j / 4;
             int i1 = y + l * 18 + 2;
-            ResourceLocation resourcelocation;
+            Identifier Identifier;
             if (i == this.menu.getSelectedRecipeIndex()) {
-                resourcelocation = RECIPE_SELECTED_SPRITE;
+                Identifier = RECIPE_SELECTED_SPRITE;
             } else if (mouseX >= k && mouseY >= i1 && mouseX < k + 16 && mouseY < i1 + 18) {
-                resourcelocation = RECIPE_HIGHLIGHTED_SPRITE;
+                Identifier = RECIPE_HIGHLIGHTED_SPRITE;
             } else {
-                resourcelocation = RECIPE_SPRITE;
+                Identifier = RECIPE_SPRITE;
             }
 
-            guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, resourcelocation, k, i1 - 1, 16, 18);
+            guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, Identifier, k, i1 - 1, 16, 18);
         }
     }
 

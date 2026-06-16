@@ -7,6 +7,19 @@ import net.minecraft.world.item.ItemStack;
 import java.util.List;
 
 public interface ItemGenerator {
+    NonNullList<ItemStack> EMPTY_LIST = NonNullList.withSize(0, ItemStack.EMPTY);
+    ItemGenerator EMPTY = new ItemGenerator() {
+        @Override
+        public Limit limitedBy() {
+            return Limit.ZERO;
+        }
+
+        @Override
+        public NonNullList<ItemStack> generateForTag(List<WeightedItem> available, int count, RandomSource random) {
+            return EMPTY_LIST;
+        }
+    };
+
 
     default NonNullList<ItemStack> generate(List<WeightedItem> available, int count, RandomSource random, List<Generator> all) {
         return generateForTag(available, count, random);

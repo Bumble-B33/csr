@@ -2,19 +2,21 @@ package net.bumblebee.claysoldiers.platform;
 
 import net.bumblebee.claysoldiers.ClaySoldierFabric;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
+import net.bumblebee.claysoldiers.block.chipassembler.ChipEnergyStorage;
 import net.bumblebee.claysoldiers.block.hamsterwheel.HamsterWheelBlockEntity;
-import net.bumblebee.claysoldiers.block.hamsterwheel.IHamsterWheelEnergyStorage;
+import net.bumblebee.claysoldiers.block.hamsterwheel.HamsterWheelEnergyStorage;
 import net.bumblebee.claysoldiers.capability.*;
 import net.bumblebee.claysoldiers.platform.services.AbstractCapabilityManger;
 import net.fabricmc.fabric.api.lookup.v1.block.BlockApiCache;
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.packs.resources.PreparableReloadListener;
 import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NonNull;
 
 public class FabricCapabilityManger extends AbstractCapabilityManger implements PreparableReloadListener {
-    public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "csr_capabilities");
+    public static final Identifier ID = Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "csr_capabilities");
 
     @Override
     public IBlockCache<IBlockStorageAccess> create(ServerLevel level, BlockPos pos) {
@@ -32,8 +34,13 @@ public class FabricCapabilityManger extends AbstractCapabilityManger implements 
     }
 
     @Override
-    public IHamsterWheelEnergyStorage createEnergyStorage(HamsterWheelBlockEntity hamsterWheelBlockEntity) {
+    public HamsterWheelEnergyStorage createEnergyStorage(HamsterWheelBlockEntity hamsterWheelBlockEntity) {
         return new FabricEnergyStorage(hamsterWheelBlockEntity);
+    }
+
+    @Override
+    public ChipEnergyStorage createEnergyChipStorage() {
+        return new ChipAssemblerEnergyStorage();
     }
 
     private record FabricBlueprintRequestCache(BlockApiCache<BlueprintRequestHandler, Void> cache) implements IBlockCache<BlueprintRequestHandler> {
@@ -46,6 +53,11 @@ public class FabricCapabilityManger extends AbstractCapabilityManger implements 
         public @Nullable BlueprintRequestHandler getCapability() {
             return cache.find(null);
         }
+
+        @Override
+        public @NonNull String toString() {
+            return "Cache: %s".formatted(getCapability());
+        }
     }
     private record FabricPoiCache(BlockApiCache<AssignableWorksiteCapability, Void> cache) implements IBlockCache<AssignableWorksiteCapability> {
         @Override
@@ -56,6 +68,11 @@ public class FabricCapabilityManger extends AbstractCapabilityManger implements 
         @Override
         public @Nullable AssignableWorksiteCapability getCapability() {
             return cache.find(null);
+        }
+
+        @Override
+        public @NonNull String toString() {
+            return "Cache: %s".formatted(getCapability());
         }
     }
 

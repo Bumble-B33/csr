@@ -5,13 +5,13 @@ import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.claysoldierpredicate.ClaySoldierInventoryQuery;
 import net.bumblebee.claysoldiers.init.ModRegistries;
 import net.bumblebee.claysoldiers.soldierproperties.combined.ValueCombiner;
-import net.minecraft.Util;
 import net.minecraft.core.Holder;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.TagKey;
+import net.minecraft.util.Util;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -86,7 +86,7 @@ public class SoldierPropertyType<T> implements ToIntFunction<T>, ValueCombiner<T
 
     public String getDescriptionId() {
         if (descriptionId == null) {
-            descriptionId = Util.makeDescriptionId(ClaySoldiersCommon.CLAY_SOLDIER_PROPERTY, getOrCreateReference().key().location());
+            descriptionId = Util.makeDescriptionId(ClaySoldiersCommon.CLAY_SOLDIER_PROPERTY, getOrCreateReference().key().identifier());
         }
         return descriptionId;
     }

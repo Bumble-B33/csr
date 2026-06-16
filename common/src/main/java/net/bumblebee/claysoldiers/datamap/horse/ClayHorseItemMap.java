@@ -1,7 +1,6 @@
 package net.bumblebee.claysoldiers.datamap.horse;
 
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,9 +22,5 @@ public final class ClayHorseItemMap {
     @Nullable
     public static ClayHorseWearableProperties get(Item item) {
         return MAP.get(item);
-    }
-    @Nullable
-    public static ClayHorseWearableProperties get(ItemStack stack) {
-        return MAP.get(stack.getItem());
     }
 }

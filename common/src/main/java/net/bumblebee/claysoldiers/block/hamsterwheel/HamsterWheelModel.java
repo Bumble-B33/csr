@@ -10,18 +10,18 @@ import net.minecraft.client.model.geom.builders.CubeListBuilder;
 import net.minecraft.client.model.geom.builders.LayerDefinition;
 import net.minecraft.client.model.geom.builders.MeshDefinition;
 import net.minecraft.client.model.geom.builders.PartDefinition;
-import net.minecraft.client.renderer.RenderType;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
-import org.joml.Vector3f;
+import org.joml.Vector3fc;
 
-import java.util.Set;
+import java.util.function.Consumer;
 
 public class HamsterWheelModel extends Model<HamsterWheelRenderState> {
-    public static final ModelLayerLocation LAYER_LOCATION = new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "hamster_wheel"), "main");
+    public static final ModelLayerLocation LAYER_LOCATION = new ModelLayerLocation(Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "hamster_wheel"), "main");
 
     public HamsterWheelModel(ModelPart root) {
-        super(root.getChild("wheel"), RenderType::entityCutoutNoCull);
+        super(root.getChild("wheel"), RenderTypes::entityCutout);
     }
 
     public static LayerDefinition createWheelLayer() {
@@ -67,7 +67,7 @@ public class HamsterWheelModel extends Model<HamsterWheelRenderState> {
         return LayerDefinition.create(meshdefinition, 32, 32);
     }
 
-    public void getExtents(Set<Vector3f> set) {
+    public void getExtents(Consumer<Vector3fc> set) {
         root().getExtentsForGui(new PoseStack(), set);
     }
 

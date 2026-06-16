@@ -6,7 +6,7 @@ import net.bumblebee.claysoldiers.capability.AssignableWorksiteCapability;
 import net.bumblebee.claysoldiers.capability.BlueprintRequestHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -20,13 +20,13 @@ import org.jetbrains.annotations.Nullable;
 public class ModCapabilities {
     public static final BlockCapability<BlueprintRequestHandler, Void> BLUEPRINT_REQUEST_CAP =
             BlockCapability.createVoid(
-                    ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "blueprint_request_handler"),
+                    Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "blueprint_request_handler"),
                     BlueprintRequestHandler.class
             );
 
     public static final BlockCapability<AssignableWorksiteCapability, Void> ASSIGNABLE_POI_CAP =
             BlockCapability.createVoid(
-                    ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "assignable_poi_cap"),
+                    Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "assignable_poi_cap"),
                     AssignableWorksiteCapability.class
             );
 
@@ -46,5 +46,7 @@ public class ModCapabilities {
                 (easel, unused) -> easel.getBlueprintRequestHandler());
         event.registerBlockEntity(ASSIGNABLE_POI_CAP, ModBlockEntities.HAMSTER_WHEEL_BLOCK_ENTITY.get(),
                 (wheel, unused) -> wheel.getPoiCap());
+
+        event.registerBlockEntity(Capabilities.Energy.BLOCK, ModBlockEntities.CHIP_ASSEMBLER_BLOCK_ENTITY.get(), (object, context) -> (EnergyHandler) object.getEnergyStorage(context));
     }
 }

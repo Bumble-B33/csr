@@ -1,38 +1,40 @@
 package net.bumblebee.claysoldiers;
 
 import com.mojang.serialization.Codec;
-import net.bumblebee.claysoldiers.blueprint.BlueprintData;
 import net.bumblebee.claysoldiers.blueprint.BlueprintManager;
 import net.bumblebee.claysoldiers.claypoifunction.ClayPoiFunctions;
+import net.bumblebee.claysoldiers.claysoldierchips.ClaySoldierChips;
+import net.bumblebee.claysoldiers.claysoldierchips.addon.ClaySoldierChipAddons;
 import net.bumblebee.claysoldiers.claysoldierpredicate.ClayPredicates;
 import net.bumblebee.claysoldiers.entity.common.ClayWraithEntity;
 import net.bumblebee.claysoldiers.entity.common.boss.BossBatEntity;
 import net.bumblebee.claysoldiers.entity.common.boss.BossClaySoldierEntity;
 import net.bumblebee.claysoldiers.entity.common.horse.ClayHorseEntity;
 import net.bumblebee.claysoldiers.entity.common.horse.ClayPegasusEntity;
-import net.bumblebee.claysoldiers.entity.common.programmable.chips.ClaySoldierChips;
-import net.bumblebee.claysoldiers.entity.common.soldier.AbstractClaySoldierEntity;
 import net.bumblebee.claysoldiers.entity.common.programmable.ProgrammableClaySoldierEntity;
+import net.bumblebee.claysoldiers.entity.common.soldier.AbstractClaySoldierEntity;
 import net.bumblebee.claysoldiers.init.*;
+import net.bumblebee.claysoldiers.item.claymobspawn.MultiSpawnItem;
 import net.bumblebee.claysoldiers.networking.*;
 import net.bumblebee.claysoldiers.networking.spawnpayloads.ClayBossSpawnPayload;
-import net.bumblebee.claysoldiers.networking.spawnpayloads.ClayMobSpawnPayload;
 import net.bumblebee.claysoldiers.networking.spawnpayloads.ClaySoldierSpawnPayload;
 import net.bumblebee.claysoldiers.networking.spawnpayloads.ProgrammableClaySoldierSpawnPayload;
 import net.bumblebee.claysoldiers.platform.services.*;
+import net.bumblebee.claysoldiers.recipe.ClientRecipeAccess;
 import net.bumblebee.claysoldiers.soldieritemtypes.SoldierItemType;
 import net.bumblebee.claysoldiers.soldierproperties.SoldierPropertyTypes;
 import net.bumblebee.claysoldiers.soldierproperties.customproperties.specialattack.SpecialAttacks;
-import net.bumblebee.claysoldiers.team.ClayMobTeam;
 import net.bumblebee.claysoldiers.team.ClayMobTeamManger;
-import net.bumblebee.claysoldiers.team.TeamLoyaltyManger;
+import net.bumblebee.claysoldiers.team.loyalty.TeamLoyaltyManger;
+import net.bumblebee.claysoldiers.util.ErrorHandler;
+import net.minecraft.core.Holder;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.Registry;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.Services;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.ProblemReporter;
@@ -41,12 +43,13 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.GameRules;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.ServiceLoader;
 import java.util.function.BiConsumer;
@@ -64,12 +67,11 @@ public class ClaySoldiersCommon {
 
     public static final IPlatformHelper PLATFORM = load(IPlatformHelper.class);
     public static final IDataMapGetter DATA_MAP = load(IDataMapGetter.class);
-    public static final INetworkManger NETWORK_MANGER = load(INetworkManger.class);
+    public static final NetworkManger NETWORK_MANGER = load(NetworkManger.class);
     public static final ICommonHooks COMMON_HOOKS = load(ICommonHooks.class);
     public static final AbstractCapabilityManger CAPABILITY_MANGER = load(AbstractCapabilityManger.class);
-
-    public static final GameRules.Key<GameRules.IntegerValue> CLAY_SOLDIER_DROP_RULE = PLATFORM.createIntRule("soldierDropThemSelf", GameRules.Category.DROPS, 50);
-    public static final GameRules.Key<GameRules.BooleanValue> CLAY_SOLDIER_INVENTORY_DROP_RULE = PLATFORM.createBoolRule("soldierDropInventory", GameRules.Category.DROPS, true);
+    public static final IConfig CONFIG = load(IConfig.class);
+    public static final ErrorHandler ERROR_HANDLER = new ErrorHandler(LOGGER, PLATFORM.isDevEnv());
 
     public static final String CSR_DATA_PACK_LOCATION = "data/datapacks";
     public static final String CSR_DEFAULT_DATA_PACK_PATH = "csr_default_datapack";
@@ -77,25 +79,24 @@ public class ClaySoldiersCommon {
     public static final String CSR_DEFAULT_DATA_PACK_LANG = "resourcePack.%s.csr_default.name".formatted(ClaySoldiersCommon.MOD_ID);
     public static final String CSR_DEFAULT_PACK_DESCRIPTION = "datapack.%s.%s.description".formatted(MOD_ID, CSR_DEFAULT_DATA_PACK_PATH);
 
-    public static final String BLUEPRINT_PACK_PATH = "blueprint_pack";
-    public static final String BLUEPRINT_DATA_PACK_LANG = "resourcePack.%s.blueprint.name".formatted(ClaySoldiersCommon.MOD_ID);
-    public static final String BLUEPRINT_PACK_DESCRIPTION = "datapack.%s.%s.description".formatted(MOD_ID, BLUEPRINT_PACK_PATH);
-    public static final String BLUEPRINT_PACK_SOURCE = "pack.source.%s.%s".formatted(MOD_ID, BLUEPRINT_PACK_PATH);
-
-    public static Predicate<Player> IS_WEARING_GOGGLES = p -> p.getItemBySlot(EquipmentSlot.HEAD).is(ModItems.CLAY_GOGGLES.get());
-    public final static List<Predicate<Player>> IS_WEARING_CLAY_SOLDIER = new ArrayList<>();
+    public final static List<Predicate<Player>> IS_WEARING_GOGGLES = new ArrayList<>(List.of(
+            p -> p.getItemBySlot(EquipmentSlot.HEAD).is(ModTags.Items.CLAY_GOGGLES_ITEM)
+    ));
+    public final static List<Predicate<Player>> IS_WEARING_CLAY_SOLDIER = new ArrayList<>(List.of(
+            p -> p.getItemBySlot(EquipmentSlot.HEAD).is(ModItems.CLAY_SOLDIER.get())
+    ));
     public final static List<Predicate<Player>> IS_WEARING_STATOMETER = new ArrayList<>(List.of(
-            p -> ModItems.STATOMETER.is(p.getOffhandItem()),
-            p -> ModItems.STATOMETER.is(p.getMainHandItem())
-            ));
+            p -> p.getOffhandItem().is(ModTags.Items.STAT_ITEM),
+            p -> p.getMainHandItem().is(ModTags.Items.STAT_ITEM)
+    ));
 
     @Nullable
     public static Supplier<@Nullable Player> clientPlayer;
 
-    public static boolean claySolderMenuModify = false;
+    public static final ClientRecipeAccess CLIENT_RECIPE_ACCESS = ClientRecipeAccess.INSTANCE;
+
 
     public static void init() {
-        ModRegistries.init();
         ModItems.init();
         ModBlocks.init();
         ModBlockEntities.init();
@@ -116,32 +117,34 @@ public class ClaySoldiersCommon {
         ModItemGenerators.init();
         ModBossBehaviours.init();
         ModPoiTypes.init();
-        ModCriterions.init();
+        ModCritirions.init();
         ClaySoldierChips.init();
+        ClaySoldierChipAddons.init();
 
         ModLootTables.init();
 
-        NETWORK_MANGER.registerS2CPayload(ClayMobItemBreakParticles.ID, ClayMobItemBreakParticles.STREAM_CODEC, ClayMobItemBreakParticles::handleClient);
-        NETWORK_MANGER.registerS2CPayload(SoldierItemChangePayload.ID, SoldierItemChangePayload.STREAM_CODEC, SoldierItemChangePayload::handleClient);
-        NETWORK_MANGER.registerS2CPayload(ClaySoldierReviveCooldownPayload.ID, ClaySoldierReviveCooldownPayload.STREAM_CODEC, ClaySoldierReviveCooldownPayload::handleClient);
-        NETWORK_MANGER.registerS2CPayload(SoldierCarriedChangePayload.ID, SoldierCarriedChangePayload.STREAM_CODEC, SoldierCarriedChangePayload::handleClient);
+        NETWORK_MANGER.registerS2CPayload(ClayMobItemBreakParticles.ID, ClayMobItemBreakParticles.STREAM_CODEC);
+        NETWORK_MANGER.registerS2CPayload(SoldierItemChangePayload.ID, SoldierItemChangePayload.STREAM_CODEC);
+        NETWORK_MANGER.registerS2CPayload(ClaySoldierReviveCooldownPayload.ID, ClaySoldierReviveCooldownPayload.STREAM_CODEC);
+        NETWORK_MANGER.registerS2CPayload(SoldierCarriedChangePayload.ID, SoldierCarriedChangePayload.STREAM_CODEC);
+        NETWORK_MANGER.registerS2CPayload(ClaySoldierChipUpdatePayload.ID, ClaySoldierChipUpdatePayload.STREAM_CODEC);
 
-        NETWORK_MANGER.registerS2CPayload(ClayTeamPlayerDataPayload.Single.ID, ClayTeamPlayerDataPayload.STREAM_CODEC_SINGLE, ClayTeamPlayerDataPayload.Single::handleClient);
-        NETWORK_MANGER.registerS2CPayload(ClayTeamPlayerDataPayload.Remove.ID, ClayTeamPlayerDataPayload.STREAM_CODEC_REMOVE, ClayTeamPlayerDataPayload.Remove::handleClient);
-        NETWORK_MANGER.registerS2CPayload(ClayTeamPlayerDataPayload.Creation.ID, ClayTeamPlayerDataPayload.STREAM_CODEC_CREATION, ClayTeamPlayerDataPayload.Creation::handleClient);
+        NETWORK_MANGER.registerS2CPayload(ClayTeamPlayerDataPayload.Single.ID, ClayTeamPlayerDataPayload.STREAM_CODEC_SINGLE);
+        NETWORK_MANGER.registerS2CPayload(ClayTeamPlayerDataPayload.Remove.ID, ClayTeamPlayerDataPayload.STREAM_CODEC_REMOVE);
+        NETWORK_MANGER.registerS2CPayload(ClayTeamPlayerDataPayload.Creation.ID, ClayTeamPlayerDataPayload.STREAM_CODEC_CREATION);
 
-        NETWORK_MANGER.registerS2CPayload(BlueprintClientPayload.ID, BlueprintClientPayload.STREAM_CODEC, BlueprintClientPayload::handleClient);
-        NETWORK_MANGER.registerS2CPayload(CapabilityStatusPayload.ID, CapabilityStatusPayload.STREAM_CODEC, CapabilityStatusPayload::handleClient);
+        NETWORK_MANGER.registerS2CPayload(BlueprintClientPayload.ID, BlueprintClientPayload.STREAM_CODEC);
+        NETWORK_MANGER.registerS2CPayload(CapabilityStatusPayload.ID, CapabilityStatusPayload.STREAM_CODEC);
 
-        NETWORK_MANGER.registerS2CPayload(HamsterWheelEnergyPayload.ID, HamsterWheelEnergyPayload.STREAM_CODEC, HamsterWheelEnergyPayload::handleClient);
+        NETWORK_MANGER.registerS2CPayload(HamsterWheelEnergyPayload.ID, HamsterWheelEnergyPayload.STREAM_CODEC);
 
-        NETWORK_MANGER.registerS2CPayload(ClayMobSpawnPayload.ID, ClayMobSpawnPayload.STREAM_CODEC, ClayMobSpawnPayload::handleClient);
-        NETWORK_MANGER.registerS2CPayload(ClaySoldierSpawnPayload.ID, ClaySoldierSpawnPayload.STREAM_CODEC, ClaySoldierSpawnPayload::handleClient);
-        NETWORK_MANGER.registerS2CPayload(ClayBossSpawnPayload.ID, ClayBossSpawnPayload.STREAM_CODEC, ClayBossSpawnPayload::handleClient);
-        NETWORK_MANGER.registerS2CPayload(ProgrammableClaySoldierSpawnPayload.ID, ProgrammableClaySoldierSpawnPayload.STREAM_CODEC, ProgrammableClaySoldierSpawnPayload::handleClient);
+        NETWORK_MANGER.registerS2CPayload(ClaySoldierSpawnPayload.ID, ClaySoldierSpawnPayload.STREAM_CODEC);
+        NETWORK_MANGER.registerS2CPayload(ClayBossSpawnPayload.ID, ClayBossSpawnPayload.STREAM_CODEC);
+        NETWORK_MANGER.registerS2CPayload(ProgrammableClaySoldierSpawnPayload.ID, ProgrammableClaySoldierSpawnPayload.STREAM_CODEC);
 
+        NETWORK_MANGER.registerS2CPayload(ChipAssemblyEnergyPayload.ID, ChipAssemblyEnergyPayload.STREAM_CODEC);
 
-        NETWORK_MANGER.registerS2CPayload(BlueprintPlacePayload.ID, BlueprintPlacePayload.STREAM_CODEC, BlueprintPlacePayload::handleClient);
+        NETWORK_MANGER.registerS2CPayload(BlueprintPlacePayload.ID, BlueprintPlacePayload.STREAM_CODEC);
     }
 
     public static void playerJoinsServerEvent(@Nullable ServerPlayer player, Stream<ServerPlayer> relevantPlayers) {
@@ -150,6 +153,19 @@ public class ClaySoldiersCommon {
         } else {
             relevantPlayers.forEach(serverPlayer -> playerJoinedServer(serverPlayer, true));
         }
+    }
+
+    public static void registerDispenseBehavior() {
+        MultiSpawnItem.registerDispenseBehavior(ModItems.CLAY_SOLDIER.get());
+        MultiSpawnItem.registerDispenseBehavior(ModItems.CAKE_HORSE.get());
+        MultiSpawnItem.registerDispenseBehavior(ModItems.GRASS_HORSE.get());
+        MultiSpawnItem.registerDispenseBehavior(ModItems.SNOW_HORSE.get());
+        MultiSpawnItem.registerDispenseBehavior(ModItems.MYCELIUM_HORSE.get());
+
+        MultiSpawnItem.registerDispenseBehavior(ModItems.CAKE_PEGASUS.get());
+        MultiSpawnItem.registerDispenseBehavior(ModItems.GRASS_PEGASUS.get());
+        MultiSpawnItem.registerDispenseBehavior(ModItems.SNOW_PEGASUS.get());
+        MultiSpawnItem.registerDispenseBehavior(ModItems.MYCELIUM_PEGASUS.get());
     }
 
     /**
@@ -171,7 +187,7 @@ public class ClaySoldiersCommon {
         sendWhenChannel(player, new CapabilityStatusPayload(AbstractCapabilityManger.getEnabledMap()), reload);
     }
 
-    private static void sendWhenChannel(ServerPlayer serverPlayer, CustomPacketPayload payload, boolean reload) {
+    public static void sendWhenChannel(ServerPlayer serverPlayer, CustomPacketPayload payload, boolean reload) {
         if (NETWORK_MANGER.hasChannel(serverPlayer, payload.type())) {
             ClaySoldiersCommon.NETWORK_MANGER.sendToPlayer(serverPlayer, payload);
             LOGGER.info("Sending {} to {} was {}", payload.type().id(), serverPlayer.getScoreboardName(), reload ? "reload" : "join");
@@ -182,29 +198,23 @@ public class ClaySoldiersCommon {
 
     public static void serverStartedEvent(MinecraftServer server) {
         LOGGER.info("TeamPlayerData on server: {}", TeamLoyaltyManger.getTeamPlayerData(server.overworld()));
-        LOGGER.info("Teams loaded: {}", ClayMobTeamManger.getAllKeys(server.registryAccess()).toList());
+        LOGGER.info("Teams loaded: {}", ClayMobTeamManger.getAll(server.registryAccess()).map(Holder::getRegisteredName).toList());
     }
 
     public static void entityAttributes(BiConsumer<EntityType<? extends LivingEntity>, AttributeSupplier> event) {
-        event.accept(ModEntityTypes.CLAY_SOLDIER_ENTITY.get(), AbstractClaySoldierEntity.setSoldierAttributes());
+        event.accept(ModEntityTypes.CLAY_SOLDIER_ENTITY.get(), AbstractClaySoldierEntity.createSoldierAttributes().build());
         event.accept(ModEntityTypes.CLAY_WRAITH.get(), ClayWraithEntity.setWraithAttributes());
-        event.accept(ModEntityTypes.ZOMBIE_CLAY_SOLDIER_ENTITY.get(), AbstractClaySoldierEntity.setSoldierAttributes());
-        event.accept(ModEntityTypes.VAMPIRE_CLAY_SOLDIER_ENTITY.get(), AbstractClaySoldierEntity.setSoldierAttributes());
+        event.accept(ModEntityTypes.ZOMBIE_CLAY_SOLDIER_ENTITY.get(), AbstractClaySoldierEntity.createSoldierAttributes().build());
+        event.accept(ModEntityTypes.VAMPIRE_CLAY_SOLDIER_ENTITY.get(), AbstractClaySoldierEntity.createSoldierAttributes().build());
         event.accept(ModEntityTypes.CLAY_HORSE_ENTITY.get(), ClayHorseEntity.createBaseHorseAttributes());
         event.accept(ModEntityTypes.CLAY_PEGASUS_ENTITY.get(), ClayPegasusEntity.createPegasusAttributes());
 
         event.accept(ModEntityTypes.BOSS_CLAY_SOLDIER_ENTITY.get(), BossClaySoldierEntity.bossAttributes());
-        event.accept(ModEntityTypes.PROGRAMMABLE_CLAY_SOLDIER_ENTITY.get(), ProgrammableClaySoldierEntity.setSoldierAttributes());
+        event.accept(ModEntityTypes.PROGRAMMABLE_CLAY_SOLDIER_ENTITY.get(), ProgrammableClaySoldierEntity.createSoldierAttributes().build());
         event.accept(ModEntityTypes.VAMPIRE_BAT.get(), BossBatEntity.createBatAttributes());
 
     }
 
-    public static void registerDynamicRegistry(DynamicRegistryEvent event) {
-        event.register(ModRegistries.BLUEPRINTS, BlueprintData.JSON_CODEC, BlueprintData.JSON_CODEC);
-        event.register(ModRegistries.SOLDIER_ITEM_TYPES, SoldierItemType.CODEC, null, ((id, location, value) -> value.onRegister(location)));
-        event.register(ModRegistries.CLAY_MOB_TEAMS, ClayMobTeam.CODEC_JSON, ClayMobTeam.CODEC_JSON,
-                (id, key, value) -> ClayMobTeamManger.appendFromItemMap(value.getGetFrom(), key));
-    }
 
     public static void onTagLoad(HolderLookup.Provider registryAccess, boolean client) {
         if (!client) {
@@ -212,8 +222,12 @@ public class ClaySoldiersCommon {
         }
     }
 
+    public static void setClientRecipes(Collection<? extends RecipeHolder<?>> recipes) {
+        ClaySoldiersCommon.CLIENT_RECIPE_ACCESS.fill(recipes);
+    }
+
     public static <T> T load(Class<T> clazz) {
-        final T loadedService = ServiceLoader.load(clazz)
+        final T loadedService = ServiceLoader.load(clazz, Services.class.getClassLoader())
                 .findFirst()
                 .orElseThrow(() -> new NullPointerException("Failed to load service for " + clazz.getName()));
         LOGGER.debug("Loaded {} for service {}", loadedService, clazz);
@@ -229,7 +243,7 @@ public class ClaySoldiersCommon {
     }
 
     public interface RegistryRegisteredCallBack<T> {
-        void onRegister(int id, ResourceLocation location, T value);
+        void onRegister(int id, Identifier location, T value);
     }
 
     public static class BlueprintTagLoad {
@@ -249,9 +263,13 @@ public class ClaySoldiersCommon {
                     throw new IllegalStateException("Cannot load Blueprint Tags on the Client");
                 }
             }
-            manger.onTagLoad(resourceManager, registries, registries.lookupOrThrow(Registries.BLOCK).get(ModTags.Blocks.BLUEPRINT_BLACK_LISTED).orElseThrow().stream().toList());
+            manger.onTagLoad(resourceManager, registries);
             manger = null;
             resourceManager = null;
         }
     }
+
+
+
+    //Todo Soldier Item Poi Source used after pick up
 }

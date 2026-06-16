@@ -2,9 +2,11 @@ package net.bumblebee.claysoldiers.entity.goal.workgoal;
 
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.blueprint.BlueprintRequest;
+import net.bumblebee.claysoldiers.blueprint.BlueprintRequestResult;
 import net.bumblebee.claysoldiers.capability.BlueprintRequestHandler;
 import net.bumblebee.claysoldiers.capability.IBlockCache;
-import net.bumblebee.claysoldiers.entity.common.soldier.AbstractClaySoldierEntity;
+import net.bumblebee.claysoldiers.claysoldierchips.ClayMobWorkAccess;
+import net.bumblebee.claysoldiers.entity.common.programmable.ProgrammableClaySoldierEntity;
 import net.bumblebee.claysoldiers.init.ModBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -14,7 +16,6 @@ import net.minecraft.world.level.LevelReader;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
-import java.util.function.Supplier;
 
 public class BuildBlueprintGoal extends AbstractWorkGoal {
     public static final String BUILDING_LANG = JOB_LANG_KEY.formatted(ClaySoldiersCommon.MOD_ID, "building");
@@ -28,10 +29,10 @@ public class BuildBlueprintGoal extends AbstractWorkGoal {
     private BlueprintRequest request = null;
     private boolean bringBack = false;
 
-    public BuildBlueprintGoal(AbstractClaySoldierEntity soldier, Supplier<WorkSelectorGoal> workSelector, int searchRange) {
+    public BuildBlueprintGoal(ProgrammableClaySoldierEntity soldier, ClayMobWorkAccess workSelector, SearchRange searchRange) {
         super(soldier, workSelector);
-        this.searchRange = searchRange;
-        this.verticalSearchRange = 2;
+        this.searchRange = searchRange.horizontalRange();
+        this.verticalSearchRange = searchRange.verticalRange();
     }
 
     @Override
@@ -88,8 +89,15 @@ public class BuildBlueprintGoal extends AbstractWorkGoal {
                     var returned = storage.tryInserting(soldier.getCarriedStack());
                     soldier.dropItemStack(returned);
                 }
-                soldier.setCarriedStack(storage.tryExtracting(stack -> stack.is(request.getItem()), 1));
-                request.setPlacing();
+                ItemStack extracted = storage.tryExtracting(stack -> stack.is(request.getItem()), 1);
+                soldier.setCarriedStack(extracted);
+                if (!soldier.getCarriedStack().isEmpty()) {
+                    request.setPlacing();
+                } else {
+                    takeAShortBreak(true);
+                    setStatus(CANNOT_FIND_ITEM_ID);
+                }
+
             } else {
                 easelPos = null;
                 request = null;
@@ -133,9 +141,11 @@ public class BuildBlueprintGoal extends AbstractWorkGoal {
     private void placeBlock() {
         var requestHandler = easelPos.getCapability();
         if (requestHandler != null) {
-            if (requestHandler.doRequest(request, soldier)) {
-                soldier.setCarriedStack(ItemStack.EMPTY);
+            BlueprintRequestResult result = requestHandler.doRequest(request, soldier);
+            if (result.isSuccess()) {
+                soldier.setCarriedStack(result.getRemainder());
                 request.setFinished();
+                bringBack = result.hasRemainder();
             } else {
                 bringBack = true;
                 request.cancel();
@@ -205,7 +215,7 @@ public class BuildBlueprintGoal extends AbstractWorkGoal {
     }
 
     @Override
-    public boolean workRequiresItemCarrying() {
+    public boolean workRequiresItemCarrying(ItemStack stack) {
         return true;
     }
 

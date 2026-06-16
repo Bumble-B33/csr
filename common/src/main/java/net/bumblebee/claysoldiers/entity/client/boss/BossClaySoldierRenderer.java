@@ -1,7 +1,7 @@
 package net.bumblebee.claysoldiers.entity.client.boss;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import net.bumblebee.claysoldiers.entity.common.boss.BossClaySoldierEntity;
+import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.entity.client.ClaySoldierModel;
 import net.bumblebee.claysoldiers.entity.client.ClaySoldierRenderer;
 import net.bumblebee.claysoldiers.entity.client.renderstates.AbstractClaySoldierRenderState;
@@ -9,6 +9,7 @@ import net.bumblebee.claysoldiers.entity.client.undead.SoldierSuitLayer;
 import net.bumblebee.claysoldiers.entity.client.undead.VampireClaySoldierRenderer;
 import net.bumblebee.claysoldiers.entity.client.undead.VampireEyesLayer;
 import net.bumblebee.claysoldiers.entity.client.undead.ZombieClaySoldierRenderer;
+import net.bumblebee.claysoldiers.entity.common.boss.BossClaySoldierEntity;
 import net.bumblebee.claysoldiers.entity.common.soldier.AbstractClaySoldierEntity;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
@@ -17,6 +18,7 @@ import net.minecraft.client.renderer.entity.layers.RenderLayer;
 
 import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 
 public class BossClaySoldierRenderer extends ClaySoldierRenderer {
     public BossClaySoldierRenderer(EntityRendererProvider.Context pContext) {
@@ -28,6 +30,9 @@ public class BossClaySoldierRenderer extends ClaySoldierRenderer {
     @Override
     public void extractRenderState(AbstractClaySoldierEntity claySoldierEntity, AbstractClaySoldierRenderState claySoldierRenderState, float partialTick) {
         super.extractRenderState(claySoldierEntity, claySoldierRenderState, partialTick);
+        if (claySoldierEntity instanceof BossClaySoldierEntity bossClaySoldierEntity) {
+            claySoldierRenderState.bossType = bossClaySoldierEntity.getBossType();
+        }
 
     }
 
@@ -43,7 +48,7 @@ public class BossClaySoldierRenderer extends ClaySoldierRenderer {
     }
 
     private static class TypeBasedRenderLayer extends RenderLayer<AbstractClaySoldierRenderState, ClaySoldierModel> {
-        private final EnumMap<BossClaySoldierEntity.BossTypes, List<RenderLayer<AbstractClaySoldierRenderState, ClaySoldierModel>>> typeRenderLayer = new EnumMap<>(BossClaySoldierEntity.BossTypes.class);
+        private final Map<BossClaySoldierEntity.BossTypes, List<RenderLayer<AbstractClaySoldierRenderState, ClaySoldierModel>>> typeRenderLayer = new EnumMap<>(BossClaySoldierEntity.BossTypes.class);
 
         public TypeBasedRenderLayer(RenderLayerParent<AbstractClaySoldierRenderState, ClaySoldierModel> renderer) {
             super(renderer);
@@ -57,6 +62,10 @@ public class BossClaySoldierRenderer extends ClaySoldierRenderer {
 
         @Override
         public void submit(PoseStack poseStack, SubmitNodeCollector submitNodeCollector, int packedLight, AbstractClaySoldierRenderState renderState, float v, float v1) {
+            if (renderState.bossType == null) {
+                ClaySoldiersCommon.ERROR_HANDLER.warn("Unset Boss AI");
+                return;
+            }
             typeRenderLayer.get(renderState.bossType).forEach(layer -> layer.submit(poseStack, submitNodeCollector, packedLight, renderState, v, v1));
         }
     }

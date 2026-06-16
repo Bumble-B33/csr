@@ -13,7 +13,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,7 +27,7 @@ public enum ClaySoldierProvider implements CommonEntityProvider<AbstractClaySold
 
     @Override
     public void appendTooltip(AbstractClaySoldierEntity claySoldier, CommonTooltipHelper tooltip, boolean detail, CompoundTag tag) {
-        if (claySoldier.getType().is(ModTags.EntityTypes.CLAY_BOSS)) {
+        if (claySoldier.is(ModTags.EntityTypes.CLAY_BOSS)) {
             return;
         }
 
@@ -68,7 +68,7 @@ public enum ClaySoldierProvider implements CommonEntityProvider<AbstractClaySold
     }
 
     @Override
-    public ResourceLocation getUniqueId() {
+    public Identifier getUniqueId() {
         return JadeRegistry.CLAY_SOLDIER;
     }
 

@@ -1,6 +1,7 @@
 package net.bumblebee.claysoldiers.capability;
 
 import net.bumblebee.claysoldiers.blueprint.BlueprintRequest;
+import net.bumblebee.claysoldiers.blueprint.BlueprintRequestResult;
 import net.bumblebee.claysoldiers.entity.common.ClayMobEntity;
 import net.minecraft.core.BlockPos;
 import org.jetbrains.annotations.Nullable;
@@ -22,5 +23,5 @@ public interface BlueprintRequestHandler {
      * @param request the request to execute.
      * @return whether it was a success or not
      */
-    boolean doRequest(@Nullable BlueprintRequest request, ClayMobEntity placer);
+    BlueprintRequestResult doRequest(@Nullable BlueprintRequest request, ClayMobEntity placer);
 }

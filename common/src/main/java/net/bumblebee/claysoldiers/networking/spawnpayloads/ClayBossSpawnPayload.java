@@ -5,18 +5,18 @@ import net.bumblebee.claysoldiers.entity.common.boss.BossClaySoldierBehaviour;
 import net.bumblebee.claysoldiers.entity.common.boss.BossClaySoldierEntity;
 import net.bumblebee.claysoldiers.init.ModRegistries;
 import net.bumblebee.claysoldiers.networking.IClientPayload;
-import net.bumblebee.claysoldiers.platform.services.INetworkManger;
+import net.bumblebee.claysoldiers.platform.services.NetworkManger;
 import net.bumblebee.claysoldiers.soldierproperties.SoldierPropertyMap;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import java.util.Objects;
 
 public final class ClayBossSpawnPayload implements IClientPayload {
-    public static final Type<ClayBossSpawnPayload> ID = new Type<>(ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_boss_spawn"));
+    public static final Type<ClayBossSpawnPayload> ID = new Type<>(Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_boss_spawn"));
     public static final StreamCodec<RegistryFriendlyByteBuf, ClayBossSpawnPayload> STREAM_CODEC = StreamCodec.composite(
             ByteBufCodecs.INT, ClayBossSpawnPayload::entity,
             SoldierPropertyMap.STREAM_CODEC, ClayBossSpawnPayload::baseProperties,
@@ -33,12 +33,12 @@ public final class ClayBossSpawnPayload implements IClientPayload {
         this.bossAI = bossAI;
     }
     public ClayBossSpawnPayload(BossClaySoldierEntity boss) {
-        this(boss.getId(), boss.getBaseProperties(), boss.getBossAI());
+        this(boss.getId(), boss.getBaseProperties(), boss.getOptionalBossAI(true).orElseThrow());
     }
 
 
     @Override
-    public void handleClient(INetworkManger.PayloadContext context) {
+    public void handleClient(NetworkManger.PayloadContext context) {
         if (context.client().level.getEntity(entity) instanceof BossClaySoldierEntity boss) {
             boss.setBossAI(bossAI);
             boss.setBaseProperties(baseProperties);

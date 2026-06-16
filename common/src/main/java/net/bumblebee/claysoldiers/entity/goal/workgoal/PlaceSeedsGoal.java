@@ -1,7 +1,8 @@
 package net.bumblebee.claysoldiers.entity.goal.workgoal;
 
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
-import net.bumblebee.claysoldiers.entity.common.soldier.AbstractClaySoldierEntity;
+import net.bumblebee.claysoldiers.claysoldierchips.ClayMobWorkAccess;
+import net.bumblebee.claysoldiers.entity.common.programmable.ProgrammableClaySoldierEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.tags.ItemTags;
@@ -11,12 +12,10 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
-import net.minecraft.world.level.block.FarmBlock;
+import net.minecraft.world.level.block.FarmlandBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.gameevent.GameEvent;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.function.Supplier;
 
 public class PlaceSeedsGoal extends AbstractWorkGoal {
     public static final String PLACING_SEEDS_LANG = JOB_LANG_KEY.formatted(ClaySoldiersCommon.MOD_ID, "placing_seeds");
@@ -25,14 +24,16 @@ public class PlaceSeedsGoal extends AbstractWorkGoal {
     private BlockPos farmLandPos = null;
     private final int searchRange;
     private final int verticalSearchRange;
-    protected int verticalSearchStart;
-    protected int tryTicks;
+    private final int verticalSearchStart;
+    private int tryTicks;
     private int maxStayTicks;
 
-    public PlaceSeedsGoal(AbstractClaySoldierEntity soldier, Supplier<WorkSelectorGoal> workSelector, int searchRange) {
+
+    public PlaceSeedsGoal(ProgrammableClaySoldierEntity soldier, ClayMobWorkAccess workSelector, SearchRange searchRange) {
         super(soldier, workSelector);
-        this.searchRange = searchRange;
-        this.verticalSearchRange = 2;
+        this.searchRange = searchRange.horizontalRange();
+        this.verticalSearchRange = searchRange.verticalRange();
+        this.verticalSearchStart = 0;
     }
 
     @Override
@@ -92,10 +93,12 @@ public class PlaceSeedsGoal extends AbstractWorkGoal {
                 }
                 soldier.setCarriedStack(cap.tryExtracting(stack -> stack.is(SEEDS), 1));
             }
+            if (soldier.getCarriedStack().isEmpty()) {
+                setStatus(CANNOT_FIND_ITEM_ID);
+                takeAShortBreak(false);
+            }
         }
-        if (soldier.getCarriedStack().isEmpty()) {
-            takeAShortBreak();
-        }
+
     }
 
     private void plantSeed() {
@@ -136,7 +139,7 @@ public class PlaceSeedsGoal extends AbstractWorkGoal {
                 }
             }
         }
-        takeAShortBreak();
+        takeAShortBreak(true);
         return false;
     }
 
@@ -150,7 +153,7 @@ public class PlaceSeedsGoal extends AbstractWorkGoal {
     }
 
     protected boolean isValidTarget(LevelReader pLevel, @Nullable BlockPos pPos) {
-        return pPos != null && pLevel.getBlockState(pPos).getBlock() instanceof FarmBlock
+        return pPos != null && pLevel.getBlockState(pPos).getBlock() instanceof FarmlandBlock
                 && pLevel.getBlockState(pPos.above()).isAir();
     }
 
@@ -168,7 +171,7 @@ public class PlaceSeedsGoal extends AbstractWorkGoal {
     }
 
     @Override
-    public boolean workRequiresItemCarrying() {
+    public boolean workRequiresItemCarrying(ItemStack stack) {
         return true;
     }
 

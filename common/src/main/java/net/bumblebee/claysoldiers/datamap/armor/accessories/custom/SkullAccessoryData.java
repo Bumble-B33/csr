@@ -14,6 +14,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ResolvableProfile;
 import net.minecraft.world.level.block.AbstractSkullBlock;
 import net.minecraft.world.level.block.SkullBlock;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
@@ -30,7 +31,8 @@ public class SkullAccessoryData implements SoldierAccessoryData {
     );
 
     private final Item headItem;
-    private final ItemStack headItemStack;
+    @Nullable
+    private ItemStack headItemStack;
     @Nullable
     private final SkullBlock.Type type;
     @Nullable
@@ -43,8 +45,7 @@ public class SkullAccessoryData implements SoldierAccessoryData {
     public SkullAccessoryData(Item headStack, @Nullable ResolvableProfile profile) {
         this.headItem = headStack;
         this.profile = profile;
-        this.headItemStack = headItem.getDefaultInstance();
-        if (headItemStack.getItem() instanceof BlockItem blockitem && blockitem.getBlock() instanceof AbstractSkullBlock abstractskullblock) {
+        if (headItem instanceof BlockItem blockitem && blockitem.getBlock() instanceof AbstractSkullBlock abstractskullblock) {
             this.type = abstractskullblock.getType();
         } else {
             this.type = null;
@@ -59,7 +60,11 @@ public class SkullAccessoryData implements SoldierAccessoryData {
         return profile;
     }
 
+    @NotNull
     public ItemStack getHeadStack() {
+        if (headItemStack == null) {
+            headItemStack = headItem.getDefaultInstance();
+        }
         return headItemStack;
     }
 
