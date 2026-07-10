@@ -37,15 +37,15 @@ public class ClaySoldierSnowball extends Snowball {
     }
 
     @Override
-    public void addAdditionalSaveData(ValueOutput compound) {
-        super.addAdditionalSaveData(compound);
-        compound.store(PROPERTIES_TAG, SoldierPropertyMap.CODEC, soldierProperties);
+    public void addAdditionalSaveData(ValueOutput output) {
+        super.addAdditionalSaveData(output);
+        output.store(PROPERTIES_TAG, SoldierPropertyMap.CODEC, soldierProperties);
     }
 
     @Override
-    public void readAdditionalSaveData(ValueInput compound) {
-        super.readAdditionalSaveData(compound);
-        compound.read(PROPERTIES_TAG, SoldierPropertyMap.CODEC).ifPresent(p -> {
+    public void readAdditionalSaveData(ValueInput input) {
+        super.readAdditionalSaveData(input);
+        input.read(PROPERTIES_TAG, SoldierPropertyMap.CODEC).ifPresent(p -> {
             soldierProperties = p;
         });
     }
@@ -60,8 +60,7 @@ public class ClaySoldierSnowball extends Snowball {
                 specialAttack.performAttackEffect(soldier, hitTarget);
                 bonusDamage += specialAttack.getBonusDamage(soldier, hitTarget);
             }
-            hitTarget.hurt(this.damageSources().thrown(this, soldier), soldierProperties.damage() + bonusDamage);
+            hitTarget.hurtOrSimulate(this.damageSources().thrown(this, soldier), soldierProperties.damage() + bonusDamage);
         }
     }
-
 }

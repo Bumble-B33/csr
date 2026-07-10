@@ -72,7 +72,6 @@ public interface IDataMapGetter {
                 effect.validate();
             } catch (IllegalStateException e) {
                 ClaySoldiersCommon.LOGGER.warn("DataMap: {} Error: {}", k, e.getMessage());
-
             }
 
             if (!isTagged.test(k, ModTags.Items.SOLDIER_HOLDABLE)) {

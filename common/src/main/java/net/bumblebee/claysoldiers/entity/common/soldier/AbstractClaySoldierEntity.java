@@ -163,12 +163,13 @@ public class AbstractClaySoldierEntity extends ClayMobTeamOwnerEntity implements
 
     private final PathNavigation waterNavigation;
     private final PathNavigation groundNavigation;
+    private final EntityType<? extends AbstractClaySoldierEntity> type;
 
     protected AbstractClaySoldierEntity(EntityType<? extends AbstractClaySoldierEntity> pEntityType, Level pLevel, AttackTypeProperty defaultAttackType) {
         this(pEntityType, pLevel, defaultAttackType, SoldierStatusManager::initDefault);
-        this.setCanPickUpLoot(true);
         this.setSpawnedFrom(ModItems.CLAY_SOLDIER.get().getDefaultInstance(), true);
         this.delayedScale = getSoldierSize();
+
     }
 
     protected AbstractClaySoldierEntity(EntityType<? extends AbstractClaySoldierEntity> pEntityType, Level pLevel, AttackTypeProperty defaultAttackType, Function<AbstractClaySoldierEntity, SoldierStatusHolder> statusManger) {
@@ -184,6 +185,8 @@ public class AbstractClaySoldierEntity extends ClayMobTeamOwnerEntity implements
         this.moveControl = new ClaySoldierMoveControl(this, this::canSwim, 85, 10, false);
 
         this.inventory = new ClaySoldierInventory();
+        this.type = pEntityType;
+        this.setCanPickUpLoot(true);
     }
 
     public static AttributeSupplier.Builder createSoldierAttributes() {
@@ -224,25 +227,25 @@ public class AbstractClaySoldierEntity extends ClayMobTeamOwnerEntity implements
     }
 
     @Override
-    public void addAdditionalSaveData(ValueOutput valueOutput) {
-        super.addAdditionalSaveData(valueOutput);
-        inventory.save(valueOutput);
+    public void addAdditionalSaveData(@NonNull ValueOutput output) {
+        super.addAdditionalSaveData(output);
+        inventory.save(output);
 
-        valueOutput.putShort(FUSE_TAG, (short) this.maxSwell);
-        valueOutput.putByte(EXPLOSION_RADIUS_TAG, (byte) this.explosionRadius);
-        valueOutput.putBoolean(IGNITED_TAG, this.isIgnited());
-        valueOutput.putBoolean(VERY_ANGRY_TAG, this.isVeryAngry());
-        valueOutput.store(OFFSET_COLOR_TAG, ColorHelper.CODEC, getOffsetColor());
+        output.putShort(FUSE_TAG, (short) this.maxSwell);
+        output.putByte(EXPLOSION_RADIUS_TAG, (byte) this.explosionRadius);
+        output.putBoolean(IGNITED_TAG, this.isIgnited());
+        output.putBoolean(VERY_ANGRY_TAG, this.isVeryAngry());
+        output.store(OFFSET_COLOR_TAG, ColorHelper.CODEC, getOffsetColor());
 
         if (!reviveTypeCooldown.isEmpty()) {
-            valueOutput.store(REVIVE_TYPE_COOLDOWN_TAG, ReviveType.COOLDOWN_MAP_CODEC, reviveTypeCooldown);
+            output.store(REVIVE_TYPE_COOLDOWN_TAG, ReviveType.COOLDOWN_MAP_CODEC, reviveTypeCooldown);
         }
 
-        valueOutput.putInt(SKIN_VARIANT_ID_TAG, skinVariantId);
+        output.putInt(SKIN_VARIANT_ID_TAG, skinVariantId);
     }
 
     @Override
-    public void readAdditionalSaveData(ValueInput input) {
+    public void readAdditionalSaveData(@NonNull ValueInput input) {
         super.readAdditionalSaveData(input);
         inventory.load(input);
 
@@ -624,6 +627,11 @@ public class AbstractClaySoldierEntity extends ClayMobTeamOwnerEntity implements
 
     @Override
     public void performRangedAttack(@NotNull LivingEntity target, float velocity) {
+        if (!(level() instanceof ServerLevel serverLevel)) {
+            ClaySoldiersCommon.ERROR_HANDLER.warn("Tried to performe ranged attack on client");
+            return;
+        }
+
         if (stackWithProjectile == null) {
             return;
         }
@@ -634,7 +642,7 @@ public class AbstractClaySoldierEntity extends ClayMobTeamOwnerEntity implements
             return;
         }
 
-        capability.performRangedAttack(this, this.level(), target, holdableEffect.applyThrowableTransform(stackWithProjectile), velocity);
+        capability.performRangedAttack(this, serverLevel, target, holdableEffect.applyThrowableTransform(stackWithProjectile), velocity);
         holdableEffect.getRemovalConditions().forEach(condition -> {
             if (stackWithProjectile == null) {
                 return;
@@ -1614,7 +1622,7 @@ public class AbstractClaySoldierEntity extends ClayMobTeamOwnerEntity implements
     }
 
     @Override
-    protected void tryToSit(@Nullable Player player, boolean sitting) {
+    protected void tryToSit(@Nullable Player player, OrderedCommand sitting) {
         if (player != null && getAttackType().isRoyalty()) {
             level().getEntitiesOfClass(
                     AbstractClaySoldierEntity.class,
@@ -1687,7 +1695,7 @@ public class AbstractClaySoldierEntity extends ClayMobTeamOwnerEntity implements
     /**
      * Called when this Soldier entered a Hamster Wheel.
      */
-    public void enteredHamsterWheel() {
+    public void enteredClayContainer() {
 
     }
 
@@ -1783,6 +1791,11 @@ public class AbstractClaySoldierEntity extends ClayMobTeamOwnerEntity implements
         list.add("Properties: " + allProperties());
         list.add("Status: " + statusManger);
         list.add("ReviveCooldown: " + reviveTypeCooldown);
+        if (level().isClientSide()) {
+            list.add("Inventory: %s".formatted(inventory));
+        } else {
+            list.add("Inventory(%s): %s".formatted(canPickUpLoot() ? "PickUp" : "NoPickUp", inventory));
+        }
         return list;
     }
 
@@ -1841,5 +1854,10 @@ public class AbstractClaySoldierEntity extends ClayMobTeamOwnerEntity implements
     @Override
     public boolean showInStatDisplay() {
         return getAttackType() != AttackTypeProperty.BOSS;
+    }
+
+    @Override
+    public @NonNull EntityType<? extends AbstractClaySoldierEntity> getType() {
+        return type;
     }
 }

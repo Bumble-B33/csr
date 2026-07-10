@@ -1,5 +1,6 @@
 package net.bumblebee.claysoldiers.entity.common;
 
+import com.mojang.serialization.Codec;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.capability.AssignableWorksiteCapability;
 import net.bumblebee.claysoldiers.capability.IBlockCache;
@@ -28,6 +29,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.tags.DamageTypeTags;
+import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
@@ -48,7 +50,9 @@ import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NonNull;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -67,6 +71,8 @@ public abstract class ClayMobEntity extends PathfinderMob implements TeamHolder,
 
     protected static final byte SITTING_FLAG = 1;
     private static final byte WAXED_FLAG = 2;
+    protected static final byte FOLLOW_OWNER_FLAG = 4;
+
 
     public static final String SITTING_TAG = "Sitting";
     public static final String WAXED_TAG = "Waxed";
@@ -79,12 +85,12 @@ public abstract class ClayMobEntity extends PathfinderMob implements TeamHolder,
     protected static final byte SPAWN_ANGRY_EVENT = 79;
     protected static final byte SPAWN_HAPPY_EVENT = 80;
 
-    protected DamageCalculator inWallDamage = (w, e) -> w ? 0.5f : 1;
-    protected DamageCalculator ownerDamage = (w, e) -> 100;
-    protected DamageCalculator otherPlayerDamage = (w, e) -> w ? 8 : 100;
-    protected DamageCalculator explosionDamage = (w, e) -> w ? 0.4f : 0.5f;
-    protected DamageCalculator clayDamage = (w, e) -> (float) getVisibilityPercent(e);
-    protected DamageCalculator defaultDamage = (w, e) -> w ? 75 : 100;
+    protected DamageCalculator inWallDamage = (w, _) -> w ? 0.5f : 1;
+    protected DamageCalculator ownerDamage = (_, _) -> 100;
+    protected DamageCalculator otherPlayerDamage = (w, _) -> w ? 8 : 100;
+    protected DamageCalculator explosionDamage = (w, _) -> w ? 0.4f : 0.5f;
+    protected DamageCalculator clayDamage = (_, e) -> (float) getVisibilityPercent(e);
+    protected DamageCalculator defaultDamage = (w, _) -> w ? 75 : 100;
 
     private final DamageSources clayDamageSources;
     private ItemStack spawnedFrom = ItemStack.EMPTY;
@@ -95,7 +101,8 @@ public abstract class ClayMobEntity extends PathfinderMob implements TeamHolder,
     @Nullable
     private IBlockCache<AssignableWorksiteCapability> poiPosCapability;
 
-    private boolean orderedToSit = false;
+    @NotNull
+    protected OrderedCommand orderedCommand = OrderedCommand.FOLLOW_OWNER;
 
     @Nullable
     public TeamPlayerData teamPlayerData = null;
@@ -114,11 +121,7 @@ public abstract class ClayMobEntity extends PathfinderMob implements TeamHolder,
         if (teamPlayerData != null) {
             return;
         }
-        if (level instanceof ServerLevel serverLevel) {
-            teamPlayerData = TeamLoyaltyManger.getTeamPlayerData(serverLevel);
-        } else {
-            teamPlayerData = TeamLoyaltyManger.getClientTeamPlayerData();
-        }
+        teamPlayerData = TeamLoyaltyManger.getTeamPlayerData(level);
     }
 
     @Override
@@ -166,34 +169,36 @@ public abstract class ClayMobEntity extends PathfinderMob implements TeamHolder,
     }
 
     @Override
-    public void addAdditionalSaveData(ValueOutput pCompound) {
-        super.addAdditionalSaveData(pCompound);
+    public void addAdditionalSaveData(@NonNull ValueOutput output) {
+        super.addAdditionalSaveData(output);
         if (!spawnedFrom.isEmpty()) {
-            pCompound.store(SPAWNED_FROM_TAG, ItemStack.CODEC, spawnedFrom);
-            pCompound.putBoolean(DROP_SPAWNED_FROM_TAG, dropSpawnedFrom);
+            output.store(SPAWNED_FROM_TAG, ItemStack.CODEC, spawnedFrom);
+            output.putBoolean(DROP_SPAWNED_FROM_TAG, dropSpawnedFrom);
         }
-        pCompound.putBoolean(SITTING_TAG, this.orderedToSit);
-        pCompound.putBoolean(WAXED_TAG, this.isWaxed());
-        pCompound.storeNullable(POI_POS_TAG, BlockPos.CODEC, getPoiPos());
+        output.store(SITTING_TAG, OrderedCommand.CODEC, this.orderedCommand);
+        output.putBoolean(WAXED_TAG, this.isWaxed());
+        output.storeNullable(POI_POS_TAG, BlockPos.CODEC, getPoiPos());
     }
 
     @Override
-    public void readAdditionalSaveData(ValueInput pCompound) {
-        super.readAdditionalSaveData(pCompound);
-        getSpawnedFromFromTag(pCompound).ifPresent(stack -> {
+    public void readAdditionalSaveData(@NonNull ValueInput input) {
+        super.readAdditionalSaveData(input);
+        getSpawnedFromFromTag(input).ifPresent(stack -> {
             spawnedFrom = stack;
-            dropSpawnedFrom = pCompound.getBooleanOr(DROP_SPAWNED_FROM_TAG, false);
+            dropSpawnedFrom = input.getBooleanOr(DROP_SPAWNED_FROM_TAG, false);
         });
         if (hasEffect(ModEffects.SLIME_ROOT)) {
             setSlimeRooted(true);
         }
-        this.orderedToSit = pCompound.getBooleanOr(SITTING_TAG, false);
-        this.setInSittingPose(this.orderedToSit);
-        if (orderedToSit) {
+        this.setOrderedCommand(input.read(SITTING_TAG, OrderedCommand.CODEC).orElse(OrderedCommand.FOLLOW_OWNER));
+
+        this.setInSittingPose(this.orderedCommand == OrderedCommand.SITTING);
+
+        if (this.orderedCommand == OrderedCommand.SITTING) {
             setPose(Pose.SITTING);
         }
-        this.setWaxed(pCompound.getBooleanOr(WAXED_TAG, false));
-        setPoiPos(pCompound.read(POI_POS_TAG, BlockPos.CODEC).orElse(null));
+        this.setWaxed(input.getBooleanOr(WAXED_TAG, false));
+        setPoiPos(input.read(POI_POS_TAG, BlockPos.CODEC).orElse(null));
     }
 
     public static Optional<ItemStack> getSpawnedFromFromTag(ValueInput tag) {
@@ -210,7 +215,7 @@ public abstract class ClayMobEntity extends PathfinderMob implements TeamHolder,
         if (amount == Float.MAX_VALUE || source.is(DamageTypes.GENERIC_KILL)) {
             return super.hurtServer(serverLevel, source, amount);
         }
-        if (source.is(DamageTypes.CRAMMING)) {
+        if (source.is(DamageTypes.CRAMMING) || source.is(DamageTypes.CACTUS)) {
             return false;
         }
         if (sameTeamAs(source.getEntity()) && !getClayTeam().isFriendlyFireAllowed()) {
@@ -502,9 +507,11 @@ public abstract class ClayMobEntity extends PathfinderMob implements TeamHolder,
     protected boolean clayBrushEffect(ClayBrushItem.Mode mode, ItemStack itemInHand, Player player) {
         if (mode == ClayBrushItem.Mode.COMMAND) {
             if (!level().isClientSide()) {
-                tryToSit(player, !this.isOrderedToSit());
+                var command = cycleOrderedCommand();
+                tryToSit(player, cycleOrderedCommand());
                 if (player instanceof ServerPlayer serverPlayer) {
                     ModCritirions.CLAY_BRUSH_COMMAND_TRIGGER.get().trigger(serverPlayer, mode);
+                    serverPlayer.sendSystemMessage(command.getDisplayName(), true);
                 }
             }
 
@@ -544,8 +551,8 @@ public abstract class ClayMobEntity extends PathfinderMob implements TeamHolder,
      * @param player  the player giving the order or {@code null} if this order was not given from a player.
      * @param sitting whether to sit or get up
      */
-    protected void tryToSit(@Nullable Player player, boolean sitting) {
-        this.setOrderedToSit(sitting);
+    protected void tryToSit(@Nullable Player player, OrderedCommand sitting) {
+        this.setOrderedCommand(sitting);
         this.jumping = false;
         this.navigation.stop();
         this.setTarget(null);
@@ -628,22 +635,43 @@ public abstract class ClayMobEntity extends PathfinderMob implements TeamHolder,
     }
 
     @Override
-    public boolean isOrderedToSit() {
+    public boolean getOrderedCommand() {
         if (getControllingPassenger() instanceof ClayMobEntity clayMob) {
-            return clayMob.orderedToSit;
+            return clayMob.orderedCommand == OrderedCommand.SITTING;
         }
-        return orderedToSit;
+        return orderedCommand == OrderedCommand.SITTING;
     }
 
-    @Override
-    public void setOrderedToSit(boolean sit) {
-        orderedToSit = sit;
+    public boolean isOrderedToIgnoreOwner() {
+        return orderedCommand == OrderedCommand.IGNORE_OWNER;
+    }
+
+    protected OrderedCommand cycleOrderedCommand() {
+        return switch (orderedCommand) {
+            case IGNORE_OWNER -> OrderedCommand.FOLLOW_OWNER;
+            case FOLLOW_OWNER -> OrderedCommand.SITTING;
+            case SITTING -> OrderedCommand.IGNORE_OWNER;
+        };
+    }
+
+    protected void setOrderedCommand(OrderedCommand command) {
+        orderedCommand = command;
+        setFollowsOwner(command == OrderedCommand.FOLLOW_OWNER);
     }
 
     @Override
     public boolean isInSittingPose() {
         return getDataFlag(SITTING_FLAG);
     }
+
+    public boolean ignoresOwner() {
+        return getDataFlag(FOLLOW_OWNER_FLAG);
+    }
+
+    public void setFollowsOwner(boolean followsOwner) {
+        setDataFlag(FOLLOW_OWNER_FLAG, followsOwner);
+    }
+
 
     @Override
     public void setInSittingPose(boolean sitting) {
@@ -671,6 +699,9 @@ public abstract class ClayMobEntity extends PathfinderMob implements TeamHolder,
     public Component getWorkStatus() {
         if (isInSittingPose()) {
             return Component.translatable(SoldierStatusManager.SITTING_LANG);
+        }
+        if (ignoresOwner()) {
+            return Component.translatable(SoldierStatusManager.IGNORING_OWNER_LANG);
         }
         return usingPoi() ? Component.literal(SoldierStatusManager.USING_POI_LANG) : null;
     }
@@ -752,7 +783,7 @@ public abstract class ClayMobEntity extends PathfinderMob implements TeamHolder,
     }
 
     @Override
-    public void startSeenByPlayer(ServerPlayer serverPlayer) {
+    public void startSeenByPlayer(@NonNull ServerPlayer serverPlayer) {
         super.startSeenByPlayer(serverPlayer);
         sendSpawnPayload(serverPlayer);
     }
@@ -813,7 +844,7 @@ public abstract class ClayMobEntity extends PathfinderMob implements TeamHolder,
     }
 
     @Override
-    protected void doPush(Entity entity) {
+    protected void doPush(@NonNull Entity entity) {
         if (!canPushPlayer() && entity instanceof Player) {
             return;
         }
@@ -870,6 +901,33 @@ public abstract class ClayMobEntity extends PathfinderMob implements TeamHolder,
     @FunctionalInterface
     protected interface DamageCalculator {
         float calculate(boolean waxed, @Nullable Entity attacker);
+    }
+
+    public enum OrderedCommand implements StringRepresentable {
+        IGNORE_OWNER("ignore"),
+        SITTING("sitting"),
+        FOLLOW_OWNER("follow_owner");
+
+        public static final Codec<OrderedCommand> CODEC = StringRepresentable.fromEnum(OrderedCommand::values);
+
+        private final String serializedName;
+
+        OrderedCommand(String serializedName) {
+            this.serializedName = serializedName;
+        }
+
+        public Component getDisplayName() {
+            return Component.translatable(translatableKey());
+        }
+
+        public String translatableKey() {
+            return "clay_mob.command." + serializedName;
+        }
+
+        @Override
+        public @NonNull String getSerializedName() {
+            return serializedName;
+        }
     }
 }
 

@@ -3,7 +3,8 @@ package net.bumblebee.claysoldiers.item;
 import com.mojang.serialization.Codec;
 import io.netty.buffer.ByteBuf;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
-import net.bumblebee.claysoldiers.block.hamsterwheel.HamsterWheelBlockEntity;
+import net.bumblebee.claysoldiers.block.chipassembler.ChipAssemblerBlockEntity;
+import net.bumblebee.claysoldiers.block.soldiercontainer.BlockEntityWithSoldier;
 import net.bumblebee.claysoldiers.entity.common.boss.ClaySoldierBossEquipment;
 import net.bumblebee.claysoldiers.entity.goal.workgoal.dig.DigBreakManger;
 import net.bumblebee.claysoldiers.init.ModDataComponents;
@@ -38,6 +39,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 public class TestItem extends Item {
@@ -53,15 +55,22 @@ public class TestItem extends Item {
 
         if (context.getLevel() instanceof ServerLevel serverLevel) {
             log(serverLevel.getBlockState(context.getClickedPos()), List.of(
-                    "PoiType: " + serverLevel.getPoiManager().getType(context.getClickedPos()),
-                    "MaxOccupants: " + (serverLevel.getPoiManager().getType(context.getClickedPos()).map(h -> h.value().maxTickets()).orElse(0))
+                            "PoiType: " + serverLevel.getPoiManager().getType(context.getClickedPos()),
+                            "MaxOccupants: " + (serverLevel.getPoiManager().getType(context.getClickedPos()).map(h -> h.value().maxTickets()).orElse(0)),
+                            "Space Left: " + Optional.ofNullable(serverLevel.getPoiManager().getDebugPoiInfo(context.getClickedPos())).map(s -> "" + s.freeTicketCount()).orElse("No Poi")
                     )
             );
         }
 
-        if (blockEntity instanceof HamsterWheelBlockEntity hamsterWheel) {
-            var data = hamsterWheel.getSoldierData();
-            log(hamsterWheel, List.of(data == null ? "HamsterWheelSoldierData(null)" : data.toString()));
+        if (blockEntity instanceof BlockEntityWithSoldier blockEntityWithSoldier) {
+            var data = blockEntityWithSoldier.getSoldierData();
+            log(blockEntityWithSoldier, List.of(data == null ? "SoldierData(null)" : data.toString()));
+        }
+
+        if (blockEntity instanceof ChipAssemblerBlockEntity chipAssemblerBlockEntity) {
+            List<String> data = new ArrayList<>();
+            chipAssemblerBlockEntity.addInfo(data);
+            log(chipAssemblerBlockEntity, data);
         }
 
         return InteractionResult.SUCCESS;
@@ -118,8 +127,10 @@ public class TestItem extends Item {
     }
 
     interface InfoGenerator<L extends Level> {
-        InfoGenerator<Level> EMPTY = (l, p, infoList) -> {};
-        InfoGenerator<ServerLevel> EMPTY_SERVER = (l, p, infoList) -> {};
+        InfoGenerator<Level> EMPTY = (l, p, infoList) -> {
+        };
+        InfoGenerator<ServerLevel> EMPTY_SERVER = (l, p, infoList) -> {
+        };
 
         void appendInfo(L level, Player player, List<String> infoList);
     }

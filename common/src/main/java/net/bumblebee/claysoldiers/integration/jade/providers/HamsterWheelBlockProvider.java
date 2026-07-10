@@ -3,8 +3,8 @@ package net.bumblebee.claysoldiers.integration.jade.providers;
 import net.bumblebee.claysoldiers.block.hamsterwheel.HamsterWheelBlock;
 import net.bumblebee.claysoldiers.block.hamsterwheel.HamsterWheelBlockEntity;
 import net.bumblebee.claysoldiers.block.hamsterwheel.HamsterWheelEnergyStorage;
-import net.bumblebee.claysoldiers.block.hamsterwheel.HamsterWheelSoldierData;
-import net.bumblebee.claysoldiers.entity.client.ClientClaySoldierEntity;
+import net.bumblebee.claysoldiers.block.soldiercontainer.OccupantSoldierData;
+import net.bumblebee.claysoldiers.entity.client.FakeClaySoldierAccess;
 import net.bumblebee.claysoldiers.integration.jade.CommonBlockProvider;
 import net.bumblebee.claysoldiers.integration.jade.CommonTooltipHelper;
 import net.bumblebee.claysoldiers.integration.jade.JadeRegistry;
@@ -24,20 +24,20 @@ public enum HamsterWheelBlockProvider implements CommonBlockProvider {
     @Override
     public void appendTooltip(BlockData data, CommonTooltipHelper tooltip, boolean detail) {
         HamsterWheelBlockEntity blockEntity = (HamsterWheelBlockEntity) data.entity();
-        HamsterWheelSoldierData soldierBlockData = blockEntity.getSoldierData();
+        OccupantSoldierData soldierBlockData = blockEntity.getSoldierData();
 
         if (soldierBlockData != null) {
-            ClientClaySoldierEntity soldier = soldierBlockData.getClientSoldier();
+            FakeClaySoldierAccess soldier = soldierBlockData.getClientSoldier();
             tooltip.addHorizontalLine();
             if (soldier.isWaxed()) {
-                tooltip.addCompoundItemStack(soldier.getPickResult(), Items.HONEYCOMB.getDefaultInstance());
+                tooltip.addCompoundItemStack(soldier.getAsItem(), Items.HONEYCOMB.getDefaultInstance());
             } else {
-                tooltip.addItemStack(soldier.getPickResult());
+                tooltip.addItemStack(soldier.getAsItem());
             }
 
             tooltip.appendMultilineText(
-                    soldier.getDisplayName().copy().withStyle(ChatFormatting.WHITE),
-                    ClayMobProvider.INSTANCE.createTeamName(soldier),
+                    soldier.displayName().copy().withStyle(ChatFormatting.WHITE),
+                    ClayMobProvider.INSTANCE.createTeamName(soldier.getClayTeam(), soldier.colorOffset(), soldier.tickCount()),
                     Component.translatable(HAMSTER_WHEEL_SPEED, soldierBlockData.getAdjustedSpeed()).withStyle(ChatFormatting.DARK_GRAY)
             );
             tooltip.addHorizontalLine();

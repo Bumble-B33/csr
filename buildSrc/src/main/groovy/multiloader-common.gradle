@@ -69,6 +69,8 @@ processResources {
             'license'                      : license,
             'description'                  : project.description,
             'wiki_link'                    : wiki_link,
+            'issue_link'                   : issue_link,
+            'github_link'                  : github_link,
             'neoforge_version'             : neoforge_version,
             'neoforge_loader_version_range': neoforge_loader_version_range,
             'credits'                      : credits,

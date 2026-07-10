@@ -26,7 +26,7 @@ public class ClayMobSitGoal extends Goal {
         if (isCurrentlyFighting()) {
             return false;
         }
-        return this.clayMobEntity.isOrderedToSit();
+        return this.clayMobEntity.getOrderedCommand();
     }
 
     @Override
@@ -38,7 +38,7 @@ public class ClayMobSitGoal extends Goal {
         LivingEntity owner = this.clayMobEntity.getClayTeamOwner();
         if (owner == null) {
             return false;
-        } else if (!this.clayMobEntity.isOrderedToSit()) {
+        } else if (!this.clayMobEntity.getOrderedCommand()) {
             return false;
         } else if (owner.getLastHurtByMob() != null && this.clayMobEntity.distanceToSqr(owner) < 144.0) {
             return false;

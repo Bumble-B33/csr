@@ -91,6 +91,10 @@ public class ModLangProvider extends LanguageProvider {
 
         addBlock(ModBlocks.CHIP_ASSEMBLER, "Chip Assembler");
 
+        addBlock(ModBlocks.SUGAR_CANE_HAMMOCK, "Sugar Cane with Hammock");
+        addBlock(ModBlocks.CACTUS_HOUSE, "Cactus House");
+
+
         addItem(ModItems.CLAY_SOLDIER, "Clay Soldier");
         add(ModItems.CLAY_SOLDIER.get().getDescriptionId() + ClaySoldierSpawnItem.DESCRIPTION_ID_PREFIX, "%s Clay Soldier");
         add(ClaySoldierSpawnItem.PLAYER_LANG, "Created by %s");
@@ -170,6 +174,8 @@ public class ModLangProvider extends LanguageProvider {
         addKeyableProperty(ClayBrushItem.Mode.COMMAND, "Command");
         addKeyableProperty(ClayBrushItem.Mode.POI, "Poi");
         add(SoldierStatusManager.SITTING_LANG, "Sitting");
+        add(SoldierStatusManager.FOLLOW_OWNER_LANG, "Following Owner");
+        add(SoldierStatusManager.IGNORING_OWNER_LANG, "Ignoring Owner");
         add(SoldierStatusManager.USING_POI_LANG, "Using Work Poi");
 
         add(IWorkGoal.DEFAULT_STATUS_LANG, "Working");
@@ -202,6 +208,10 @@ public class ModLangProvider extends LanguageProvider {
         add(ClayMobEntity.WORK_POI_CLEARED_LANG, "Poi Cleared");
         add(ClayMobEntity.WORK_POI_INVALID_LANG, "Invalid Poi (%s)");
 
+        add(ClayMobEntity.OrderedCommand.SITTING.translatableKey(), "Is now Sitting");
+        add(ClayMobEntity.OrderedCommand.FOLLOW_OWNER.translatableKey(), "Follows his Owner");
+        add(ClayMobEntity.OrderedCommand.IGNORE_OWNER.translatableKey(), "Ignores his Owner");
+
 
         addEntityType(ModEntityTypes.CLAY_SOLDIER_ENTITY, "Clay Soldier");
         addEntityType(ModEntityTypes.CLAY_WRAITH, "Wraith");
@@ -218,6 +228,8 @@ public class ModLangProvider extends LanguageProvider {
         addEntityType(ModEntityTypes.CLAY_SOLDIER_THROWABLE_ITEM, "Clay Soldier Thrown Item");
         addEntityType(ModEntityTypes.CLAY_SOLDIER_SNOWBALL, "Clay Soldier Snowball");
         addEntityType(ModEntityTypes.CLAY_SOLDIER_POTION, "Clay Soldier Potion");
+        addEntityType(ModEntityTypes.CLAY_SOLDIER_ARROW, "Clay Soldier Arrow");
+
 
         addEntityType(ModEntityTypes.CLAY_BLOCK_PROJECTILE, "Clay Block");
 
@@ -277,6 +289,8 @@ public class ModLangProvider extends LanguageProvider {
         this.addJade(JadeRegistry.VAMPIRE_SOLDIER, "Vampire Clay Soldier");
         this.addJade(JadeRegistry.EASEL_BLOCK, "Easel Block");
         this.addJade(JadeRegistry.HAMSTER_WHEEL_BLOCK, "Hamster Wheel Block");
+        this.addJade(JadeRegistry.SUGAR_CANE_HAMMOCK_BLOCK, "Sugar Cane with Hammock");
+
         this.addJade(JadeRegistry.BOSS_CLAY_SOLDIER, "Clay Soldier Boss");
 
 

@@ -68,8 +68,8 @@ public abstract class ClayMobRideableEntity extends ClayMobEntity {
     }
 
     @Override
-    public boolean isOrderedToSit() {
-        return super.isOrderedToSit() || (getFirstPassenger() instanceof ClayMobEntity clayMob && clayMob.isOrderedToSit()) ;
+    public boolean getOrderedCommand() {
+        return super.getOrderedCommand() || (getFirstPassenger() instanceof ClayMobEntity clayMob && clayMob.getOrderedCommand()) ;
     }
 
     @Override

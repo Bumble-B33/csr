@@ -2,7 +2,9 @@ package net.bumblebee.claysoldiers.entity.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.logging.LogUtils;
-import net.bumblebee.claysoldiers.ClaySoldiersCommon;
+import net.bumblebee.claysoldiers.block.soldiercontainer.OccupantSoldierData;
+import net.bumblebee.claysoldiers.claysoldierchips.ClaySoldierChip;
+import net.bumblebee.claysoldiers.entity.common.programmable.ProgrammableClayMobAccess;
 import net.bumblebee.claysoldiers.entity.common.soldier.AbstractClaySoldierEntity;
 import net.bumblebee.claysoldiers.init.ModEntityTypes;
 import net.bumblebee.claysoldiers.item.claymobspawn.ClaySoldierSpawnItem;
@@ -15,16 +17,14 @@ import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
-import net.minecraft.core.RegistryAccess;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.WalkAnimationState;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.entity.EntityInLevelCallback;
-import net.minecraft.world.level.storage.TagValueInput;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +35,7 @@ import org.slf4j.Logger;
 import java.util.Locale;
 import java.util.Objects;
 
-public class ClientClaySoldierEntity extends AbstractClaySoldierEntity {
+public class ClientClaySoldierEntity extends AbstractClaySoldierEntity implements FakeClaySoldierAccess, ProgrammableClayMobAccess {
     private static final Logger LOGGER = LogUtils.getLogger();
     @Nullable
     private final AbstractClaySoldierRenderer renderer;
@@ -44,12 +44,15 @@ public class ClientClaySoldierEntity extends AbstractClaySoldierEntity {
     private ItemStack cachedPickResult;
     private float scale = 1f;
     private boolean waxed = false;
+    private int skinVariantId = 0;
+    @Nullable
+    private ClaySoldierChip<?> installedChip;
 
     public final WalkAnimationState fakeWalkState;
 
 
-    private ClientClaySoldierEntity(EntityType<? extends AbstractClaySoldierEntity> entityType, BlockPos pos, WalkAnimationState fakeWalkState, Holder.Reference<ClayMobTeam> clayMobTeamId) {
-        super(entityType, Minecraft.getInstance().level, AttackTypeProperty.NORMAL);
+    private ClientClaySoldierEntity(EntityType<? extends AbstractClaySoldierEntity> entityType, Level level, BlockPos pos, WalkAnimationState fakeWalkState, Holder.Reference<ClayMobTeam> clayMobTeamId) {
+        super(entityType, level, AttackTypeProperty.NORMAL);
         this.fakeWalkState = fakeWalkState;
         this.clayMobTeamId = clayMobTeamId;
         this.renderer = createRenderer(entityType, this);
@@ -57,25 +60,34 @@ public class ClientClaySoldierEntity extends AbstractClaySoldierEntity {
         setPosRaw(pos.getX(), pos.getY(), pos.getZ());
     }
 
-    public static ClientClaySoldierEntity create(EntityType<? extends AbstractClaySoldierEntity> type, CompoundTag tag, BlockPos pos, WalkAnimationState state, ResourceKey<ClayMobTeam> id, float size) {
-        RegistryAccess registryAccess = Minecraft.getInstance().level.registryAccess();
-        ValueInput input = TagValueInput.create(ClaySoldiersCommon.PROBLEM_REPORTER, registryAccess, tag);
+    public static FakeClaySoldierAccess create(EntityType<? extends AbstractClaySoldierEntity> type, OccupantSoldierData.Data tag, BlockPos pos, WalkAnimationState state, Holder.Reference<ClayMobTeam> team) {
+        ClientClaySoldierEntity soldier = new ClientClaySoldierEntity(type, Minecraft.getInstance().level, pos, state, team);
+        soldier.waxed = tag.waxed();
+        soldier.getInventory().copyFrom(tag.inventory());
+        soldier.offsetColor = tag.offsetColor();
+        soldier.scale = tag.scale();
+        soldier.skinVariantId = tag.skinVariantId();
+        soldier.installedChip = tag.chip().orElse(null);
 
-        var ref = ClayMobTeamManger.get(id, registryAccess).orElse(ClayMobTeamManger.getDefault(registryAccess));
-        ClientClaySoldierEntity soldier = new ClientClaySoldierEntity(type, pos, state, ref);
-        soldier.waxed = input.getBooleanOr(WAXED_TAG, false);
-        soldier.getInventory().load(input);
-        soldier.offsetColor = input.read(OFFSET_COLOR_TAG, ColorHelper.CODEC).orElse(ColorHelper.EMPTY);
-        soldier.scale = size;
         return soldier;
     }
 
-    public static ClientClaySoldierEntity createAsProjectile(WalkAnimationState state, Holder.Reference<ClayMobTeam> clayMobTeam) {
-        return new ClientClaySoldierEntity(ModEntityTypes.CLAY_SOLDIER_ENTITY.get(), BlockPos.ZERO, state, clayMobTeam);
+    public static FakeClaySoldierAccess createAsProjectile(Level level, WalkAnimationState state, Holder.Reference<ClayMobTeam> clayMobTeam) {
+        return new ClientClaySoldierEntity(ModEntityTypes.CLAY_SOLDIER_ENTITY.get(), level, BlockPos.ZERO, state, clayMobTeam);
+    }
+
+    @Override
+    public int getSkinVariant() {
+        return skinVariantId;
     }
 
     public void setUpCape() {
         moveCloak(0, 0, 0);
+    }
+
+    @Override
+    public void increaseTickCount() {
+        tickCount++;
     }
 
     private static AbstractClaySoldierRenderer createRenderer(EntityType<? extends AbstractClaySoldierEntity> type, AbstractClaySoldierEntity soldier) {
@@ -87,7 +99,8 @@ public class ClientClaySoldierEntity extends AbstractClaySoldierEntity {
         }
     }
 
-    public void submit(float partialTicks, PoseStack poseStack, SubmitNodeCollector buffer, int packedLight, CameraRenderState cameraRenderState) {
+    @Override
+    public void submit(PoseStack poseStack, SubmitNodeCollector buffer, int packedLight, CameraRenderState cameraRenderState, float partialTicks) {
         if (renderer != null) {
             yBodyRotO = 0;
             yBodyRot = 0;
@@ -132,6 +145,16 @@ public class ClientClaySoldierEntity extends AbstractClaySoldierEntity {
         return waxed;
     }
 
+    @Override
+    public ItemStack getAsItem() {
+        return getPickResult();
+    }
+
+    @Override
+    public Component displayName() {
+        return getDisplayName();
+    }
+
 
     @Override
     public @NotNull ClayMobTeam getClayTeam() {
@@ -140,6 +163,16 @@ public class ClientClaySoldierEntity extends AbstractClaySoldierEntity {
         }
         clayMobTeamId = ClayMobTeamManger.getDefault(registryAccess());
         return clayMobTeamId.value();
+    }
+
+    @Override
+    public int tickCount() {
+        return tickCount;
+    }
+
+    @Override
+    public int colorOffset() {
+        return getId();
     }
 
     @Override
@@ -170,16 +203,21 @@ public class ClientClaySoldierEntity extends AbstractClaySoldierEntity {
     }
 
     @Override
+    public @Nullable ClaySoldierChip<?> getInstalledChip() {
+        return installedChip;
+    }
+
+    @Override
     public @Nullable Component getWorkStatus() {
         return null;
     }
 
     @Override
-    public void addAdditionalSaveData(ValueOutput valueOutput) {
+    public void addAdditionalSaveData(@NonNull ValueOutput output) {
     }
 
     @Override
-    public void readAdditionalSaveData(ValueInput input) {
+    public void readAdditionalSaveData(@NonNull ValueInput input) {
     }
 
     @Override

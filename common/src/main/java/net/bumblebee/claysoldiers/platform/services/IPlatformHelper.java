@@ -30,13 +30,13 @@ import net.minecraft.world.entity.ai.village.poi.PoiType;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.MenuType;
-import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeBookCategory;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.item.crafting.display.SlotDisplay;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -45,7 +45,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.loot.functions.LootItemFunction;
 
 import java.util.List;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -72,13 +71,11 @@ public interface IPlatformHelper {
 
     <T extends Item> ItemLikeSupplier<T> registerItem(String id, Function<Item.Properties, T> item);
 
-    default  <T extends Block> ItemLikeSupplier<T> registerBlockWithItem(String id, Function<BlockBehaviour.Properties, T> block, BlockBehaviour.Properties properties) {
-        return registerBlockWithItem(id, block, properties, BlockItem::new);
-    }
+    <T extends Block> ItemLikeSupplier<T> registerBlockWithItem(String id, Function<BlockBehaviour.Properties, T> block, BlockBehaviour.Properties properties);
 
-    <T extends Block> ItemLikeSupplier<T> registerBlockWithItem(String id, Function<BlockBehaviour.Properties, T> block, BlockBehaviour.Properties properties, BiFunction<Block, Item.Properties, BlockItem> createBlockItem);
+    <T extends Block> Supplier<T> registerBlockWithoutItem(String id, Function<BlockBehaviour.Properties, T> block, BlockBehaviour.Properties properties);
 
-    <T extends BlockEntity> Supplier<BlockEntityType<T>> registerBlockEntity(String id, BlockEntityFactory<T> factory, List<Supplier<Block>> blocks);
+    <T extends BlockEntity> Supplier<BlockEntityType<T>> registerBlockEntity(String id, BlockEntityFactory<T> factory, List<Supplier<? extends Block>> blocks);
     Supplier<SimpleParticleType> registerParticle(String id, Supplier<SimpleParticleType> particleTye);
     <T extends Entity> Supplier<EntityType<T>> registerEntity(String id, Supplier<EntityType<T>> entityType);
     <T> Supplier<DataComponentType<T>> registerDataComponent(String id, Supplier<DataComponentType<T>> dataComponent);
@@ -108,13 +105,15 @@ public interface IPlatformHelper {
 
     <T extends Recipe<?>> Supplier<RecipeSerializer<T>> registerRecipe(String id, Supplier<RecipeSerializer<T>> recipe);
 
+    <T extends SlotDisplay> void registerSlotDisplay(String id, SlotDisplay.Type<T> recipe);
+
 
     List<Item> getAllItems();
     Supplier<CreativeModeTab> registerCreativeModeTab(String id, Function<CreativeModeTab.Builder, CreativeModeTab> creativeModeTab);
     Supplier<CreativeModeTab> registerCreativeModeTabSoldierItems();
 
     Holder<MobEffect> registerMobEffect(String id, Supplier<MobEffect> effect);
-    Holder<PoiType> registerPoiType(ResourceKey<PoiType> id, Supplier<PoiType> poiType);
+    Supplier<PoiType> registerPoiType(ResourceKey<PoiType> id, Supplier<PoiType> poiType);
 
     DamageSources createClayDamageSources(RegistryAccess registryAccess);
 

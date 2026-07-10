@@ -72,7 +72,7 @@ public class ClaySoldierThrowableItemEntity extends ThrowableItemProjectile {
         }
         var effect = thrownItem.effect();
         if (effect == null) {
-            hitTarget.hurt(this.damageSources().thrown(this, this.getOwner()), 0);
+            hitTarget.hurtOrSimulate(this.damageSources().thrown(this, this.getOwner()), 0);
             this.discard();
             return;
         }
@@ -85,7 +85,7 @@ public class ClaySoldierThrowableItemEntity extends ThrowableItemProjectile {
                 specialAttack.performAttackEffect(thrower, hitTarget);
                 bonusDamage += specialAttack.getBonusDamage(thrower, hitTarget);
             }
-            hitTarget.hurt(this.damageSources().thrown(this, thrower), (effect.damage() + bonusDamage) * powerScale);
+            hitTarget.hurtOrSimulate(this.damageSources().thrown(this, thrower), (effect.damage() + bonusDamage) * powerScale);
             int secOnFireInTicks = effect.properties().setOnFire();
             if (secOnFireInTicks > 0) {
                 hitTarget.igniteForTicks(adjustFireTicks(secOnFireInTicks, powerScale));

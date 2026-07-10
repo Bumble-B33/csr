@@ -95,6 +95,6 @@ public class ShearBladeRecipe extends CustomRecipe {
     }
 
     public boolean isDisabled() {
-        return ClaySoldiersCommon.CONFIG.getCommonConfig().shearBladeRecipeEnabled();
+        return !ClaySoldiersCommon.CONFIG.getCommonConfig().shearBladeRecipeEnabled();
     }
 }

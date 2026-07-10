@@ -4,6 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.entity.client.ClaySoldierRenderer;
 import net.bumblebee.claysoldiers.entity.client.renderstates.AbstractClaySoldierRenderState;
+import net.bumblebee.claysoldiers.entity.common.programmable.ProgrammableClayMobAccess;
 import net.bumblebee.claysoldiers.entity.common.programmable.ProgrammableClaySoldierEntity;
 import net.bumblebee.claysoldiers.entity.common.soldier.AbstractClaySoldierEntity;
 import net.minecraft.client.renderer.SubmitNodeCollector;
@@ -37,8 +38,13 @@ public class ProgrammableClaySoldierRenderer extends ClaySoldierRenderer {
     @Override
     public void extractRenderState(AbstractClaySoldierEntity claySoldierEntity, AbstractClaySoldierRenderState claySoldierRenderState, float partialTick) {
         super.extractRenderState(claySoldierEntity, claySoldierRenderState, partialTick);
+        if (claySoldierEntity instanceof ProgrammableClayMobAccess programmable) {
+            var chip = programmable.getInstalledChip();
+            if (chip != null) {
+                claySoldierRenderState.moduleTexture = chip.assetId();
+            }
+        }
         if (claySoldierEntity instanceof ProgrammableClaySoldierEntity soldier) {
-            claySoldierRenderState.moduleTexture = soldier.getInstalledModule().assetId();
             if (soldier.isFishingAnker()) {
                 claySoldierRenderState.renderCarried = false;
             }

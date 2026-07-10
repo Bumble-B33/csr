@@ -200,12 +200,7 @@ public class ClaySoldierSpawnItem extends MultiSpawnItem<ClaySoldierEntity> impl
         if (optTeam.isEmpty()) {
             return false;
         }
-        TeamPlayerData data;
-        if (player.level() instanceof ServerLevel serverLevel) {
-            data = TeamLoyaltyManger.getTeamPlayerData(serverLevel);
-        } else {
-            data = TeamLoyaltyManger.getClientTeamPlayerData();
-        }
+        TeamPlayerData data = TeamLoyaltyManger.getTeamPlayerData(player.level());
         var playerData = data.getPlayerForTeam(team);
 
         return playerData != null && playerData.is(player);
@@ -225,8 +220,8 @@ public class ClaySoldierSpawnItem extends MultiSpawnItem<ClaySoldierEntity> impl
             return;
         }
         var stack = getProjectileItem(player);
-        if (stack != null) {
-            stack.getThrowableCap().performRangedAttack(player, player.level(), attacker, stack, 1f);
+        if (stack != null && player.level() instanceof ServerLevel serverLevel) {
+            stack.getThrowableCap().performRangedAttack(player, serverLevel, attacker, stack, 1f);
         }
     }
 

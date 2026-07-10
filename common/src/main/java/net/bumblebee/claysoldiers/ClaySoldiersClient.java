@@ -6,9 +6,11 @@ import net.bumblebee.claysoldiers.block.SpecialItemRenderers;
 import net.bumblebee.claysoldiers.block.blueprint.EaselBlockEntityRenderer;
 import net.bumblebee.claysoldiers.block.chipassembler.ChipAssemblerArmModel;
 import net.bumblebee.claysoldiers.block.chipassembler.ChipAssemblerBlockEntityRenderer;
+import net.bumblebee.claysoldiers.block.hammock.SugarCaneHammockBlockEntityRenderer;
 import net.bumblebee.claysoldiers.block.hamsterwheel.HamsterWheelBlockEntityRenderer;
 import net.bumblebee.claysoldiers.block.hamsterwheel.HamsterWheelModel;
 import net.bumblebee.claysoldiers.claysoldierchips.ClaySoldierChip;
+import net.bumblebee.claysoldiers.entity.client.ClaySoldierArrowRenderer;
 import net.bumblebee.claysoldiers.entity.client.ClaySoldierModel;
 import net.bumblebee.claysoldiers.entity.client.ClaySoldierRenderer;
 import net.bumblebee.claysoldiers.entity.client.accesories.ClaySoldierCapeModel;
@@ -24,10 +26,7 @@ import net.bumblebee.claysoldiers.entity.client.undead.VampireClaySoldierRendere
 import net.bumblebee.claysoldiers.entity.client.undead.ZombieClaySoldierRenderer;
 import net.bumblebee.claysoldiers.entity.client.wraith.WraithModel;
 import net.bumblebee.claysoldiers.entity.client.wraith.WraithRenderer;
-import net.bumblebee.claysoldiers.init.ModBlockEntities;
-import net.bumblebee.claysoldiers.init.ModDataComponents;
-import net.bumblebee.claysoldiers.init.ModEntityTypes;
-import net.bumblebee.claysoldiers.init.ModParticles;
+import net.bumblebee.claysoldiers.init.*;
 import net.bumblebee.claysoldiers.item.ClayBrushItem;
 import net.bumblebee.claysoldiers.item.blueprint.BlueprintItem;
 import net.bumblebee.claysoldiers.item.blueprint.tooltip.BlueprintTooltip;
@@ -43,6 +42,8 @@ import net.bumblebee.claysoldiers.platform.services.IClientHooks;
 import net.bumblebee.claysoldiers.util.ComponentFormating;
 import net.bumblebee.claysoldiers.util.color.ColorHelper;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.color.block.BlockTintSource;
+import net.minecraft.client.color.block.BlockTintSources;
 import net.minecraft.client.color.item.ItemTintSource;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
 import net.minecraft.client.model.HumanoidModel;
@@ -54,10 +55,12 @@ import net.minecraft.client.particle.*;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
 import net.minecraft.client.renderer.entity.ArmorModelSet;
+import net.minecraft.client.renderer.entity.ArrowRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.ThrownItemRenderer;
 import net.minecraft.client.renderer.item.properties.numeric.RangeSelectItemModelProperty;
 import net.minecraft.client.renderer.special.SpecialModelRenderer;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleType;
 import net.minecraft.network.chat.Component;
@@ -70,8 +73,10 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -134,12 +139,15 @@ public class ClaySoldiersClient {
 
         event.accept(ChipAssemblerBlockEntityRenderer.BATTER_LEFT_LAYER, ChipAssemblerBlockEntityRenderer::createLeftBatteryLayer);
         event.accept(ChipAssemblerBlockEntityRenderer.ARM_LAYER, ChipAssemblerArmModel::createLayer);
+
+        event.accept(SugarCaneHammockBlockEntityRenderer.LAYER_LOCATION, SugarCaneHammockBlockEntityRenderer::createHammockLayer);
     }
 
     public static void registerBlockRenderers(BlockEntityRendererFactory event) {
         event.registerBlockEntityRenderer(ModBlockEntities.HAMSTER_WHEEL_BLOCK_ENTITY.get(), HamsterWheelBlockEntityRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.EASEL_BLOCK_ENTITY.get(), EaselBlockEntityRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.CHIP_ASSEMBLER_BLOCK_ENTITY.get(), ChipAssemblerBlockEntityRenderer::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.SUGAR_CANE_HAMMOCK_BLOCK_ENTITY.get(), SugarCaneHammockBlockEntityRenderer::new);
 
     }
 
@@ -153,6 +161,8 @@ public class ClaySoldiersClient {
         event.registerEntityRenderer(ModEntityTypes.CLAY_SOLDIER_THROWABLE_ITEM.get(), ThrownItemRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.CLAY_SOLDIER_POTION.get(), ThrownItemRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.CLAY_SOLDIER_SNOWBALL.get(), ThrownItemRenderer::new);
+        event.registerEntityRenderer(ModEntityTypes.CLAY_SOLDIER_ARROW.get(), ClaySoldierArrowRenderer::new);
+
 
         event.registerEntityRenderer(ModEntityTypes.CLAY_WRAITH.get(), WraithRenderer::new);
 
@@ -272,6 +282,10 @@ public class ClaySoldiersClient {
         }
     }
 
+    public static void registerBlockColorHandlers(final BiConsumer<List<BlockTintSource>, Block> event) {
+        event.accept(List.of(BlockTintSources.sugarCane()), ModBlocks.SUGAR_CANE_HAMMOCK.get());
+    }
+
     public static void registerItemColorHandlers(final BiConsumer<Identifier, MapCodec<? extends ItemTintSource>> event) {
         event.accept(Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_soldier"), ClaySoldierItemTintSource.MAP_CODEC);
         event.accept(Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_pouch"), ClayPouchItemTintSource.MAP_CODEC);
@@ -336,4 +350,5 @@ public class ClaySoldiersClient {
     public interface ParticleRegistration {
         <T extends ParticleOptions> void registerSpriteSet(ParticleType<T> type, Function<SpriteSet, ParticleProvider<T>> engine);
     }
+
 }

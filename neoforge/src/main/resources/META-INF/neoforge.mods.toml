@@ -12,6 +12,7 @@ logoFile= "csr-logo.png" #optional
 #credits="${credits}" #optional
 authors = "${mod_author}" #optional
 description = '''${description}''' #mandatory (Supports multiline text)
+issueTrackerURL = "${issue_link}"
 
 [[mixins]]
 config = "${mod_id}.mixins.json"

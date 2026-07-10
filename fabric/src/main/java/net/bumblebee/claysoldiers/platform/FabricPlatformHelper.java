@@ -21,6 +21,7 @@ import net.fabricmc.fabric.api.event.registry.FabricRegistryBuilder;
 import net.fabricmc.fabric.api.event.registry.RegistryAttribute;
 import net.fabricmc.fabric.api.menu.v1.ExtendedMenuType;
 import net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityTypeBuilder;
+import net.fabricmc.fabric.api.object.builder.v1.world.poi.PoiHelper;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.advancements.CriterionTrigger;
 import net.minecraft.advancements.criterion.EntitySubPredicate;
@@ -50,6 +51,7 @@ import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeBookCategory;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.item.crafting.display.SlotDisplay;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -58,7 +60,6 @@ import net.minecraft.world.level.storage.loot.functions.LootItemFunction;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -100,17 +101,25 @@ public class FabricPlatformHelper implements IPlatformHelper {
     }
 
     @Override
-    public <T extends Block> ItemLikeSupplier<T> registerBlockWithItem(String id, Function<BlockBehaviour.Properties, T> block, BlockBehaviour.Properties properties, BiFunction<Block, Item.Properties, BlockItem> createBlockItem) {
+    public <T extends Block> ItemLikeSupplier<T> registerBlockWithItem(String id, Function<BlockBehaviour.Properties, T> block, BlockBehaviour.Properties properties) {
         Identifier location = Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, id);
         var unpacked = block.apply(properties.setId(ResourceKey.create(Registries.BLOCK, location)));
-        registerItem(id, props -> createBlockItem.apply(unpacked, props.useBlockDescriptionPrefix()));
+        registerItem(id, props -> new BlockItem(unpacked, props.useBlockDescriptionPrefix()));
 
         Registry.register(BuiltInRegistries.BLOCK, location, unpacked);
         return () -> unpacked;
     }
 
     @Override
-    public <T extends BlockEntity> Supplier<BlockEntityType<T>> registerBlockEntity(String id, BlockEntityFactory<T> factory, List<Supplier<Block>> blocks) {
+    public <T extends Block> Supplier<T> registerBlockWithoutItem(String id, Function<BlockBehaviour.Properties, T> block, BlockBehaviour.Properties properties) {
+        Identifier location = Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, id);
+        T unpacked = block.apply(properties.setId(ResourceKey.create(Registries.BLOCK, location)));
+        Registry.register(BuiltInRegistries.BLOCK, location, unpacked);
+        return () -> unpacked;
+    }
+
+    @Override
+    public <T extends BlockEntity> Supplier<BlockEntityType<T>> registerBlockEntity(String id, BlockEntityFactory<T> factory, List<Supplier<? extends Block>> blocks) {
         var unpacked = FabricBlockEntityTypeBuilder.create(factory::create, blocks.stream().map(Supplier::get).toArray(Block[]::new)).build();
         Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE, Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, id), unpacked);
         return () -> unpacked;
@@ -137,8 +146,13 @@ public class FabricPlatformHelper implements IPlatformHelper {
     }
 
     @Override
+    public <T extends SlotDisplay> void registerSlotDisplay(String id, SlotDisplay.Type<T> recipe) {
+        defaultRegistrationStrict(BuiltInRegistries.SLOT_DISPLAY, id, recipe);
+    }
+
+    @Override
     public <T extends AbstractContainerMenu> Supplier<MenuType<T>> registerMenuType(String id, MenuFactory<T> menu) {
-        return defaultRegistration(BuiltInRegistries.MENU, id, (Supplier<MenuType<T>>) () -> new ExtendedMenuType<>(menu::create, ByteBufCodecs.VAR_INT));
+        return defaultRegistration(BuiltInRegistries.MENU, id, () -> new ExtendedMenuType<>(menu::create, ByteBufCodecs.VAR_INT));
     }
 
     @Override
@@ -204,17 +218,17 @@ public class FabricPlatformHelper implements IPlatformHelper {
 
     @Override
     public <T extends ClaySoldierChipAddon> T registerClaySoldierChipAddon(String name, T addon) {
-        return defaultRegistration(ModRegistries.CLAY_SOLDIER_CHIP_ADDONS_REGISTRY, name, addon);
+        return defaultRegistrationStrict(ModRegistries.CLAY_SOLDIER_CHIP_ADDONS_REGISTRY, name, addon);
     }
 
     @Override
     public <T extends RecipeBookCategory> T registerRecipeBookCategory(String name, T category) {
-        return defaultRegistration(BuiltInRegistries.RECIPE_BOOK_CATEGORY, name, category);
+        return defaultRegistrationStrict(BuiltInRegistries.RECIPE_BOOK_CATEGORY, name, category);
     }
 
     @Override
     public <T extends RecipeType<?>> T registerRecipeType(String name, T type) {
-        return defaultRegistration(BuiltInRegistries.RECIPE_TYPE, name, type);
+        return defaultRegistrationStrict(BuiltInRegistries.RECIPE_TYPE, name, type);
     }
 
     @Override
@@ -232,26 +246,27 @@ public class FabricPlatformHelper implements IPlatformHelper {
     public Supplier<CreativeModeTab> registerCreativeModeTabSoldierItems() {
         List<Holder<Item>> duplicates = new ArrayList<>();
         var group = FabricCreativeModeTab.builder()
-                        .title(Component.translatable(ModCreativeTab.CLAY_SOLDIER_ITEMS_TAB_TITLE))
-                        .icon(() -> ModItems.SHARPENED_STICK.get().getDefaultInstance())
-                        .displayItems((displayParameters, output) -> {
-                            displayParameters.holders().lookup(Registries.ITEM).ifPresent(reg -> {
-                                reg.get(ModTags.Items.SOLDIER_HOLDABLE).ifPresent(items -> items.forEach(itemHolder -> addItemIfAllowed(itemHolder, output, displayParameters)));
-                                reg.get(ModTags.Items.SOLDIER_POI).ifPresent(s -> s.forEach(i -> output.accept(i.value(), CreativeModeTab.TabVisibility.PARENT_TAB_ONLY)));
-                                reg.get(ModTags.Items.CLAY_HORSE_ARMOR).ifPresent(s -> s.forEach(i -> {
-                                    try {
-                                        output.accept(i.value(), CreativeModeTab.TabVisibility.PARENT_TAB_ONLY);
-                                    } catch (IllegalStateException e) {
-                                        duplicates.add(i);
-                                    }
-                                }));
-                            });
-                        })
-                        .build();
+                .title(Component.translatable(ModCreativeTab.CLAY_SOLDIER_ITEMS_TAB_TITLE))
+                .icon(() -> ModItems.SHARPENED_STICK.get().getDefaultInstance())
+                .displayItems((displayParameters, output) -> {
+                    displayParameters.holders().lookup(Registries.ITEM).ifPresent(reg -> {
+                        reg.get(ModTags.Items.SOLDIER_HOLDABLE).ifPresent(items -> items.forEach(itemHolder -> addItemIfAllowed(itemHolder, output, displayParameters)));
+                        reg.get(ModTags.Items.SOLDIER_POI).ifPresent(s -> s.forEach(i -> output.accept(i.value(), CreativeModeTab.TabVisibility.PARENT_TAB_ONLY)));
+                        reg.get(ModTags.Items.CLAY_HORSE_ARMOR).ifPresent(s -> s.forEach(i -> {
+                            try {
+                                output.accept(i.value(), CreativeModeTab.TabVisibility.PARENT_TAB_ONLY);
+                            } catch (IllegalStateException e) {
+                                duplicates.add(i);
+                            }
+                        }));
+                    });
+                })
+                .build();
         Registry.register(BuiltInRegistries.CREATIVE_MODE_TAB, Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_soldier_items"), group);
         ClaySoldiersCommon.LOGGER.debug("Added {} twice to Clay Soldier Items Tab", duplicates);
         return () -> group;
     }
+
     private static void addItemIfAllowed(Holder<Item> item, CreativeModeTab.Output output, CreativeModeTab.ItemDisplayParameters parameters) {
         if ((item.is(ModTags.Items.GAME_MASTER_ITEM) || item.value() instanceof GameMasterBlockItem) && !parameters.hasPermissions()) {
             return;
@@ -282,9 +297,11 @@ public class FabricPlatformHelper implements IPlatformHelper {
     }
 
     @Override
-    public Holder<PoiType> registerPoiType(ResourceKey<PoiType> id, Supplier<PoiType> poiType) {
-        return defaultHolderRegistration(BuiltInRegistries.POINT_OF_INTEREST_TYPE, id.identifier().getPath(), poiType);
+    public Supplier<PoiType> registerPoiType(ResourceKey<PoiType> id, Supplier<PoiType> poiType) {
+        var type = PoiHelper.register(id.identifier(), poiType.get().maxTickets(), poiType.get().validRange(), poiType.get().matchingStates());
+        return () -> type;
     }
+
     @Override
     public DamageSources createClayDamageSources(RegistryAccess registryAccess) {
         return new ClayDamageSources(registryAccess);
@@ -296,7 +313,7 @@ public class FabricPlatformHelper implements IPlatformHelper {
         return () -> unpacked;
     }
 
-    private <B, T extends B> T defaultRegistration(Registry<B> registry, String id, T value) {
+    private <B, T extends B> T defaultRegistrationStrict(Registry<B> registry, String id, T value) {
         return Registry.register(registry, Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, id), value);
     }
 

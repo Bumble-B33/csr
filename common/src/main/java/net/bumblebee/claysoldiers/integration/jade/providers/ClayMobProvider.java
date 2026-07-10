@@ -1,5 +1,6 @@
 package net.bumblebee.claysoldiers.integration.jade.providers;
 
+import net.bumblebee.claysoldiers.entity.client.FakeClaySoldierAccess;
 import net.bumblebee.claysoldiers.entity.common.ClayMobEntity;
 import net.bumblebee.claysoldiers.entity.common.soldier.AbstractClaySoldierEntity;
 import net.bumblebee.claysoldiers.init.ModTags;
@@ -7,6 +8,7 @@ import net.bumblebee.claysoldiers.integration.jade.CommonEntityProvider;
 import net.bumblebee.claysoldiers.integration.jade.CommonTooltipHelper;
 import net.bumblebee.claysoldiers.integration.jade.JadeRegistry;
 import net.bumblebee.claysoldiers.soldierproperties.types.BreathHoldPropertyType;
+import net.bumblebee.claysoldiers.team.ClayMobTeam;
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -48,9 +50,13 @@ public enum ClayMobProvider implements CommonEntityProvider<ClayMobEntity> {
     }
 
     public Component createTeamName(ClayMobEntity clayMob) {
+        return createTeamName(clayMob.getClayTeam(), clayMob.getId(), clayMob.tickCount);
+    }
+
+    public Component createTeamName(ClayMobTeam clayMobTeam, int offset, int ticks) {
         return Component.translatable(ClayMobProvider.CLAY_MOB_TEAM).withStyle(ChatFormatting.DARK_GRAY)
                 .append(Component.literal(": ").withStyle(ChatFormatting.DARK_GRAY))
-                .append(clayMob.getClayTeam().getDisplayNameWithColor(c -> c.getColor(clayMob, 0)));
+                .append(clayMobTeam.getDisplayNameWithColor(c -> c.getColor(offset, ticks, 0)));
     }
 
     private static void addAirBubbles(AbstractClaySoldierEntity soldier, BiConsumer<Integer, Boolean> adder) {

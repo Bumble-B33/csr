@@ -108,7 +108,9 @@ public final class ModTagProvider {
 
         @Override
         protected void addTags(HolderLookup.Provider provider) {
-            this.tag(ModTags.PoiTypes.SOLDIER_CONTAINER).add(ModPoiTypes.HAMSTER_WHEEL_POI_KEY);
+            this.tag(ModTags.PoiTypes.SOLDIER_CONTAINER)
+                    .add(ModPoiTypes.SINGLE_SOLDIER_CONTAINER_POI_KEY)
+                    .add(ModPoiTypes.CLAY_CACTUS_POI_KEY);
         }
     }
 

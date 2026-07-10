@@ -3,6 +3,7 @@ package net.bumblebee.claysoldiers.capability;
 import net.bumblebee.claysoldiers.entity.common.throwables.ClaySoldierThrownPotion;
 import net.bumblebee.claysoldiers.item.itemeffectholder.ItemStackWithEffect;
 import net.minecraft.core.Holder;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.projectile.throwableitemprojectile.AbstractThrownPotion;
@@ -24,15 +25,15 @@ public class ThrowHealingCapability implements ThrowableItemCapability {
     }
 
     @Override
-    public void performRangedAttack(LivingEntity shooter, Level level, LivingEntity pTarget, ItemStackWithEffect holdableEffect, float pVelocity) {
-        Vec3 targetMovement = pTarget.getDeltaMovement();
-        double potionX = pTarget.getX() + targetMovement.x - shooter.getX();
-        double potionY = pTarget.getEyeY() - 1.1F - shooter.getY();
-        double potionZ = pTarget.getZ() + targetMovement.z - shooter.getZ();
+    public void performRangedAttack(LivingEntity shooter, ServerLevel level, LivingEntity target, ItemStackWithEffect holdableEffect, float pVelocity) {
+        Vec3 targetMovement = target.getDeltaMovement();
+        double potionX = target.getX() + targetMovement.x - shooter.getX();
+        double potionY = target.getEyeY() - 1.1F - shooter.getY();
+        double potionZ = target.getZ() + targetMovement.z - shooter.getZ();
         double distanceTarget = Math.sqrt(potionX * potionX + potionZ * potionZ);
         Holder<Potion> potion = Potions.REGENERATION;
 
-        if (pTarget.getHealth() <= 4.0F) {
+        if (target.getHealth() <= 4.0F) {
             potion = Potions.HEALING;
         }
 

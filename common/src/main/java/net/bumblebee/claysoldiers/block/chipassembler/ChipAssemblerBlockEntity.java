@@ -41,11 +41,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.logging.Logger;
 
 public class ChipAssemblerBlockEntity extends BlockEntity implements StatInfoDisplay {
     private static final String ENERGY_TAG = "energy";
     private static final String PROGRESS_TAG = "progress";
     private static final String PROGRESS_START_TAG = "progress_start";
+    public static final int CHIP_RECIPE_EXTRA_REQUIRED_ENERGY = 20;
 
     private static final String LAST_RECIPE_TAG = "last_recipe";
     private static final Codec<ResourceKey<Recipe<?>>> LAST_RECIPE_CODEC = ResourceKey.codec(Registries.RECIPE);
@@ -133,37 +135,43 @@ public class ChipAssemblerBlockEntity extends BlockEntity implements StatInfoDis
 
     public void serverTick() {
         if (level instanceof ServerLevel serverLevel) {
-            int energy = tickRecipe(serverLevel, energyStorage.getEnergyStored());
-            if (energy > 0) {
-                energyStorage.remove(energy);
-            }
+            ChipInput chipInput = new ChipInput(inventory.withoutEmpty());
+            RecipeHolder<ChipAssemblyRecipe> recipeHolder = getRecipe(chipInput, level);
 
-            if (energyRequiresUpdate(energyStorage.getEnergyStored(), lastEnergyStored)) {
+            if (energyRequiresUpdate(energyStorage.getEnergyStored(), lastEnergyStored) || (recipeHolder != null && recipeHolder.id() != lastRecipe)) {
                 ClaySoldiersCommon.NETWORK_MANGER.sendToPlayersTrackingBlockEntity(this, new ChipAssemblyEnergyPayload(worldPosition, energyStorage.getEnergyStored()));
                 lastEnergyStored = energyStorage.getEnergyStored();
+            }
+
+            int energy = tickRecipe(recipeHolder, chipInput, serverLevel, energyStorage.getEnergyStored());
+            if (energy > 0) {
+                energyStorage.remove(energy);
             }
         }
     }
 
     public void clientTick() {
         if (level != null) {
-            tickRecipe(level, energyStorage.getEnergyStored());
+            ChipInput chipInput = new ChipInput(inventory.withoutEmpty());
+            RecipeHolder<ChipAssemblyRecipe> recipeHolder = getRecipe(chipInput, level);
+            tickRecipe(recipeHolder, chipInput, level, energyStorage.getEnergyStored());
         }
     }
 
     /**
      * @return the energy consumed by this recipe
      */
-    private int tickRecipe(@NotNull Level level, long storedEnergy) {
-        ChipInput chipInput = new ChipInput(inventory.withoutEmpty());
-        RecipeHolder<ChipAssemblyRecipe> recipeHolder = getRecipe(chipInput, level);
-
+    private int tickRecipe(@Nullable RecipeHolder<ChipAssemblyRecipe> recipeHolder, ChipInput chipInput, @NotNull Level level, long storedEnergy) {
         if (recipeHolder == null) {
             lastRecipe = null;
             progress = -1;
             progressStart = -1;
             return 0;
         }
+        if (progress <= -1 && recipeHolder.value().totalEnergyCost() + CHIP_RECIPE_EXTRA_REQUIRED_ENERGY > storedEnergy) {
+            return 0;
+        }
+
         int energyNeed = recipeHolder.value().energyCost();
         if (energyNeed > storedEnergy) {
             return 0;
@@ -234,10 +242,13 @@ public class ChipAssemblerBlockEntity extends BlockEntity implements StatInfoDis
         if (energy == lastEnergy) {
             return false;
         }
+        if (progress >= 0) {
+            return true;
+        }
         if (energy == 0) {
             return true;
         }
-        if (Math.abs(energy - lastEnergy) > 10) {
+        if (Math.abs(energy - lastEnergy) > 3) {
             return true;
         }
         return energy >= energyStorage.getMaxCapacity();
@@ -253,5 +264,15 @@ public class ChipAssemblerBlockEntity extends BlockEntity implements StatInfoDis
             list.add(CommonComponents.space().append(Component.translatable(StatInfoDisplay.PROGRESS, (progress / 20) + 1)).withStyle(ChatFormatting.GRAY));
 
         }
+    }
+
+    public void addInfo(List<String> info) {
+        info.add("Progress: " + progress);
+        info.add("Energy: " + energyStorage);
+    }
+
+    @Override
+    public String toString() {
+        return "ChipAssemblerBlockEntity{%s, %s}".formatted(worldPosition, level);
     }
 }

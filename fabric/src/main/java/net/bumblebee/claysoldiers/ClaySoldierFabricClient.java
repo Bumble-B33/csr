@@ -16,9 +16,12 @@ import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.particle.v1.ParticleProviderRegistry;
 import net.fabricmc.fabric.api.client.recipe.v1.sync.ClientRecipeSynchronizedEvent;
+import net.fabricmc.fabric.api.client.rendering.v1.BlockColorRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.ClientTooltipComponentCallback;
 import net.fabricmc.fabric.api.client.rendering.v1.ModelLayerRegistry;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.color.block.BlockColors;
+import net.minecraft.client.color.block.BlockTintSources;
 import net.minecraft.client.color.item.ItemTintSources;
 import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
@@ -58,6 +61,7 @@ public class ClaySoldierFabricClient implements ClientModInitializer {
         });
 
         ClaySoldiersClient.registerItemColorHandlers(ItemTintSources.ID_MAPPER::put);
+        ClaySoldiersClient.registerBlockColorHandlers(BlockColorRegistry::register);
         ClaySoldiersClient.registerItemModelCondition(RangeSelectItemModelProperties.ID_MAPPER::put);
         ClaySoldiersClient.registerSpecialItemModelRenderer(SpecialModelRenderers.ID_MAPPER::put);
 

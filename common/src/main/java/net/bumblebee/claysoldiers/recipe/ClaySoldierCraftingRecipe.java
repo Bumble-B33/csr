@@ -1,6 +1,7 @@
 package net.bumblebee.claysoldiers.recipe;
 
 import com.mojang.serialization.MapCodec;
+import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.init.ModItems;
 import net.bumblebee.claysoldiers.init.ModRecipes;
 import net.bumblebee.claysoldiers.item.claymobspawn.ClaySoldierSpawnItem;
@@ -10,9 +11,10 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.CraftingInput;
-import net.minecraft.world.item.crafting.CustomRecipe;
-import net.minecraft.world.item.crafting.RecipeSerializer;
+import net.minecraft.world.item.crafting.*;
+import net.minecraft.world.item.crafting.display.RecipeDisplay;
+import net.minecraft.world.item.crafting.display.ShapelessCraftingRecipeDisplay;
+import net.minecraft.world.item.crafting.display.SlotDisplay;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.NotNull;
 
@@ -68,7 +70,13 @@ public class ClaySoldierCraftingRecipe extends CustomRecipe {
         if (count > 0 && id != null) {
             return ClaySoldierSpawnItem.createStackUnchecked(id, count);
         }
-        throw new IllegalStateException("Crafting: Tried Crafting a Clay Soldier without a team item");
+        ClaySoldiersCommon.ERROR_HANDLER.warn("Crafting: Tried Crafting a Clay Soldier without a team item");
+        return ItemStack.EMPTY;
+    }
+
+    @Override
+    public boolean showNotification() {
+        return false;
     }
 
     @Override

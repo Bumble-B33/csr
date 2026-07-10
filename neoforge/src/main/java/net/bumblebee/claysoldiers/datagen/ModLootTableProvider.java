@@ -51,6 +51,9 @@ public class ModLootTableProvider extends LootTableProvider {
             dropSelf(ModBlocks.EASEL_BLOCK.get());
             dropSelf(ModBlocks.ESCRITOIRE_BLOCK.get());
             dropSelf(ModBlocks.CHIP_ASSEMBLER.get());
+            dropOther(ModBlocks.SUGAR_CANE_HAMMOCK.get(), Items.SUGAR_CANE);
+            dropOther(ModBlocks.CACTUS_HOUSE.get(), Items.CACTUS);
+
         }
 
         @Override

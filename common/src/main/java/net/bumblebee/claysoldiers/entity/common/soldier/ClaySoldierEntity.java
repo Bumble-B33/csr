@@ -26,6 +26,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NonNull;
 
 import java.util.UUID;
 
@@ -40,13 +41,13 @@ public class ClaySoldierEntity extends AbstractClaySoldierEntity implements Vamp
     }
 
     @Override
-    public void addAdditionalSaveData(ValueOutput valueOutput) {
-        super.addAdditionalSaveData(valueOutput);
-        addVampOwner(valueOutput);
+    public void addAdditionalSaveData(@NonNull ValueOutput output) {
+        super.addAdditionalSaveData(output);
+        addVampOwner(output);
     }
 
     @Override
-    public void readAdditionalSaveData(ValueInput input) {
+    public void readAdditionalSaveData(@NonNull ValueInput input) {
         super.readAdditionalSaveData(input);
         readVampOwner(input);
     }
@@ -123,6 +124,7 @@ public class ClaySoldierEntity extends AbstractClaySoldierEntity implements Vamp
         ItemStack itemInHand = player.getItemInHand(hand);
         ClaySoldierChip<?> chip = ClaySoldierChipItem.getChipFromItem(itemInHand);
         if (chip != null) {
+
             if (level() instanceof ServerLevel) {
                 if (ClaySoldiersCommon.CONFIG.getServerConfig().chipRequiresLoyalty() && !isOwnedBy(player)) {
                     return InteractionResult.FAIL;

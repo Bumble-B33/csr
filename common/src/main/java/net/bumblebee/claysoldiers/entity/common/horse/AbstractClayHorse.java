@@ -39,6 +39,7 @@ import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NonNull;
 
 import java.util.OptionalInt;
 
@@ -101,19 +102,19 @@ public abstract class AbstractClayHorse extends ClayMobRideableEntity implements
     }
 
     @Override
-    public void addAdditionalSaveData(ValueOutput pCompound) {
-        super.addAdditionalSaveData(pCompound);
-        pCompound.putBoolean("EatingHaystack", this.isEating());
-        pCompound.putBoolean("Bred", this.isBred());
-        pCompound.putInt("Variant", this.getVariant().getId());
+    public void addAdditionalSaveData(@NonNull ValueOutput output) {
+        super.addAdditionalSaveData(output);
+        output.putBoolean("EatingHaystack", this.isEating());
+        output.putBoolean("Bred", this.isBred());
+        output.putInt("Variant", this.getVariant().getId());
     }
 
     @Override
-    public void readAdditionalSaveData(ValueInput pCompound) {
-        super.readAdditionalSaveData(pCompound);
-        this.setEating(pCompound.getBooleanOr("EatingHaystack", false));
-        this.setBred(pCompound.getBooleanOr("Bred", false));
-        this.setVariant(ClayHorseVariants.getById(pCompound.getIntOr("Variant", ClayHorseVariants.CAKE.getId())));
+    public void readAdditionalSaveData(@NonNull ValueInput input) {
+        super.readAdditionalSaveData(input);
+        this.setEating(input.getBooleanOr("EatingHaystack", false));
+        this.setBred(input.getBooleanOr("Bred", false));
+        this.setVariant(ClayHorseVariants.getById(input.getIntOr("Variant", ClayHorseVariants.CAKE.getId())));
     }
 
     @Override

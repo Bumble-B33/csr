@@ -1,10 +1,9 @@
 package net.bumblebee.claysoldiers.init;
 
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
-import net.bumblebee.claysoldiers.recipe.BrickedItemReviveRecipe;
-import net.bumblebee.claysoldiers.recipe.ClaySoldierCookingRecipe;
-import net.bumblebee.claysoldiers.recipe.ClaySoldierCraftingRecipe;
-import net.bumblebee.claysoldiers.recipe.ShearBladeRecipe;
+import net.bumblebee.claysoldiers.integration.ExternalMods;
+import net.bumblebee.claysoldiers.integration.jei.JEIShapelessRecipe;
+import net.bumblebee.claysoldiers.recipe.*;
 import net.bumblebee.claysoldiers.recipe.chip.AddonChipRecipe;
 import net.bumblebee.claysoldiers.recipe.chip.BasicChipAssemblyRecipe;
 import net.bumblebee.claysoldiers.recipe.chip.ChipAssemblyRecipe;
@@ -44,7 +43,7 @@ public final class ModRecipes {
     public static final RecipeType<ChipAssemblyRecipe> CHIP_ASSEMBLY_TYPE = ClaySoldiersCommon.PLATFORM.registerRecipeType("chip_assembly", new RecipeType<>() {
         @Override
         public String toString() {
-            return "csr:chip_assembly";
+            return ClaySoldiersCommon.MOD_ID + ":chip_assembly";
         }
     });
 
@@ -55,9 +54,11 @@ public final class ModRecipes {
             () -> new RecipeSerializer<>(AddonChipRecipe.CODEC, AddonChipRecipe.STREAM_CODEC)
     );
 
-
     private ModRecipes() {
     }
 
-    public static void init() {}
+    public static void init() {
+        ClaySoldiersCommon.PLATFORM.registerRecipe("jei_shapeless_recipe", () -> JEIShapelessRecipe.SERIALIZER);
+        ClaySoldiersCommon.PLATFORM.registerSlotDisplay("team_based", TeamBasesItemStackDisplay.TYPE);
+    }
 }

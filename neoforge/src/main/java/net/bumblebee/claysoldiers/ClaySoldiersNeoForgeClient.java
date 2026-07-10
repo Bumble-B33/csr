@@ -42,6 +42,7 @@ public class ClaySoldiersNeoForgeClient {
         modEventBus.addListener(this::registerParticles);
         modEventBus.addListener(this::registerMenuScreen);
         modEventBus.addListener(this::registerItemColorHandler);
+        modEventBus.addListener(this::registerBlockColorHandler);
         modEventBus.addListener(this::registerItemModelCondition);
 
         modEventBus.addListener(this::registerRenderers);
@@ -88,6 +89,11 @@ public class ClaySoldiersNeoForgeClient {
         event.register(ModMenuTypes.CLAY_HORSE_MENU.get(), ClayHorseScreen::new);
         event.register(ModMenuTypes.ESCRITOIRE_MENU.get(), EscritoireScreen::new);
     }
+
+    private void registerBlockColorHandler(RegisterColorHandlersEvent.BlockTintSources event) {
+        ClaySoldiersClient.registerBlockColorHandlers(event::register);
+    }
+
     private void registerItemColorHandler(RegisterColorHandlersEvent.ItemTintSources event) {
         ClaySoldiersClient.registerItemColorHandlers(event::register);
     }

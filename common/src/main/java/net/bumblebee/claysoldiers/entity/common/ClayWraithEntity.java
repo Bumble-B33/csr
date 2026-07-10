@@ -28,12 +28,12 @@ import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NonNull;
 
 import java.util.EnumSet;
 import java.util.List;
@@ -58,8 +58,8 @@ public class ClayWraithEntity extends ClayMobTeamOwnerEntity implements ClaySold
     private int limitedLifeTicks;
     private List<SpecialAttack<?>> attackFunctions = List.of();
 
-    public ClayWraithEntity(EntityType<? extends ClayMobEntity> pEntityType, Level pLevel) {
-        super(pEntityType, pLevel);
+    public ClayWraithEntity(EntityType<? extends ClayMobEntity> pEntityType, Level level) {
+        super(pEntityType, level);
         this.moveControl = new WraithMovementControl(this);
     }
 
@@ -142,15 +142,15 @@ public class ClayWraithEntity extends ClayMobTeamOwnerEntity implements ClaySold
     }
 
     @Override
-    public void addAdditionalSaveData(ValueOutput valueOutput) {
-        super.addAdditionalSaveData(valueOutput);
-        valueOutput.storeNullable("bound_pos", BlockPos.CODEC, boundOrigin);
+    public void addAdditionalSaveData(@NonNull ValueOutput output) {
+        super.addAdditionalSaveData(output);
+        output.storeNullable("bound_pos", BlockPos.CODEC, boundOrigin);
         if (hasLimitedLife()) {
-            valueOutput.putInt(MAX_LIFE_TICKS_TAG, this.maxLimitedLifeTicks);
-            valueOutput.putInt(LIFE_TICKS_TAG, this.limitedLifeTicks);
+            output.putInt(MAX_LIFE_TICKS_TAG, this.maxLimitedLifeTicks);
+            output.putInt(LIFE_TICKS_TAG, this.limitedLifeTicks);
         }
         if (!attackFunctions.isEmpty()) {
-            writeSpecialAttackToTag(valueOutput, attackFunctions);
+            writeSpecialAttackToTag(output, attackFunctions);
         }
 
     }
@@ -160,11 +160,11 @@ public class ClayWraithEntity extends ClayMobTeamOwnerEntity implements ClaySold
     }
 
     @Override
-    public void readAdditionalSaveData(ValueInput pCompound) {
-        super.readAdditionalSaveData(pCompound);
-        this.boundOrigin = pCompound.read("bound_pos", BlockPos.CODEC).orElse(null);
+    public void readAdditionalSaveData(@NonNull ValueInput input) {
+        super.readAdditionalSaveData(input);
+        this.boundOrigin = input.read("bound_pos", BlockPos.CODEC).orElse(null);
 
-        readItemPersistentData(pCompound);
+        readItemPersistentData(input);
     }
 
     @Override
@@ -281,8 +281,6 @@ public class ClayWraithEntity extends ClayMobTeamOwnerEntity implements ClaySold
     public <T extends ClaySoldierInventoryHandler> void copyInventory(T toCopyTo) {
     }
 
-
-
     @Override
     public float getNightPower() {
         return VampiricClayMob.getPowerForMoonPhase(level().environmentAttributes().getValue(EnvironmentAttributes.MOON_PHASE, this.blockPosition()));
@@ -331,13 +329,20 @@ public class ClayWraithEntity extends ClayMobTeamOwnerEntity implements ClaySold
     }
 
     @Override
-    public LevelAccessor getLevel() {
+    public Level getLevel() {
         return level();
     }
 
     @Override
     public boolean showInStatDisplay() {
         return true;
+    }
+
+    @Override
+    public List<String> getInfoState() {
+        var list = super.getInfoState();
+        list.add("Is Night: " + isNightForVampire());
+        return list;
     }
 
     class WraithMovementControl extends MoveControl {
@@ -437,7 +442,7 @@ public class ClayWraithEntity extends ClayMobTeamOwnerEntity implements ClaySold
 
         @Override
         public boolean canUse() {
-            if (ClayWraithEntity.this.isOrderedToSit()) {
+            if (ClayWraithEntity.this.getOrderedCommand()) {
                 return false;
             }
             return !ClayWraithEntity.this.getMoveControl().hasWanted() && ClayWraithEntity.this.random.nextInt(reducedTickDelay(7)) == 0;
@@ -488,7 +493,7 @@ public class ClayWraithEntity extends ClayMobTeamOwnerEntity implements ClaySold
                 if (owner == null) {
                     return false;
                 } else {
-                    return (!(this.clayMobEntity.distanceToSqr(owner) < 144.0) || owner.getLastHurtByMob() == null) && this.clayMobEntity.isOrderedToSit();
+                    return (!(this.clayMobEntity.distanceToSqr(owner) < 144.0) || owner.getLastHurtByMob() == null) && this.clayMobEntity.getOrderedCommand();
                 }
             }
         }

@@ -46,7 +46,7 @@ public class ClayBlockProjectileRenderer extends EntityRenderer<ClayBlockProject
     public void submit(ClayBlockProjectileRenderState renderState, PoseStack poseStack, SubmitNodeCollector nodeCollector, CameraRenderState cameraRenderState) {
         var clientSoldier = renderState.clientClaySoldierEntity;
         if (clientSoldier != null) {
-            clientSoldier.submit(renderState.partialRot, poseStack, nodeCollector, renderState.lightCoords, cameraRenderState);
+            clientSoldier.submit(poseStack, nodeCollector, renderState.lightCoords, cameraRenderState, renderState.partialRot);
         } else {
             renderBlock(renderState, poseStack, nodeCollector);
         }

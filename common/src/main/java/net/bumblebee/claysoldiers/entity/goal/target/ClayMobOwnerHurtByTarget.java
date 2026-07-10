@@ -20,8 +20,12 @@ public class ClayMobOwnerHurtByTarget extends TargetGoal {
 
     @Override
     public boolean canUse() {
+        if (clayMob.isOrderedToIgnoreOwner()) {
+            return false;
+        }
+
         LivingEntity owner = this.clayMob.getClayTeamOwner();
-        if (owner != null && !this.clayMob.isOrderedToSit()) {
+        if (owner != null && !this.clayMob.getOrderedCommand()) {
             this.ownerLastHurtBy = owner.getLastHurtByMob();
             int lastHurtByMobTimestamp = owner.getLastHurtByMobTimestamp();
             return lastHurtByMobTimestamp != this.timestamp && this.canAttack(this.ownerLastHurtBy, TargetingConditions.DEFAULT)

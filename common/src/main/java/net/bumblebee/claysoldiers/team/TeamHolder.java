@@ -112,15 +112,13 @@ public interface TeamHolder extends OwnableEntity {
      * Returns whether this {@code TeamHolder} can move to its owner.
      */
     default boolean unableToMoveToOwner() {
-        return getClayTeamOwner() == null || getClayTeamOwner().isSpectator() || isOrderedToSit();
+        return getClayTeamOwner() == null || getClayTeamOwner().isSpectator() || getOrderedCommand();
     }
 
     /**
      * Returns whether this {@code TeamHolder} is ordered to sit.
      */
-    boolean isOrderedToSit();
-
-    void setOrderedToSit(boolean sit);
+    boolean getOrderedCommand();
 
     /**
      * Returns whether this {@code TeamHolder} is in a sitting pose

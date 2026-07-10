@@ -3,16 +3,19 @@ package net.bumblebee.claysoldiers.datagen;
 import net.bumblebee.claysoldiers.ClaySoldiersClient;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.block.SpecialItemRenderers;
+import net.bumblebee.claysoldiers.block.cacti.ClayCactusBlock;
 import net.bumblebee.claysoldiers.datamap.ThrowableTransform;
 import net.bumblebee.claysoldiers.entity.client.programmable.ProgrammableClaySoldierRenderer;
 import net.bumblebee.claysoldiers.init.ModBlocks;
 import net.bumblebee.claysoldiers.init.ModItems;
 import net.bumblebee.claysoldiers.item.ClayBrushItem;
-import net.minecraft.client.color.item.ItemTintSource;
 import net.minecraft.client.data.models.BlockModelGenerators;
 import net.minecraft.client.data.models.ItemModelGenerators;
 import net.minecraft.client.data.models.ModelProvider;
+import net.minecraft.client.data.models.blockstates.MultiVariantGenerator;
+import net.minecraft.client.data.models.blockstates.PropertyDispatch;
 import net.minecraft.client.data.models.model.*;
+import net.minecraft.client.renderer.block.dispatch.Variant;
 import net.minecraft.client.renderer.item.ClientItem;
 import net.minecraft.client.renderer.item.ItemModel;
 import net.minecraft.client.renderer.item.RangeSelectItemModel;
@@ -20,27 +23,21 @@ import net.minecraft.client.renderer.item.SpecialModelWrapper;
 import net.minecraft.client.renderer.item.properties.select.DisplayContext;
 import net.minecraft.client.resources.model.UnbakedModel;
 import net.minecraft.client.resources.model.sprite.Material;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.data.PackOutput;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.neoforged.neoforge.client.model.generators.template.ExtendedModelTemplateBuilder;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 public class ModModelProvider extends ModelProvider {
     private static final ModelTemplate SPECIAL_BLOCK = ExtendedModelTemplateBuilder.builder()
             .parent(Identifier.withDefaultNamespace("block/block"))
-            /*.transform(ItemDisplayContext.GUI, t -> t.scale(0.9f).rotation(30, 225, 0))
-            .transform(ItemDisplayContext.HEAD, t -> t.scale(0.5f).translation(0, 3, 0))
-            .transform(ItemDisplayContext.FIXED, t -> t.rotation(0, 180, 0))
-            .transform(ItemDisplayContext.THIRD_PERSON_RIGHT_HAND, t -> t.scale(0.5f).translation(0, 2.5f, 0).rotation(75, 315, 0))
-            .transform(ItemDisplayContext.FIRST_PERSON_RIGHT_HAND, t -> t.scale(0.8f).rotation(0, 315, 0))*/
-
             .build();
 
     public static final ModelTemplate CLAY_STAFF_MODEL = ExtendedModelTemplateBuilder.builder()
@@ -62,6 +59,14 @@ public class ModModelProvider extends ModelProvider {
             .requiredTextureSlot(TextureSlot.LAYER1)
             .requiredTextureSlot(TextureSlot.LAYER2)
             .requiredTextureSlot(LAYER3)
+            .build();
+
+    public static final ModelTemplate CACTUS_HOME_TEMPLATE = ExtendedModelTemplateBuilder.builder()
+            .parent(Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "block/cactus_home_base"))
+            .requiredTextureSlot(TextureSlot.NORTH)
+            .requiredTextureSlot(TextureSlot.SOUTH)
+            .requiredTextureSlot(TextureSlot.EAST)
+            .requiredTextureSlot(TextureSlot.WEST)
             .build();
 
     public ModModelProvider(PackOutput output) {
@@ -114,10 +119,15 @@ public class ModModelProvider extends ModelProvider {
         generateAddon(ModItems.TARGET_IGNORE_BABIES_ADDON.get(), ModItems.BLANK_ADDON.get(), itemModels);
 
 
+        ItemModel.Unbaked fishingRodModel = ItemModelUtils.plainModel(
+                ModelLocationUtils.getModelLocation(Items.FISHING_ROD, "_cast")
+        );
+
+
         itemModels.itemModelOutput.register(
                 ProgrammableClaySoldierRenderer.FISHING_ROD_CAST_MODEL,
                 new ClientItem(
-                        ItemModelUtils.plainModel(itemModels.createFlatItemModel(Items.FISHING_ROD, "_cast", ModelTemplates.FLAT_HANDHELD_ROD_ITEM)),
+                        fishingRodModel,
                         ClientItem.Properties.DEFAULT
                 )
         );
@@ -143,6 +153,10 @@ public class ModModelProvider extends ModelProvider {
 
         blockModels.createParticleOnlyBlock(ModBlocks.HAMSTER_WHEEL_BLOCK.get(), Blocks.COPPER_BLOCK);
         blockModels.createParticleOnlyBlock(ModBlocks.EASEL_BLOCK.get(), Blocks.OAK_PLANKS);
+
+        blockModels.createCrossBlock(ModBlocks.SUGAR_CANE_HAMMOCK.get(), BlockModelGenerators.PlantType.TINTED);
+
+        createCactusHome(blockModels, ModBlocks.CACTUS_HOUSE.get(), ClayCactusBlock.COUNT.getPossibleValues().stream().max(Integer::compareTo).orElse(0));
 
         blockModels.generateSimpleSpecialItemModel(ModBlocks.HAMSTER_WHEEL_BLOCK.get(), Optional.empty(), new SpecialItemRenderers.HamsterWheelSpecialRenderer.Unbaked());
         blockModels.generateSimpleSpecialItemModel(ModBlocks.EASEL_BLOCK.get(), Optional.empty(), new SpecialItemRenderers.EaselBlockSpecialRenderer.Unbaked());
@@ -295,5 +309,84 @@ public class ModModelProvider extends ModelProvider {
                         ClientItem.Properties.DEFAULT
                 )
         );
+    }
+
+
+    private static void createCactusHome(BlockModelGenerators modelGenerators, Block cactus, int count) {
+        var dispatchBuilder = PropertyDispatch.initial(ClayCactusBlock.COUNT);
+
+        if (count != 4) {
+            throw new IllegalStateException("Count cannot not be not 4: " + count);
+        }
+
+        Map<Integer, List<Variant>> variants = new HashMap<>(count);
+        for (int i = 0; i <= count; i++) {
+            variants.put(i, new ArrayList<>());
+        }
+
+        for (int i = 0; i < 16; i++) {
+            boolean north = (i & 1) == 1;
+            boolean east = (i & 2) == 2;
+            boolean south = (i & 4) == 4;
+            boolean west = (i & 8) == 8;
+
+            String name = "%s%s%s%s%s".formatted(
+                    north || east || south || west ? "_" : "",
+                    north ? "n" : "",
+                    east ? "e" : "",
+                    south ? "s" : "",
+                    west ? "w" : ""
+            );
+
+            int currentCount = (north ? 1 : 0) +
+                    (east ? 1 : 0) +
+                    (south ? 1 : 0) +
+                    (west ? 1 : 0);
+
+            TextureMapping textureMapping = textureMappingCactus(cactus, north, east, south, west);
+
+            Identifier model = CACTUS_HOME_TEMPLATE.create(
+                    ModelLocationUtils.getModelLocation(cactus, name),
+                    textureMapping,
+                    modelGenerators.modelOutput
+            );
+
+            Variant variant = BlockModelGenerators.plainModel(model);
+
+            variants.get(currentCount).add(variant);
+        }
+
+        modelGenerators.registerSimpleItemModel(cactus.asItem(), variants.get(0).getFirst().modelLocation());
+
+        variants.forEach((k, v) -> {
+            dispatchBuilder.select(k, BlockModelGenerators.variants(v.toArray(Variant[]::new)));
+        });
+
+
+        modelGenerators.blockStateOutput.accept(
+                MultiVariantGenerator.dispatch(cactus)
+                        .with(dispatchBuilder)
+                        .with(BlockModelGenerators.ROTATION_HORIZONTAL_FACING));
+    }
+
+    private static Material getCactiHomeTexture(Block block, String suffix) {
+        Identifier id = BuiltInRegistries.BLOCK.getKey(block);
+        return new Material(id.withPath(path -> "block/" + path + "/" + suffix));
+    }
+
+    private static TextureMapping textureMappingCactus(Block cactus, boolean north, boolean east, boolean south, boolean west) {
+        String northId;
+        if (north) {
+            northId = west ? "full" : "empty_full";
+        } else {
+            northId = west ? "full_empty" : "empty";
+        }
+
+        return new TextureMapping()
+                .put(TextureSlot.NORTH, getCactiHomeTexture(cactus, northId + "_north"))
+                .put(TextureSlot.EAST, getCactiHomeTexture(cactus, (east ? "full" : "empty") + "_east"))
+                .put(TextureSlot.SOUTH, getCactiHomeTexture(cactus, (south ? "full" : "empty") + "_south"))
+                .put(TextureSlot.WEST, getCactiHomeTexture(cactus, (west ? "full" : "empty") + "_west"));
+
     }
 }

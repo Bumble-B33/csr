@@ -56,6 +56,7 @@ import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 
 import java.util.*;
@@ -147,31 +148,31 @@ public class BossClaySoldierEntity extends AbstractClaySoldierEntity {
 
 
     @Override
-    public void addAdditionalSaveData(ValueOutput valueOutput) {
-        super.addAdditionalSaveData(valueOutput);
+    public void addAdditionalSaveData(@NonNull ValueOutput output) {
+        super.addAdditionalSaveData(output);
 
         if (!baseProperties.isEmpty()) {
-            writeBasePropertiesToTag(baseProperties, valueOutput);
+            writeBasePropertiesToTag(baseProperties, output);
         }
-        valueOutput.store(TYPE_TAG, BossTypes.CODEC, getBossType());
+        output.store(TYPE_TAG, BossTypes.CODEC, getBossType());
 
-        getOptionalBossAI(true).ifPresent(s -> writeBossAIToTag(s, valueOutput));
+        getOptionalBossAI(true).ifPresent(s -> writeBossAIToTag(s, output));
 
         if (minionOwner != null) {
-            valueOutput.store(MINION_OWNER_TAG, UUIDUtil.CODEC, minionOwner.getUUID());
+            output.store(MINION_OWNER_TAG, UUIDUtil.CODEC, minionOwner.getUUID());
         }
         if (minions != null) {
-            valueOutput.store(MINIONS_TAG, UUIDUtil.CODEC.listOf(), minions.stream().map(Entity::getUUID).toList());
+            output.store(MINIONS_TAG, UUIDUtil.CODEC.listOf(), minions.stream().map(Entity::getUUID).toList());
         }
 
         if (phaseCompleted > 0) {
-            valueOutput.putInt(PHASE_COMPLETED_TAG, phaseCompleted);
+            output.putInt(PHASE_COMPLETED_TAG, phaseCompleted);
         }
     }
 
 
     @Override
-    public void readAdditionalSaveData(ValueInput input) {
+    public void readAdditionalSaveData(@NonNull ValueInput input) {
         super.readAdditionalSaveData(input);
 
         readAndSetBasePropertiesFromTag(input);
@@ -185,7 +186,7 @@ public class BossClaySoldierEntity extends AbstractClaySoldierEntity {
         }
         minionOwnerUUID = input.read(MINION_OWNER_TAG, UUIDUtil.CODEC).orElse(null);
 
-        minionUUIDs = input.read(MINIONS_TAG, UUIDUtil.CODEC.listOf()).orElse(null);
+        minionUUIDs = input.read(MINIONS_TAG, UUIDUtil.CODEC.listOf()).map(ArrayList::new).orElse(null);
 
         phaseCompleted = input.getIntOr(PHASE_COMPLETED_TAG, 0);
     }
@@ -308,7 +309,7 @@ public class BossClaySoldierEntity extends AbstractClaySoldierEntity {
     }
 
     @Override
-    public void startSeenByPlayer(ServerPlayer serverPlayer) {
+    public void startSeenByPlayer(@NonNull ServerPlayer serverPlayer) {
         super.startSeenByPlayer(serverPlayer);
         bossEvent.addPlayer(serverPlayer);
     }

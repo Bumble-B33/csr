@@ -7,6 +7,7 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.data.PackOutput;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.block.Blocks;
+import net.neoforged.neoforge.common.Tags;
 import net.neoforged.neoforge.common.data.BlockTagsProvider;
 
 import java.util.concurrent.CompletableFuture;
@@ -31,5 +32,11 @@ public class ModBlockTagsProvider extends BlockTagsProvider {
                         Blocks.JIGSAW,
                         Blocks.MOVING_PISTON,
                         Blocks.LIGHT);
+
+        tag(BlockTags.SUPPORTS_CACTUS).add(ModBlocks.CACTUS_HOUSE.get());
+        tag(BlockTags.SUPPORT_OVERRIDE_CACTUS_FLOWER).add(ModBlocks.CACTUS_HOUSE.get());
+        tag(BlockTags.HAPPY_GHAST_AVOIDS).add(ModBlocks.CACTUS_HOUSE.get());
     }
+
+
 }

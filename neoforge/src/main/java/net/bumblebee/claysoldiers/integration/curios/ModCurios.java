@@ -70,6 +70,7 @@ public class ModCurios {
             return new SoldierCurios(stack, team);
         }
 
+
         @Override
         public List<Component> getSlotsTooltip(List<Component> tooltips, Item.TooltipContext context) {
             return List.of();

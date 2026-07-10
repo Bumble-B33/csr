@@ -1,5 +1,6 @@
 package net.bumblebee.claysoldiers.entity.common;
 
+import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.init.ModEntitySerializers;
 import net.bumblebee.claysoldiers.team.ClayMobTeam;
 import net.bumblebee.claysoldiers.team.ClayMobTeamManger;
@@ -34,17 +35,17 @@ public abstract class ClayMobTeamOwnerEntity extends ClayMobEntity {
     }
 
     @Override
-    public void readAdditionalSaveData(ValueInput pCompound) {
-        super.readAdditionalSaveData(pCompound);
-        ClayMobTeam.read(pCompound, level().registryAccess()).ifPresentOrElse(
+    public void readAdditionalSaveData(@NonNull ValueInput input) {
+        super.readAdditionalSaveData(input);
+        ClayMobTeam.read(input, level().registryAccess()).ifPresentOrElse(
                 this::setClayTeamType,
-                () -> ClayMobTeamManger.LOGGER.error("{} was saved with a Team that does not exist anymore", this.getClass().getSimpleName()));
+                () -> ClaySoldiersCommon.ERROR_HANDLER.debug("%s was saved with a Team that does not exist anymore".formatted(this.getClass().getSimpleName())));
     }
 
     @Override
-    public void addAdditionalSaveData(ValueOutput valueOutput) {
-        super.addAdditionalSaveData(valueOutput);
-        ClayMobTeam.store(getClayTeamHolder(), valueOutput);
+    public void addAdditionalSaveData(@NonNull ValueOutput output) {
+        super.addAdditionalSaveData(output);
+        ClayMobTeam.store(getClayTeamHolder(), output);
     }
 
     @Override

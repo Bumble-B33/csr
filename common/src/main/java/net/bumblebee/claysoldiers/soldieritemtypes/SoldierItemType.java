@@ -112,7 +112,7 @@ public class SoldierItemType {
     }
 
     private static void postTagLoad(Stream<SoldierItemType> all) {
-        ClaySoldiersCommon.LOGGER.info("Post Tag Loaded");
+        ClaySoldiersCommon.ERROR_HANDLER.debug("Post Tag Loaded");
         types = all.filter(s -> !s.available.isEmpty() && s.generator.limitedBy() != ItemGenerator.Limit.ZERO).map(SoldierItemType::asGenerator).toList();
     }
 

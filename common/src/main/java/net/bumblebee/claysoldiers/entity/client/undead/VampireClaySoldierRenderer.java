@@ -1,8 +1,8 @@
 package net.bumblebee.claysoldiers.entity.client.undead;
 
-import net.bumblebee.claysoldiers.entity.common.VampiricClayMob;
 import net.bumblebee.claysoldiers.entity.client.ClaySoldierRenderer;
 import net.bumblebee.claysoldiers.entity.client.renderstates.AbstractClaySoldierRenderState;
+import net.bumblebee.claysoldiers.entity.common.VampiricClayMob;
 import net.bumblebee.claysoldiers.entity.common.soldier.AbstractClaySoldierEntity;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 

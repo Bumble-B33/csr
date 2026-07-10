@@ -1,7 +1,7 @@
 package net.bumblebee.claysoldiers.item.disruptor;
 
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
-import net.bumblebee.claysoldiers.block.ClayMobContainer;
+import net.bumblebee.claysoldiers.block.soldiercontainer.ClayMobContainer;
 import net.bumblebee.claysoldiers.entity.common.ClayMobEntity;
 import net.bumblebee.claysoldiers.init.ModCritirions;
 import net.bumblebee.claysoldiers.init.ModDataComponents;
@@ -69,18 +69,19 @@ public class ClayMobKillItem extends Item {
         }
 
         List<ClayMobContainer> soldierContainer = killRange.getClaySoldierContainers(level, player, center);
-        soldierContainer.forEach(blockEntity -> blockEntity.killSoldier(level, player));
 
-        return clayMobEntities.size() + soldierContainer.size();
+        int killedSoldiers = soldierContainer.stream().mapToInt(b -> b.killSoldier(level, player)).sum();
+
+        return clayMobEntities.size() + killedSoldiers;
     }
 
     @Override
-    public ItemUseAnimation getUseAnimation(ItemStack pStack) {
+    public ItemUseAnimation getUseAnimation(ItemStack stack) {
         return ItemUseAnimation.BRUSH;
     }
 
     @Override
-    public int getUseDuration(ItemStack pStack, LivingEntity p_344979_) {
+    public int getUseDuration(ItemStack stack, LivingEntity livingEntity) {
         return 10;
     }
 }

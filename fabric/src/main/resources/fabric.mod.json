@@ -9,7 +9,8 @@
   ],
   "contact": {
     "homepage": "${wiki_link}",
-    "sources": "https://github.com/bumble-b33/csr"
+    "sources": "${github_link}",
+    "issues": "${issue_link}"
   },
   "license": "${license}",
   "icon": "csr-logo.png",

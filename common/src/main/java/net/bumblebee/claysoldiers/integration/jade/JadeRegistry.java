@@ -24,6 +24,7 @@ public class JadeRegistry {
 
     public static final Identifier EASEL_BLOCK = Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "easel_block_storage");
     public static final Identifier HAMSTER_WHEEL_BLOCK = Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "hamster_wheel");
+    public static final Identifier SUGAR_CANE_HAMMOCK_BLOCK = Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "sugar_cane_hammock");
 
     public static final Identifier BOSS_CLAY_SOLDIER = Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "boss_clay_soldier");
 
@@ -40,10 +41,9 @@ public class JadeRegistry {
         registerEntityServerAppender(ClayWraithProvider.INSTANCE);
         registerEntityServerAppender(ZombieClaySoldierProvider.INSTANCE);
 
-
-
         registerBlockProvider(EaselBlockProvider.INSTANCE);
         registerBlockProvider(HamsterWheelBlockProvider.INSTANCE);
+        registerBlockProvider(SugarCaneHammockProvider.INSTANCE);
     }
 
     public static String getLangKey(CommonBlockProvider provider, String suffix) {

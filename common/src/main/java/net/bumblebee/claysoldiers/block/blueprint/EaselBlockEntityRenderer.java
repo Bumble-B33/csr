@@ -169,8 +169,6 @@ public class EaselBlockEntityRenderer implements BlockEntityRenderer<EaselBlockE
                 );
             }
         });
-
-
     }
 
     private static boolean shouldShowOutline() {

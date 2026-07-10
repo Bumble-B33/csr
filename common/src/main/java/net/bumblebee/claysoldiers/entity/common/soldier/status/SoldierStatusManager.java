@@ -10,8 +10,10 @@ import java.util.List;
 import java.util.function.Supplier;
 
 public class SoldierStatusManager implements SoldierStatusHolder {
-    public static final String SITTING_LANG = "clay_mob_status." + ClaySoldiersCommon.MOD_ID + ".sitting";
-    public static final String USING_POI_LANG = "clay_mob_status." + ClaySoldiersCommon.MOD_ID + ".using_work_poi";
+    public static final String FOLLOW_OWNER_LANG = "clay_mob.status." + ClaySoldiersCommon.MOD_ID + ".follow_owner";
+    public static final String IGNORING_OWNER_LANG = "clay_mob.status." + ClaySoldiersCommon.MOD_ID + ".ignoring_owner";
+    public static final String SITTING_LANG = "clay_mob.status." + ClaySoldiersCommon.MOD_ID + ".sitting";
+    public static final String USING_POI_LANG = "clay_mob.status." + ClaySoldiersCommon.MOD_ID + ".using_work_poi";
 
     private final List<Supplier<SoldierStatusHolder>> statuses;
 
@@ -29,7 +31,7 @@ public class SoldierStatusManager implements SoldierStatusHolder {
     public static SoldierStatusManager initProgrammable(ProgrammableClaySoldierEntity soldier) {
         return new SoldierStatusManager(List.of(
                 () -> createSittingStatus(soldier),
-                () -> (() -> soldier.getInstalledModule().getWorkStatusDisplayName(soldier)),
+                () -> (() -> soldier.getInstalledChip().getWorkStatusDisplayName(soldier)),
                 () -> createCombatOwnerAndPoiStatus(soldier)
         ));
     }
@@ -55,6 +57,10 @@ public class SoldierStatusManager implements SoldierStatusHolder {
         return new SoldierStatusHolder() {
             @Override
             public @Nullable Component getStatusDisplayName() {
+                if (soldier.ignoresOwner()) {
+                    return Component.translatable(IGNORING_OWNER_LANG);
+                }
+
                 return soldier.isInSittingPose() ? Component.translatable(SITTING_LANG) : null;
             }
         };

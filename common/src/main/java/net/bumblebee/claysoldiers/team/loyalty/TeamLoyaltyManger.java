@@ -14,6 +14,7 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -30,6 +31,13 @@ public final class TeamLoyaltyManger {
     );
     public static final StreamCodec<RegistryFriendlyByteBuf, Pair<ResourceKey<ClayMobTeam>, TeamPlayerData.PlayerData>> STREAM_CODEC_TEAM_PLAYER = StreamCodec.composite(KEY_STREAM_CODEC, Pair::getFirst, PLAYER_DATA_STREAM_CODEC, Pair::getSecond, Pair::of);
     public static final StreamCodec<RegistryFriendlyByteBuf, List<Pair<ResourceKey<ClayMobTeam>, TeamPlayerData.PlayerData>>> STREAM_CODEC_TEAM_PLAYER_DATA = STREAM_CODEC_TEAM_PLAYER.apply(ByteBufCodecs.list());
+
+    public static TeamPlayerData getTeamPlayerData(Level level) {
+        if (level instanceof ServerLevel serverLevel) {
+            return getTeamPlayerData(serverLevel);
+        }
+        return getClientTeamPlayerData();
+    }
 
     public static TeamPlayerData getTeamPlayerData(ServerLevel level) {
         return ServerTeamPlayerData.getFromLevel(level);

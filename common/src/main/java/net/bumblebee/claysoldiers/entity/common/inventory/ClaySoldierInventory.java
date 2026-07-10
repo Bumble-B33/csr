@@ -33,7 +33,9 @@ public class ClaySoldierInventory {
             ItemStack.STREAM_CODEC,
             SoldierEquipmentSlot.values().length
     );
-    private final Codec<Map<SoldierEquipmentSlot, ItemStackWithEffect>> CODEC = Codec.unboundedMap(SoldierEquipmentSlot.CODEC, ItemStackWithEffect.CODEC);
+    private static final Codec<Map<SoldierEquipmentSlot, ItemStackWithEffect>> CODEC = Codec.unboundedMap(SoldierEquipmentSlot.CODEC, ItemStackWithEffect.CODEC);
+    public static final Codec<ClaySoldierInventory> DIRECT_CODEC = CODEC.xmap(ClaySoldierInventory::new, s -> s.inventory);
+
 
     private final Map<SoldierEquipmentSlot, ItemStackWithEffect> inventory;
 
@@ -54,12 +56,21 @@ public class ClaySoldierInventory {
     }
 
     public void load(ValueInput input) {
-        input.read(INVENTORY_TAG, CODEC).ifPresent(inventory::putAll);
+        input.read(INVENTORY_TAG, CODEC).ifPresent(this::putAll);
     }
 
     public void setItemSlot(SoldierEquipmentSlot slot, ItemStackWithEffect stack) {
         Objects.requireNonNull(stack, "Stack cannot be null");
         this.inventory.put(slot, stack);
+    }
+
+    public void putAll(Map<SoldierEquipmentSlot, ItemStackWithEffect> inventory) {
+        this.inventory.clear();
+        this.inventory.putAll(inventory);
+    }
+
+    public void copyFrom(ClaySoldierInventory inventory) {
+        this.putAll(inventory.inventory);
     }
 
     public ItemStackWithEffect getItemBySlot(SoldierEquipmentSlot slot) {
@@ -109,6 +120,11 @@ public class ClaySoldierInventory {
                 dropInWorld.accept(slot, stack.stack());
             }
         }
+    }
+
+    @Override
+    public String toString() {
+        return "ClaySoldierInventory{%s}".formatted(inventory);
     }
 
     private static class EmptyEntityEquipment extends EntityEquipment {

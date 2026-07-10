@@ -19,6 +19,7 @@ import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NonNull;
 
 public class ZombieClaySoldierEntity extends UndeadClaySoldier {
     private static final EntityDataAccessor<Holder.Reference<ClayMobTeam>> PREVIOUS_TEAM_SYNC = SynchedEntityData.defineId(ZombieClaySoldierEntity.class, ModEntitySerializers.CLAY_TEAM);
@@ -33,7 +34,7 @@ public class ZombieClaySoldierEntity extends UndeadClaySoldier {
     }
 
     @Override
-    public void readAdditionalSaveData(ValueInput input) {
+    public void readAdditionalSaveData(@NonNull ValueInput input) {
         super.readAdditionalSaveData(input);
         ClayMobTeam.read(input, "zombie", level().registryAccess()).ifPresent(this::setPreviousTeam);
 
@@ -42,11 +43,11 @@ public class ZombieClaySoldierEntity extends UndeadClaySoldier {
     }
 
     @Override
-    public void addAdditionalSaveData(ValueOutput valueOutput) {
-        super.addAdditionalSaveData(valueOutput);
-        ClayMobTeam.store(getClayTeamHolder(), valueOutput, "zombie");
-        valueOutput.putBoolean(CURABLE_TAG, isCurable());
-        valueOutput.putBoolean(PICK_ITEMS_TAG, canPickItems());
+    public void addAdditionalSaveData(@NonNull ValueOutput output) {
+        super.addAdditionalSaveData(output);
+        ClayMobTeam.store(getClayTeamHolder(), output, "zombie");
+        output.putBoolean(CURABLE_TAG, isCurable());
+        output.putBoolean(PICK_ITEMS_TAG, canPickItems());
     }
 
     @Override

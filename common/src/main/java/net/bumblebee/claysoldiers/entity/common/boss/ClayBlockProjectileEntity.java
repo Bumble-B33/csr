@@ -1,6 +1,7 @@
 package net.bumblebee.claysoldiers.entity.common.boss;
 
 import net.bumblebee.claysoldiers.entity.client.ClientClaySoldierEntity;
+import net.bumblebee.claysoldiers.entity.client.FakeClaySoldierAccess;
 import net.bumblebee.claysoldiers.entity.common.soldier.AbstractClaySoldierEntity;
 import net.bumblebee.claysoldiers.init.ModCritirions;
 import net.bumblebee.claysoldiers.init.ModDamageTypes;
@@ -52,7 +53,7 @@ public class ClayBlockProjectileEntity extends AbstractHurtingProjectile {
 
     private final DamageSource damageSource;
     @Nullable
-    private ClientClaySoldierEntity clientSoldier;
+    private FakeClaySoldierAccess clientSoldier;
     @Nullable
     private WalkAnimationState walkState;
     public int showParticle = 3;
@@ -253,7 +254,7 @@ public class ClayBlockProjectileEntity extends AbstractHurtingProjectile {
             var holder = getClayTeam();
             if (holder != null) {
                 walkState = new WalkAnimationState();
-                clientSoldier = ClientClaySoldierEntity.createAsProjectile(walkState, holder);
+                clientSoldier = ClientClaySoldierEntity.createAsProjectile(level(), walkState, holder);
             } else {
                 clientSoldier = null;
                 walkState = null;
@@ -293,7 +294,7 @@ public class ClayBlockProjectileEntity extends AbstractHurtingProjectile {
     }
 
     @Nullable
-    public ClientClaySoldierEntity getClientSoldier() {
+    public FakeClaySoldierAccess getClientSoldier() {
         return clientSoldier;
     }
 

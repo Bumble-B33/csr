@@ -1,6 +1,8 @@
 package net.bumblebee.claysoldiers.recipe.chip;
 
 import com.mojang.serialization.MapCodec;
+import net.bumblebee.claysoldiers.block.chipassembler.ChipAssemblerBlockEntity;
+import net.bumblebee.claysoldiers.block.chipassembler.ChipEnergyStorage;
 import net.bumblebee.claysoldiers.init.ModRecipes;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
@@ -37,6 +39,12 @@ public abstract class ChipAssemblyRecipe implements Recipe<ChipInput> {
         return energyPerTick;
     }
 
+    public int totalEnergyCost() {
+        return energyPerTick * adjustedBuiltTime();
+    }
+
+
+
     @Override
     public boolean showNotification() {
         return info.showNotification();
@@ -61,8 +69,7 @@ public abstract class ChipAssemblyRecipe implements Recipe<ChipInput> {
         };
     }
 
-    public record ChipAssemblyInfo(ChipAssemblyCategory category,
-                                   String group) implements Recipe.BookInfo<ChipAssemblyCategory> {
+    public record ChipAssemblyInfo(ChipAssemblyCategory category, String group) implements Recipe.BookInfo<ChipAssemblyCategory> {
         public static final MapCodec<ChipAssemblyInfo> MAP_CODEC = BookInfo.mapCodec(ChipAssemblyCategory.CODEC, ChipAssemblyCategory.MISC, ChipAssemblyInfo::new);
         public static final StreamCodec<RegistryFriendlyByteBuf, ChipAssemblyInfo> STREAM_CODEC = BookInfo.streamCodec(ChipAssemblyCategory.STREAM_CODEC, ChipAssemblyInfo::new);
     }

@@ -6,6 +6,7 @@ import com.mojang.serialization.DataResult;
 import com.mojang.serialization.Decoder;
 import com.mojang.serialization.JsonOps;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
+import net.bumblebee.claysoldiers.block.soldiercontainer.ClayMobContainer;
 import net.bumblebee.claysoldiers.block.chipassembler.ChipEnergyStorage;
 import net.bumblebee.claysoldiers.block.hamsterwheel.HamsterWheelBlockEntity;
 import net.bumblebee.claysoldiers.block.hamsterwheel.HamsterWheelEnergyStorage;
@@ -24,6 +25,8 @@ import net.minecraft.util.StringRepresentable;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
@@ -93,6 +96,7 @@ public abstract class AbstractCapabilityManger extends SimpleJsonResourceReloadL
 
     public abstract IBlockCache<AssignableWorksiteCapability> createPoiCache(ServerLevel level, BlockPos pos);
 
+    public abstract @Nullable ClayMobContainer getClayMobContainer(ServerLevel level, BlockPos pos, BlockState state, @Nullable BlockEntity blockEntity);
 
     @Override
     protected void apply(Map<Identifier, JsonElement> jsonElementMap, ResourceManager resourceManager, ProfilerFiller profilerFiller) {

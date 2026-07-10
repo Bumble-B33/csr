@@ -57,6 +57,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.crafting.RecipeBookCategory;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.item.crafting.display.SlotDisplay;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.storage.loot.functions.LootItemFunction;
 import net.neoforged.bus.api.IEventBus;
@@ -69,6 +70,7 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.*;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
+import net.neoforged.neoforge.event.entity.player.UseItemOnBlockEvent;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
@@ -110,6 +112,7 @@ public class ClaySoldiersNeoForge {
 
     public static final DeferredRegister<RecipeBookCategory> RECIPE_BOOK_CATEGORIES = DeferredRegister.create(Registries.RECIPE_BOOK_CATEGORY, ClaySoldiersCommon.MOD_ID);
     public static final DeferredRegister<RecipeType<?>> RECIPE_TYPES = DeferredRegister.create(Registries.RECIPE_TYPE, ClaySoldiersCommon.MOD_ID);
+    public static final DeferredRegister<SlotDisplay.Type<?>> SLOT_DISPLAYS = DeferredRegister.create(BuiltInRegistries.SLOT_DISPLAY, ClaySoldiersCommon.MOD_ID);
 
 
     public static final DeferredRegister<EntityDataSerializer<?>> ENTITY_DATA_SERIALIZERS = DeferredRegister.create(NeoForgeRegistries.ENTITY_DATA_SERIALIZERS, ClaySoldiersCommon.MOD_ID);
@@ -147,6 +150,7 @@ public class ClaySoldiersNeoForge {
         CLAY_SOLDIER_CHIP_ADDONS.register(modEventBus);
         RECIPE_TYPES.register(modEventBus);
         RECIPE_BOOK_CATEGORIES.register(modEventBus);
+        SLOT_DISPLAYS.register(modEventBus);
         ENTITY_DATA_SERIALIZERS.register(modEventBus);
 
         modEventBus.addListener(this::registerRegistry);
@@ -155,7 +159,7 @@ public class ClaySoldiersNeoForge {
         modEventBus.addListener(this::commonSetup);
         modEventBus.addListener(DataGenerators::gatherData);
         modEventBus.addListener(this::registerCapabilities);
-        modEventBus.addListener(ModDataMaps::registerDataMaps);
+        modEventBus.addListener(NeoForgeDataMaps::registerDataMaps);
         modEventBus.addListener(this::addFeaturePacks);
         modEventBus.addListener(this::addDataPackRegistry);
 
@@ -169,6 +173,7 @@ public class ClaySoldiersNeoForge {
         NeoForge.EVENT_BUS.addListener(this::afterDataMapLoad);
         NeoForge.EVENT_BUS.addListener(this::playerHurtEvent);
         NeoForge.EVENT_BUS.addListener(this::recipeSyncEvent);
+        NeoForge.EVENT_BUS.addListener(this::useItemOnBlockEvent);
 
 
         modContainer.registerConfig(ModConfig.Type.CLIENT, NeoForgeConfig.CLIENT_SPEC);
@@ -189,7 +194,7 @@ public class ClaySoldiersNeoForge {
     }
 
     private void registerCapabilities(RegisterCapabilitiesEvent event) {
-        ModCapabilities.registerCapabilities(event);
+        NeoForgeCapabilities.registerCapabilities(event);
     }
 
     private void playerHurtEvent(LivingIncomingDamageEvent event) {
@@ -274,14 +279,15 @@ public class ClaySoldiersNeoForge {
             if (event.getCause() == DataMapsUpdatedEvent.UpdateCause.SERVER_RELOAD) {
                 SoldierItemType.onDataMapLoad(() -> {
                     event.getRegistries().lookupOrThrow(ModRegistries.SOLDIER_ITEM_TYPES).forEach(SoldierItemType::afterDataMapLoad);
-                });}
+                });
+            }
 
-            registry.getDataMap(ModDataMaps.SOLDIER_ARMOR).values().forEach(multiWearable -> {
+            registry.getDataMap(NeoForgeDataMaps.SOLDIER_ARMOR).values().forEach(multiWearable -> {
                 multiWearable.forEachWearableEffect(wearable -> wearable.buildTrims(event.getRegistries()));
             });
 
 
-            Map<ResourceKey<Item>, SoldierHoldableEffect> map = registry.getDataMap(ModDataMaps.SOLDIER_HOLDABLE);
+            Map<ResourceKey<Item>, SoldierHoldableEffect> map = registry.getDataMap(NeoForgeDataMaps.SOLDIER_HOLDABLE);
             IDataMapGetter.warnHoldable(map, (itemResourceKey, itemTagKey) -> {
                 var opTag = registry.get(itemTagKey);
                 if (opTag.isEmpty()) {
@@ -308,6 +314,10 @@ public class ClaySoldiersNeoForge {
         if (event.shouldUpdateStaticData()) {
             blueprintTagLoader.onTagLoad(event.getRegistries());
         }
+    }
+
+    private void useItemOnBlockEvent(UseItemOnBlockEvent event) {
+        ClaySoldiersCommon.useItemOnBlockEvent(event.getPlayer(), event.getLevel(), event.getHand(), event.getPos()).ifPresent(event::cancelWithResult);
     }
 
     private void recipeSyncEvent(final OnDatapackSyncEvent event) {

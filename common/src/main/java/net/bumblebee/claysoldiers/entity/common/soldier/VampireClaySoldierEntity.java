@@ -12,9 +12,11 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
+import org.jspecify.annotations.NonNull;
+
+import java.util.List;
 
 public class VampireClaySoldierEntity extends UndeadClaySoldier implements VampiricClayMob {
     private static final EntityDataAccessor<Boolean> ALPHA = SynchedEntityData.defineId(VampireClaySoldierEntity.class, EntityDataSerializers.BOOLEAN);
@@ -36,15 +38,15 @@ public class VampireClaySoldierEntity extends UndeadClaySoldier implements Vampi
     }
 
     @Override
-    public void addAdditionalSaveData(ValueOutput valueOutput) {
-        super.addAdditionalSaveData(valueOutput);
+    public void addAdditionalSaveData(@NonNull ValueOutput output) {
+        super.addAdditionalSaveData(output);
         if (isAlpha()) {
-            valueOutput.putBoolean(ALPHA_TAG, true);
+            output.putBoolean(ALPHA_TAG, true);
         }
     }
 
     @Override
-    public void readAdditionalSaveData(ValueInput input) {
+    public void readAdditionalSaveData(@NonNull ValueInput input) {
         super.readAdditionalSaveData(input);
         setIsAlpha(input.getBooleanOr(ALPHA_TAG, false));
     }
@@ -96,7 +98,14 @@ public class VampireClaySoldierEntity extends UndeadClaySoldier implements Vampi
     }
 
     @Override
-    public LevelAccessor getLevel() {
+    public Level getLevel() {
         return level();
+    }
+
+    @Override
+    public List<String> getInfoState() {
+        var list = super.getInfoState();
+        list.add("Is Night: " + isNightForVampire());
+        return list;
     }
 }

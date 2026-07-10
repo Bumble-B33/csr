@@ -5,6 +5,7 @@ import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.entity.common.ClayMobEntity;
+import net.bumblebee.claysoldiers.util.codec.EntityTypesCodecs;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
@@ -21,17 +22,15 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 
 public final class AdditionalSoldierData {
-    private static final String ERROR_MESSAGE_CASTING = "Wrong Entity Type for AdditionalSoldierData. %s does not extend ClayMobEntity and ClaySoldierLike";
-
     public static final Codec<AdditionalSoldierData> CODEC = RecordCodecBuilder.create(in -> in.group(
-            createEntityTypeCodec().fieldOf("type").forGetter(AdditionalSoldierData::soldierType),
+            EntityTypesCodecs.createClaySoldierLikeCodec().fieldOf("type").forGetter(AdditionalSoldierData::soldierType),
             CompoundTag.CODEC.optionalFieldOf("additional_data", new CompoundTag()).forGetter(AdditionalSoldierData::tag)
     ).apply(in, AdditionalSoldierData::new));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, AdditionalSoldierData> STREAM_CODEC = StreamCodec.composite(
-            ByteBufCodecs.registry(Registries.ENTITY_TYPE), AdditionalSoldierData::soldierType,
+            EntityTypesCodecs.createClaySoldierLikeStream(), AdditionalSoldierData::soldierType,
             ByteBufCodecs.COMPOUND_TAG, AdditionalSoldierData::tag,
-            (type, tag) -> new AdditionalSoldierData(cast(type).getOrThrow(), tag)
+            AdditionalSoldierData::new
     );
 
     private final EntityType<? extends ClayMobEntity> soldierType;
@@ -40,7 +39,6 @@ public final class AdditionalSoldierData {
     public <T extends ClayMobEntity & ClaySoldierLike> AdditionalSoldierData(EntityType<T> soldierType, CompoundTag tag) {
         this.soldierType = soldierType;
         this.tag = tag;
-
     }
 
     /**
@@ -67,19 +65,6 @@ public final class AdditionalSoldierData {
 
     public CompoundTag tag() {
         return tag;
-    }
-
-    private static <T extends ClayMobEntity & ClaySoldierLike> Codec<EntityType<T>> createEntityTypeCodec() {
-        return BuiltInRegistries.ENTITY_TYPE.byNameCodec().comapFlatMap(AdditionalSoldierData::cast, entityType -> entityType);
-    }
-
-    @SuppressWarnings("unchecked")
-    private static <T extends ClayMobEntity & ClaySoldierLike> DataResult<EntityType<T>> cast(EntityType<?> type) {
-        try {
-            return DataResult.success((EntityType<T>) type);
-        } catch (ClassCastException e) {
-            return DataResult.error(() -> ERROR_MESSAGE_CASTING.formatted(type));
-        }
     }
 
     @Override

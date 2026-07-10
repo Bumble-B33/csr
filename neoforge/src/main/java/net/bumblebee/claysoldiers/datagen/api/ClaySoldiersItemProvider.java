@@ -5,7 +5,7 @@ import net.bumblebee.claysoldiers.datagen.tags.ModTagProvider;
 import net.bumblebee.claysoldiers.datamap.SoldierHoldableEffect;
 import net.bumblebee.claysoldiers.datamap.armor.SoldierMultiWearable;
 import net.bumblebee.claysoldiers.datamap.armor.SoldierWearableEffect;
-import net.bumblebee.claysoldiers.init.ModDataMaps;
+import net.bumblebee.claysoldiers.init.NeoForgeDataMaps;
 import net.bumblebee.claysoldiers.init.ModTags;
 import net.bumblebee.claysoldiers.soldierpoi.SoldierPoi;
 import net.minecraft.core.HolderLookup;
@@ -45,10 +45,10 @@ public abstract class ClaySoldiersItemProvider implements DataProvider {
             protected void gather(HolderLookup.Provider provider) {}
         };
         this.itemTagsProvider = new CustomItemTagsProvider(packOutput, lookupProvider, modid);
-        this.holdableBuilder = dataMapProvider.builder(ModDataMaps.SOLDIER_HOLDABLE);
-        this.poiItemBuilder = dataMapProvider.builder(ModDataMaps.SOLDIER_ITEM_POI);
-        this.armorBuilder = dataMapProvider.builder(ModDataMaps.SOLDIER_ARMOR);
-        this.poiBlockBuilder = dataMapProvider.builder(ModDataMaps.SOLDIER_BLOCK_POI);
+        this.holdableBuilder = dataMapProvider.builder(NeoForgeDataMaps.SOLDIER_HOLDABLE);
+        this.poiItemBuilder = dataMapProvider.builder(NeoForgeDataMaps.SOLDIER_ITEM_POI);
+        this.armorBuilder = dataMapProvider.builder(NeoForgeDataMaps.SOLDIER_ARMOR);
+        this.poiBlockBuilder = dataMapProvider.builder(NeoForgeDataMaps.SOLDIER_BLOCK_POI);
         this.allItems = new HashSet<>();
         this.allTags = new HashSet<>();
     }

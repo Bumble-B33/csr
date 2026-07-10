@@ -35,6 +35,9 @@ public class ClayMobFollowTeamOwner extends Goal {
     }
     @Override
     public boolean canUse() {
+        if (clayMobEntity.isOrderedToIgnoreOwner()) {
+            return false;
+        }
         LivingEntity livingentity = this.clayMobEntity.getClayTeamOwner();
         if (livingentity == null) {
             return false;

@@ -5,7 +5,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import io.netty.buffer.ByteBuf;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
-import net.bumblebee.claysoldiers.block.ClayMobContainer;
+import net.bumblebee.claysoldiers.block.soldiercontainer.ClayMobContainer;
 import net.bumblebee.claysoldiers.entity.common.ClayMobEntity;
 import net.bumblebee.claysoldiers.init.ModTags;
 import net.minecraft.core.BlockPos;
@@ -67,14 +67,15 @@ public class DisruptorKillRange {
         int range = unlimited ? MAX_RANGE : Math.max(MAX_RANGE, (int) this.range);
         return level.getPoiManager().getInSquare(h -> h.is(ModTags.PoiTypes.SOLDIER_CONTAINER), center, range, PoiManager.Occupancy.IS_OCCUPIED)
                 .map(p -> getClayMobContainer(level, p.getPos()))
-                .filter(c -> c != null && c.canKillClayMob(level, player))
+                .filter(Objects::nonNull)
                 .toList();
     }
     private static @Nullable ClayMobContainer getClayMobContainer(ServerLevel level, BlockPos pos) {
-        if (level.getBlockEntity(pos) instanceof ClayMobContainer clayMobContainer) {
-            return clayMobContainer;
+        ClayMobContainer cap = ClaySoldiersCommon.CAPABILITY_MANGER.getClayMobContainer(level, pos, level.getBlockState(pos), level.getBlockEntity(pos));
+        if (cap != null) {
+            return cap;
         }
-        ClaySoldiersCommon.LOGGER.error("ClayMobContainerPoi({}) does not implement {}", pos.toShortString(), ClayMobContainer.class.getSimpleName());
+        ClaySoldiersCommon.LOGGER.error("ClayMobContainerPoi({}) does not have the {} Capability", pos.toShortString(), ClayMobContainer.class.getSimpleName());
         return null;
     }
 

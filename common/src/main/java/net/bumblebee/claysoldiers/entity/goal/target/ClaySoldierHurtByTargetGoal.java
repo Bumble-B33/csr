@@ -1,7 +1,7 @@
 package net.bumblebee.claysoldiers.entity.goal.target;
 
-import net.bumblebee.claysoldiers.entity.goal.AlertOthersGoal;
 import net.bumblebee.claysoldiers.entity.common.soldier.AbstractClaySoldierEntity;
+import net.bumblebee.claysoldiers.entity.goal.AlertOthersGoal;
 import net.bumblebee.claysoldiers.soldierproperties.customproperties.AttackTypeProperty;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 

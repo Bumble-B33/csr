@@ -97,11 +97,10 @@ public class HamsterWheelBlock extends BaseEntityBlock {
 
 
     @Override
-    protected InteractionResult useWithoutItem(BlockState pState, Level pLevel, BlockPos pPos, Player pPlayer, BlockHitResult pHitResult) {
-        HamsterWheelBlockEntity hamsterWheelBlockEntity = (HamsterWheelBlockEntity) pLevel.getBlockEntity(pPos);
-        if (hamsterWheelBlockEntity.hasSoldier()) {
-            hamsterWheelBlockEntity.spawnSoldier(7);
-            hamsterWheelBlockEntity.setChanged();
+    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult) {
+        if (level.getBlockEntity(pos) instanceof HamsterWheelBlockEntity hamsterWheel) {
+            hamsterWheel.spawnSoldier(7);
+            hamsterWheel.setChanged();
             return InteractionResult.SUCCESS;
         }
 

@@ -9,7 +9,9 @@ import net.bumblebee.claysoldiers.entity.common.StatInfoDisplay;
 import net.bumblebee.claysoldiers.entity.common.soldier.AbstractClaySoldierEntity;
 import net.bumblebee.claysoldiers.entity.common.soldier.status.SoldierStatusManager;
 import net.bumblebee.claysoldiers.entity.goal.workgoal.ClaySoldierFishGoal;
+import net.bumblebee.claysoldiers.init.ModCritirions;
 import net.bumblebee.claysoldiers.init.ModEntitySerializers;
+import net.bumblebee.claysoldiers.item.ClayBrushItem;
 import net.bumblebee.claysoldiers.item.chip.ClaySoldierChipItem;
 import net.bumblebee.claysoldiers.networking.ClaySoldierChipUpdatePayload;
 import net.bumblebee.claysoldiers.networking.SoldierCarriedChangePayload;
@@ -38,12 +40,13 @@ import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NonNull;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-public class ProgrammableClaySoldierEntity extends AbstractClaySoldierEntity {
+public class ProgrammableClaySoldierEntity extends AbstractClaySoldierEntity implements ProgrammableClayMobAccess {
     private static final EntityDataAccessor<Optional<UUID>> DATA_OWNER_UUID = SynchedEntityData.defineId(ProgrammableClaySoldierEntity.class, ModEntitySerializers.UUID);
     private static final EntityDataAccessor<Byte> DATA_WORK_STATUS = SynchedEntityData.defineId(ProgrammableClaySoldierEntity.class, EntityDataSerializers.BYTE);
     private static final EntityDataAccessor<Boolean> IS_FISHING_ANKER = SynchedEntityData.defineId(ProgrammableClaySoldierEntity.class, EntityDataSerializers.BOOLEAN);
@@ -76,24 +79,22 @@ public class ProgrammableClaySoldierEntity extends AbstractClaySoldierEntity {
     }
 
     @Override
-    public void addAdditionalSaveData(ValueOutput valueOutput) {
-        super.addAdditionalSaveData(valueOutput);
-        valueOutput.store(CHIP_TAG, ClaySoldierChip.CODEC, brain);
-        brain.saveAdditional(valueOutput);
+    public void addAdditionalSaveData(@NonNull ValueOutput output) {
+        super.addAdditionalSaveData(output);
+        output.store(CHIP_TAG, ClaySoldierChip.CODEC, brain);
+        brain.saveAdditional(output);
         brain.reset();
 
         if (!carriedStack.isEmpty()) {
-            valueOutput.store(CARRIED_ITEM_TAG, ItemStack.CODEC, carriedStack);
+            output.store(CARRIED_ITEM_TAG, ItemStack.CODEC, carriedStack);
         }
 
-        getOwnerUUID().ifPresent(uuid -> valueOutput.store(OWNER_UUID_TAG, UUIDUtil.CODEC, uuid));
+        getOwnerUUID().ifPresent(uuid -> output.store(OWNER_UUID_TAG, UUIDUtil.CODEC, uuid));
     }
 
     @Override
-    public void readAdditionalSaveData(ValueInput input) {
+    public void readAdditionalSaveData(@NonNull ValueInput input) {
         super.readAdditionalSaveData(input);
-        //workSelector.readFromTag(input);
-        //setupChip(ClaySoldierChip.load(input));
         setupChip(input.read(CHIP_TAG, ClaySoldierChip.CODEC).orElse(EmptyClaySoldierChip.EMPTY));
         brain.readAdditional(input);
 
@@ -128,10 +129,23 @@ public class ProgrammableClaySoldierEntity extends AbstractClaySoldierEntity {
         ItemStack itemInHand = player.getItemInHand(hand);
         ClaySoldierChip<?> chip = ClaySoldierChipItem.getChipFromItem(itemInHand);
         if (chip != null) {
-            itemInHand.shrink(1);
-            player.addItem(ClaySoldierChipItem.create(getInstalledModule()));
-            setupChip(chip);
-            return InteractionResult.SUCCESS;
+            if (level() instanceof ServerLevel) {
+                if (ClaySoldiersCommon.CONFIG.getServerConfig().chipRequiresLoyalty() && !isOwnedBy(player)) {
+                    return InteractionResult.FAIL;
+                }
+                BlockPos pos = ClayBrushItem.getPoiPos(itemInHand);
+                this.setPoiPos(pos);
+
+                itemInHand.shrink(1);
+                player.addItem(ClaySoldierChipItem.create(getInstalledChip()));
+                setupChip(chip);
+                if (player instanceof ServerPlayer serverPlayer) {
+                    ModCritirions.FEED_CLAY_SOLDIER_TRIGGER.get().triggerChip(serverPlayer, itemInHand);
+                }
+
+                return InteractionResult.SUCCESS_SERVER;
+            }
+            return InteractionResult.CONSUME;
         }
 
         return super.mobInteract(player, hand);
@@ -182,7 +196,7 @@ public class ProgrammableClaySoldierEntity extends AbstractClaySoldierEntity {
     }
 
     @Override
-    public void enteredHamsterWheel() {
+    public void enteredClayContainer() {
         dropCarried();
     }
 
@@ -220,7 +234,7 @@ public class ProgrammableClaySoldierEntity extends AbstractClaySoldierEntity {
         if (!getCarriedStack().isEmpty()) {
             this.dropItemStack(getCarriedStack());
         }
-        this.dropItemStack(ClaySoldierChipItem.create(getInstalledModule()));
+        this.dropItemStack(ClaySoldierChipItem.create(getInstalledChip()));
     }
 
     @Override
@@ -254,8 +268,9 @@ public class ProgrammableClaySoldierEntity extends AbstractClaySoldierEntity {
         entityData.set(DATA_OWNER_UUID, Optional.ofNullable(ownerUUID));
     }
 
+    @Override
     @NotNull
-    public ClaySoldierChip<?> getInstalledModule() {
+    public ClaySoldierChip<?> getInstalledChip() {
         return brain;
     }
 
@@ -420,5 +435,22 @@ public class ProgrammableClaySoldierEntity extends AbstractClaySoldierEntity {
         // Move toward target
         Vec3 movement = delta.normalize().scale(speedPerTick);
         clientBobberPos = clientBobberPos.add(movement);
+    }
+
+    @Override
+    protected OrderedCommand cycleOrderedCommand() {
+        if (orderedCommand == OrderedCommand.SITTING) {
+            return OrderedCommand.FOLLOW_OWNER;
+        }
+        return OrderedCommand.SITTING;
+    }
+
+    @Override
+    protected void setOrderedCommand(OrderedCommand command) {
+        if (command == OrderedCommand.IGNORE_OWNER) {
+            super.setOrderedCommand(OrderedCommand.FOLLOW_OWNER);
+        } else {
+            super.setOrderedCommand(command);
+        }
     }
 }

@@ -1,5 +1,6 @@
 package net.bumblebee.claysoldiers.platform;
 
+import net.bumblebee.claysoldiers.block.soldiercontainer.ClayMobContainer;
 import net.bumblebee.claysoldiers.block.chipassembler.ChipEnergyStorage;
 import net.bumblebee.claysoldiers.block.hamsterwheel.HamsterWheelBlockEntity;
 import net.bumblebee.claysoldiers.block.hamsterwheel.HamsterWheelEnergyStorage;
@@ -10,10 +11,12 @@ import net.bumblebee.claysoldiers.capability.AssignableWorksiteCapability;
 import net.bumblebee.claysoldiers.capability.BlueprintRequestHandler;
 import net.bumblebee.claysoldiers.capability.IBlockCache;
 import net.bumblebee.claysoldiers.capability.IBlockStorageAccess;
-import net.bumblebee.claysoldiers.init.ModCapabilities;
+import net.bumblebee.claysoldiers.init.NeoForgeCapabilities;
 import net.bumblebee.claysoldiers.platform.services.AbstractCapabilityManger;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.capabilities.BlockCapabilityCache;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import org.jetbrains.annotations.ApiStatus;
@@ -42,12 +45,17 @@ public class NeoForgeCapabilityManager extends AbstractCapabilityManger {
 
     @Override
     public IBlockCache<BlueprintRequestHandler> createBlueprint(ServerLevel level, BlockPos pos) {
-        return new NeoforgeBlueprintCache(BlockCapabilityCache.create(ModCapabilities.BLUEPRINT_REQUEST_CAP, level, pos, null));
+        return new NeoforgeBlueprintCache(BlockCapabilityCache.create(NeoForgeCapabilities.BLUEPRINT_REQUEST_CAP, level, pos, null));
     }
 
     @Override
     public IBlockCache<AssignableWorksiteCapability> createPoiCache(ServerLevel level, BlockPos pos) {
-        return new NeoForgePoiCache(BlockCapabilityCache.create(ModCapabilities.ASSIGNABLE_POI_CAP, level, pos, null));
+        return new NeoForgePoiCache(BlockCapabilityCache.create(NeoForgeCapabilities.ASSIGNABLE_POI_CAP, level, pos, null));
+    }
+
+    @Override
+    public ClayMobContainer getClayMobContainer(ServerLevel level, BlockPos pos, BlockState state, @Nullable BlockEntity blockEntity) {
+        return NeoForgeCapabilities.CLAY_MOB_CONTAINER.getCapability(level, pos, state, blockEntity, null);
     }
 
     private record NeoforgeBlueprintCache(BlockCapabilityCache<BlueprintRequestHandler, Void> cache) implements IBlockCache<BlueprintRequestHandler> {

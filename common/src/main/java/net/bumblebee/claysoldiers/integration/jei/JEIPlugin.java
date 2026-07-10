@@ -16,6 +16,7 @@ import net.bumblebee.claysoldiers.init.ModItems;
 import net.bumblebee.claysoldiers.init.ModTags;
 import net.bumblebee.claysoldiers.util.ComponentFormating;
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -43,8 +44,8 @@ public class JEIPlugin implements IModPlugin {
 
     @Override
     public void registerRecipes(IRecipeRegistration registration) {
-        registration.addRecipes(RecipeTypes.CRAFTING, ClaySoldierCrafting.createRecipes());
-        registration.addRecipes(RecipeTypes.CRAFTING, ClaySoldierCrafting.createClaySoldierRevive());
+        registration.addRecipes(RecipeTypes.CRAFTING, ClaySoldierCrafting.createRecipes(Minecraft.getInstance().level.registryAccess()));
+        registration.addRecipes(RecipeTypes.CRAFTING, ClaySoldierCrafting.createClaySoldierRevive(Minecraft.getInstance().level.registryAccess()));
         if (ClaySoldiersCommon.CONFIG.getCommonConfig().shearBladeRecipeEnabled()) {
             registration.addRecipes(RecipeTypes.CRAFTING, createShearBladeRecipe());
         }

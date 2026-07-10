@@ -2,7 +2,9 @@ package net.bumblebee.claysoldiers.init;
 
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.block.blueprint.EaselBlockEntity;
+import net.bumblebee.claysoldiers.block.cacti.ClayCactusBlockEntity;
 import net.bumblebee.claysoldiers.block.chipassembler.ChipAssemblerBlockEntity;
+import net.bumblebee.claysoldiers.block.hammock.SugarCaneHammockBlockEntity;
 import net.bumblebee.claysoldiers.block.hamsterwheel.HamsterWheelBlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 
@@ -19,9 +21,14 @@ public final class ModBlockEntities {
     public static final Supplier<BlockEntityType<ChipAssemblerBlockEntity>> CHIP_ASSEMBLER_BLOCK_ENTITY =
             ClaySoldiersCommon.PLATFORM.registerBlockEntity("chip_assembler_block_entity", ChipAssemblerBlockEntity::new, List.of(ModBlocks.CHIP_ASSEMBLER));
 
+    public static final Supplier<BlockEntityType<SugarCaneHammockBlockEntity>> SUGAR_CANE_HAMMOCK_BLOCK_ENTITY =
+            ClaySoldiersCommon.PLATFORM.registerBlockEntity("suagr_cane_hammock_block_entity", SugarCaneHammockBlockEntity::new, List.of(ModBlocks.SUGAR_CANE_HAMMOCK));
+
+    public static final Supplier<BlockEntityType<ClayCactusBlockEntity>> CLAY_CACTUS_BLOCK_ENTITY =
+            ClaySoldiersCommon.PLATFORM.registerBlockEntity("clay_house", ClayCactusBlockEntity::new, List.of(ModBlocks.CACTUS_HOUSE));
+
 
     public static void init() {
-
     }
 
     private ModBlockEntities() {

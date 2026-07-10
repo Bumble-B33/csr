@@ -172,7 +172,7 @@ public class ClaySoldierFishingTicker {
     }
 
     private boolean canFishTreasure() {
-        return soldier.getInstalledModule().hasAddon(ClaySoldierChipAddons.FISH_TREASURE_ADDON);
+        return soldier.getInstalledChip().hasAddon(ClaySoldierChipAddons.FISH_TREASURE_ADDON);
     }
 
     private RandomSource getRandom() {

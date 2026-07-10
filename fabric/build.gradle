@@ -15,6 +15,10 @@ repositories {
         name = "ModMaven"
         url = "https://modmaven.dev"
     }
+    maven {
+        name = "Terraformers"
+        url = "https://maven.terraformersmc.com/"
+    }
     exclusiveContent {
         forRepository {
             maven {
@@ -25,6 +29,7 @@ repositories {
         filter {
             includeGroup "maven.modrinth"
         }
+
     }
 
     // Accessories
@@ -44,8 +49,11 @@ dependencies {
 
     implementation("maven.modrinth:jade:${jade_fabric_version}")
 
+    implementation("com.terraformersmc:modmenu:${modmenu_fabric_version}")
+
+
     //modCompileOnlyApi("io.wispforest:accessories-fabric:${accessories_version}+${minecraft_version}")
-    api("teamreborn:energy:${fabric_energy_version}")
+    include(api("teamreborn:energy:${fabric_energy_version}"))
 }
 
 loom {

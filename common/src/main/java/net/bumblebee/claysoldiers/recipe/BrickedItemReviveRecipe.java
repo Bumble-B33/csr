@@ -1,6 +1,7 @@
 package net.bumblebee.claysoldiers.recipe;
 
 import com.mojang.serialization.MapCodec;
+import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.init.ModItems;
 import net.bumblebee.claysoldiers.init.ModRecipes;
 import net.bumblebee.claysoldiers.item.BrickedItem;
@@ -18,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class BrickedItemReviveRecipe extends CustomRecipe {
+public class BrickedItemReviveRecipe implements CraftingRecipe {
     public static final BrickedItemReviveRecipe INSTANCE = new BrickedItemReviveRecipe();
     public static final MapCodec<BrickedItemReviveRecipe> CODEC = MapCodec.unit(INSTANCE);
     public static final StreamCodec<RegistryFriendlyByteBuf, BrickedItemReviveRecipe> STREAM_CODEC = StreamCodec.unit(INSTANCE);
@@ -98,7 +99,22 @@ public class BrickedItemReviveRecipe extends CustomRecipe {
     }
 
     @Override
+    public boolean showNotification() {
+        return false;
+    }
+
+    @Override
+    public String group() {
+        return ClaySoldiersCommon.MOD_ID + ":revive";
+    }
+
+    @Override
     public @NotNull RecipeSerializer<BrickedItemReviveRecipe> getSerializer() {
         return ModRecipes.CLAY_SOLDIER_REVIVING.get();
+    }
+
+    @Override
+    public CraftingBookCategory category() {
+        return CraftingBookCategory.MISC;
     }
 }

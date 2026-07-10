@@ -20,7 +20,11 @@ public class ClayMobOwnerTarget extends TargetGoal {
 
     @Override
     public boolean canUse() {
-        if (!this.clayMob.isOrderedToSit()) {
+        if (clayMob.isOrderedToIgnoreOwner()) {
+            return false;
+        }
+
+        if (!this.clayMob.getOrderedCommand()) {
             LivingEntity owner = this.clayMob.getClayTeamOwner();
             if (owner == null) {
                 return false;

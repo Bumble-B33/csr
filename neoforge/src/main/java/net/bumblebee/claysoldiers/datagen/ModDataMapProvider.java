@@ -1,6 +1,6 @@
 package net.bumblebee.claysoldiers.datagen;
 
-import net.bumblebee.claysoldiers.init.ModDataMaps;
+import net.bumblebee.claysoldiers.init.NeoForgeDataMaps;
 import net.bumblebee.claysoldiers.init.ModEntityTypes;
 import net.bumblebee.claysoldiers.soldierproperties.SoldierProperty;
 import net.bumblebee.claysoldiers.soldierproperties.SoldierPropertyMap;
@@ -24,7 +24,7 @@ public class ModDataMapProvider extends DataMapProvider {
 
     @Override
     protected void gather(HolderLookup.Provider provider) {
-        builder(ModDataMaps.SOLDIER_VEHICLE_PROPERTIES)
+        builder(NeoForgeDataMaps.SOLDIER_VEHICLE_PROPERTIES)
                 .add(EntityType.ENDERMITE.builtInRegistryHolder(),
                         new SoldierVehicleProperties(
                                 SoldierPropertyMap.of(

@@ -1,10 +1,8 @@
 package net.bumblebee.claysoldiers;
 
 import com.mojang.serialization.Codec;
-import net.bumblebee.claysoldiers.block.blueprint.EaselBlockEntity;
-import net.bumblebee.claysoldiers.block.chipassembler.ChipAssemblerBlockEntity;
+import net.bumblebee.claysoldiers.block.soldiercontainer.ClayMobContainer;
 import net.bumblebee.claysoldiers.block.hamsterwheel.BatteryProperty;
-import net.bumblebee.claysoldiers.block.hamsterwheel.HamsterWheelBlockEntity;
 import net.bumblebee.claysoldiers.blueprint.BlueprintManager;
 import net.bumblebee.claysoldiers.capability.AssignableWorksiteCapability;
 import net.bumblebee.claysoldiers.capability.BlueprintRequestHandler;
@@ -23,6 +21,7 @@ import net.fabricmc.fabric.api.command.v2.ArgumentTypeRegistry;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.CommonLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
+import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.fabricmc.fabric.api.event.registry.DynamicRegistries;
 import net.fabricmc.fabric.api.event.registry.DynamicRegistrySetupCallback;
 import net.fabricmc.fabric.api.lookup.v1.block.BlockApiLookup;
@@ -43,6 +42,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.resources.PreparableReloadListener;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
+import net.minecraft.world.InteractionResult;
 import org.jetbrains.annotations.Nullable;
 import org.jspecify.annotations.NonNull;
 import team.reborn.energy.api.EnergyStorage;
@@ -61,14 +61,17 @@ public class ClaySoldierFabric implements ModInitializer {
     public static final BlockApiLookup<AssignableWorksiteCapability, Void> ASSIGNABLE_POI_LOOKUP =
             BlockApiLookup.get(Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "assignable_poi_capability"), AssignableWorksiteCapability.class, Void.class);
 
+    public static final BlockApiLookup<ClayMobContainer, Void> CLAY_MOB_CONTAINER_LOOKUP =
+            BlockApiLookup.get(Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_mob_container"), ClayMobContainer.class, Void.class);
+
+
     private final ClaySoldiersCommon.BlueprintTagLoad blueprintTagLoader = new ClaySoldiersCommon.BlueprintTagLoad();
 
     @Override
     public void onInitialize() {
         ClaySoldiersCommon.init();
 
-        ModRegistries.register(r -> {
-        });
+        ModRegistries.register(r -> {});
         RecipeSynchronization.synchronizeRecipeSerializer(ModRecipes.CHIP_ASSEMBLY_SERIALIZER.get());
 
 
@@ -134,6 +137,8 @@ public class ClaySoldierFabric implements ModInitializer {
             }
         });
 
+        UseBlockCallback.EVENT.register((player, level, hand, blockHitResult) -> ClaySoldiersCommon.useItemOnBlockEvent(player, level, hand, blockHitResult.getBlockPos()).orElse(InteractionResult.PASS));
+
         ArgumentTypeRegistry.registerArgumentType(
                 Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "color_helper"),
                 ColorHelperArgumentType.class,
@@ -152,21 +157,10 @@ public class ClaySoldierFabric implements ModInitializer {
 
         ExternalMods.ACCESSORIES.ifLoaded(() -> ModAccessories::init);
 
-        EnergyStorage.SIDED.registerForBlockEntities((blockEntity, context) -> {
-            var en = HamsterWheelBlockEntity.getEnergyStorage(blockEntity, context);
-            return en == null ? null : (EnergyStorage) en;
-        }, ModBlockEntities.HAMSTER_WHEEL_BLOCK_ENTITY.get());
-
-        EnergyStorage.SIDED.registerForBlockEntities((blockEntity, context) -> {
-            if (blockEntity instanceof ChipAssemblerBlockEntity chipAssembler) {
-                return (EnergyStorage) chipAssembler.getEnergyStorage(context);
-            }
-            return null;
-        }, ModBlockEntities.CHIP_ASSEMBLER_BLOCK_ENTITY.get());
-
-        BLUEPRINT_REQUEST_HANDLER_LOOKUP.registerForBlockEntities((blockEntity, _) -> blockEntity instanceof EaselBlockEntity easelBlockEntity ? easelBlockEntity.getBlueprintRequestHandler() : null, ModBlockEntities.EASEL_BLOCK_ENTITY.get());
-        ASSIGNABLE_POI_LOOKUP.registerForBlockEntities((blockEntity, _) -> blockEntity instanceof HamsterWheelBlockEntity wheel ? wheel.getPoiCap() : null, ModBlockEntities.HAMSTER_WHEEL_BLOCK_ENTITY.get());
-
+        ModCapabilities.registerEnergy((type, lookup) -> EnergyStorage.SIDED.registerForBlockEntities((b, c) -> (EnergyStorage) lookup.apply(b, c), type));
+        ModCapabilities.registerBlueprint((type, lookup) -> BLUEPRINT_REQUEST_HANDLER_LOOKUP.registerForBlockEntities((o, _) -> lookup.apply(o), type));
+        ModCapabilities.registerAssignablePoi((type, lookup) -> ASSIGNABLE_POI_LOOKUP.registerForBlockEntities((o, _) -> lookup.apply(o), type));
+        ModCapabilities.registerClayMobContainer((type, lookup) -> CLAY_MOB_CONTAINER_LOOKUP.registerForBlockEntities((o, _) -> lookup.apply(o), type));
 
         SimpleConfigFabric config = SimpleConfigFabric.of(ClaySoldiersCommon.MOD_ID).provider(namespace ->
                 """

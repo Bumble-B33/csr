@@ -1,6 +1,7 @@
 package net.bumblebee.claysoldiers;
 
 import com.mojang.serialization.Codec;
+import net.bumblebee.claysoldiers.block.hammock.SugarCaneHammockBlock;
 import net.bumblebee.claysoldiers.blueprint.BlueprintManager;
 import net.bumblebee.claysoldiers.claypoifunction.ClayPoiFunctions;
 import net.bumblebee.claysoldiers.claysoldierchips.ClaySoldierChips;
@@ -27,9 +28,7 @@ import net.bumblebee.claysoldiers.soldierproperties.customproperties.specialatta
 import net.bumblebee.claysoldiers.team.ClayMobTeamManger;
 import net.bumblebee.claysoldiers.team.loyalty.TeamLoyaltyManger;
 import net.bumblebee.claysoldiers.util.ErrorHandler;
-import net.minecraft.core.Holder;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.core.Registry;
+import net.minecraft.core.*;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
@@ -38,20 +37,23 @@ import net.minecraft.server.Services;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.ProblemReporter;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeHolder;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.ServiceLoader;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -189,7 +191,7 @@ public class ClaySoldiersCommon {
 
     public static void sendWhenChannel(ServerPlayer serverPlayer, CustomPacketPayload payload, boolean reload) {
         if (NETWORK_MANGER.hasChannel(serverPlayer, payload.type())) {
-            ClaySoldiersCommon.NETWORK_MANGER.sendToPlayer(serverPlayer, payload);
+            NETWORK_MANGER.sendToPlayer(serverPlayer, payload);
             LOGGER.info("Sending {} to {} was {}", payload.type().id(), serverPlayer.getScoreboardName(), reload ? "reload" : "join");
         } else {
             LOGGER.error("Could not send {} Packet to {} because there was no Channel", payload.type().id(), serverPlayer.getScoreboardName());
@@ -270,6 +272,7 @@ public class ClaySoldiersCommon {
     }
 
 
-
-    //Todo Soldier Item Poi Source used after pick up
+    public static Optional<InteractionResult> useItemOnBlockEvent(Player player, Level level, InteractionHand hand, BlockPos pos) {
+        return SugarCaneHammockBlock.onSugarCaneUse(player, level, hand, pos);
+    }
 }

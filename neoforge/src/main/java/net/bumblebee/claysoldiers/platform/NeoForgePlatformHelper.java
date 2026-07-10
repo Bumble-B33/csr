@@ -42,6 +42,7 @@ import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeBookCategory;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.item.crafting.display.SlotDisplay;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -97,14 +98,12 @@ public class NeoForgePlatformHelper implements IPlatformHelper {
     }
 
     @Override
-    public <T extends Block> ItemLikeSupplier<T> registerBlockWithItem(String id, Function<BlockBehaviour.Properties, T> block, BlockBehaviour.Properties properties, BiFunction<Block, Item.Properties, BlockItem> createBlockItem) {
-        DeferredBlock<T> blockHolder = ClaySoldiersNeoForge.BLOCKS.registerBlock(id, block, () -> properties);
-        ClaySoldiersNeoForge.ITEMS.registerItem(id, itemProp -> createBlockItem.apply(blockHolder.get(), itemProp));
-        return ItemLikeSupplier.create(blockHolder);
+    public <T extends Block> Supplier<T> registerBlockWithoutItem(String id, Function<BlockBehaviour.Properties, T> block, BlockBehaviour.Properties properties) {
+        return ClaySoldiersNeoForge.BLOCKS.registerBlock(id, block, () -> properties);
     }
 
     @Override
-    public <T extends BlockEntity> Supplier<BlockEntityType<T>> registerBlockEntity(String id, BlockEntityFactory<T> factory, List<Supplier<Block>> blocks) {
+    public <T extends BlockEntity> Supplier<BlockEntityType<T>> registerBlockEntity(String id, BlockEntityFactory<T> factory, List<Supplier<? extends Block>> blocks) {
         return ClaySoldiersNeoForge.BLOCK_ENTITIES.register(id, () -> new BlockEntityType<T>(factory::create, blocks.stream().map(Supplier::get).toArray(Block[]::new)));
     }
 
@@ -133,6 +132,11 @@ public class NeoForgePlatformHelper implements IPlatformHelper {
     public <T extends RecipeType<?>> T registerRecipeType(String name, T type) {
         ClaySoldiersNeoForge.RECIPE_TYPES.register(name, () -> type);
         return type;
+    }
+
+    @Override
+    public <T extends SlotDisplay> void registerSlotDisplay(String id, SlotDisplay.Type<T> recipe) {
+        ClaySoldiersNeoForge.SLOT_DISPLAYS.register(id, () -> recipe);
     }
 
     @Override
@@ -245,8 +249,9 @@ public class NeoForgePlatformHelper implements IPlatformHelper {
     }
 
     @Override
-    public Holder<PoiType> registerPoiType(ResourceKey<PoiType> id, Supplier<PoiType> poiType) {
-        return ClaySoldiersNeoForge.POI_TYPES.register(id.identifier().getPath(), poiType);
+    public Supplier<PoiType> registerPoiType(ResourceKey<PoiType> id, Supplier<PoiType> poiType) {
+        ClaySoldiersNeoForge.POI_TYPES.register(id.identifier().getPath(), poiType);
+        return poiType;
     }
 
     @Override

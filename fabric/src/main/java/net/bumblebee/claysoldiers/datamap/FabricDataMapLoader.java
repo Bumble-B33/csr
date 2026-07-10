@@ -81,7 +81,7 @@ public class FabricDataMapLoader extends SimpleJsonResourceReloadListener<JsonEl
     @Override
     protected void apply(Map<Identifier, JsonElement> object, ResourceManager resourceManager, ProfilerFiller profiler) {
         if (provider == null) {
-            LOGGER.error("FabricDataMapGetter load Error: Lookup is null");
+            ClaySoldiersCommon.ERROR_HANDLER.error("FabricDataMapGetter load Error: Lookup is null");
             return;
         }
 

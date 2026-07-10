@@ -12,6 +12,7 @@ import net.bumblebee.claysoldiers.entity.common.soldier.AbstractClaySoldierEntit
 import net.bumblebee.claysoldiers.entity.common.soldier.ClaySoldierEntity;
 import net.bumblebee.claysoldiers.entity.common.soldier.VampireClaySoldierEntity;
 import net.bumblebee.claysoldiers.entity.common.soldier.ZombieClaySoldierEntity;
+import net.bumblebee.claysoldiers.entity.common.throwables.ClaySoldierArrow;
 import net.bumblebee.claysoldiers.entity.common.throwables.ClaySoldierSnowball;
 import net.bumblebee.claysoldiers.entity.common.throwables.ClaySoldierThrowableItemEntity;
 import net.bumblebee.claysoldiers.entity.common.throwables.ClaySoldierThrownPotion;
@@ -20,6 +21,8 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 
 import java.util.function.Supplier;
 
@@ -28,6 +31,7 @@ public class ModEntityTypes {
             ClaySoldiersCommon.PLATFORM.registerEntity("clay_soldier", () -> EntityType.Builder.of(ClaySoldierEntity::new, MobCategory.CREATURE)
                     .sized(0.6F * AbstractClaySoldierEntity.DEFAULT_SCALE, 1.95F * AbstractClaySoldierEntity.DEFAULT_SCALE)
                     .ridingOffset(-0.7F * AbstractClaySoldierEntity.DEFAULT_SCALE)
+                    .immuneTo(ModBlocks.CACTUS_HOUSE.get(), Blocks.CACTUS)
                     .build(ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_soldier")))
             );
 
@@ -79,27 +83,48 @@ public class ModEntityTypes {
 
     public static final Supplier<EntityType<ClaySoldierThrowableItemEntity>> CLAY_SOLDIER_THROWABLE_ITEM =
             ClaySoldiersCommon.PLATFORM.registerEntity("clay_soldier_thrown", () -> EntityType.Builder.<ClaySoldierThrowableItemEntity>of(ClaySoldierThrowableItemEntity::new, MobCategory.MISC)
-                    .sized(0.25f, 0.25f).clientTrackingRange(4).updateInterval(10)
+                    .sized(0.25f, 0.25f)
+                    .clientTrackingRange(4)
+                    .updateInterval(10)
+                    .noSummon()
                     .build(ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_soldier_thrown")))
             );
     public static final Supplier<EntityType<ClaySoldierThrownPotion>> CLAY_SOLDIER_POTION =
             ClaySoldiersCommon.PLATFORM.registerEntity("clay_soldier_potion", () -> EntityType.Builder.<ClaySoldierThrownPotion>of(ClaySoldierThrownPotion::new, MobCategory.MISC)
-                    .sized(0.25f, 0.25f).clientTrackingRange(4).updateInterval(10)
+                    .sized(0.25f, 0.25f)
+                    .clientTrackingRange(4)
+                    .updateInterval(10)
                     .noSummon()
                     .build(ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_soldier_potion")))
             );
     public static final Supplier<EntityType<ClaySoldierSnowball>> CLAY_SOLDIER_SNOWBALL =
             ClaySoldiersCommon.PLATFORM.registerEntity("clay_soldier_snowball", () -> EntityType.Builder.<ClaySoldierSnowball>of(ClaySoldierSnowball::new, MobCategory.MISC)
-                    .sized(0.25f, 0.25f).clientTrackingRange(4).updateInterval(10)
+                    .sized(0.25f, 0.25f)
+                    .clientTrackingRange(4)
+                    .updateInterval(10)
                     .noSummon()
                     .build(ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_soldier_snowball")))
             );
 
+    public static final Supplier<EntityType<ClaySoldierArrow>> CLAY_SOLDIER_ARROW =
+            ClaySoldiersCommon.PLATFORM.registerEntity("clay_soldier_arrow", () -> EntityType.Builder.<ClaySoldierArrow>of(ClaySoldierArrow::new, MobCategory.MISC)
+                    .sized(0.25f, 0.25f).eyeHeight(0.065f)
+                    .clientTrackingRange(4)
+                    .updateInterval(20)
+                    .noSummon()
+                    .build(ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_soldier_arrow")))
+            );
+
     public static final Supplier<EntityType<ClayBlockProjectileEntity>> CLAY_BLOCK_PROJECTILE = ClaySoldiersCommon.PLATFORM.registerEntity(
             "clay_block_projectile", () -> EntityType.Builder.<ClayBlockProjectileEntity>of(ClayBlockProjectileEntity::new, MobCategory.MISC)
-                    .sized(0.3125F, 0.3125F).eyeHeight(0.3125F / 2F).clientTrackingRange(4).updateInterval(10)
+                    .sized(0.3125F, 0.3125F).eyeHeight(0.3125F / 2F).
+                    clientTrackingRange(4)
+                    .updateInterval(10)
+                    .noSummon()
                     .build(ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_block_projectile")))
     );
+
+
 
 
     public static final Supplier<EntityType<ClayWraithEntity>> CLAY_WRAITH =
@@ -110,7 +135,8 @@ public class ModEntityTypes {
 
     public static final Supplier<EntityType<BossBatEntity>> VAMPIRE_BAT =
             ClaySoldiersCommon.PLATFORM.registerEntity("vampire_bat", () -> EntityType.Builder.of(BossBatEntity::new, MobCategory.MISC)
-                    .sized(0.5F, 0.9F).eyeHeight(0.45F).clientTrackingRange(5)
+                    .sized(0.5F, 0.9F).eyeHeight(0.45F)
+                    .clientTrackingRange(5)
                     .build(ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "vampire_bat")))
             );
 

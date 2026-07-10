@@ -126,7 +126,7 @@ public class HamsterWheelBlockEntityRenderer implements BlockEntityRenderer<Hams
 
             poseStack.translate(0.5f, 0.1f, 0.5f);
             poseStack.mulPose(Axis.YP.rotation(DEG_90));
-            hamsterWheelRenderState.clientClaySoldierEntity.submit(hamsterWheelRenderState.partialTicks, poseStack, nodeCollector, hamsterWheelRenderState.lightCoords, cameraRenderState);
+            hamsterWheelRenderState.clientClaySoldierEntity.submit(poseStack, nodeCollector, hamsterWheelRenderState.lightCoords, cameraRenderState, hamsterWheelRenderState.partialTicks);
 
             profiler.pop();
         }

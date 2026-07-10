@@ -180,6 +180,7 @@ public class ModDataMapAndTagProvider extends ClaySoldiersItemProvider {
         addHoldable(Items.SWEET_BERRIES, SoldierHoldableEffect.of(SoldierPropertyMap.builder().throwable(RangedAttackType.HARM, 1)).removalCondition(RemovalConditionType.ON_USE_RANGED, OnUseCondition.ranged(1f)).setSlots(SoldierEquipmentSlot.BACKPACK_SLOTS).setMaxStackSize(4).setThrowableTransform(ThrowableTransform.SWEET_BERRY).build());
         addHoldable(Items.GLOW_BERRIES, SoldierHoldableEffect.of(SoldierPropertyMap.builder().throwable(RangedAttackType.HARM, 1)).removalCondition(RemovalConditionType.ON_USE_RANGED, OnUseCondition.ranged(1f)).setSlots(SoldierEquipmentSlot.BACKPACK_SLOTS).setMaxStackSize(4).setThrowableTransform(ThrowableTransform.GLOW_BERRY).build());
 
+        addHoldable(Items.BOW, SoldierHoldableEffect.of(SoldierPropertyMap.builder().throwable(RangedAttackType.HARM, 2)).setSlot(SoldierEquipmentSlot.MAINHAND).build());
 
         addWearable(Items.LILY_PAD,
                 SoldierHoldableEffect.of(SoldierPropertyMap.builder().setProtection(2f).setCanSwim()).setSlot(SoldierEquipmentSlot.LEGS).setPredicate(ClayPredicates.LogicPredicate.not(new ClayPredicates.SoldierPropertyPredicate(ClayPredicates.PropertyTestType.INCREASE, SoldierPropertyTypes.HEAVY.get()))).build(),

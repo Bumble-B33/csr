@@ -1,6 +1,6 @@
 package net.bumblebee.claysoldiers.block.hamsterwheel;
 
-import net.bumblebee.claysoldiers.entity.client.ClientClaySoldierEntity;
+import net.bumblebee.claysoldiers.entity.client.FakeClaySoldierAccess;
 import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
 
 public class HamsterWheelRenderState extends BlockEntityRenderState {
@@ -10,7 +10,7 @@ public class HamsterWheelRenderState extends BlockEntityRenderState {
     public float yRot;
     public boolean hasEnergyStorage;
     public boolean hasSecondBattery;
-    public ClientClaySoldierEntity clientClaySoldierEntity;
+    public FakeClaySoldierAccess clientClaySoldierEntity;
     public float partialTicks;
     public boolean hasEnergy;
     public long energyStored;
