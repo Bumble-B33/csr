@@ -27,7 +27,9 @@ import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 
 public class ClaySoldierChipItem extends Item {
@@ -78,14 +80,14 @@ public class ClaySoldierChipItem extends Item {
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay tooltipDisplay, Consumer<Component> tooltipAdder, TooltipFlag flag) {
         super.appendHoverText(stack, context, tooltipDisplay, tooltipAdder, flag);
-        var chip = getChipFromItem(stack);
+        ClaySoldierChip<?> chip = getChipFromItem(stack);
         if (!tooltipDisplay.shows(ModDataComponents.CLAY_SOLDIER_CHIP.get())) {
             return;
         }
         Component chipLang;
 
         if (chip != null) {
-            chipLang = chip.info(ClaySoldiersCommon.clientPlayer != null ? ClaySoldiersCommon.clientPlayer.get() : null);
+            chipLang = chip.info(ClaySoldiersCommon.clientPlayer.get());
         } else {
             chipLang = Component.translatable(NO_CHIP_ERROR_LANG).withStyle(ChatFormatting.RED);
         }
@@ -107,24 +109,35 @@ public class ClaySoldierChipItem extends Item {
 
     private @Nullable Component getAddonsFormatted(@NotNull ClaySoldierChip<?> chip) {
         List<ClaySoldierChipAddon> addons = chip.getAddons();
+        Map<ClaySoldierChipAddon, Integer> map = new HashMap<>();
+        addons.forEach(a -> map.compute(a, (_, i) -> i == null ? 1 : i + 1));
 
         MutableComponent addonList = null;
 
-        for (int i = 0; i < chip.getAllowedAddonsCount(); i++) {
-            if (i < addons.size()) {
-                if (addonList == null) {
-                    addonList = addons.getFirst().getDisplayName().copy();
-                } else {
-                    addonList.append(Component.literal(", ").append(addons.get(i).getDisplayName()));
-                }
+        for (var entry : map.entrySet()) {
+            if (addonList == null) {
+                addonList = entry.getKey().getDisplayName().copy();
             } else {
-                if (addonList == null) {
-                    addonList = Component.translatable(NO_ADDON_INSTALLED_LANG);
-                } else {
-                    addonList.append(Component.literal(", ").append(Component.translatable(NO_ADDON_INSTALLED_LANG)));
-                }
+                addonList.append(Component.literal(", ").append(entry.getKey().getDisplayName()));
+            }
+            if (entry.getValue() > 1) {
+                addonList.append(" x" + entry.getValue());
             }
         }
+        int emptyCount = chip.getAllowedAddonsCount() - addons.size();
+
+        if (emptyCount > 0) {
+            if (addonList == null) {
+                addonList = Component.translatable(NO_ADDON_INSTALLED_LANG);
+            } else {
+                addonList.append(Component.literal(", ").append(Component.translatable(NO_ADDON_INSTALLED_LANG)));
+            }
+            if (emptyCount > 1) {
+                addonList.append(" x" + emptyCount);
+            }
+        }
+
+
         return addonList;
     }
 
@@ -152,6 +165,8 @@ public class ClaySoldierChipItem extends Item {
             return ModItems.PLACE_SEEDS_CHIP.asItem();
         } else if (type == ClaySoldierChips.BUILD_BLUEPRINT_TYPE.get()) {
             return ModItems.BLUEPRINT_CHIP.asItem();
+        } else if (type == ClaySoldierChips.BEEKEEPING_TYPE.get()) {
+            return ModItems.BEE_KEEPING_CHIP.asItem();
         }
         ClaySoldiersCommon.ERROR_HANDLER.warn("Chip Type with no Item: " + type.toString());
         return ModItems.BLANK_CHIP.asItem();

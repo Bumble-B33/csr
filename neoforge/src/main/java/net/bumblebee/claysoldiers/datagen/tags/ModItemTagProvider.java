@@ -71,7 +71,8 @@ public class ModItemTagProvider extends BlockTagCopyingItemTagProvider {
                 ModItems.PLACE_SEEDS_CHIP.get(),
                 ModItems.PICK_UP_ITEMS_CHIP.get(),
                 ModItems.FISHING_CHIP.get(),
-                ModItems.BLUEPRINT_CHIP.get()
+                ModItems.BLUEPRINT_CHIP.get(),
+                ModItems.BEE_KEEPING_CHIP.get()
         );
     }
 

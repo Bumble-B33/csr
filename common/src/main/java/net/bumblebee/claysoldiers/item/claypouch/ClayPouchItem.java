@@ -139,7 +139,7 @@ public class ClayPouchItem extends Item {
     @Override
     public int getBarColor(ItemStack stack) {
         var content = stack.get(ModDataComponents.CLAY_POUCH_CONTENT.get());
-        if (content == null || ClaySoldiersCommon.clientPlayer == null || ClaySoldiersCommon.clientPlayer.get() == null) {
+        if (content == null || ClaySoldiersCommon.clientPlayer.get() == null) {
             return BAR_COLOR;
         }
         return content.getColor(ClaySoldiersCommon.clientPlayer.get());

@@ -97,7 +97,6 @@ public final class ModTags {
         public static final TagKey<EntityType<?>> CLAY_BOSS = create("clay_boss");
         public static final TagKey<EntityType<?>> CLAY_SOLDIER = create("clay_soldier");
 
-
         private static TagKey<EntityType<?>> create(String name) {
             return TagKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, name));
         }

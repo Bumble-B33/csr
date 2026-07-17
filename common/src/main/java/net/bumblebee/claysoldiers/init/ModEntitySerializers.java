@@ -15,7 +15,6 @@ import java.util.UUID;
 import java.util.function.BiConsumer;
 
 public final class ModEntitySerializers {
-    public static final EntityDataSerializer<Optional<UUID>> UUID = EntityDataSerializer.forValueType(ByteBufCodecs.optional(UUIDUtil.STREAM_CODEC));
     public static final EntityDataSerializer<ColorHelper> COLOR = EntityDataSerializer.forValueType(ColorHelper.STREAM_CODEC);
     public static final EntityDataSerializer<Holder.Reference<ClayMobTeam>> CLAY_TEAM = EntityDataSerializer.forValueType(ClayMobTeam.STREAM_CODEC);
     public static final EntityDataSerializer<ClaySoldierFishingData> FISHING_DATA = EntityDataSerializer.forValueType(ClaySoldierFishingData.STREAM_CODEC);
@@ -25,12 +24,10 @@ public final class ModEntitySerializers {
 
 
     public static void register(BiConsumer<String, EntityDataSerializer<?>> event) {
-        event.accept("owner_uuid", ModEntitySerializers.UUID);
         event.accept("color", ModEntitySerializers.COLOR);
         event.accept("clay_mob_team", ModEntitySerializers.CLAY_TEAM);
         event.accept("clay_soldier_fishing_data", ModEntitySerializers.FISHING_DATA);
         event.accept("clay_soldier_boss_type", ModEntitySerializers.BOSS_TYPES);
         event.accept("clay_soldier_boss_behaviour", ModEntitySerializers.BOSS_BEHAVIOUR);
-
     }
 }

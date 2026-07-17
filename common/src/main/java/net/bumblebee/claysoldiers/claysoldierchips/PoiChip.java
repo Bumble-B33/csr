@@ -1,6 +1,8 @@
 package net.bumblebee.claysoldiers.claysoldierchips;
 
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
+import net.bumblebee.claysoldiers.claysoldierchips.addon.ClaySoldierChipAddon;
+import net.bumblebee.claysoldiers.claysoldierchips.addon.ClaySoldierChipAddons;
 import net.bumblebee.claysoldiers.entity.common.ClayMobEntity;
 import net.bumblebee.claysoldiers.entity.common.programmable.ProgrammableClaySoldierEntity;
 import net.bumblebee.claysoldiers.entity.goal.UseAssignedPoiGoal;
@@ -14,20 +16,31 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.OptionalInt;
+import java.util.Set;
 import java.util.function.BiConsumer;
 
 public class PoiChip extends ClaySoldierChip<Unit> {
-    public static final PoiChip INSTANCE = new PoiChip();
     private static final Identifier ASSET_ID = Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "poi");
     public static final String POI_NO_DATA_LANG = LANG_PREFIX + ".data.poi.unset";
     public static final String ACTIVE_POI_DATA_LANG = LANG_PREFIX + ".data.poi.active";
+    public static final AddonInfo ADDON_INFO = new AddonInfo() {
+        @Override
+        public boolean canBeApplied(List<ClaySoldierChipAddon> presentAddons, ClaySoldierChipAddon addon) {
+            return addon == ClaySoldierChipAddons.ACCELERATION_ADDON;
+        }
 
-    private PoiChip() {
-        super(Unit.INSTANCE, List.of());
+        @Override
+        public int getAllowedAddonsCount() {
+            return 3;
+        }
+    };
+
+    public PoiChip(List<ClaySoldierChipAddon> addons) {
+        super(Unit.INSTANCE, addons);
     }
 
     public static PoiChip create() {
-        return INSTANCE;
+        return new PoiChip(List.of());
     }
 
     @Override

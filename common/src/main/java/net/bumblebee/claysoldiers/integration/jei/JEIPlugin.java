@@ -10,6 +10,7 @@ import mezz.jei.api.registration.IRecipeCategoryRegistration;
 import mezz.jei.api.registration.IRecipeRegistration;
 import mezz.jei.api.registration.ISubtypeRegistration;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
+import net.bumblebee.claysoldiers.blueprint.BlueprintManager;
 import net.bumblebee.claysoldiers.init.ModBlocks;
 import net.bumblebee.claysoldiers.init.ModDataComponents;
 import net.bumblebee.claysoldiers.init.ModItems;
@@ -18,6 +19,7 @@ import net.bumblebee.claysoldiers.util.ComponentFormating;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.Holder;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
@@ -44,8 +46,11 @@ public class JEIPlugin implements IModPlugin {
 
     @Override
     public void registerRecipes(IRecipeRegistration registration) {
-        registration.addRecipes(RecipeTypes.CRAFTING, ClaySoldierCrafting.createRecipes(Minecraft.getInstance().level.registryAccess()));
-        registration.addRecipes(RecipeTypes.CRAFTING, ClaySoldierCrafting.createClaySoldierRevive(Minecraft.getInstance().level.registryAccess()));
+        RegistryAccess registries = Minecraft.getInstance().level.registryAccess();
+
+        registration.addRecipes(RecipeTypes.CRAFTING, ClaySoldierCrafting.createRecipes(registries));
+        registration.addRecipes(RecipeTypes.CRAFTING, ClaySoldierCrafting.createClaySoldierRevive(registries));
+
         if (ClaySoldiersCommon.CONFIG.getCommonConfig().shearBladeRecipeEnabled()) {
             registration.addRecipes(RecipeTypes.CRAFTING, createShearBladeRecipe());
         }
@@ -55,6 +60,9 @@ public class JEIPlugin implements IModPlugin {
         registration.addRecipes(RecipeTypes.CAMPFIRE_COOKING, ClaySoldierCookingRecipe.createCookingRecipe(CampfireCookingRecipe::new, 200));
         registration.addRecipes(RecipeTypes.SMOKING, ClaySoldierCookingRecipe.createCookingRecipe(SmokingRecipe::new, 300));
 
+        registration.addRecipes(BlueprintRecipeCategory.TYPE, BlueprintManager.getBlueprintItems(registries));
+
+        ClaySoldiersCommon.CLIENT_RECIPE_ACCESS.whenBasicRecipesAreLoaded(r -> registration.addRecipes(ChipAssemblyRecipeCategory.TYPE, r));
 
         BuiltInRegistries.ITEM.get(ModTags.Items.SOLDIER_HOLDABLE).ifPresentOrElse(set -> {
             addItemToInfo(registration, set.stream().map(Holder::value), ClaySoldiersCommon.DATA_MAP::getEffect, ComponentFormating::addHoldableTooltip);
@@ -70,20 +78,18 @@ public class JEIPlugin implements IModPlugin {
                 ComponentFormating.addPoiTooltip(poi, list);
             });
         }, () -> ClaySoldiersCommon.LOGGER.error("Could not load JEI Info for Clay Soldier POIs "));
-
-        ClaySoldiersCommon.CLIENT_RECIPE_ACCESS.whenBasicRecipesAreLoaded(r -> registration.addRecipes(ChipAssemblyRecipeCategory.TYPE, r));
     }
 
     @Override
     public void registerCategories(IRecipeCategoryRegistration registration) {
-        registration.addRecipeCategories(
-                new ChipAssemblyRecipeCategory(registration.getJeiHelpers().getGuiHelper())
-        );
+        registration.addRecipeCategories(new ChipAssemblyRecipeCategory(registration.getJeiHelpers().getGuiHelper()));
+        registration.addRecipeCategories(new BlueprintRecipeCategory(registration.getJeiHelpers().getGuiHelper()));
     }
 
     @Override
     public void registerRecipeCatalysts(IRecipeCatalystRegistration registration) {
         registration.addCraftingStation(ChipAssemblyRecipeCategory.TYPE, ModBlocks.CHIP_ASSEMBLER);
+        registration.addCraftingStation(BlueprintRecipeCategory.TYPE, ModBlocks.ESCRITOIRE_BLOCK);
     }
 
     private static <T> void addItemToInfo(IRecipeRegistration registration, Stream<Item> items, Function<Item, T> effectGetter, BiConsumer<T, List<Component>> getDescription) {

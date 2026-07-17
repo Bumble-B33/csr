@@ -86,7 +86,7 @@ public class ZombieClaySoldierEntity extends UndeadClaySoldier {
      * @param claySoldier the other soldier
      */
     public boolean previousTeamSameAs(ClayMobEntity claySoldier) {
-        if (!getPreviousTeam().isCooperative() || claySoldier.hasNoTeam()) {
+        if (claySoldier.hasNoTeam()) {
             return false;
         }
         return getPreviousHolder().is(claySoldier.getClayTeamHolder());

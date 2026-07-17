@@ -4,7 +4,8 @@ import com.mojang.serialization.Codec;
 import io.netty.buffer.ByteBuf;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.block.chipassembler.ChipAssemblerBlockEntity;
-import net.bumblebee.claysoldiers.block.soldiercontainer.BlockEntityWithSoldier;
+import net.bumblebee.claysoldiers.block.soldiercontainer.BaseBlockEntityWithSoldier;
+import net.bumblebee.claysoldiers.block.soldiercontainer.BlockEntityWithSingleSoldier;
 import net.bumblebee.claysoldiers.entity.common.boss.ClaySoldierBossEquipment;
 import net.bumblebee.claysoldiers.entity.goal.workgoal.dig.DigBreakManger;
 import net.bumblebee.claysoldiers.init.ModDataComponents;
@@ -62,9 +63,12 @@ public class TestItem extends Item {
             );
         }
 
-        if (blockEntity instanceof BlockEntityWithSoldier blockEntityWithSoldier) {
-            var data = blockEntityWithSoldier.getSoldierData();
-            log(blockEntityWithSoldier, List.of(data == null ? "SoldierData(null)" : data.toString()));
+        if (blockEntity instanceof BaseBlockEntityWithSoldier blockEntityWithSoldier) {
+            List<String> data = new ArrayList<>();
+            data.add("SoldierData[");
+            blockEntityWithSoldier.forEachSoldier(s -> data.add(" " + s));
+            data.add("]");
+            log(blockEntityWithSoldier, data);
         }
 
         if (blockEntity instanceof ChipAssemblerBlockEntity chipAssemblerBlockEntity) {

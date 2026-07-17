@@ -168,11 +168,18 @@ public class ClaySoldierFishingTicker {
     }
 
     private int getFishingTime() {
-        return FISHING_START + 500 + (((int) (level.getGameTime()) % 12) * 9);
+        int time = Math.max(500 - accelerationAddonCount() * 100, 0);
+
+
+        return FISHING_START + time; //+ (((int) (level.getGameTime()) % 12) * 9);
     }
 
     private boolean canFishTreasure() {
         return soldier.getInstalledChip().hasAddon(ClaySoldierChipAddons.FISH_TREASURE_ADDON);
+    }
+
+    private int accelerationAddonCount() {
+        return soldier.getInstalledChip().addonCount(ClaySoldierChipAddons.ACCELERATION_ADDON) + 1;
     }
 
     private RandomSource getRandom() {

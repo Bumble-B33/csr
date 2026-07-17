@@ -4,6 +4,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.netty.buffer.ByteBuf;
 import net.bumblebee.claysoldiers.soldierproperties.combined.ValueCombiner;
+import net.bumblebee.claysoldiers.util.codec.CodecUtils;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
@@ -27,7 +28,7 @@ public class DamageBlock {
     public static final ValueCombiner<DamageBlock> COMBINER = CombinedDamageBlock::new;
     public static final ToIntFunction<DamageBlock> TO_INT = (d) -> d.blockAmount > 0 && d.blockChance > 0 ? 1 : 0;
     public static final Codec<DamageBlock> CODEC = RecordCodecBuilder.create(in -> in.group(
-            ExtraCodecs.POSITIVE_FLOAT.fieldOf("chance").forGetter(d -> d.blockChance),
+            CodecUtils.CHANCE_CODEC.fieldOf("chance").forGetter(d -> d.blockChance),
             ExtraCodecs.POSITIVE_FLOAT.fieldOf("amountRequired").forGetter(d -> d.blockAmount),
             Codec.BOOL.optionalFieldOf("pierceable", true).forGetter(d -> d.pierceable)
     ).apply(in, DamageBlock::new));

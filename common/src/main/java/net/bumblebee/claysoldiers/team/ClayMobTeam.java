@@ -9,6 +9,7 @@ import net.bumblebee.claysoldiers.init.ModRegistries;
 import net.bumblebee.claysoldiers.soldierproperties.SoldierPropertyMap;
 import net.bumblebee.claysoldiers.util.color.ColorHelper;
 import net.minecraft.core.Holder;
+import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -17,6 +18,8 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.Identifier;
+import net.minecraft.resources.RegistryFileCodec;
+import net.minecraft.resources.RegistryFixedCodec;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -72,7 +75,6 @@ public class ClayMobTeam {
     private final Item getFrom;
     private final SoldierPropertyMap properties;
     private final List<PlayerUUIDAndName> players;
-    private final Collection<UUID> playerUUIDs;
     private final List<String> playerNames;
     private final boolean tamable;
 
@@ -83,7 +85,6 @@ public class ClayMobTeam {
         this.getFrom = getFrom == Items.AIR ? null : getFrom;
         this.properties = properties;
         this.players = List.copyOf(players);
-        this.playerUUIDs = players.stream().map(PlayerUUIDAndName::uuid).toList();
         this.playerNames = players.stream().map(PlayerUUIDAndName::name).toList();
         this.tamable = tamable;
         if (color.isEmpty()) {
@@ -179,15 +180,6 @@ public class ClayMobTeam {
      */
     public boolean canBeTamed() {
         return tamable;
-    }
-
-    /**
-     * Returns whether this team is can cooperate with other members of this team.
-     *
-     * @return whether this team is can cooperate
-     */
-    public boolean isCooperative() {
-        return true;
     }
 
     @UnmodifiableView

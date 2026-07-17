@@ -1,6 +1,7 @@
 package net.bumblebee.claysoldiers.claysoldierchips.addon;
 
 import com.mojang.serialization.Codec;
+import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.init.ModRegistries;
 import net.minecraft.core.Holder;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -57,7 +58,7 @@ public class ClaySoldierChipAddon {
     @Override
     public boolean equals(Object obj) {
         if (this != obj && obj instanceof ClaySoldierChipAddon ad && ad.name.equals(name)) {
-            throw new IllegalStateException("huh");
+            ClaySoldiersCommon.ERROR_HANDLER.warn("Addons should be equal:" + this + ", " + obj);
         }
         return this == obj;
     }

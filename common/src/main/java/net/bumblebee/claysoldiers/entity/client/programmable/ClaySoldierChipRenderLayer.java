@@ -15,7 +15,7 @@ import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.Nullable;
 
 public class ClaySoldierChipRenderLayer extends RenderLayer<AbstractClaySoldierRenderState, ClaySoldierModel> {
-    private static final Identifier TEXTURE_LOCATION = Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "textures/entity/clay_soldier/module/empty.png");
+    private static final Identifier TEXTURE_LOCATION = Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "textures/entity/clay_soldier/chip/empty.png");
     private static final RenderType RENDER_TYPE = RenderTypes.entitySolid(TEXTURE_LOCATION);
     private final ClaySoldierChipModel chip;
 
@@ -42,7 +42,7 @@ public class ClaySoldierChipRenderLayer extends RenderLayer<AbstractClaySoldierR
         if (textureLocation == null) {
             return RENDER_TYPE;
         }
-        var te = textureLocation.withPrefix("textures/entity/clay_soldier/module/").withSuffix(".png");
+        var te = textureLocation.withPrefix("textures/entity/clay_soldier/chip/").withSuffix(".png");
         return RenderTypes.entitySolid(te);
     }
 }

@@ -34,7 +34,6 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jspecify.annotations.Nullable;
 
-//Todo
 public class ClayCactusBlock extends BaseEntityBlock {
     public static final IntegerProperty COUNT = IntegerProperty.create("soldier_count", 0, 4);
     public static final EnumProperty<Direction> FACING = BlockStateProperties.HORIZONTAL_FACING;

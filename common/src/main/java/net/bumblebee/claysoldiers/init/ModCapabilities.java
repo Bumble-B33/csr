@@ -5,8 +5,7 @@ import net.bumblebee.claysoldiers.block.cacti.ClayCactusBlockEntity;
 import net.bumblebee.claysoldiers.block.chipassembler.ChipAssemblerBlockEntity;
 import net.bumblebee.claysoldiers.block.hammock.SugarCaneHammockBlockEntity;
 import net.bumblebee.claysoldiers.block.hamsterwheel.HamsterWheelBlockEntity;
-import net.bumblebee.claysoldiers.block.soldiercontainer.BlockEntityWithSoldier;
-import net.bumblebee.claysoldiers.block.soldiercontainer.BlockEntityWithSoldiers;
+import net.bumblebee.claysoldiers.block.soldiercontainer.BaseBlockEntityWithSoldier;
 import net.bumblebee.claysoldiers.block.soldiercontainer.ClayMobContainer;
 import net.bumblebee.claysoldiers.capability.AssignableWorksiteCapability;
 import net.bumblebee.claysoldiers.capability.BlueprintRequestHandler;
@@ -30,13 +29,17 @@ public class ModCapabilities {
     }
 
     public static void registerClayMobContainer(BiConsumer<BlockEntityType<?>, Function<BlockEntity, ClayMobContainer>> event) {
-        event.accept(ModBlockEntities.HAMSTER_WHEEL_BLOCK_ENTITY.get(), s -> s instanceof BlockEntityWithSoldier entity ? entity.getClayMobContainer() : null);
-        event.accept(ModBlockEntities.SUGAR_CANE_HAMMOCK_BLOCK_ENTITY.get(), s -> s instanceof BlockEntityWithSoldier entity ? entity.getClayMobContainer() : null);
-        event.accept(ModBlockEntities.CLAY_CACTUS_BLOCK_ENTITY.get(), s -> s instanceof BlockEntityWithSoldiers entity ? entity.getClayMobContainer() : null);
+        event.accept(ModBlockEntities.HAMSTER_WHEEL_BLOCK_ENTITY.get(), ModCapabilities::getContainer);
+        event.accept(ModBlockEntities.SUGAR_CANE_HAMMOCK_BLOCK_ENTITY.get(), ModCapabilities::getContainer);
+        event.accept(ModBlockEntities.CLAY_CACTUS_BLOCK_ENTITY.get(), ModCapabilities::getContainer);
     }
 
     public static void registerEnergy(BiConsumer<BlockEntityType<?>, BiFunction<BlockEntity, Direction, ?>> event) {
         event.accept(ModBlockEntities.HAMSTER_WHEEL_BLOCK_ENTITY.get(), HamsterWheelBlockEntity::getEnergyStorage);
         event.accept(ModBlockEntities.CHIP_ASSEMBLER_BLOCK_ENTITY.get(), (s, c) -> s instanceof ChipAssemblerBlockEntity entity ? entity.getEnergyStorage(c) : null);
+    }
+
+    private static ClayMobContainer getContainer(BlockEntity entity) {
+        return entity instanceof BaseBlockEntityWithSoldier b ? b.getClayMobContainer() : null;
     }
 }

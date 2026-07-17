@@ -49,6 +49,7 @@ import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -92,8 +93,8 @@ public class ClaySoldiersCommon {
             p -> p.getMainHandItem().is(ModTags.Items.STAT_ITEM)
     ));
 
-    @Nullable
-    public static Supplier<@Nullable Player> clientPlayer;
+    @NotNull
+    public static Supplier<@Nullable Player> clientPlayer = () -> null;
 
     public static final ClientRecipeAccess CLIENT_RECIPE_ACCESS = ClientRecipeAccess.INSTANCE;
 

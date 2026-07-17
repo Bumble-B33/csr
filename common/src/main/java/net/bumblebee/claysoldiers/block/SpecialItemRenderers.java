@@ -32,7 +32,7 @@ public class SpecialItemRenderers {
             public static final MapCodec<Unbaked> MAP_CODEC = MapCodec.unit(new Unbaked());
 
             @Override
-            public @Nullable SpecialModelRenderer<Void> bake(BakingContext bakingContext) {
+            public SpecialModelRenderer<Void> bake(BakingContext bakingContext) {
                 return new EaselBlockSpecialRenderer(new EaselBlockEntityRenderer(bakingContext.entityModelSet(), bakingContext.sprites()));
             }
 

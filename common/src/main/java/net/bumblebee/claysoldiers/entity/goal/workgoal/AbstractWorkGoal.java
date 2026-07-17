@@ -10,9 +10,13 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Stack;
 import java.util.function.Predicate;
 
 public abstract class AbstractWorkGoal extends Goal implements IWorkGoal {
@@ -164,4 +168,35 @@ public abstract class AbstractWorkGoal extends Goal implements IWorkGoal {
         }
         return null;
     }
+
+    protected boolean acquireJobItem(Collection<JobItemRequest> tools) {
+        if (!moveToPoi()) {
+            return false;
+        }
+        if (tools.isEmpty() || !soldier.getCarriedStack().isEmpty()) {
+            ClaySoldiersCommon.ERROR_HANDLER.warn("Required Tools is empty");
+            soldier.setPoiPos(null);
+            return true;
+        }
+
+        IBlockCache<IBlockStorageAccess> cap = getCapCacheResetIfInvalid();
+        if (cap != null) {
+            IBlockStorageAccess storage = cap.getCapability();
+            if (storage != null) {
+                ItemStack res = ItemStack.EMPTY;
+                for (var req : tools) {
+                    res = storage.tryExtracting(req.test, req.amount);
+                    if (!res.isEmpty()) {
+                        break;
+                    }
+                }
+                soldier.setCarriedStack(res);
+            }
+        }
+        soldier.setPoiPos(null);
+        return true;
+    }
+
+    protected record JobItemRequest(Predicate<ItemStack> test, int amount) {}
+
 }

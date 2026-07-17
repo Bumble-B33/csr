@@ -40,6 +40,7 @@ public class ChipAssemblerBlock extends BaseEntityBlock {
     private static final VoxelShape INTER_SOUTH = makeShape(OctahedralGroup.BLOCK_ROT_Y_180);
     private static final VoxelShape INTER_WEST = makeShape(OctahedralGroup.BLOCK_ROT_Y_270);
     private static final VoxelShape SHAPE = Shapes.create(0, 0, 0, 1, 0.5, 1);
+    public static final String CONTAINER_TITLE = ClaySoldiersCommon.MOD_ID +  ".container.chip_assembler";
 
 
     public ChipAssemblerBlock(Properties properties) {

@@ -38,7 +38,7 @@ public interface TeamHolder extends OwnableEntity {
      * @return whether this {@code TeamHolder} belongs to any team that cooperates.
      */
     default boolean hasNoTeam() {
-        return !getClayTeam().isCooperative();
+        return false;
     }
 
     /**

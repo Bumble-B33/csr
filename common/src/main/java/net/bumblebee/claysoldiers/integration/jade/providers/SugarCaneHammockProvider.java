@@ -1,7 +1,7 @@
 package net.bumblebee.claysoldiers.integration.jade.providers;
 
 import net.bumblebee.claysoldiers.block.hammock.SugarCaneHammockBlock;
-import net.bumblebee.claysoldiers.block.soldiercontainer.BlockEntityWithSoldier;
+import net.bumblebee.claysoldiers.block.soldiercontainer.BlockEntityWithSingleSoldier;
 import net.bumblebee.claysoldiers.block.soldiercontainer.OccupantSoldierData;
 import net.bumblebee.claysoldiers.entity.client.FakeClaySoldierAccess;
 import net.bumblebee.claysoldiers.integration.jade.CommonBlockProvider;
@@ -17,7 +17,7 @@ public enum SugarCaneHammockProvider implements CommonBlockProvider {
 
     @Override
     public void appendTooltip(BlockData data, CommonTooltipHelper tooltip, boolean detail) {
-        BlockEntityWithSoldier blockEntity = (BlockEntityWithSoldier) data.entity();
+        BlockEntityWithSingleSoldier blockEntity = (BlockEntityWithSingleSoldier) data.entity();
         OccupantSoldierData soldierBlockData = blockEntity.getSoldierData();
 
         if (soldierBlockData != null) {

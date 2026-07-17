@@ -135,7 +135,7 @@ public class ClaySoldierEntity extends AbstractClaySoldierEntity implements Vamp
                     s.setupChip(chip);
                     s.setClayTeamType(getClayTeamHolder());
                     s.stopRiding();
-                    s.setOwnerUUID(player.getUUID());
+                    s.setOwnerUUID(player);
                     s.setPoiPos(pos);
                 });
                 if (player instanceof ServerPlayer serverPlayer) {

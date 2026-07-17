@@ -4,15 +4,18 @@ import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.capability.AssignableWorksiteCapability;
 import net.bumblebee.claysoldiers.capability.IBlockCache;
 import net.bumblebee.claysoldiers.capability.IBlockStorageAccess;
+import net.bumblebee.claysoldiers.claysoldierchips.addon.ClaySoldierChipAddons;
 import net.bumblebee.claysoldiers.datamap.SoldierEquipmentSlot;
 import net.bumblebee.claysoldiers.datamap.SoldierSlotCallback;
 import net.bumblebee.claysoldiers.entity.common.ClayMobEntity;
+import net.bumblebee.claysoldiers.entity.common.programmable.ProgrammableClayMobAccess;
 import net.bumblebee.claysoldiers.entity.common.soldier.AbstractClaySoldierEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.item.ItemStack;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -24,6 +27,8 @@ public class UseAssignedPoiGoal extends Goal {
     public static final Identifier STORAGE_WORKSITE_ID = Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "storage");
     private static final int MAX_WAIT_BEFORE_NEXT_ATTEMPT = 200;
     private final ClayMobEntity clayMob;
+    @NotNull
+    private final ProgrammableClayMobAccess chipAccess;
     private final double speedModifier;
     private int waitTime = 0;
 
@@ -31,6 +36,11 @@ public class UseAssignedPoiGoal extends Goal {
         this.clayMob = clayMob;
         this.speedModifier = pSpeedModifier;
         setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
+        if (clayMob instanceof ProgrammableClayMobAccess programmableClayMobAccess) {
+            chipAccess = programmableClayMobAccess;
+        } else {
+            chipAccess = ProgrammableClayMobAccess.EMPTY;
+        }
     }
 
     @Override
@@ -73,13 +83,21 @@ public class UseAssignedPoiGoal extends Goal {
 
         var cap = clayMob.getPoiCapability();
         if (cap != null && cap.canUse(clayMob)) {
-            cap.useWorksite(clayMob);
+            cap.useWorksite(clayMob, getAcceleration());
             if (cap.isOneTimeUse()) {
                 clayMob.setPoiPos(null);
             }
         } else {
             clayMob.setPoiPos(null);
         }
+    }
+
+    private int getAcceleration() {
+        var chip = chipAccess.getInstalledChip();
+        if (chip == null) {
+            return 0;
+        }
+        return chip.addonCount(ClaySoldierChipAddons.ACCELERATION_ADDON);
     }
 
     @Override
@@ -181,7 +199,7 @@ public class UseAssignedPoiGoal extends Goal {
         }
 
         @Override
-        public int onUse(ClayMobEntity clayMob) {
+        public int onUse(ClayMobEntity clayMob, int acceleration) {
             if (!(clayMob instanceof AbstractClaySoldierEntity soldier)) {
                 throw new IllegalStateException(clayMob + " cannot use this poi " + descriptionId());
             }

@@ -37,9 +37,9 @@ public class ClayMobKillItem extends Item {
 
     @Override
     public InteractionResult use(Level pLevel, Player player, InteractionHand usedHand) {
-        if (pLevel instanceof ServerLevel serverLevel && player instanceof ServerPlayer serverPlayer && usedHand == InteractionHand.MAIN_HAND) {
+        if (player instanceof ServerPlayer serverPlayer && usedHand == InteractionHand.MAIN_HAND) {
             ItemStack itemInHand = player.getItemInHand(usedHand);
-            int amountKilled = killSoldiers(itemInHand, serverLevel, player.getOnPos(), serverPlayer);
+            int amountKilled = killSoldiers(itemInHand, serverPlayer.level(), player.getOnPos(), serverPlayer);
             ModCritirions.DISRUPTOR_KILL_TRIGGER.get().trigger(serverPlayer, amountKilled);
             itemInHand.hurtAndBreak(1, player, usedHand);
 
@@ -70,7 +70,7 @@ public class ClayMobKillItem extends Item {
 
         List<ClayMobContainer> soldierContainer = killRange.getClaySoldierContainers(level, player, center);
 
-        int killedSoldiers = soldierContainer.stream().mapToInt(b -> b.killSoldier(level, player)).sum();
+        int killedSoldiers = soldierContainer.stream().mapToInt(b -> b.killSoldiers(level, player)).sum();
 
         return clayMobEntities.size() + killedSoldiers;
     }

@@ -27,6 +27,7 @@ import java.util.function.BiConsumer;
 public class ClaySoldierInventory {
     public static final String INVENTORY_TAG = "clay_soldier_invetory";
     public static final EntityEquipment EMPTY_ENTITY_EQUIPMENT = new EmptyEntityEquipment();
+    public static final ClaySoldierInventory EMPTY = new ClaySoldierInventory();
     public static StreamCodec<RegistryFriendlyByteBuf, Map<SoldierEquipmentSlot, ItemStack>> STREAM_CODEC = ByteBufCodecs.map(
             i -> new EnumMap<>(SoldierEquipmentSlot.class),
             SoldierEquipmentSlot.STREAM_CODEC,

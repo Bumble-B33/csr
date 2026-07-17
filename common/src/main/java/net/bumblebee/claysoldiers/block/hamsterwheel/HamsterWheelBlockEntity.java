@@ -1,7 +1,7 @@
 package net.bumblebee.claysoldiers.block.hamsterwheel;
 
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
-import net.bumblebee.claysoldiers.block.soldiercontainer.BlockEntityWithSoldier;
+import net.bumblebee.claysoldiers.block.soldiercontainer.BlockEntityWithSingleSoldier;
 import net.bumblebee.claysoldiers.capability.AssignableWorksiteCapability;
 import net.bumblebee.claysoldiers.entity.common.ClayMobEntity;
 import net.bumblebee.claysoldiers.entity.common.StatInfoDisplay;
@@ -15,6 +15,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
+import net.minecraft.util.Mth;
 import net.minecraft.world.Containers;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.Items;
@@ -28,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class HamsterWheelBlockEntity extends BlockEntityWithSoldier implements StatInfoDisplay {
+public class HamsterWheelBlockEntity extends BlockEntityWithSingleSoldier implements StatInfoDisplay {
     public static final Identifier WORKSITE_ID = Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "hamster_wheel");
     private final AssignableWorksiteCapability poiCap = new AssignableWorksiteCapability() {
         @Override
@@ -37,9 +38,9 @@ public class HamsterWheelBlockEntity extends BlockEntityWithSoldier implements S
         }
 
         @Override
-        public int onUse(ClayMobEntity clayMob) {
+        public int onUse(ClayMobEntity clayMob, int acceleration) {
             if (clayMob instanceof AbstractClaySoldierEntity soldier) {
-                addSoldier(soldier);
+                addSoldier(soldier, true, acceleration);
                 return 1;
             } else {
                 throw new IllegalArgumentException(clayMob + " cannot use this poi");
@@ -54,7 +55,7 @@ public class HamsterWheelBlockEntity extends BlockEntityWithSoldier implements S
     private final HamsterWheelEnergyStorage energyStorage;
 
     private long lastEnergySend = 0;
-    private int rotationTick = 0;
+    private float rotationTick = 0;
 
     public HamsterWheelBlockEntity(BlockPos pPos, BlockState pBlockState) {
         super(ModBlockEntities.HAMSTER_WHEEL_BLOCK_ENTITY.get(), pPos, pBlockState, ModPoiTypes.SINGLE_SOLDIER_CONTAINER_POI_KEY, ModPoiTypes.SINGLE_SOLDIER_CONTAINER.get());
@@ -63,17 +64,27 @@ public class HamsterWheelBlockEntity extends BlockEntityWithSoldier implements S
 
 
     public void clientTick() {
+        //todo
         if (hasSoldier()) {
-            rotationTick += (int) Math.clamp(soldierData.getSpeed(), 1, 3);
+            //Todo
+            float speed = getSoldierSpeedFactor();
 
-            soldierData.getClientSoldier().increaseTickCount();
+            walkAnimation.update(0.8f * Mth.sqrt(speed), 0.4F, 1f);
 
-            walkAnimation.update(0.75f, 0.4F, 1f);
+            rotationTick += speed;
+
+            getSoldierData().getClientSoldier().increaseTickCount();
+
         }
     }
 
+    public float getSoldierSpeedFactor() {
+        float speed = getSoldierData().getSpeed();
+        return 1f + (speed * 0.15f);
+    }
+
     public float getRotationTick(float partialTick) {
-        return rotationTick + (hasSoldier() ? partialTick : 0);
+        return rotationTick + (hasSoldier() ? partialTick * getSoldierSpeedFactor() : 0);
     }
 
     public AssignableWorksiteCapability getPoiCap() {
@@ -133,7 +144,7 @@ public class HamsterWheelBlockEntity extends BlockEntityWithSoldier implements S
 
     public void serverTick() {
         if (hasEnergyStorage() && hasSoldier()) {
-            energyStorage.generate(soldierData.getAdjustedSpeed());
+            energyStorage.generate(getSoldierData().getAdjustedSpeed());
         }
         if (hasEnergyStorage() && Math.abs(lastEnergySend - energyStorage.energyStored()) > 2) {
             ClaySoldiersCommon.NETWORK_MANGER.sendToPlayersTrackingBlockEntity(this, new HamsterWheelEnergyPayload(energyStorage.energyStored(), getBlockPos()));
@@ -171,14 +182,14 @@ public class HamsterWheelBlockEntity extends BlockEntityWithSoldier implements S
     public void getStatDisplay(List<Component> list, LivingEntity viewer) {
         String energyUnit = ClaySoldiersCommon.PLATFORM.getEnergyUnitName();
         list.add(getBlockState().getBlock().getName());
-        addSoldierData(list, viewer);
+        addSoldierDataView(list, viewer, true);
 
         if (hasEnergyStorage()) {
             list.add(CommonComponents.space().append(
                     Component.translatable(StatInfoDisplay.ENERGY_LANG, energyStorage.energyStored() + energyUnit, energyStorage.maxEnergyStored() + energyUnit).withStyle(ChatFormatting.GRAY)
             ));
             list.add(CommonComponents.space().append(
-                    Component.translatable(StatInfoDisplay.GENERATION_LANG, HamsterWheelEnergyStorage.energyGeneratedPerTick(soldierData == null ? 0 : soldierData.getAdjustedSpeed()) + energyUnit).withStyle(ChatFormatting.GRAY)
+                    Component.translatable(StatInfoDisplay.GENERATION_LANG, HamsterWheelEnergyStorage.energyGeneratedPerTick(hasSoldier() ? 0 : getSoldierData().getAdjustedSpeed()) + energyUnit).withStyle(ChatFormatting.GRAY)
             ));
         }
     }

@@ -17,6 +17,8 @@ import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.WalkAnimationState;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -29,17 +31,23 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jspecify.annotations.NonNull;
 
-import java.util.Iterator;
+import java.util.Collection;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 public abstract class BaseBlockEntityWithSoldier extends BlockEntity implements ClayMobContainer {
-    private final ClayMobHolder queue;
     private final int maxSpace;
+    protected final OccupantQueue queue;
+    protected final WalkAnimationState walkAnimation;
 
-    public BaseBlockEntityWithSoldier(BlockEntityType<?> type, BlockPos worldPosition, BlockState blockState, ClayMobHolder queue, int maxSpace) {
+    public BaseBlockEntityWithSoldier(BlockEntityType<?> type, BlockPos worldPosition, BlockState blockState, OccupantQueue queue, int maxSpace, WalkAnimationState walkAnimation) {
         super(type, worldPosition, blockState);
         this.queue = queue;
+        this.walkAnimation = walkAnimation;
+        if (maxSpace == 0) {
+            throw new IllegalStateException("Cannot have a Container with not Space");
+        }
         this.maxSpace = maxSpace;
     }
 
@@ -53,19 +61,21 @@ public abstract class BaseBlockEntityWithSoldier extends BlockEntity implements 
 
     protected abstract Vec3 getExitPosition();
 
-    protected boolean addSoldier(AbstractClaySoldierEntity soldier, boolean force) {
+    protected boolean addSoldier(AbstractClaySoldierEntity soldier, boolean force, int acceleration) {
         if (!hasSpace()) {
-            if (force) {
-                spawnSoldier(0);
-            } else {
+            if (!force) {
                 return false;
             }
+
+            spawnSoldier(0);
         }
+
         soldier.stopRiding();
         soldier.ejectPassengers();
         soldier.enteredClayContainer();
 
-        addSoldierData(OccupantSoldierData.of(soldier), 7);
+        queue.add(OccupantSoldierData.of(soldier, acceleration));
+        onUpdate(getBlockState(), getBlockState(), UpdateOperation.ADD, 7, queue.size());
 
         soldier.discard();
         return true;
@@ -73,7 +83,7 @@ public abstract class BaseBlockEntityWithSoldier extends BlockEntity implements 
 
     public void spawnSoldier(int flags) {
         if (getLevel() instanceof ServerLevel serverLevel && hasSoldier()) {
-            OccupantSoldierData s = queue.remove();
+            OccupantSoldierData s = queue.removeSoldier();
 
             AbstractClaySoldierEntity soldier = s.createSoldier(serverLevel);
             soldier.snapTo(getExitPosition());
@@ -92,15 +102,6 @@ public abstract class BaseBlockEntityWithSoldier extends BlockEntity implements 
      *              <p>2 will notify client</p>
      *              <p>4 will update POI Occupants</p>
      */
-    protected void addSoldierData(OccupantSoldierData soldierData, int flags) {
-        if (!hasSpace()) {
-            ClaySoldiersCommon.ERROR_HANDLER.warn("Block already contains max amount of Soldiers");
-        }
-        queue.add(soldierData);
-        onUpdate(getBlockState(), getBlockState(), UpdateOperation.ADD, flags, queue.size());
-    }
-
-
     protected void onUpdate(BlockState oldState, BlockState newState, UpdateOperation operation, int flags, int currentSoldiers) {
         if ((flags & 1) != 0) {
             setChanged();
@@ -115,29 +116,29 @@ public abstract class BaseBlockEntityWithSoldier extends BlockEntity implements 
 
     protected abstract void updateOccupants(@Nullable Level level, UpdateOperation operation);
 
+    public void forEachSoldier(Consumer<OccupantSoldierData> action) {
+        queue.forEach(action);
+    }
+
     public ClayMobContainer getClayMobContainer() {
         return this;
     }
 
     @Override
-    public int killSoldier(ServerLevel level, ServerPlayer player) {
-        int killed = 0;
-        int skipped = 0;
-        var it = queue.iterator();
-        while (it.hasNext()) {
-            OccupantSoldierData soldier = it.next();
-
-            if (soldier.canBeKilledBy(level, player)) {
-                Vec3 pos = getExitPosition();
-                soldier.dropItems(level, pos.x, pos.y, pos.z);
-                it.remove();
-                killed++;
-            } else {
-                skipped++;
-            }
+    public int killSoldiers(ServerLevel level, ServerPlayer player) {
+        if (!hasSoldier()) {
+            return 0;
         }
-        onUpdate(getBlockState(), getBlockState(), UpdateOperation.UPDATE, 7, skipped);
-        return killed;
+
+        Collection<OccupantSoldierData> killed = queue.killSoldiers(level, player, this::getExitPosition);
+
+        killed.forEach(s -> {
+            Vec3 pos = getExitPosition();
+            s.dropItems(level, pos.x, pos.y, pos.z);
+        });
+
+        onUpdate(getBlockState(), getBlockState(), UpdateOperation.UPDATE, 7, queue.size());
+        return killed.size();
     }
 
     protected void addSoldierDataView(List<Component> list, LivingEntity viewer, boolean withSpeed) {
@@ -203,20 +204,33 @@ public abstract class BaseBlockEntityWithSoldier extends BlockEntity implements 
         return ClientboundBlockEntityDataPacket.create(this);
     }
 
+    @Override
+    public String toString() {
+        return "%s(%s, %s)".formatted(
+                this.getClass().getSimpleName(),
+                hasLevel() ? getLevel() : "Null",
+                worldPosition
+        );
+    }
+
     protected enum UpdateOperation {
         ADD,
         REMOVE,
         UPDATE;
     }
 
-    protected interface ClayMobHolder extends Iterable<OccupantSoldierData> {
+    protected interface OccupantQueue {
         void add(OccupantSoldierData data);
 
-        OccupantSoldierData remove();
+        OccupantSoldierData removeSoldier();
 
         int size();
 
         void clear();
+
+        void forEach(Consumer<OccupantSoldierData> action);
+
+        Collection<OccupantSoldierData> killSoldiers(ServerLevel level, ServerPlayer player, Supplier<Vec3> exitPos);
 
         void saveAdditional(@NotNull ValueOutput tag, boolean client);
 

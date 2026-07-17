@@ -9,20 +9,16 @@ import net.bumblebee.claysoldiers.entity.goal.ClaySoldierMeleeAttackGoal;
 import net.bumblebee.claysoldiers.entity.goal.ClaySoldierRangedAttackGoal;
 import net.bumblebee.claysoldiers.entity.goal.target.ClayMobOwnerHurtByTarget;
 import net.bumblebee.claysoldiers.entity.goal.target.ClayMobOwnerTarget;
-import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.Unit;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.monster.Monster;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
@@ -31,18 +27,18 @@ import java.util.OptionalInt;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-public class CombatChip extends ClaySoldierChip<Integer> {
-    private static final Identifier ASSET_OWNER_ID = Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "combat/owner");
-    private static final Identifier ASSET_MONSTER_ID = Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "combat/monster");
-    private static final Identifier ASSET_ANIMAL_ID = Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "combat/animal");
+public class CombatChip extends ClaySoldierChip<Unit> {
+    private static final Identifier ASSET_OWNER_ID = Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "combat_owner");
+    private static final Identifier ASSET_MONSTER_ID = Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "combat_monster");
+    private static final Identifier ASSET_ANIMAL_ID = Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "combat_animal");
 
+    private static final int DEFAULT_SEARCH_RANGE = 10;
 
     public static final String COMBAT_DATA_ANIMAL_LANG = LANG_PREFIX + ".data.combat.animal";
     public static final String COMBAT_DATA_MONSTER_LANG = LANG_PREFIX + ".data.combat.monster";
     public static final String COMBAT_DATA_IGNORE_BABIES_LANG = LANG_PREFIX + ".data.combat.ignore_babies";
     public static final String COMBAT_DATA_OWNER_LANG = LANG_PREFIX + ".data.combat.owner";
 
-    public static final StreamCodec<RegistryFriendlyByteBuf, Integer> STREAM_CODEC = ByteBufCodecs.VAR_INT.cast();
     public static final AddonInfo ADDON_INFO = new AddonInfo() {
         @Override
         public boolean canBeApplied(List<ClaySoldierChipAddon> presentAddons, ClaySoldierChipAddon addon) {
@@ -75,8 +71,8 @@ public class CombatChip extends ClaySoldierChip<Integer> {
     private final Target target;
 
 
-    public CombatChip(int searchRange, List<ClaySoldierChipAddon> addons) {
-        super(searchRange, addons);
+    public CombatChip(List<ClaySoldierChipAddon> addons) {
+        super(Unit.INSTANCE, addons);
         this.ignoreBabies = hasAddon(ClaySoldierChipAddons.TARGET_IGNORE_BABIES_ADDON);
 
         if (hasAddon(ClaySoldierChipAddons.TARGET_ANIMALS_ADDON)) {
@@ -89,18 +85,18 @@ public class CombatChip extends ClaySoldierChip<Integer> {
     }
 
     public static CombatChip create() {
-        return new CombatChip(10, List.of());
+        return new CombatChip(List.of());
     }
 
 
     @Override
-    public ClaySoldierChip<Integer> withSoldier(ProgrammableClaySoldierEntity soldier) {
+    public ClaySoldierChip<Unit> withSoldier(ProgrammableClaySoldierEntity soldier) {
         return this;
     }
 
     @Override
     public void addSpecialGoals(ServerLevel level, ProgrammableClaySoldierEntity soldier, BiConsumer<Integer, Goal> goalAdder, BiConsumer<Integer, Goal> targetAdder) {
-        goalAdder.accept(1, new ClaySoldierRangedAttackGoal(soldier, 1, data));
+        goalAdder.accept(1, new ClaySoldierRangedAttackGoal(soldier, 1, DEFAULT_SEARCH_RANGE));
         goalAdder.accept(2, new ClaySoldierMeleeAttackGoal(soldier, 1, false));
 
         if (target == Target.OWNER) {
@@ -130,7 +126,7 @@ public class CombatChip extends ClaySoldierChip<Integer> {
     }
 
     @Override
-    public Type<Integer> getType() {
+    public Type<Unit> getType() {
         return ClaySoldierChips.COMBAT_TYPE.get();
     }
 
@@ -153,16 +149,6 @@ public class CombatChip extends ClaySoldierChip<Integer> {
                 case ANIMAL -> OptionalInt.of(0xFFA61B);
             };
         };
-    }
-
-    @Override
-    public void readAdditional(ValueInput input) {
-        super.readAdditional(input);
-    }
-
-    @Override
-    public void saveAdditional(ValueOutput output) {
-        super.saveAdditional(output);
     }
 
     @Override

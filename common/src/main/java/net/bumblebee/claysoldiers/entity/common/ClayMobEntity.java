@@ -12,6 +12,7 @@ import net.bumblebee.claysoldiers.item.ClayBrushItem;
 import net.bumblebee.claysoldiers.item.TestItem;
 import net.bumblebee.claysoldiers.soldierpoi.SoldierPoiWithItem;
 import net.bumblebee.claysoldiers.team.ClayMobTeamManger;
+import net.bumblebee.claysoldiers.team.OwnerQuery;
 import net.bumblebee.claysoldiers.team.TeamHolder;
 import net.bumblebee.claysoldiers.team.loyalty.TeamLoyaltyManger;
 import net.bumblebee.claysoldiers.team.loyalty.TeamPlayerData;
@@ -110,10 +111,11 @@ public abstract class ClayMobEntity extends PathfinderMob implements TeamHolder,
     private TeamPlayerData.PlayerData cachedTeamOwner = null;
     private long lastOwnerChange = -1;
 
-    protected ClayMobEntity(EntityType<? extends ClayMobEntity> pEntityType, Level pLevel) {
-        super(pEntityType, pLevel);
-        this.clayDamageSources = ClaySoldiersCommon.PLATFORM.createClayDamageSources(pLevel.registryAccess());
-        setPlayerTeamData(pLevel);
+
+    protected ClayMobEntity(EntityType<? extends ClayMobEntity> entityType, Level level) {
+        super(entityType, level);
+        this.clayDamageSources = ClaySoldiersCommon.PLATFORM.createClayDamageSources(level.registryAccess());
+        setPlayerTeamData(level);
         setPersistenceRequired();
     }
 
@@ -272,7 +274,7 @@ public abstract class ClayMobEntity extends PathfinderMob implements TeamHolder,
     /**
      * Set the {@code ItemStack} this ClayMob was spawned from.
      *
-     * @param spawnedFrom   the {@code ItemStack} the clay-mab was spawned from
+     * @param spawnedFrom   the {@code ItemStack} the ClayMob was spawned from
      * @param allowDropping whether {@code spawnedFrom} should be dropped on death
      */
     public void setSpawnedFrom(ItemStack spawnedFrom, boolean allowDropping) {
@@ -280,7 +282,7 @@ public abstract class ClayMobEntity extends PathfinderMob implements TeamHolder,
         this.dropSpawnedFrom = allowDropping;
     }
 
-    public boolean dropSpawnedFrom() {
+    public boolean shouldDropSpawnedFrom() {
         return dropSpawnedFrom;
     }
 
@@ -363,9 +365,12 @@ public abstract class ClayMobEntity extends PathfinderMob implements TeamHolder,
      *
      * @return whether this ClayMob can be killed by a Clay Mob Kill Item
      */
-    public boolean canBeKilledByDisruptor(ServerLevel level, ServerPlayer player) {
-        var owner = TeamLoyaltyManger.getTeamPlayerData(level).getPlayerForTeam(this.getClayTeamKey());
-        return owner == null || owner.is(player);
+    public final boolean canBeKilledByDisruptor(ServerPlayer player) {
+        return player.getUUID().equals(getClayTeamOwnerUUID());
+    }
+
+    public OwnerQuery createOwnerQuery() {
+        return OwnerQuery.team(getClayTeamHolder());
     }
 
     /**

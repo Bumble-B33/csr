@@ -54,9 +54,9 @@ public class DisruptorKillRange {
     public List<? extends ClayMobEntity> getEntitiesInRange(ServerLevel level, ServerPlayer serverPlayer, BlockPos center) {
         List<? extends ClayMobEntity> clayMobs;
         if (unlimited) {
-            clayMobs = level.getEntities(EntityTypeTest.forClass(ClayMobEntity.class), c -> c.canBeKilledByDisruptor(level, serverPlayer));
+            clayMobs = level.getEntities(EntityTypeTest.forClass(ClayMobEntity.class), c -> c.canBeKilledByDisruptor(serverPlayer));
         } else if (range >= 1) {
-            clayMobs = level.getEntitiesOfClass(ClayMobEntity.class, new AABB(center).inflate(range), c -> c.canBeKilledByDisruptor(level, serverPlayer));
+            clayMobs = level.getEntitiesOfClass(ClayMobEntity.class, new AABB(center).inflate(range), c -> c.canBeKilledByDisruptor(serverPlayer));
         } else {
             clayMobs = List.of();
         }

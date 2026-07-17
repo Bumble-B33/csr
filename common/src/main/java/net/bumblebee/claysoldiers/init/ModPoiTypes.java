@@ -14,7 +14,7 @@ import java.util.Comparator;
 import java.util.function.Supplier;
 
 public class ModPoiTypes {
-    public static final ResourceKey<PoiType> SINGLE_SOLDIER_CONTAINER_POI_KEY = ResourceKey.create(Registries.POINT_OF_INTEREST_TYPE, Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "hamster_wheel_poi"));
+    public static final ResourceKey<PoiType> SINGLE_SOLDIER_CONTAINER_POI_KEY = ResourceKey.create(Registries.POINT_OF_INTEREST_TYPE, Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "single_clay_mob_container"));
     public static final ResourceKey<PoiType> CLAY_CACTUS_POI_KEY = ResourceKey.create(Registries.POINT_OF_INTEREST_TYPE, Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "cactus_house"));
 
 
@@ -28,7 +28,7 @@ public class ModPoiTypes {
     public static final Supplier<PoiType> CLAY_CACTUS = ClaySoldiersCommon.PLATFORM.registerPoiType(CLAY_CACTUS_POI_KEY,
             () -> new PoiType(ImmutableSet.<BlockState>builder()
                     .addAll(ModBlocks.CACTUS_HOUSE.get().getStateDefinition().getPossibleStates())
-                    .build(), ClayCactusBlock.COUNT.getPossibleValues().stream().max(Integer::compareTo).orElse(0), 1)
+                    .build(), ClayCactusBlock.COUNT.getPossibleValues().stream().max(Integer::compareTo).orElseThrow(), 1)
     );
 
     public static void init() {

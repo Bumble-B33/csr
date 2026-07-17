@@ -117,7 +117,7 @@ public class ModModelProvider extends ModelProvider {
         generateAddon(ModItems.TARGET_ANIMAL_ADDON.get(), ModItems.BLANK_ADDON.get(), itemModels);
         generateAddon(ModItems.TARGET_MONSTER_ADDON.get(), ModItems.BLANK_ADDON.get(), itemModels);
         generateAddon(ModItems.TARGET_IGNORE_BABIES_ADDON.get(), ModItems.BLANK_ADDON.get(), itemModels);
-
+        generateAddon(ModItems.ACCELERATION_ADDON.get(), ModItems.BLANK_ADDON.get(), itemModels);
 
         ItemModel.Unbaked fishingRodModel = ItemModelUtils.plainModel(
                 ModelLocationUtils.getModelLocation(Items.FISHING_ROD, "_cast")
@@ -201,6 +201,7 @@ public class ModModelProvider extends ModelProvider {
         itemModels.itemModelOutput.accept(ModItems.PLACE_SEEDS_CHIP.get(), chipModel);
         itemModels.itemModelOutput.accept(ModItems.FISHING_CHIP.get(), chipModel);
         itemModels.itemModelOutput.accept(ModItems.BLUEPRINT_CHIP.get(), chipModel);
+        itemModels.itemModelOutput.accept(ModItems.BEE_KEEPING_CHIP.get(), chipModel);
 
     }
 

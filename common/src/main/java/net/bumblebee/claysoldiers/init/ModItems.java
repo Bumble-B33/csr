@@ -106,6 +106,8 @@ public class ModItems {
             p -> createChip(p, FishingChip.create(new SearchRange(16, 2))));
     public static final ItemLikeSupplier<ClaySoldierChipItem> BLUEPRINT_CHIP = ClaySoldiersCommon.PLATFORM.registerItem("build_blueprint_clay_soldier_chip",
             p -> createChip(p, BlueprintChip.create(new SearchRange(16, 2))));
+    public static final ItemLikeSupplier<ClaySoldierChipItem> BEE_KEEPING_CHIP = ClaySoldiersCommon.PLATFORM.registerItem("bee_keeping_clay_soldier_chip",
+            p -> createChip(p, BeeKeepingChip.create(new SearchRange(8, 2))));
 
 
 
@@ -123,6 +125,8 @@ public class ModItems {
             p -> createAddon(p, ClaySoldierChipAddons.TARGET_MONSTER_ADDON));
     public static final ItemLikeSupplier<Item> TARGET_IGNORE_BABIES_ADDON = ClaySoldiersCommon.PLATFORM.registerItem("target_ignore_babies_addon",
             p -> createAddon(p, ClaySoldierChipAddons.TARGET_IGNORE_BABIES_ADDON));
+    public static final ItemLikeSupplier<Item> ACCELERATION_ADDON = ClaySoldiersCommon.PLATFORM.registerItem("acceleration_addon",
+            p -> createAddon(p, ClaySoldierChipAddons.ACCELERATION_ADDON));
 
     public static final Supplier<? extends MultiSpawnItem<?>> CAKE_HORSE = registerSpawnItemVariant("horse", ModEntityTypes.CLAY_HORSE_ENTITY, ClayHorseVariants.CAKE, ClayHorseVariants.CLAY_HORSE_ITEM_BY_VARIANT);
     public static final Supplier<? extends MultiSpawnItem<?>> GRASS_HORSE = registerSpawnItemVariant("horse", ModEntityTypes.CLAY_HORSE_ENTITY, ClayHorseVariants.GRASS, ClayHorseVariants.CLAY_HORSE_ITEM_BY_VARIANT);

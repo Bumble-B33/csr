@@ -18,6 +18,7 @@ import net.bumblebee.claysoldiers.soldierproperties.SoldierPropertyMapReader;
 import net.bumblebee.claysoldiers.soldierproperties.SoldierPropertyTypes;
 import net.bumblebee.claysoldiers.soldierproperties.combined.SoldierPropertyCombinedMap;
 import net.bumblebee.claysoldiers.soldierproperties.customproperties.AttackTypeProperty;
+import net.bumblebee.claysoldiers.team.OwnerQuery;
 import net.minecraft.advancements.CriteriaTriggers;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.UUIDUtil;
@@ -269,6 +270,11 @@ public class BossClaySoldierEntity extends AbstractClaySoldierEntity {
         return null;
     }
 
+    @Override
+    public OwnerQuery createOwnerQuery() {
+        return OwnerQuery.none();
+    }
+
     // Bossbar
     @Override
     public void setCustomName(@Nullable Component name) {
@@ -378,11 +384,6 @@ public class BossClaySoldierEntity extends AbstractClaySoldierEntity {
     @Override
     protected boolean canPushPlayer() {
         return true;
-    }
-
-    @Override
-    public boolean canBeKilledByDisruptor(ServerLevel level, ServerPlayer serverPlayer) {
-        return false;
     }
 
     @Override

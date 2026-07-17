@@ -25,6 +25,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.level.ItemLike;
+import net.neoforged.neoforge.common.Tags;
 import org.jspecify.annotations.NonNull;
 
 import java.util.concurrent.CompletableFuture;
@@ -276,6 +277,17 @@ public class ModRecipeProvider extends RecipeProvider {
                 .unlockedBy("has_chip", has(ModTags.Items.CHIP))
                 .save(recipeOutput, CLAY_SOLDIER_BLUEPRINT_CHIP);
 
+        ChipAssemblyRecipeBuilder.of(ChipAssemblyCategory.CHIP, ModItems.BEE_KEEPING_CHIP)
+                .addInput(Items.HONEYCOMB)
+                .addInput(Items.IRON_INGOT)
+                .addInput(Items.HONEYCOMB)
+                .addInput(Items.IRON_INGOT)
+                .chip(ModItems.BLANK_CHIP)
+                .setEnergyCost(8)
+                .setBuildTime(10)
+                .unlockedBy("has_chip", has(ModTags.Items.CHIP))
+                .save(recipeOutput);
+
         ChipAssemblyRecipeBuilder.of(ChipAssemblyCategory.ADDON, ModItems.BLANK_ADDON, 4)
                 .addInput(Items.IRON_INGOT)
                 .addInput(Items.RED_DYE)
@@ -336,6 +348,16 @@ public class ModRecipeProvider extends RecipeProvider {
                 .chip(ModItems.BLANK_ADDON)
                 .setEnergyCost(8)
                 .setBuildTime(10)
+                .unlockedBy("has_chip", has(ModTags.Items.CHIP))
+                .save(recipeOutput);
+
+        ChipAssemblyRecipeBuilder.of(ChipAssemblyCategory.ADDON, ModItems.ACCELERATION_ADDON)
+                .addInput(Items.SUGAR)
+                .addInput(Items.SUGAR)
+                .addInput(Items.GOLD_INGOT)
+                .chip(ModItems.BLANK_ADDON)
+                .setEnergyCost(7)
+                .setBuildTime(9)
                 .unlockedBy("has_chip", has(ModTags.Items.CHIP))
                 .save(recipeOutput);
 

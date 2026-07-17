@@ -35,7 +35,6 @@ public final class SpecialAttacks {
     private static final Supplier<SpecialAttackSerializer<EffectAttack>> EFFECT_ATTACK_SERIALIZER = ClaySoldiersCommon.PLATFORM.registerSpecialAttackSerializer("effect", () -> new SpecialAttackSerializer<>(EffectAttack.CODEC, EffectAttack.STREAM_CODEC));
     private static final Supplier<SpecialAttackSerializer<CritAttack>> CRIT_ATTACK_SERIALIZER = ClaySoldiersCommon.PLATFORM.registerSpecialAttackSerializer("critical_hit", () -> new SpecialAttackSerializer<>(CritAttack.CODEC, CritAttack.STREAM_CODEC));
     private static final Supplier<SpecialAttackSerializer<Smite>> SMITE_ATTACK_SERIALIZER = ClaySoldiersCommon.PLATFORM.registerSpecialAttackSerializer("smite", () -> new SpecialAttackSerializer<>(Smite.CODEC, Smite.STREAM_CODEC));
-    private static final Supplier<SpecialAttackSerializer<Ignite>> IGNITE_ATTACK_SERIALIZER = ClaySoldiersCommon.PLATFORM.registerSpecialAttackSerializer("ignite", () -> new SpecialAttackSerializer<>(Ignite.CODEC, Ignite.STREAM_CODEC));
 
 
     public static class Thorns extends SpecialAttack<Thorns> {
@@ -194,7 +193,7 @@ public final class SpecialAttacks {
         public static final Codec<CritAttack> CODEC = RecordCodecBuilder.create(in -> in.group(
                 SpecialAttackType.CODEC.fieldOf("attack_type").forGetter(CritAttack::getAttackType),
                 Codec.FLOAT.optionalFieldOf("damage", 0f).forGetter(CritAttack::getDamage),
-                ExtraCodecs.POSITIVE_FLOAT.optionalFieldOf("chance", 0.5f).forGetter(c -> c.chance)
+                CodecUtils.CHANCE_CODEC.optionalFieldOf("chance", 0.5f).forGetter(c -> c.chance)
         ).apply(in, CritAttack::new));
         public static final StreamCodec<RegistryFriendlyByteBuf, CritAttack> STREAM_CODEC = StreamCodec.composite(
                 SpecialAttackType.STREAM_CODEC, CritAttack::getAttackType,
@@ -258,46 +257,6 @@ public final class SpecialAttacks {
             return Component.translatable(DISPLAY_NAME_KEY).withStyle(ChatFormatting.YELLOW);
         }
     }
-    public static class Ignite extends SpecialAttack<Ignite> implements ValueCombiner<Ignite> {
-        public static final Codec<Ignite> CODEC = RecordCodecBuilder.create(in -> in.group(
-                SpecialAttackType.CODEC.fieldOf("attack_type").forGetter(Ignite::getAttackType),
-                Codec.FLOAT.optionalFieldOf("damage", 0f).forGetter(Ignite::getDamage),
-                ExtraCodecs.NON_NEGATIVE_INT.fieldOf("duration").forGetter(c -> c.duration)
-        ).apply(in, Ignite::new));
-        public static final StreamCodec<RegistryFriendlyByteBuf, Ignite> STREAM_CODEC = StreamCodec.composite(
-                SpecialAttackType.STREAM_CODEC, Ignite::getAttackType,
-                ByteBufCodecs.FLOAT, Ignite::getDamage,
-                ByteBufCodecs.VAR_INT, c -> c.duration,
-                Ignite::new
-        );
-
-        public static final String DISPLAY_NAME_KEY = DISPLAY_KEY_PREFIX + "ignite";
-
-        private final int duration;
-
-        public Ignite(SpecialAttackType attackType, float bonusDamage, int duration) {
-            super(IGNITE_ATTACK_SERIALIZER, attackType, bonusDamage);
-            this.duration = duration;
-        }
-
-
-        @Override
-        public void attackEffect(LivingEntity attacker, Entity target) {
-            target.igniteForTicks(duration);
-        }
-
-
-        @Override
-        public @Nullable Component getDisplayName() {
-            return Component.translatable(DISPLAY_NAME_KEY, duration / 20f).withStyle(ChatFormatting.GOLD);
-        }
-
-        @Override
-        public Ignite combine(Ignite first, Ignite second) {
-            return new Ignite(first.getAttackType(), first.getDamage() + second.getDamage(), first.duration + second.duration);
-        }
-    }
-
 
     public static void init() {
     }

@@ -20,10 +20,10 @@ public interface AssignableWorksiteCapability {
      * @return the amount of times the soldier used the poi,
      * @throws IllegalArgumentException when the given {@code ClayMob} cannot use this Poi.
      */
-    int onUse(ClayMobEntity clayMob);
+    int onUse(ClayMobEntity clayMob, int acceleration);
 
-    default void useWorksite(ClayMobEntity clayMob) {
-        int used = onUse(clayMob);
+    default void useWorksite(ClayMobEntity clayMob, int acceleration) {
+        int used = onUse(clayMob, acceleration);
         if (clayMob.getClayTeamOwner() instanceof ServerPlayer serverPlayer) {
             ModCritirions.USE_ASSIGNED_POI_TRIGGER.get().trigger(serverPlayer, clayMob, this, used);
         }

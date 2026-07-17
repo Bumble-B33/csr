@@ -1846,6 +1846,7 @@ public class AbstractClaySoldierEntity extends ClayMobTeamOwnerEntity implements
     public @NotNull RandomSource getClaySoldierRandom() {
         return getRandom();
     }
+
     @Override
     public @Nullable Player getClayTeamOwner() {
         return super.getClayTeamOwner();

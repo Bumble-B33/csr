@@ -5,10 +5,10 @@ import net.minecraft.server.level.ServerPlayer;
 
 public interface ClayMobContainer {
     /**
-     * Kills all ClayMobEntities this container holds.
+     * Kills all ClayMobs this container holds.
      * @param player the player executing the kill
-     * @return number of ClayMobEntities killed.
+     * @return number of ClayMobs killed.
      */
-    int killSoldier(ServerLevel level, ServerPlayer player);
+    int killSoldiers(ServerLevel level, ServerPlayer player);
 
 }

@@ -16,9 +16,22 @@ import java.util.Set;
 
 public class FishingChip extends WorkGoalChip<SearchRange, ClaySoldierFishGoal> {
     private static final Identifier FISHING_ASSET = Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "fishing");
-    public static final AddonInfo ADDON_INFO = AddonInfo.allowed(
-            Set.of(ClaySoldierChipAddons.NO_BREAK_ADDON, ClaySoldierChipAddons.RANGE_ADDON, ClaySoldierChipAddons.FISH_TREASURE_ADDON), 2
-    );
+    public static final AddonInfo ADDON_INFO = new AddonInfo() {
+        @Override
+        public boolean canBeApplied(List<ClaySoldierChipAddon> presentAddons, ClaySoldierChipAddon addon) {
+            if (addon == ClaySoldierChipAddons.NO_BREAK_ADDON
+            || addon == ClaySoldierChipAddons.RANGE_ADDON
+            || addon == ClaySoldierChipAddons.FISH_TREASURE_ADDON) {
+                return !presentAddons.contains(addon);
+            }
+            return addon == ClaySoldierChipAddons.ACCELERATION_ADDON;
+        }
+
+        @Override
+        public int getAllowedAddonsCount() {
+            return 4;
+        }
+    };
 
     public FishingChip(SearchRange data, List<ClaySoldierChipAddon> addons) {
         super(data, addons, FISHING_ASSET, 0x104e4e, 0xF9F9F9);
@@ -28,8 +41,11 @@ public class FishingChip extends WorkGoalChip<SearchRange, ClaySoldierFishGoal> 
         return new FishingChip(searchRange, List.of());
     }
 
-    public static FishingChip create(ClaySoldierChipAddon addon, ClaySoldierChipAddon addon2) {
-        return new FishingChip(new SearchRange(8), List.of(addon, addon2));
+    public static FishingChip create(ClaySoldierChipAddon... addons) {
+        if (addons.length > ADDON_INFO.getAllowedAddonsCount()) {
+            throw new IllegalStateException("Too many Addons");
+        }
+        return new FishingChip(new SearchRange(8), List.of(addons));
     }
 
     @Override
@@ -41,6 +57,4 @@ public class FishingChip extends WorkGoalChip<SearchRange, ClaySoldierFishGoal> 
     protected ClaySoldierFishGoal createGoal(ProgrammableClaySoldierEntity soldier, ClayMobWorkAccess workAccess) {
         return new ClaySoldierFishGoal(soldier, workAccess, scaleRange(data));
     }
-
-
 }

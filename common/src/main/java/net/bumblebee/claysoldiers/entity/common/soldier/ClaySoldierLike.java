@@ -71,7 +71,7 @@ public interface ClaySoldierLike {
         if (copyInventory && toCopyTo instanceof ClaySoldierInventoryHandler inventoryHandler) {
             copyInventory(inventoryHandler);
         }
-        toCopyTo.setSpawnedFrom(asClayMob().getSpawnedFrom(), asClayMob().dropSpawnedFrom());
+        toCopyTo.setSpawnedFrom(asClayMob().getSpawnedFrom(), asClayMob().shouldDropSpawnedFrom());
 
         if (asClayMob().isPassenger()) {
             Entity entity = asClayMob().getVehicle();

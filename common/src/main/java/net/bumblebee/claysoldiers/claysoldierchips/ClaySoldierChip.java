@@ -31,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -218,6 +219,21 @@ public abstract class ClaySoldierChip<T> {
         return getAddons().contains(addon);
     }
 
+    public int addonCount(ClaySoldierChipAddon addon) {
+        return getAddonCount(getAddons(), addon);
+    }
+
+    public static int getAddonCount(Collection<ClaySoldierChipAddon> addons, ClaySoldierChipAddon toFind) {
+        int count = 0;
+        for (var ad : addons) {
+            if (ad.equals(toFind)) {
+                count++;
+            }
+        }
+
+        return count;
+    }
+
     @NotNull
     private AddonInfo getAddonInfo() {
         if (addonInfo == null) {
@@ -270,6 +286,12 @@ public abstract class ClaySoldierChip<T> {
                     dataCodec.forGetter(c -> c.data),
                     ClaySoldierChipAddon.LIST_CODEC.optionalFieldOf("addons", List.of()).forGetter(c -> c.addons)
             ).apply(in, factory::create));
+        }
+
+        public static Type<Unit> create(Function<List<ClaySoldierChipAddon>, ? extends ClaySoldierChip<Unit>> instance, AddonInfo addonInfo) {
+            return new Type<>(
+                    (_, addons) -> instance.apply(addons), addonInfo, MapCodec.unit(Unit.INSTANCE), Unit.STREAM_CODEC.cast()
+            );
         }
 
         public static Type<Unit> empty(Supplier<? extends ClaySoldierChip<Unit>> instance) {

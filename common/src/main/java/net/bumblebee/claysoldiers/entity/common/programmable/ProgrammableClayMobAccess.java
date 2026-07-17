@@ -6,8 +6,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Optional;
 
 public interface ProgrammableClayMobAccess {
+    ProgrammableClayMobAccess EMPTY = () -> null;
+
     @Nullable
     ClaySoldierChip<?> getInstalledChip();
-
-
 }

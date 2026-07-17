@@ -33,7 +33,7 @@ public class PickUpItemsGoal extends AbstractWorkGoal {
         if (isOnBreak()) {
             return false;
         }
-        return !getItemsInArea().isEmpty() || !soldier.getCarriedStack().isEmpty();
+        return !getItemsInArea().isEmpty();
     }
 
     @Override

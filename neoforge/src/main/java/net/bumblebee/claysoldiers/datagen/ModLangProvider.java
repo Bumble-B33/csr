@@ -2,6 +2,7 @@ package net.bumblebee.claysoldiers.datagen;
 
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.block.blueprint.EscritoireBlock;
+import net.bumblebee.claysoldiers.block.chipassembler.ChipAssemblerBlock;
 import net.bumblebee.claysoldiers.claypoifunction.ClayPoiFunctions;
 import net.bumblebee.claysoldiers.claypoifunction.ColorGetterFunction;
 import net.bumblebee.claysoldiers.clayremovalcondition.*;
@@ -90,6 +91,7 @@ public class ModLangProvider extends LanguageProvider {
         add(EscritoireBlock.CONTAINER_TITLE, "Escritoire");
 
         addBlock(ModBlocks.CHIP_ASSEMBLER, "Chip Assembler");
+        add(ChipAssemblerBlock.CONTAINER_TITLE, "Chip Assembly");
 
         addBlock(ModBlocks.SUGAR_CANE_HAMMOCK, "Sugar Cane with Hammock");
         addBlock(ModBlocks.CACTUS_HOUSE, "Cactus House");
@@ -156,6 +158,7 @@ public class ModLangProvider extends LanguageProvider {
         addItem(ModItems.BREAK_CROPS_CHIP, "Harvest Crops Clay Soldier Chip");
         addItem(ModItems.COMBAT_CHIP, "Combat Clay Soldier Chip");
         addItem(ModItems.BLUEPRINT_CHIP, "Build Blueprint Clay Soldier Chip");
+        addItem(ModItems.BEE_KEEPING_CHIP, "Bee Keeping Clay Soldier Chip");
 
 
         addItem(ModItems.BLANK_ADDON, "Blank Addon");
@@ -165,6 +168,8 @@ public class ModLangProvider extends LanguageProvider {
         addItem(ModItems.TARGET_ANIMAL_ADDON, "Target Animals Addon");
         addItem(ModItems.TARGET_MONSTER_ADDON, "Target Monsters Addon");
         addItem(ModItems.TARGET_IGNORE_BABIES_ADDON, "Target Ignore Babies Addon");
+        addItem(ModItems.ACCELERATION_ADDON, "Acceleration Addon");
+
 
         add(ModDatapackProvider.SMALL_HOUSE_LANG, "Small House");
         add(ModDatapackProvider.SMALL_FARM_LANG, "Farm");
@@ -189,8 +194,9 @@ public class ModLangProvider extends LanguageProvider {
 
 
         add(DigHoleGoal.DIG_LANG, "Digging");
-        add(DigHoleGoal.BREAKING_LANG, "breaking blocks");
-        add(DigHoleGoal.UNBREAKABLE_BLOCK, "But cannot break block");
+        add(BreakSingleBlockGoal.BREAK_BLOCK_LANG, "Breaking");
+        add(BaseBreakBlockGoal.BREAKING_LANG, "Breaking blocks");
+        add(BaseBreakBlockGoal.UNBREAKABLE_BLOCK, "But cannot break block");
         add(BreakCropGoal.BREAK_CROPS_LANG, "Harvesting");
         add(BreakCropGoal.CROP_BREAK_DISALLOWED, "Not allowed to Break Crops");
         add(PlaceSeedsGoal.PLACING_SEEDS_LANG, "Replanting");
@@ -413,7 +419,6 @@ public class ModLangProvider extends LanguageProvider {
         add(IEvacuationProperty.EvacuationProperty.FIREWORK.translatableKey(), "Firework");
 
         add(SpecialAttacks.CritAttack.DISPLAY_NAME_KEY, "Critical Strike");
-        add(SpecialAttacks.Ignite.DISPLAY_NAME_KEY, "Ignite: %ss");
         add(SpecialAttacks.Smite.DISPLAY_NAME_KEY, "Smite");
         add(SpecialAttacks.Thorns.DISPLAY_NAME_KEY, "Thorns");
         add(SpecialAttacks.EffectAttack.DISPLAY_NAME_KEY, "Effect");
@@ -659,6 +664,7 @@ public class ModLangProvider extends LanguageProvider {
         addModuleType(ClaySoldierChips.DIG_TYPE, "Dig Module");
         addModuleType(ClaySoldierChips.FISHING_TYPE, "Fishing Module");
         addModuleType(ClaySoldierChips.BUILD_BLUEPRINT_TYPE, "Build Blueprint Module");
+        addModuleType(ClaySoldierChips.BEEKEEPING_TYPE, "Bee Keeping Module");
 
 
         addChipAddon(ClaySoldierChipAddons.RANGE_ADDON, "Range");
@@ -667,6 +673,7 @@ public class ModLangProvider extends LanguageProvider {
         addChipAddon(ClaySoldierChipAddons.TARGET_MONSTER_ADDON, "Target Monsters");
         addChipAddon(ClaySoldierChipAddons.TARGET_ANIMALS_ADDON, "Target Animals");
         addChipAddon(ClaySoldierChipAddons.TARGET_IGNORE_BABIES_ADDON, "Target Ignore Babies");
+        addChipAddon(ClaySoldierChipAddons.ACCELERATION_ADDON, "Acceleration");
 
 
         add(ClaySoldierChip.NO_MODI, "This Chip does not have any additional Modi");

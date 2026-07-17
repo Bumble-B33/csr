@@ -1,7 +1,7 @@
 package net.bumblebee.claysoldiers.block.hammock;
 
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
-import net.bumblebee.claysoldiers.block.soldiercontainer.BlockEntityWithSoldier;
+import net.bumblebee.claysoldiers.block.soldiercontainer.BlockEntityWithSingleSoldier;
 import net.bumblebee.claysoldiers.capability.AssignableWorksiteCapability;
 import net.bumblebee.claysoldiers.entity.common.ClayMobEntity;
 import net.bumblebee.claysoldiers.entity.common.StatInfoDisplay;
@@ -18,7 +18,7 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
 
-public class SugarCaneHammockBlockEntity extends BlockEntityWithSoldier implements StatInfoDisplay {
+public class SugarCaneHammockBlockEntity extends BlockEntityWithSingleSoldier implements StatInfoDisplay {
     public static final Identifier WORKSITE_ID = Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "sugar_cane_hammock");
     private final AssignableWorksiteCapability poiCap = new AssignableWorksiteCapability() {
         @Override
@@ -27,9 +27,9 @@ public class SugarCaneHammockBlockEntity extends BlockEntityWithSoldier implemen
         }
 
         @Override
-        public int onUse(ClayMobEntity clayMob) {
+        public int onUse(ClayMobEntity clayMob, int acceleration) {
             if (clayMob instanceof AbstractClaySoldierEntity soldier) {
-                addSoldier(soldier);
+                addSoldier(soldier, true, acceleration);
                 return 1;
             } else {
                 throw new IllegalArgumentException(clayMob + " cannot use this poi");
@@ -62,7 +62,7 @@ public class SugarCaneHammockBlockEntity extends BlockEntityWithSoldier implemen
     @Override
     public void getStatDisplay(List<Component> list, LivingEntity viewer) {
         list.add(getBlockState().getBlock().getName());
-        addSoldierData(list, viewer);
+        addSoldierDataView(list, viewer, false);
     }
 
     @Override

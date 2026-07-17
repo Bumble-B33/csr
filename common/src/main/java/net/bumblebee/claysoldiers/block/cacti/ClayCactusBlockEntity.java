@@ -11,6 +11,7 @@ import net.bumblebee.claysoldiers.init.ModPoiTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
@@ -29,11 +30,10 @@ public class ClayCactusBlockEntity extends BlockEntityWithSoldiers implements St
         }
 
         @Override
-        public int onUse(ClayMobEntity clayMob) {
+        public int onUse(ClayMobEntity clayMob, int acceleration) {
             if (clayMob instanceof AbstractClaySoldierEntity soldier) {
-                if (addSoldier(soldier)) {
-                    return 1;
-                }
+                addSoldier(soldier, true, acceleration);
+                return 1;
             }
 
             throw new IllegalArgumentException(clayMob + " cannot use this poi");
@@ -61,13 +61,25 @@ public class ClayCactusBlockEntity extends BlockEntityWithSoldiers implements St
 
     @Override
     protected Vec3 getExitPosition() {
-        return Vec3.atBottomCenterOf(worldPosition).add(0, 1, 0);
+        if (!hasLevel()) {
+            return Vec3.atBottomCenterOf(worldPosition).add(0, 1, 0);
+        }
+        RandomSource random = getLevel().getRandom();
+
+        int corner = random.nextBoolean() ? 0 : 1;
+        float side = random.nextFloat();
+
+        if (random.nextBoolean()) {
+            return Vec3.atLowerCornerOf(worldPosition).add(corner, 0, side);
+        } else {
+            return Vec3.atLowerCornerOf(worldPosition).add(side, 0, corner);
+        }
     }
 
     @Override
     public void getStatDisplay(List<Component> list, LivingEntity viewer) {
         list.add(getBlockState().getBlock().getName());
-        addSoldierData(list, viewer);
+        addSoldierDataView(list, viewer, false);
     }
 
 

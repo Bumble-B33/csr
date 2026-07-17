@@ -36,7 +36,6 @@ public final class ClaySoldierCookingRecipe {
 
         res.add(new RecipeHolder<>(ResourceKey.create(Registries.RECIPE, id), cookingRecipe));
 
-
         return res;
     }
 

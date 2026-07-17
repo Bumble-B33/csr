@@ -4,6 +4,7 @@ import net.bumblebee.claysoldiers.claysoldierchips.addon.ClaySoldierChipAddon;
 import net.bumblebee.claysoldiers.claysoldierchips.addon.ClaySoldierChipAddons;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public interface AddonInfo {
@@ -23,6 +24,23 @@ public interface AddonInfo {
     boolean canBeApplied(List<ClaySoldierChipAddon> presentAddons, ClaySoldierChipAddon addon);
 
     int getAllowedAddonsCount();
+
+    static AddonInfo allowed(ClaySoldierChipAddon allowed) {
+        return new AddonInfo() {
+            @Override
+            public boolean canBeApplied(List<ClaySoldierChipAddon> presentAddons, ClaySoldierChipAddon addon) {
+                if (presentAddons.contains(addon)) {
+                    return false;
+                }
+                return allowed == addon;
+            }
+
+            @Override
+            public int getAllowedAddonsCount() {
+                return 1;
+            }
+        };
+    }
 
     static AddonInfo allowed(Set<ClaySoldierChipAddon> addons, int max) {
         return new AddonInfo() {

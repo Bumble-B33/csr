@@ -11,6 +11,7 @@ import mezz.jei.api.recipe.IFocusGroup;
 import mezz.jei.api.recipe.category.IRecipeCategory;
 import mezz.jei.api.recipe.types.IRecipeType;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
+import net.bumblebee.claysoldiers.block.chipassembler.ChipAssemblerBlock;
 import net.bumblebee.claysoldiers.init.ModBlocks;
 import net.bumblebee.claysoldiers.recipe.chip.BasicChipAssemblyRecipe;
 import net.bumblebee.claysoldiers.recipe.chip.ChipAssemblyRecipe;
@@ -36,7 +37,7 @@ public class ChipAssemblyRecipeCategory implements IRecipeCategory<BasicChipAsse
 
     @Override
     public Component getTitle() {
-        return Component.literal("Chip Assembly");
+        return Component.translatable(ChipAssemblerBlock.CONTAINER_TITLE);
     }
 
     @Override

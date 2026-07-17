@@ -28,13 +28,14 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Stream;
 
 public class ClaySoldierCrafting {
     private static final String CLAY_SOLDIER_REVIVING = "jei." + ClaySoldiersCommon.MOD_ID + ".soldier.revive";
     private static final String CLAY_SOLDIER_CRAFTING = "jei." + ClaySoldiersCommon.MOD_ID + ".soldier.crafting";
 
     public static List<RecipeHolder<CraftingRecipe>> createRecipes(RegistryAccess registryAccess) {
-        var allKeys = ClayMobTeamManger.getAll(registryAccess);
+        Stream<Holder.Reference<ClayMobTeam>> allKeys = ClayMobTeamManger.getAll(registryAccess);
         return allKeys.<RecipeHolder<CraftingRecipe>>mapMulti((entry, r) -> {
             for (int i = 1; i <= 8; i++) {
                 r.accept(createRecipe(entry, i, registryAccess));
@@ -71,7 +72,7 @@ public class ClaySoldierCrafting {
     public static List<RecipeHolder<CraftingRecipe>> createClaySoldierRevive(RegistryAccess registryAccess) {
         return ClayMobTeamManger.getAll(registryAccess).map(ClaySoldierCrafting::createClaySoldierRevive).toList();
     }
-    public static RecipeHolder<CraftingRecipe> createClaySoldierRevive(Holder.Reference<ClayMobTeam> team) {
+    private static RecipeHolder<CraftingRecipe> createClaySoldierRevive(Holder.Reference<ClayMobTeam> team) {
         ItemStackTemplate output = ClaySoldierSpawnItem.createTemplateClayMobTeam(team);
 
 
@@ -93,4 +94,6 @@ public class ClaySoldierCrafting {
         );
         return new RecipeHolder<>(recipeId, recipe);
     }
+
+    private ClaySoldierCrafting() {}
 }

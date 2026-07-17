@@ -64,12 +64,13 @@ public final class ModTagProvider {
         protected void addTags(HolderLookup.Provider pProvider) {
             this.tag(EntityTypeTags.UNDEAD).add(ModEntityTypes.ZOMBIE_CLAY_SOLDIER_ENTITY.get(), ModEntityTypes.VAMPIRE_CLAY_SOLDIER_ENTITY.get());
             this.tag(EntityTypeTags.BURN_IN_DAYLIGHT).add(ModEntityTypes.ZOMBIE_CLAY_SOLDIER_ENTITY.get(), ModEntityTypes.VAMPIRE_CLAY_SOLDIER_ENTITY.get());
+
             this.tag(ModTags.EntityTypes.CLAY_BOSS).add(ModEntityTypes.BOSS_CLAY_SOLDIER_ENTITY.get());
+
             this.tag(ModTags.EntityTypes.CLAY_SOLDIER)
                     .add(ModEntityTypes.CLAY_SOLDIER_ENTITY.get())
                     .add(ModEntityTypes.VAMPIRE_CLAY_SOLDIER_ENTITY.get())
                     .add(ModEntityTypes.ZOMBIE_CLAY_SOLDIER_ENTITY.get());
-
         }
     }
 
@@ -127,7 +128,8 @@ public final class ModTagProvider {
                             ClaySoldierChips.DIG_TYPE.get(),
                             ClaySoldierChips.BUILD_BLUEPRINT_TYPE.get(),
                             ClaySoldierChips.PLACE_SEEDS_TYPE.get(),
-                            ClaySoldierChips.PICK_UP_ITEMS_TYPE.get()
+                            ClaySoldierChips.PICK_UP_ITEMS_TYPE.get(),
+                            ClaySoldierChips.BEEKEEPING_TYPE.get()
                     );
         }
 

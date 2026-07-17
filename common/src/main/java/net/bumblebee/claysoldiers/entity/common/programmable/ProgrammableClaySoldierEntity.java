@@ -17,6 +17,7 @@ import net.bumblebee.claysoldiers.networking.ClaySoldierChipUpdatePayload;
 import net.bumblebee.claysoldiers.networking.SoldierCarriedChangePayload;
 import net.bumblebee.claysoldiers.networking.spawnpayloads.ProgrammableClaySoldierSpawnPayload;
 import net.bumblebee.claysoldiers.soldierproperties.customproperties.AttackTypeProperty;
+import net.bumblebee.claysoldiers.team.OwnerQuery;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.UUIDUtil;
@@ -30,6 +31,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.EntityReference;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -47,7 +49,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 public class ProgrammableClaySoldierEntity extends AbstractClaySoldierEntity implements ProgrammableClayMobAccess {
-    private static final EntityDataAccessor<Optional<UUID>> DATA_OWNER_UUID = SynchedEntityData.defineId(ProgrammableClaySoldierEntity.class, ModEntitySerializers.UUID);
+    private static final EntityDataAccessor<Optional<EntityReference<LivingEntity>>> DATA_OWNER_UUID = SynchedEntityData.defineId(ProgrammableClaySoldierEntity.class, EntityDataSerializers.OPTIONAL_LIVING_ENTITY_REFERENCE);
     private static final EntityDataAccessor<Byte> DATA_WORK_STATUS = SynchedEntityData.defineId(ProgrammableClaySoldierEntity.class, EntityDataSerializers.BYTE);
     private static final EntityDataAccessor<Boolean> IS_FISHING_ANKER = SynchedEntityData.defineId(ProgrammableClaySoldierEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<ClaySoldierFishingData> FISHING_POS = SynchedEntityData.defineId(ProgrammableClaySoldierEntity.class, ModEntitySerializers.FISHING_DATA);
@@ -261,12 +263,26 @@ public class ProgrammableClaySoldierEntity extends AbstractClaySoldierEntity imp
     }
 
     public Optional<UUID> getOwnerUUID() {
-        return entityData.get(DATA_OWNER_UUID);
+        return entityData.get(DATA_OWNER_UUID).map(EntityReference::getUUID);
+    }
+
+    @Override
+    public @Nullable EntityReference<LivingEntity> getOwnerReference() {
+        return entityData.get(DATA_OWNER_UUID).orElse(null);
+    }
+
+    public void setOwnerUUID(@NotNull LivingEntity player) {
+        entityData.set(DATA_OWNER_UUID, Optional.of(EntityReference.of(player)));
     }
 
     public void setOwnerUUID(@Nullable UUID ownerUUID) {
-        entityData.set(DATA_OWNER_UUID, Optional.ofNullable(ownerUUID));
+        if (ownerUUID == null) {
+            entityData.set(DATA_OWNER_UUID, Optional.empty());
+        } else {
+            entityData.set(DATA_OWNER_UUID, Optional.of(EntityReference.of(ownerUUID)));
+        }
     }
+
 
     @Override
     @NotNull
@@ -284,6 +300,11 @@ public class ProgrammableClaySoldierEntity extends AbstractClaySoldierEntity imp
     }
 
     @Override
+    public OwnerQuery createOwnerQuery() {
+        return getOwnerUUID().map(OwnerQuery::owner).orElse(OwnerQuery.none());
+    }
+
+    @Override
     public Component getOwnerDisplayName() {
         UUID owner = getOwnerUUID().orElse(null);
         if (owner == null) {
@@ -294,11 +315,6 @@ public class ProgrammableClaySoldierEntity extends AbstractClaySoldierEntity imp
             return player.getDisplayName();
         }
         return Component.translatable(UNKNOWN_OWNER_LANG, owner);
-    }
-
-    @Override
-    public boolean canBeKilledByDisruptor(ServerLevel level, ServerPlayer player) {
-        return false;
     }
 
     @Override
