@@ -1,20 +1,20 @@
 package net.bumblebee.claysoldiers;
 
-import net.bumblebee.claysoldiers.init.ModMenuTypes;
 import net.bumblebee.claysoldiers.init.ModRecipes;
 import net.bumblebee.claysoldiers.integration.ExternalMods;
 import net.bumblebee.claysoldiers.integration.accessories.ModAccessoryRenderers;
 import net.bumblebee.claysoldiers.integration.curios.ModCuriosRenderers;
-import net.bumblebee.claysoldiers.menu.escritoire.EscritoireScreen;
-import net.bumblebee.claysoldiers.menu.horse.ClayHorseScreen;
 import net.bumblebee.claysoldiers.menu.info.StatOverlay;
-import net.bumblebee.claysoldiers.menu.soldier.ClaySoldierScreen;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.inventory.MenuAccess;
 import net.minecraft.client.particle.ParticleProvider;
 import net.minecraft.client.particle.SpriteSet;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleType;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.MenuType;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
@@ -85,9 +85,11 @@ public class ClaySoldiersNeoForgeClient {
     }
 
     private void registerMenuScreen(RegisterMenuScreensEvent event) {
-        event.register(ModMenuTypes.CLAY_SOLDIER_MENU.get(), ClaySoldierScreen::new);
-        event.register(ModMenuTypes.CLAY_HORSE_MENU.get(), ClayHorseScreen::new);
-        event.register(ModMenuTypes.ESCRITOIRE_MENU.get(), EscritoireScreen::new);
+        ClaySoldiersClient.registerMenuScreenEvent(new ClaySoldiersClient.RegisterMenuEvent() {
+            public <M extends AbstractContainerMenu, U extends Screen & MenuAccess<M>> void register(MenuType<? extends M> type, ClaySoldiersClient.ScreenConstructor<M, U> factory) {
+                event.register(type, factory::create);
+            }
+        });
     }
 
     private void registerBlockColorHandler(RegisterColorHandlersEvent.BlockTintSources event) {

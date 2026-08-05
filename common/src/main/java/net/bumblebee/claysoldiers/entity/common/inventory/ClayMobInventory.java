@@ -44,4 +44,6 @@ public class ClayMobInventory<S, T> extends EntityEquipment {
             set(slot, get(slot));
         }
     }
+
+
 }

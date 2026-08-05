@@ -16,9 +16,7 @@ import net.minecraft.world.item.crafting.display.ShapelessCraftingRecipeDisplay;
 import net.minecraft.world.item.crafting.display.SlotDisplay;
 import net.minecraft.world.level.Level;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.function.BiConsumer;
 
 public class JEIShapelessRecipe implements CraftingRecipe {
     public static final MapCodec<JEIShapelessRecipe> CODEC = RecordCodecBuilder.mapCodec((instance) -> instance.group(
@@ -101,7 +99,6 @@ public class JEIShapelessRecipe implements CraftingRecipe {
 
     @Override
     public List<RecipeDisplay> display() {
-
         return List.of(
                 new ShapelessCraftingRecipeDisplay(
                         displays,

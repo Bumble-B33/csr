@@ -18,6 +18,7 @@ import net.minecraft.world.item.enchantment.EnchantmentEffectComponents;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
+import org.jspecify.annotations.NonNull;
 
 import java.util.EnumMap;
 import java.util.Map;
@@ -74,7 +75,8 @@ public class ClaySoldierInventory {
         this.putAll(inventory.inventory);
     }
 
-    public ItemStackWithEffect getItemBySlot(SoldierEquipmentSlot slot) {
+
+    public @NonNull ItemStackWithEffect getItemBySlot(SoldierEquipmentSlot slot) {
         return inventory.getOrDefault(slot, ItemStackWithEffect.EMPTY);
     }
 
@@ -90,6 +92,10 @@ public class ClaySoldierInventory {
             }
         });
         return map;
+    }
+
+    public void forEach(BiConsumer<SoldierEquipmentSlot, ItemStackWithEffect> action) {
+        inventory.forEach(action);
     }
 
     // Old

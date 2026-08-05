@@ -2,35 +2,40 @@ package net.bumblebee.claysoldiers.item.chip;
 
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.claysoldierchips.ClaySoldierChip;
-import net.bumblebee.claysoldiers.claysoldierchips.ClaySoldierChips;
 import net.bumblebee.claysoldiers.claysoldierchips.addon.ClaySoldierChipAddon;
 import net.bumblebee.claysoldiers.init.ModDataComponents;
-import net.bumblebee.claysoldiers.init.ModItems;
 import net.bumblebee.claysoldiers.init.ModTags;
 import net.bumblebee.claysoldiers.item.ClayBrushItem;
+import net.bumblebee.claysoldiers.util.PoiPosInfo;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponentPatch;
+import net.minecraft.core.component.DataComponentType;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.ItemStackTemplate;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.component.TooltipDisplay;
+import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NonNull;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 public class ClaySoldierChipItem extends Item {
     public static final String NO_CHIP_ERROR_LANG = "item.%s.clay_soldier_chip.no_chip";
@@ -44,23 +49,27 @@ public class ClaySoldierChipItem extends Item {
         super(properties);
     }
 
-    public static ItemStack create(ClaySoldierChip<?> chip) {
+    public static ItemStack create(ClaySoldierChip chip) {
         return createTemplate(chip).create();
     }
 
-    public static ItemStackTemplate createTemplate(ClaySoldierChip<?> chip) {
-        return new ItemStackTemplate(getItemForChip(chip.getType()),
+    public static ItemStackTemplate createTemplate(ClaySoldierChip chip) {
+        return new ItemStackTemplate(chip.getType().asItem(),
                 DataComponentPatch.builder().set(ModDataComponents.CLAY_SOLDIER_CHIP.get(), chip).build());
     }
 
-    public static ItemStackTemplate createTemplate(Item item, ClaySoldierChip<?> chip) {
+    public static ItemStackTemplate createTemplate(Item item, ClaySoldierChip chip) {
         return new ItemStackTemplate(item,
                 DataComponentPatch.builder().set(ModDataComponents.CLAY_SOLDIER_CHIP.get(), chip).build());
     }
 
-    public static ItemStack addChip(ItemStack stack, ClaySoldierChip<?> chip) {
+    public static ItemStack addChip(ItemStack stack, ClaySoldierChip chip) {
         stack.set(ModDataComponents.CLAY_SOLDIER_CHIP.get(), chip);
         return stack;
+    }
+
+    public static void setPoiInfo(ItemStack stack, @NonNull PoiPosInfo poiInfo) {
+        ClayBrushItem.setPoiPos(stack, poiInfo);
     }
 
     @Override
@@ -78,10 +87,38 @@ public class ClaySoldierChipItem extends Item {
     }
 
     @Override
+    public InteractionResult useOn(UseOnContext context) {
+        ItemStack itemInHand = context.getItemInHand();
+        Player player = context.getPlayer();
+        if (player != null && player.isShiftKeyDown()) {
+            ClayBrushItem.withSide(itemInHand, context.getClickedPos(), context.getClickedFace(), player);
+            return InteractionResult.SUCCESS;
+        }
+
+        return InteractionResult.SUCCESS;
+    }
+
+    @Override
+    public InteractionResult use(Level level, Player player, InteractionHand hand) {
+        ItemStack itemInHand = player.getItemInHand(hand);
+
+        if (player.isShiftKeyDown()) {
+            ClayBrushItem.withSide(itemInHand, null, null, player);
+            return InteractionResult.SUCCESS;
+        }
+
+        return super.use(level, player, hand);
+    }
+
+    @Override
     public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay tooltipDisplay, Consumer<Component> tooltipAdder, TooltipFlag flag) {
         super.appendHoverText(stack, context, tooltipDisplay, tooltipAdder, flag);
-        ClaySoldierChip<?> chip = getChipFromItem(stack);
-        if (!tooltipDisplay.shows(ModDataComponents.CLAY_SOLDIER_CHIP.get())) {
+        appendHoverText(stack, tooltipDisplay::shows, tooltipAdder);
+    }
+
+    public static void appendHoverText(ItemStack stack, Predicate<DataComponentType<ClaySoldierChip>> show, Consumer<Component> tooltipAdder) {
+        ClaySoldierChip chip = getChipFromItem(stack);
+        if (!show.test(ModDataComponents.CLAY_SOLDIER_CHIP.get())) {
             return;
         }
         Component chipLang;
@@ -94,9 +131,9 @@ public class ClaySoldierChipItem extends Item {
 
         tooltipAdder.accept(Component.translatable(INSTALLED_CHIP_LANG, chipLang).withStyle(ChatFormatting.GRAY));
 
-        BlockPos pos = ClayBrushItem.getPoiPos(stack);
-        if (pos != null) {
-            tooltipAdder.accept(Component.translatable(AT_POS_LANG, pos.toShortString()).withStyle(ChatFormatting.DARK_GRAY));
+        PoiPosInfo pos = ClayBrushItem.getPoiPos(stack);
+        if (!pos.isEmpty()) {
+            tooltipAdder.accept(Component.translatable(AT_POS_LANG, pos.shortDisplayName()).withStyle(ChatFormatting.DARK_GRAY));
         }
 
         if (chip != null) {
@@ -104,10 +141,12 @@ public class ClaySoldierChipItem extends Item {
             if (comp != null) {
                 tooltipAdder.accept(CommonComponents.space().append(Component.translatable(INSTALLED_ADDONS_LANG, comp).withStyle(ChatFormatting.GRAY)));
             }
+
+            chip.appendItemHoverText(stack, tooltipAdder);
         }
     }
 
-    private @Nullable Component getAddonsFormatted(@NotNull ClaySoldierChip<?> chip) {
+    private static @Nullable Component getAddonsFormatted(@NotNull ClaySoldierChip chip) {
         List<ClaySoldierChipAddon> addons = chip.getAddons();
         Map<ClaySoldierChipAddon, Integer> map = new HashMap<>();
         addons.forEach(a -> map.compute(a, (_, i) -> i == null ? 1 : i + 1));
@@ -142,33 +181,7 @@ public class ClaySoldierChipItem extends Item {
     }
 
 
-    public static @Nullable ClaySoldierChip<?> getChipFromItem(ItemStack stack) {
+    public static @Nullable ClaySoldierChip getChipFromItem(ItemStack stack) {
         return stack.get(ModDataComponents.CLAY_SOLDIER_CHIP.get());
-    }
-
-    private static Item getItemForChip(ClaySoldierChip.Type<?> type) {
-        if (type == ClaySoldierChips.EMPTY_TYPE.get()) {
-            return ModItems.BLANK_CHIP.asItem();
-        } else if (type == ClaySoldierChips.PLACE_SEEDS_TYPE.get()) {
-            return ModItems.PLACE_SEEDS_CHIP.asItem();
-        } else if (type == ClaySoldierChips.BREAK_CROPS_TYPE.get()) {
-            return ModItems.BREAK_CROPS_CHIP.asItem();
-        } else if (type == ClaySoldierChips.PICK_UP_ITEMS_TYPE.get()) {
-            return ModItems.PICK_UP_ITEMS_CHIP.asItem();
-        } else if (type == ClaySoldierChips.COMBAT_TYPE.get()) {
-            return ModItems.COMBAT_CHIP.asItem();
-        } else if (type == ClaySoldierChips.DIG_TYPE.get()) {
-            return ModItems.DIG_CHIP.asItem();
-        } else if (type == ClaySoldierChips.FISHING_TYPE.get()) {
-            return ModItems.FISHING_CHIP.asItem();
-        } else if (type == ClaySoldierChips.USE_POI.get()) {
-            return ModItems.PLACE_SEEDS_CHIP.asItem();
-        } else if (type == ClaySoldierChips.BUILD_BLUEPRINT_TYPE.get()) {
-            return ModItems.BLUEPRINT_CHIP.asItem();
-        } else if (type == ClaySoldierChips.BEEKEEPING_TYPE.get()) {
-            return ModItems.BEE_KEEPING_CHIP.asItem();
-        }
-        ClaySoldiersCommon.ERROR_HANDLER.warn("Chip Type with no Item: " + type.toString());
-        return ModItems.BLANK_CHIP.asItem();
     }
 }

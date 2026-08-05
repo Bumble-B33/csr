@@ -12,25 +12,35 @@ import net.minecraft.resources.Identifier;
 
 import java.util.List;
 
-public class BreakCropsChip extends WorkGoalChip<SearchRange, BreakCropGoal> {
+public class BreakCropsChip extends WorkGoalChip<BreakCropGoal> {
     private static final Identifier BREAK_CROPS_ASSET = Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "harvest");
+    private static final SearchRange DEFAULT = new SearchRange(16, 2);
+    private static final BreakCropsChip NO_ADDON = new BreakCropsChip(List.of());
+
     public static final AddonInfo ADDON_INFO = AddonInfo.NO_BREAK_AND_RANGE;
 
-    public BreakCropsChip(SearchRange data, List<ClaySoldierChipAddon> addons) {
-        super(data, addons, BREAK_CROPS_ASSET, 0x0E3708, 0xFFA61B);
+    private BreakCropsChip(List<ClaySoldierChipAddon> addons) {
+        super(addons, BREAK_CROPS_ASSET, 0x0E3708, 0xFFA61B);
     }
 
-    public static BreakCropsChip create(SearchRange searchRange) {
-        return new BreakCropsChip(searchRange, List.of());
+    public static BreakCropsChip create(List<ClaySoldierChipAddon> addons) {
+        if (addons.isEmpty()) {
+            return NO_ADDON;
+        }
+        return new BreakCropsChip(addons);
+    }
+
+    public static BreakCropsChip create() {
+        return NO_ADDON;
     }
 
     @Override
     protected BreakCropGoal createGoal(ProgrammableClaySoldierEntity soldier, ClayMobWorkAccess workAccess) {
-        return new BreakCropGoal(soldier, workAccess, scaleRange(data));
+        return new BreakCropGoal(soldier, workAccess, 1, scaleRange(DEFAULT));
     }
 
     @Override
-    public Type<SearchRange> getType() {
+    public Type getType() {
         return ClaySoldierChips.BREAK_CROPS_TYPE.get();
     }
 }

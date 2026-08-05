@@ -1,6 +1,7 @@
 package net.bumblebee.claysoldiers.init;
 
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
+import net.bumblebee.claysoldiers.block.chargingpad.SoldierChargingPadBlock;
 import net.bumblebee.claysoldiers.block.blueprint.EaselBlock;
 import net.bumblebee.claysoldiers.block.blueprint.EscritoireBlock;
 import net.bumblebee.claysoldiers.block.cacti.ClayCactusBlock;
@@ -35,6 +36,13 @@ public class ModBlocks {
 
     public static final ItemLikeSupplier<Block> CHIP_ASSEMBLER = ClaySoldiersCommon.PLATFORM.registerBlockWithItem("chip_assembler",
             ChipAssemblerBlock::new, BlockBehaviour.Properties.of()
+                    .strength(2)
+                    .requiresCorrectToolForDrops().strength(1.5F, 6.0F)
+                    .noOcclusion()
+    );
+
+    public static final ItemLikeSupplier<Block> SOLDIER_CHARGING_PAD = ClaySoldiersCommon.PLATFORM.registerBlockWithItem("charging_pad",
+            SoldierChargingPadBlock::new, BlockBehaviour.Properties.of()
                     .strength(2)
                     .requiresCorrectToolForDrops().strength(1.5F, 6.0F)
                     .noOcclusion()

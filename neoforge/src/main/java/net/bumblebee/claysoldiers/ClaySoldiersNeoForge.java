@@ -17,7 +17,6 @@ import net.bumblebee.claysoldiers.integration.ExternalMods;
 import net.bumblebee.claysoldiers.integration.accessories.ModAccessories;
 import net.bumblebee.claysoldiers.integration.curios.ModCurios;
 import net.bumblebee.claysoldiers.item.claymobspawn.ClaySoldierSpawnItem;
-import net.bumblebee.claysoldiers.platform.NeoForgeCapabilityManager;
 import net.bumblebee.claysoldiers.platform.NeoForgeConfig;
 import net.bumblebee.claysoldiers.platform.NeoForgeDataMapGetter;
 import net.bumblebee.claysoldiers.platform.services.IDataMapGetter;
@@ -32,13 +31,13 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.commands.synchronization.ArgumentTypeInfo;
 import net.minecraft.commands.synchronization.ArgumentTypeInfos;
 import net.minecraft.commands.synchronization.SingletonArgumentInfo;
-import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.particles.ParticleType;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.syncher.EntityDataSerializer;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
@@ -46,6 +45,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.repository.Pack;
 import net.minecraft.server.packs.repository.PackSource;
+import net.minecraft.util.ExtraCodecs;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -74,15 +74,13 @@ import net.neoforged.neoforge.event.entity.player.UseItemOnBlockEvent;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
-import net.neoforged.neoforge.registries.DataPackRegistryEvent;
-import net.neoforged.neoforge.registries.DeferredRegister;
-import net.neoforged.neoforge.registries.NeoForgeRegistries;
-import net.neoforged.neoforge.registries.NewRegistryEvent;
+import net.neoforged.neoforge.registries.*;
 import net.neoforged.neoforge.registries.datamaps.DataMapsUpdatedEvent;
 import net.neoforged.neoforge.resource.VanillaServerListeners;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
+import java.util.function.Supplier;
 
 @Mod(ClaySoldiersCommon.MOD_ID)
 public class ClaySoldiersNeoForge {
@@ -107,7 +105,7 @@ public class ClaySoldiersNeoForge {
     public static final DeferredRegister<CriterionTrigger<?>> CRITERION_TRIGGERS = DeferredRegister.create(Registries.TRIGGER_TYPE, ClaySoldiersCommon.MOD_ID);
     public static final DeferredRegister<MapCodec<? extends EntitySubPredicate>> ENTITY_SUB_PREDICATE = DeferredRegister.create(Registries.ENTITY_SUB_PREDICATE_TYPE, ClaySoldiersCommon.MOD_ID);
     public static final DeferredRegister<MapCodec<? extends LootItemFunction>> LOOT_ITEM_FUNCTIONS = DeferredRegister.create(Registries.LOOT_FUNCTION_TYPE, ClaySoldiersCommon.MOD_ID);
-    public static final DeferredRegister<ClaySoldierChip.Type<?>> CLAY_SOLDIER_CHIPS = DeferredRegister.create(ModRegistries.CLAY_SOLDIER_MODULES_REGISTRY, ClaySoldiersCommon.MOD_ID);
+    public static final DeferredRegister<ClaySoldierChip.Type> CLAY_SOLDIER_CHIPS = DeferredRegister.create(ModRegistries.CLAY_SOLDIER_MODULES_REGISTRY, ClaySoldiersCommon.MOD_ID);
     public static final DeferredRegister<ClaySoldierChipAddon> CLAY_SOLDIER_CHIP_ADDONS = DeferredRegister.create(ModRegistries.CLAY_SOLDIER_CHIP_ADDONS_REGISTRY, ClaySoldiersCommon.MOD_ID);
 
     public static final DeferredRegister<RecipeBookCategory> RECIPE_BOOK_CATEGORIES = DeferredRegister.create(Registries.RECIPE_BOOK_CATEGORY, ClaySoldiersCommon.MOD_ID);
@@ -117,9 +115,10 @@ public class ClaySoldiersNeoForge {
 
     public static final DeferredRegister<EntityDataSerializer<?>> ENTITY_DATA_SERIALIZERS = DeferredRegister.create(NeoForgeRegistries.ENTITY_DATA_SERIALIZERS, ClaySoldiersCommon.MOD_ID);
 
-
-    private static final Holder<ArgumentTypeInfo<?, ?>> COLOR_HELPER = COMMAND_ARGUMENT_TYPES.register("color_helper",
-            () -> ArgumentTypeInfos.registerByClass(ColorHelperArgumentType.class, SingletonArgumentInfo.contextFree(ColorHelperArgumentType::colorArgumentType)));
+    public static final Supplier<DataComponentType<Integer>> BATTERY_ENERGY = DATA_COMPONENTS.register("battery_energy", () -> DataComponentType.<Integer>builder()
+            .persistent(ExtraCodecs.NON_NEGATIVE_INT)
+            .networkSynchronized(ByteBufCodecs.VAR_INT)
+            .build());
 
     private final ClaySoldiersCommon.BlueprintTagLoad blueprintTagLoader = new ClaySoldiersCommon.BlueprintTagLoad();
 
@@ -159,7 +158,7 @@ public class ClaySoldiersNeoForge {
         modEventBus.addListener(this::commonSetup);
         modEventBus.addListener(DataGenerators::gatherData);
         modEventBus.addListener(this::registerCapabilities);
-        modEventBus.addListener(NeoForgeDataMaps::registerDataMaps);
+        modEventBus.addListener(ModNeoForgeDataMaps::registerDataMaps);
         modEventBus.addListener(this::addFeaturePacks);
         modEventBus.addListener(this::addDataPackRegistry);
 
@@ -183,6 +182,10 @@ public class ClaySoldiersNeoForge {
 
         ModEntitySerializers.register((id, s) -> ENTITY_DATA_SERIALIZERS.register(id, () -> s));
 
+        COMMAND_ARGUMENT_TYPES.register("color_helper",
+                () -> ArgumentTypeInfos.registerByClass(ColorHelperArgumentType.class, SingletonArgumentInfo.contextFree(ColorHelperArgumentType::colorArgumentType)));
+
+
         ExternalMods.CURIOS.ifLoaded(() -> () -> new ModCurios(modEventBus));
     }
 
@@ -194,7 +197,7 @@ public class ClaySoldiersNeoForge {
     }
 
     private void registerCapabilities(RegisterCapabilitiesEvent event) {
-        NeoForgeCapabilities.registerCapabilities(event);
+        ModNeoForgeCapabilities.registerCapabilities(event);
     }
 
     private void playerHurtEvent(LivingIncomingDamageEvent event) {
@@ -211,8 +214,7 @@ public class ClaySoldiersNeoForge {
     }
 
     private void reloadEvent(AddServerReloadListenersEvent event) {
-
-        event.addListener(Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "capability_manager"), new NeoForgeCapabilityManager());
+        event.addListener(Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "capability_manager"), ClaySoldiersCommon.CAPABILITY_MANGER);
         event.addListener(BlueprintManager.LISTENER_KEY, new BlueprintManager(
                         blueprintTagLoader
                 )
@@ -282,12 +284,12 @@ public class ClaySoldiersNeoForge {
                 });
             }
 
-            registry.getDataMap(NeoForgeDataMaps.SOLDIER_ARMOR).values().forEach(multiWearable -> {
+            registry.getDataMap(ModNeoForgeDataMaps.SOLDIER_ARMOR).values().forEach(multiWearable -> {
                 multiWearable.forEachWearableEffect(wearable -> wearable.buildTrims(event.getRegistries()));
             });
 
 
-            Map<ResourceKey<Item>, SoldierHoldableEffect> map = registry.getDataMap(NeoForgeDataMaps.SOLDIER_HOLDABLE);
+            Map<ResourceKey<Item>, SoldierHoldableEffect> map = registry.getDataMap(ModNeoForgeDataMaps.SOLDIER_HOLDABLE);
             IDataMapGetter.warnHoldable(map, (itemResourceKey, itemTagKey) -> {
                 var opTag = registry.get(itemTagKey);
                 if (opTag.isEmpty()) {

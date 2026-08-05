@@ -12,25 +12,35 @@ import net.minecraft.resources.Identifier;
 
 import java.util.List;
 
-public class BlueprintChip extends WorkGoalChip<SearchRange, BuildBlueprintGoal> {
+public class BlueprintChip extends WorkGoalChip<BuildBlueprintGoal> {
     private static final Identifier ASSET_ID = Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "blueprint");
+    private static final SearchRange DEFAULT = new SearchRange(16, 2);
+    private static final BlueprintChip NO_ADDON = new BlueprintChip(List.of());
+
     public static final AddonInfo ADDON_INFO = AddonInfo.EMPTY;
 
-    public BlueprintChip(SearchRange data, List<ClaySoldierChipAddon> addons) {
-        super(data, addons, ASSET_ID, 0x2A4DA0, 0xB6CDED);
+    private BlueprintChip(List<ClaySoldierChipAddon> addons) {
+        super(addons, ASSET_ID, 0x2A4DA0, 0xB6CDED);
     }
 
-    public static BlueprintChip create(SearchRange searchRange) {
-        return new BlueprintChip(searchRange, List.of());
+    public static BlueprintChip create() {
+        return new BlueprintChip(List.of());
+    }
+
+    public static BlueprintChip create(List<ClaySoldierChipAddon> addons) {
+        if (addons.isEmpty()) {
+            return NO_ADDON;
+        }
+        return new BlueprintChip(addons);
     }
 
     @Override
-    public Type<SearchRange> getType() {
+    public Type getType() {
         return ClaySoldierChips.BUILD_BLUEPRINT_TYPE.get();
     }
 
     @Override
     protected BuildBlueprintGoal createGoal(ProgrammableClaySoldierEntity soldier, ClayMobWorkAccess workAccess) {
-        return new BuildBlueprintGoal(soldier, workAccess, scaleRange(data));
+        return new BuildBlueprintGoal(soldier, workAccess, scaleRange(DEFAULT));
     }
 }

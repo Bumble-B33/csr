@@ -3,6 +3,7 @@ package net.bumblebee.claysoldiers.init;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.block.blueprint.EaselBlockEntity;
 import net.bumblebee.claysoldiers.block.cacti.ClayCactusBlockEntity;
+import net.bumblebee.claysoldiers.block.chargingpad.SoldierChargingPadBlockEntity;
 import net.bumblebee.claysoldiers.block.chipassembler.ChipAssemblerBlockEntity;
 import net.bumblebee.claysoldiers.block.hammock.SugarCaneHammockBlockEntity;
 import net.bumblebee.claysoldiers.block.hamsterwheel.HamsterWheelBlockEntity;
@@ -26,6 +27,9 @@ public final class ModBlockEntities {
 
     public static final Supplier<BlockEntityType<ClayCactusBlockEntity>> CLAY_CACTUS_BLOCK_ENTITY =
             ClaySoldiersCommon.PLATFORM.registerBlockEntity("clay_house", ClayCactusBlockEntity::new, List.of(ModBlocks.CACTUS_HOUSE));
+
+    public static final Supplier<BlockEntityType<SoldierChargingPadBlockEntity>> SOLDIER_CHARGING_PAD =
+            ClaySoldiersCommon.PLATFORM.registerBlockEntity("charging_pad", SoldierChargingPadBlockEntity::new, List.of(ModBlocks.SOLDIER_CHARGING_PAD));
 
 
     public static void init() {

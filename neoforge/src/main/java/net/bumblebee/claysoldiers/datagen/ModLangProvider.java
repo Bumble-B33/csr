@@ -2,6 +2,7 @@ package net.bumblebee.claysoldiers.datagen;
 
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.block.blueprint.EscritoireBlock;
+import net.bumblebee.claysoldiers.block.chargingpad.SoldierChargingPadBlock;
 import net.bumblebee.claysoldiers.block.chipassembler.ChipAssemblerBlock;
 import net.bumblebee.claysoldiers.claypoifunction.ClayPoiFunctions;
 import net.bumblebee.claysoldiers.claypoifunction.ColorGetterFunction;
@@ -9,10 +10,12 @@ import net.bumblebee.claysoldiers.clayremovalcondition.*;
 import net.bumblebee.claysoldiers.claysoldierchips.*;
 import net.bumblebee.claysoldiers.claysoldierchips.addon.ClaySoldierChipAddon;
 import net.bumblebee.claysoldiers.claysoldierchips.addon.ClaySoldierChipAddons;
+import net.bumblebee.claysoldiers.claysoldierchips.work.ElectricianChip;
 import net.bumblebee.claysoldiers.claysoldierpredicate.ClayPredicates;
 import net.bumblebee.claysoldiers.commands.ColorHelperArgumentType;
 import net.bumblebee.claysoldiers.datagen.advancements.ModAdvancements;
 import net.bumblebee.claysoldiers.datamap.SoldierEquipmentSlot;
+import net.bumblebee.claysoldiers.entity.ClayMobWorkStatusManger;
 import net.bumblebee.claysoldiers.entity.common.ClayMobEntity;
 import net.bumblebee.claysoldiers.entity.common.StatInfoDisplay;
 import net.bumblebee.claysoldiers.entity.common.VampireSubjugate;
@@ -20,7 +23,7 @@ import net.bumblebee.claysoldiers.entity.common.programmable.ClaySoldierFishingD
 import net.bumblebee.claysoldiers.entity.common.programmable.ClaySoldierFishingTicker;
 import net.bumblebee.claysoldiers.entity.common.programmable.ProgrammableClaySoldierEntity;
 import net.bumblebee.claysoldiers.entity.common.soldier.AbstractClaySoldierEntity;
-import net.bumblebee.claysoldiers.entity.common.soldier.status.SoldierStatusManager;
+import net.bumblebee.claysoldiers.entity.common.soldier.status.SoldierStatusHolder;
 import net.bumblebee.claysoldiers.entity.goal.workgoal.*;
 import net.bumblebee.claysoldiers.entity.goal.workgoal.dig.DigHoleGoal;
 import net.bumblebee.claysoldiers.init.*;
@@ -36,6 +39,8 @@ import net.bumblebee.claysoldiers.item.disruptor.ClayMobKillItem;
 import net.bumblebee.claysoldiers.menu.AbstractClayMobScreen;
 import net.bumblebee.claysoldiers.menu.horse.ClayHorseMenuSlot;
 import net.bumblebee.claysoldiers.menu.horse.ClayHorseScreen;
+import net.bumblebee.claysoldiers.menu.soldier.CarriedClaySoldierMenuSlot;
+import net.bumblebee.claysoldiers.menu.soldier.ChipClaySoldierSlot;
 import net.bumblebee.claysoldiers.menu.soldier.ClaySoldierScreen;
 import net.bumblebee.claysoldiers.platform.services.IConfig;
 import net.bumblebee.claysoldiers.soldieritemtypes.DefaultSoldierItemTypes;
@@ -50,6 +55,7 @@ import net.bumblebee.claysoldiers.soldierproperties.customproperties.specialatta
 import net.bumblebee.claysoldiers.soldierproperties.translation.KeyableTranslatableProperty;
 import net.bumblebee.claysoldiers.soldierproperties.types.BreathHoldPropertyType;
 import net.bumblebee.claysoldiers.util.ComponentFormating;
+import net.bumblebee.claysoldiers.util.PoiPosInfo;
 import net.minecraft.data.PackOutput;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Util;
@@ -67,18 +73,22 @@ public class ModLangProvider extends LanguageProvider {
         add(ClaySoldiersCommon.CSR_DEFAULT_DATA_PACK_LANG, "Default Clay Soldiers Items");
         add(ClaySoldiersCommon.CSR_DEFAULT_PACK_DESCRIPTION, "Default Clay Soldier Items");
 
-
         addConfig(IConfig.SOLDIER_MODIFY_MENU_KEY, "Modify in Menu");
-        addConfig(IConfig.HAMSTER_WHEEL_CAPACITY_KEY, "Hamster Wheel Energy Capacity");
+        addConfig(IConfig.BASE_ENERGY_CAPACITY_BATTERIES_KEY, "Base Energy Capacity of Batteries and Blocks");
         addConfig(IConfig.HAMSTER_WHEEL_SPEED_KEY, "Hamster Wheel Speed");
+        addConfig(IConfig.BASE_SOLDIER_ENERGY_TRANSFER_RATE_KEY, "Soldier Energy Transfer Rate");
+        addConfig(IConfig.CHARGING_PAD_PLAYER_RATE_KEY, "Charging Pad Player Energy Transfer Rate");
+
         addConfig(IConfig.SHEAR_BLADE_RECIPE_KEY, "Shear Blade Recipe");
 
         addConfig(IConfig.SOLDIER_DROP_INVENTORY_KEY, "Clay Soldiers drop Inventory");
-        addConfig(IConfig.SOLDIER_DROP_SELF_KEY, "Clay Soldier drop them selfs on death");
+        addConfig(IConfig.SOLDIER_DROP_SELF_KEY, "Clay Soldier drop themselves on death");
         addConfig(IConfig.CHIP_REQUIRES_LOYALTY_KEY, "Chip requires Loyalty of the Soldier to be inserted");
 
         addConfig(IConfig.STATO_METER_SHOW_INFO_KEY, "Stat Item: Show Clay Soldier Info");
         addConfig(IConfig.STATO_METER_SHOW_COUNT_KEY, "Stat Item: Show Clay Soldier Count");
+        addConfig(IConfig.ENERGY_COLOR_KEY, "Color of Energy");
+
 
         add(ModCreativeTab.CLAY_SOLDIERS_TAB_TITLE, "Clay Soldiers");
         add(ModCreativeTab.CLAY_SOLDIER_ITEMS_TAB_TITLE, "Clay Soldier Items");
@@ -92,6 +102,9 @@ public class ModLangProvider extends LanguageProvider {
 
         addBlock(ModBlocks.CHIP_ASSEMBLER, "Chip Assembler");
         add(ChipAssemblerBlock.CONTAINER_TITLE, "Chip Assembly");
+
+        addBlock(ModBlocks.SOLDIER_CHARGING_PAD, "Charging Pad");
+        add(SoldierChargingPadBlock.CHARGING_TOOLTIP_LANG, "Transfer Rate: %s%s/t");
 
         addBlock(ModBlocks.SUGAR_CANE_HAMMOCK, "Sugar Cane with Hammock");
         addBlock(ModBlocks.CACTUS_HOUSE, "Cactus House");
@@ -139,6 +152,9 @@ public class ModLangProvider extends LanguageProvider {
         addItem(ModItems.CLAY_STAFF, "Clay Staff");
         addItem(ModItems.CLAY_POUCH, "Clay Pouch");
         add(ClayPouchItem.FULLNESS_LANG, "%s/%s");
+        addItem(ModItems.SMALL_BATTERY, "Small Battery");
+        addItem(ModItems.LARGE_BATTERY, "Large Battery");
+
 
         addItem(ModItems.STATOMETER, "Statometer");
 
@@ -159,6 +175,7 @@ public class ModLangProvider extends LanguageProvider {
         addItem(ModItems.COMBAT_CHIP, "Combat Clay Soldier Chip");
         addItem(ModItems.BLUEPRINT_CHIP, "Build Blueprint Clay Soldier Chip");
         addItem(ModItems.BEE_KEEPING_CHIP, "Bee Keeping Clay Soldier Chip");
+        addItem(ModItems.ELECTRICIAN_CHIP, "Electrician Clay Soldier Chip");
 
 
         addItem(ModItems.BLANK_ADDON, "Blank Addon");
@@ -168,7 +185,8 @@ public class ModLangProvider extends LanguageProvider {
         addItem(ModItems.TARGET_ANIMAL_ADDON, "Target Animals Addon");
         addItem(ModItems.TARGET_MONSTER_ADDON, "Target Monsters Addon");
         addItem(ModItems.TARGET_IGNORE_BABIES_ADDON, "Target Ignore Babies Addon");
-        addItem(ModItems.ACCELERATION_ADDON, "Acceleration Addon");
+        addItem(ModItems.ACCELERATION_ADDON, "Acceleration I Addon");
+        addItem(ModItems.UPGRADED_ACCELERATION_ADDON, "Acceleration II Addon");
 
 
         add(ModDatapackProvider.SMALL_HOUSE_LANG, "Small House");
@@ -178,36 +196,47 @@ public class ModLangProvider extends LanguageProvider {
 
         addKeyableProperty(ClayBrushItem.Mode.COMMAND, "Command");
         addKeyableProperty(ClayBrushItem.Mode.POI, "Poi");
-        add(SoldierStatusManager.SITTING_LANG, "Sitting");
-        add(SoldierStatusManager.FOLLOW_OWNER_LANG, "Following Owner");
-        add(SoldierStatusManager.IGNORING_OWNER_LANG, "Ignoring Owner");
-        add(SoldierStatusManager.USING_POI_LANG, "Using Work Poi");
+        add(SoldierStatusHolder.SITTING_LANG, "Sitting");
+        add(SoldierStatusHolder.FOLLOW_OWNER_LANG, "Following Owner");
+        add(SoldierStatusHolder.IGNORING_OWNER_LANG, "Ignoring Owner");
+        add(SoldierStatusHolder.USING_POI_LANG, "Using Work Poi");
 
-        add(IWorkGoal.DEFAULT_STATUS_LANG, "Working");
-        add(AbstractWorkGoal.BREAK_LANG, "On a short Break");
-        add(AbstractWorkGoal.CARRYING_LANG, "Carrying");
-        add(AbstractWorkGoal.SEARCHING_LANG, "Searching");
-        add(AbstractWorkGoal.STUCK_LANG, "Stuck");
-        add(AbstractWorkGoal.REQUIRES_POI_LANG, "But does not know where");
-        add(AbstractWorkGoal.RETURNING_LANG, "Returning");
-        add(AbstractWorkGoal.CANNOT_FIND_ITEM_LANG, "Cannot find the needed Item");
+        add(ClayMobWorkStatusManger.BREAK_LANG, "On a short Break");
+        add(ClayMobWorkStatusManger.CARRYING_LANG, "Carrying");
+        add(ClayMobWorkStatusManger.SEARCHING_LANG, "Searching");
+        add(ClayMobWorkStatusManger.REQUIRES_POI_LANG, "But does not know where");
+        add(ClayMobWorkStatusManger.RETURNING_LANG, "Returning");
+        add(ClayMobWorkStatusManger.CANNOT_FIND_ITEM_LANG, "Cannot find the needed Item");
+        add(ClayMobWorkStatusManger.BREAK_CROPS_LANG, "Harvesting");
+        add(ClayMobWorkStatusManger.CROP_BREAK_DISALLOWED, "Not allowed to break Crops");
 
+        add(ClayMobWorkStatusManger.EXTRACTING_ENERGY_LANG, "Extracting Energy");
+        add(ClayMobWorkStatusManger.INSERTING_ENERGY_LANG, "Inserting Energy");
+        add(ClayMobWorkStatusManger.NEEDS_BATTERY_LANG, "Requires a Battery");
+        add(ClayMobWorkStatusManger.NOTHING_TO_CHARGE_LANG, "Does not know what to Charge (No Poi)");
+        add(ClayMobWorkStatusManger.NO_CHARGING_PAD_LANG, "Cannot find a Charging Pad");
+
+        add(ClayMobWorkStatusManger.IS_ANKER_LANG, "Fishing Anker");
+        add(ClayMobWorkStatusManger.SEARCHING_FOR_WATER_LANG, "Searching for Water");
+        add(ClayMobWorkStatusManger.SEARCHING_ANKER_LANG, "Searching for Anker");
+        add(ClayMobWorkStatusManger.FISHING_LANG, "Catching Fish");
+        add(ClayMobWorkStatusManger.BREAKING_BLOCK_LANG, "Breaking Blocks");
+        add(ClayMobWorkStatusManger.UNBREAKABLE_BLOCK_LANG, "But cannot break Block");
+        add(ClayMobWorkStatusManger.BLOCK_BREAK_DISALLOWED, "But cannot break Blocks");
+
+        add(ClayMobWorkStatusManger.NO_CHEST_LANG, "No where to deposit Items (No Poi)");
+
+        add(ClayMobWorkStatusManger.NEEDS_SHEARS_OR_BOTTLE_LANG, "Requires Shears or a Bottle");
+        add(ClayMobWorkStatusManger.NO_HIVE_LANG, "No ready Hive nearby");
 
         add(DigHoleGoal.DIG_LANG, "Digging");
-        add(BreakSingleBlockGoal.BREAK_BLOCK_LANG, "Breaking");
-        add(BaseBreakBlockGoal.BREAKING_LANG, "Breaking blocks");
-        add(BaseBreakBlockGoal.UNBREAKABLE_BLOCK, "But cannot break block");
         add(BreakCropGoal.BREAK_CROPS_LANG, "Harvesting");
-        add(BreakCropGoal.CROP_BREAK_DISALLOWED, "Not allowed to Break Crops");
         add(PlaceSeedsGoal.PLACING_SEEDS_LANG, "Replanting");
         add(PickUpItemsGoal.PICK_UP_ITEM_LANG, "Pick up Items");
         add(BuildBlueprintGoal.BUILDING_LANG, "Building");
         add(ClaySoldierFishGoal.FISH_LANG, "Fishing");
-        add(ClaySoldierFishGoal.IS_ANKER_LANG, "Fishing Anker");
-        add(ClaySoldierFishGoal.SEARCHING_FOR_WATER_LANG, "Searching for Water");
-        add(ClaySoldierFishGoal.SEARCHING_ANKER_LANG, "Searching for Anker");
-        add(ClaySoldierFishGoal.FISHING_LANG, "Catching Fish");
-
+        add(BeeKeepingGoal.BEE_KEEPING_LANG, "Bee Keeping");
+        add(ElectricianGoal.ELECTRICIAN_LANG, "Electrician");
 
         add(AbstractClaySoldierEntity.DEFENDING_AREA_LANG, "Defending this Area");
         add(AbstractClaySoldierEntity.PROTECTING_OWNER_LANG, "Protecting its owner");
@@ -218,6 +247,15 @@ public class ModLangProvider extends LanguageProvider {
         add(ClayMobEntity.OrderedCommand.FOLLOW_OWNER.translatableKey(), "Follows his Owner");
         add(ClayMobEntity.OrderedCommand.IGNORE_OWNER.translatableKey(), "Ignores his Owner");
 
+        add(PoiPosInfo.EMPTY_LANG, "Empty");
+        add(PoiPosInfo.POS_LANG, "%s");
+        add(PoiPosInfo.POS_AND_SIDE_LANG, "%s, Side: %s");
+        add(PoiPosInfo.TOP_LANG, "Top");
+        add(PoiPosInfo.BOTTOM_LANG, "Bottom");
+        add(PoiPosInfo.NORTH_LANG, "North");
+        add(PoiPosInfo.EAST_LANG, "East");
+        add(PoiPosInfo.SOUTH_LANG, "South");
+        add(PoiPosInfo.WEST_LANG, "West");
 
         addEntityType(ModEntityTypes.CLAY_SOLDIER_ENTITY, "Clay Soldier");
         addEntityType(ModEntityTypes.CLAY_WRAITH, "Wraith");
@@ -320,7 +358,7 @@ public class ModLangProvider extends LanguageProvider {
         add(EaselBlockProvider.EASEL_FINISHED_LANG, "Finished");
 
         add(HamsterWheelBlockProvider.HAMSTER_WHEEL_SPEED, "Speed: %s");
-        add(HamsterWheelBlockProvider.GENERATING, "Generating: %s" + ClaySoldiersCommon.PLATFORM.getEnergyUnitName() + "/t");
+        add(HamsterWheelBlockProvider.GENERATING, "Generating: %s%s/t");
 
         add(BossClaySoldierProvider.CLAY_SOLDIER_BOSS_NAME, "Boss");
 
@@ -438,6 +476,10 @@ public class ModLangProvider extends LanguageProvider {
         add(ClayHorseMenuSlot.ARMOR_SLOT_NAME, "Armor");
         add(ClayHorseMenuSlot.HORN_SLOT_NAME, "Horn");
 
+        add(ChipClaySoldierSlot.CHIP_NAME, "Chip");
+        add(CarriedClaySoldierMenuSlot.CARRIED_SLOT_NAME, "Carried Item");
+
+
 
         add(ClayPredicates.LogicComparator.ALL.getDisplayName().getString(), "When all:");
         add(ClayPredicates.LogicComparator.ANY.getDisplayName().getString(), "When any:");
@@ -488,6 +530,8 @@ public class ModLangProvider extends LanguageProvider {
         add(ModTags.Items.STAT_ITEM, "Statometer");
         add(ModTags.Items.CLAY_GOGGLES_ITEM, "Clay Goggles");
         add(ModTags.Items.CHIP, "Clay Soldier Chips");
+        add(ModTags.Items.BATTERY, "Battery");
+
 
         add(ModTags.Items.GAME_MASTER_ITEM, "Game Master Items");
         add(ModTags.Items.SOLDIER_WEAPON, "Clay Soldier Weapon");
@@ -506,6 +550,7 @@ public class ModLangProvider extends LanguageProvider {
         add(ModTags.Items.BASIC, "Basic Clay Soldier Items");
         add(ModTags.Items.EXPLOSIVE_EXPERT, "Explosive Clay Soldier Items");
         add(ModTags.Items.DIVER, "Aquatic Clay Soldier Items");
+        add(ModTags.Items.ARSONIST, "Clay Soldier Items for an Arsonist");
         add(ModTags.Items.MAGICIAN, "Magical Clay Soldier Items");
         add(ModTags.Items.RANGED, "Ranged Clay Soldier Items");
         add(ModTags.Items.SPECIALIST, "Miscellaneous Clay Soldier Items");
@@ -515,11 +560,19 @@ public class ModLangProvider extends LanguageProvider {
         add(ModTags.Items.FASHION, "Stylish Clay Soldier Items");
         add(ModTags.Items.KINGDOM, "Clay Soldier Items for a Kingdom");
 
+        add(ModTags.Items.SOLDIER_SLINGSHOT_ENCHANTABLE, "Clay Soldier Slingshot Enchantable");
+
 
         add(ModTags.Blocks.BLUEPRINT_BLACK_LISTED, "Blueprint Blacklist");
         add(ModTags.DamageTypes.CLAY_SOLDIER_DAMAGE, "Clay Soldier Damage");
         add(ModTags.EntityTypes.CLAY_BOSS, "Clay Soldier Boss");
         add(ModTags.SoldierPropertyTypes.REQUIRES_OWNER, "Requires Owner");
+
+        add("gui.jei.category.tagInformation.%s".formatted(
+                ModRegistries.CLAY_SOLDIER_MODULES.identifier().getPath()
+        ), "Clay Soldier Chips");
+        add(ModTags.ClaySoldierChips.REQUIRES_POI_POS, "Requires a Poi Position");
+
 
         add(ModAdvancements.ROOT_TITLE, "Clay Soldiers");
         add(ModAdvancements.ROOT_DESCRIPTION, "Obtain some Clay.");
@@ -534,7 +587,7 @@ public class ModLangProvider extends LanguageProvider {
         add(ModAdvancements.REVIVE_DESCRIPTION, "Revive a burnt Clay Soldier with a %s");
 
         add(ModAdvancements.DISRUPTOR_TITLE, "Mass Extinction");
-        add(ModAdvancements.DISRUPTOR_DESCRIPTION, "Kill a bounch of Clay Soldiers with a Disruptor");
+        add(ModAdvancements.DISRUPTOR_DESCRIPTION, "Kill a bunch of Clay Soldiers with a Disruptor");
 
         add(ModAdvancements.WAXED_TITLE, "You can do that?");
         add(ModAdvancements.WAXED_DESCRIPTION, "Wax a Clay Soldier");
@@ -665,6 +718,17 @@ public class ModLangProvider extends LanguageProvider {
         addModuleType(ClaySoldierChips.FISHING_TYPE, "Fishing Module");
         addModuleType(ClaySoldierChips.BUILD_BLUEPRINT_TYPE, "Build Blueprint Module");
         addModuleType(ClaySoldierChips.BEEKEEPING_TYPE, "Bee Keeping Module");
+        addModuleType(ClaySoldierChips.ELECTRICIAN_TYPE, "Electrician Module");
+
+        add(PoiChip.POI_NO_DATA_LANG, "POI: Unset");
+        add(PoiChip.ACTIVE_POI_DATA_LANG, "POI: Active");
+
+        add(CombatChip.COMBAT_DATA_MONSTER_LANG, "Target Monsters");
+        add(CombatChip.COMBAT_DATA_ANIMAL_LANG, "Target Animals");
+        add(CombatChip.COMBAT_DATA_IGNORE_BABIES_LANG, "Ignoring Babies");
+        add(CombatChip.COMBAT_DATA_OWNER_LANG, "Target from Owner");
+
+        add(ElectricianChip.TRANSFER_RATE_LANG, "Transfer Rate: %s%s/t");
 
 
         addChipAddon(ClaySoldierChipAddons.RANGE_ADDON, "Range");
@@ -673,21 +737,9 @@ public class ModLangProvider extends LanguageProvider {
         addChipAddon(ClaySoldierChipAddons.TARGET_MONSTER_ADDON, "Target Monsters");
         addChipAddon(ClaySoldierChipAddons.TARGET_ANIMALS_ADDON, "Target Animals");
         addChipAddon(ClaySoldierChipAddons.TARGET_IGNORE_BABIES_ADDON, "Target Ignore Babies");
-        addChipAddon(ClaySoldierChipAddons.ACCELERATION_ADDON, "Acceleration");
+        addChipAddon(ClaySoldierChipAddons.ACCELERATION_ADDON, "Acceleration I");
+        addChipAddon(ClaySoldierChipAddons.UPGRADED_ACCELERATION_ADDON, "Acceleration II");
 
-
-        add(ClaySoldierChip.NO_MODI, "This Chip does not have any additional Modi");
-
-        add(EmptyClaySoldierChip.EMPTY_CHIP_DATA_LANG, "No Data");
-
-        add(PoiChip.POI_NO_DATA_LANG, "POI: Unset");
-        add(PoiChip.ACTIVE_POI_DATA_LANG, "POI: Active");
-
-
-        add(CombatChip.COMBAT_DATA_MONSTER_LANG, "Target Monsters");
-        add(CombatChip.COMBAT_DATA_ANIMAL_LANG, "Target Animals");
-        add(CombatChip.COMBAT_DATA_IGNORE_BABIES_LANG, "Ignoring Babies");
-        add(CombatChip.COMBAT_DATA_OWNER_LANG, "Target from Owner");
 
     }
 
@@ -699,7 +751,7 @@ public class ModLangProvider extends LanguageProvider {
         this.add(propertyType.get().getDescriptionId(), name);
     }
 
-    private <T extends ClaySoldierChip.Type<?>> void addModuleType(Supplier<T> moduleType, String name) {
+    private <T extends ClaySoldierChip.Type> void addModuleType(Supplier<T> moduleType, String name) {
         this.add(moduleType.get().getDescriptionId(), name);
     }
 

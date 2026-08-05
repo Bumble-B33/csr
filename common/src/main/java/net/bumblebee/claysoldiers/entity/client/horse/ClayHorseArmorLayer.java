@@ -16,7 +16,6 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.util.Util;
 import net.minecraft.world.item.equipment.EquipmentAsset;
-import net.minecraft.world.item.equipment.Equippable;
 
 import java.util.List;
 import java.util.function.Function;
@@ -40,11 +39,11 @@ public class ClayHorseArmorLayer extends RenderLayer<ClayHorseRenderState, ClayH
         if (effect == null) {
             return;
         }
-        Equippable equippable = effect.getEquippable();
+        ResourceKey<EquipmentAsset> assetId = effect.assetId();
 
 
-        if (equippable != null && !equippable.assetId().isEmpty()) {
-            this.renderLayers(EquipmentClientInfo.LayerType.HORSE_BODY, equippable.assetId().get(), model, clayHorseRenderState, poseStack, submitNodeCollector, clayHorseRenderState.lightCoords, effect.color().getColor(0, clayHorseRenderState.ageInTicks), clayHorseRenderState.outlineColor);
+        if (assetId != null) {
+            this.renderLayers(EquipmentClientInfo.LayerType.HORSE_BODY, assetId, model, clayHorseRenderState, poseStack, submitNodeCollector, clayHorseRenderState.lightCoords, effect.color().getColor(0, clayHorseRenderState.ageInTicks), clayHorseRenderState.outlineColor);
         }
     }
 

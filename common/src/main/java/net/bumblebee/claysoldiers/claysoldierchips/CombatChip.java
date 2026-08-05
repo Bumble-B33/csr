@@ -13,7 +13,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.util.Unit;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
@@ -27,17 +26,17 @@ import java.util.OptionalInt;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-public class CombatChip extends ClaySoldierChip<Unit> {
+public class CombatChip extends ClaySoldierChip {
     private static final Identifier ASSET_OWNER_ID = Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "combat_owner");
     private static final Identifier ASSET_MONSTER_ID = Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "combat_monster");
     private static final Identifier ASSET_ANIMAL_ID = Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "combat_animal");
-
+    private static final CombatChip NO_ADDON = new CombatChip(List.of());
     private static final int DEFAULT_SEARCH_RANGE = 10;
 
-    public static final String COMBAT_DATA_ANIMAL_LANG = LANG_PREFIX + ".data.combat.animal";
-    public static final String COMBAT_DATA_MONSTER_LANG = LANG_PREFIX + ".data.combat.monster";
-    public static final String COMBAT_DATA_IGNORE_BABIES_LANG = LANG_PREFIX + ".data.combat.ignore_babies";
-    public static final String COMBAT_DATA_OWNER_LANG = LANG_PREFIX + ".data.combat.owner";
+    public static final String COMBAT_DATA_ANIMAL_LANG = LANG_PREFIX + "combat.animal";
+    public static final String COMBAT_DATA_MONSTER_LANG = LANG_PREFIX + "combat.monster";
+    public static final String COMBAT_DATA_IGNORE_BABIES_LANG = LANG_PREFIX + "combat.ignore_babies";
+    public static final String COMBAT_DATA_OWNER_LANG = LANG_PREFIX + "combat.owner";
 
     public static final AddonInfo ADDON_INFO = new AddonInfo() {
         @Override
@@ -72,7 +71,7 @@ public class CombatChip extends ClaySoldierChip<Unit> {
 
 
     public CombatChip(List<ClaySoldierChipAddon> addons) {
-        super(Unit.INSTANCE, addons);
+        super(addons);
         this.ignoreBabies = hasAddon(ClaySoldierChipAddons.TARGET_IGNORE_BABIES_ADDON);
 
         if (hasAddon(ClaySoldierChipAddons.TARGET_ANIMALS_ADDON)) {
@@ -84,13 +83,20 @@ public class CombatChip extends ClaySoldierChip<Unit> {
         }
     }
 
+    public static CombatChip create(List<ClaySoldierChipAddon> addons) {
+        if (addons.isEmpty()) {
+            return NO_ADDON;
+        }
+        return new CombatChip(addons);
+    }
+
     public static CombatChip create() {
-        return new CombatChip(List.of());
+        return NO_ADDON;
     }
 
 
     @Override
-    public ClaySoldierChip<Unit> withSoldier(ProgrammableClaySoldierEntity soldier) {
+    public ClaySoldierChip withSoldier(ProgrammableClaySoldierEntity soldier) {
         return this;
     }
 
@@ -126,7 +132,7 @@ public class CombatChip extends ClaySoldierChip<Unit> {
     }
 
     @Override
-    public Type<Unit> getType() {
+    public Type getType() {
         return ClaySoldierChips.COMBAT_TYPE.get();
     }
 

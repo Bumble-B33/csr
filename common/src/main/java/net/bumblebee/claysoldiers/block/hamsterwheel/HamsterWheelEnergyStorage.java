@@ -1,46 +1,46 @@
 package net.bumblebee.claysoldiers.block.hamsterwheel;
 
+import com.google.common.primitives.Ints;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
 
 public interface HamsterWheelEnergyStorage {
-    String TAG_KEY = "wheel_energy";
+    String TAG_KEY = "energy";
 
     /**
      * @return the energy stored in this storage
      */
-    long energyStored();
+    int energyStored();
 
     /**
      * @return the capacity of this storage
      */
-    long maxEnergyStored();
-
-    /**
-     * Generates energy if possible
-     */
-    void generate(float speed);
-
-    void save(ValueOutput tag);
-
-    void load(ValueInput tag);
+    int maxEnergyStored();
 
     /**
      * Sets the energy of this storage to the given energy
      */
-    void setEnergy(long energy);
+    void setEnergy(int energy);
 
     /**
-     * Returns this energy storage as view only, no energy can be extracted.
-     * Energy can still be set with {@link #setEnergy}.
+     * Generates energy if possible
      */
-    HamsterWheelEnergyStorage asViewOnly();
+    default void generate(int amount) {
+        if (amount <= 0) {
+            return;
+        }
+        long generate = energyStored() + (long) amount;
+        setEnergy(Ints.saturatedCast(generate));
+    }
 
-    static long energyGeneratedPerTick(float speed) {
+    /**
+     * Pushes Energy to a nearby Energy Storage
+     */
+    void distribute();
+
+    static int energyGeneratedPerTick(float speed) {
         if (speed <= 0) {
             return 0;
         }
-        return (long) Math.max(1, ClaySoldiersCommon.CONFIG.getCommonConfig().getHamsterWheelSpeed() * speed);
+        return (int) Math.max(1d, (double) ClaySoldiersCommon.CONFIG.getCommonConfig().getHamsterWheelSpeed() * speed);
     }
 }

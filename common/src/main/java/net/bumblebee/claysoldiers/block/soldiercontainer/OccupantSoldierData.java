@@ -11,17 +11,16 @@ import net.bumblebee.claysoldiers.entity.common.inventory.ClaySoldierInventory;
 import net.bumblebee.claysoldiers.entity.common.programmable.ProgrammableClayMobAccess;
 import net.bumblebee.claysoldiers.entity.common.programmable.ProgrammableClaySoldierEntity;
 import net.bumblebee.claysoldiers.entity.common.soldier.AbstractClaySoldierEntity;
-import net.bumblebee.claysoldiers.soldierproperties.customproperties.revive.ReviveType;
 import net.bumblebee.claysoldiers.team.ClayMobTeam;
 import net.bumblebee.claysoldiers.team.OwnerQuery;
 import net.bumblebee.claysoldiers.util.codec.EntityTypesCodecs;
 import net.bumblebee.claysoldiers.util.color.ColorHelper;
-import net.minecraft.core.*;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtOps;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.RegistryOps;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -129,13 +128,15 @@ public class OccupantSoldierData implements Comparable<OccupantSoldierData> {
         soldier.save(output);
 
         IGNORED_TAGS.forEach(output::discard);
-        //Todo
+        double moveSpeed = soldier.getAttribute(Attributes.MOVEMENT_SPEED).getValue();
+        float accelerationSpeed = 1f + (acceleration);
+
         return new OccupantSoldierData(soldier.getType(),
                 output.buildResult(),
                 Data.of(soldier),
                 timeData,
                 soldier.getClayTeamHolder(),
-                (float) soldier.getAttribute(Attributes.MOVEMENT_SPEED).getValue() * (acceleration + 1),
+                (float) moveSpeed * accelerationSpeed,
                 soldier.level().getGameTime()
         );
     }
@@ -203,6 +204,7 @@ public class OccupantSoldierData implements Comparable<OccupantSoldierData> {
             entity.getInventory().copyFrom(explicitData.inventory());
             entity.setOffsetColor(explicitData.offsetColor());
             entity.setSpawnedFrom(explicitData.spawnedFrom, explicitData.dropSpawnedFrom);
+            entity.afterInventoryLoad();
             return entity;
         } else {
             return null;
@@ -291,7 +293,7 @@ public class OccupantSoldierData implements Comparable<OccupantSoldierData> {
 
     public record Data(float scale, boolean waxed, boolean dropSpawnedFrom, ItemStack spawnedFrom,
                        ClaySoldierInventory inventory, int skinVariantId,
-                       ColorHelper offsetColor, Optional<ClaySoldierChip<?>> chip, OwnerQuery ownerQuery) {
+                       ColorHelper offsetColor, Optional<ClaySoldierChip> chip, OwnerQuery ownerQuery) {
         public static final Codec<Data> CODEC = RecordCodecBuilder.create(in -> in.group(
                 Codec.FLOAT.optionalFieldOf("scale", 1f).forGetter(Data::scale),
                 Codec.BOOL.optionalFieldOf(ClayMobEntity.WAXED_TAG, false).forGetter(Data::waxed),
@@ -305,7 +307,7 @@ public class OccupantSoldierData implements Comparable<OccupantSoldierData> {
         ).apply(in, Data::new));
 
         public static Data of(AbstractClaySoldierEntity soldier) {
-            ClaySoldierChip<?> chip = soldier instanceof ProgrammableClayMobAccess access ? access.getInstalledChip() : null;
+            ClaySoldierChip chip = soldier instanceof ProgrammableClayMobAccess access ? access.getInstalledChip() : null;
 
             return new Data(
                     soldier.getScale(),

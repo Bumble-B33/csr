@@ -42,28 +42,17 @@ public enum SoldierEquipmentSlot implements StringRepresentable, KeyableTranslat
     public static final StreamCodec<FriendlyByteBuf, SoldierEquipmentSlot> STREAM_CODEC = CodecUtils.createEnumStreamCodec(SoldierEquipmentSlot.class);
     public static final StreamCodec<FriendlyByteBuf, List<SoldierEquipmentSlot>> LIST_STREAM_CODEC = STREAM_CODEC.apply(ByteBufCodecs.list());
 
-    public static final StreamCodec<ByteBuf, Optional<SoldierEquipmentSlot>> OPTIONAL_STREAM_CODEC = new StreamCodec<>() {
-        @Override
-        public Optional<SoldierEquipmentSlot> decode(ByteBuf byteBuf) {
-            int i = byteBuf.readByte();
-            return i == -1 ? Optional.empty() : Optional.of(SoldierEquipmentSlot.values()[i]);
-        }
-
-        @Override
-        public void encode(ByteBuf o, Optional<SoldierEquipmentSlot> soldierEquipmentSlot) {
-            o.writeByte(soldierEquipmentSlot.map(SoldierEquipmentSlot::ordinal).orElse(-1));
-        }
-    };
+    public static final StreamCodec<FriendlyByteBuf, Optional<SoldierEquipmentSlot>> OPTIONAL_STREAM_CODEC = ByteBufCodecs.optional(STREAM_CODEC);
     private final Type type;
     private final int index;
     private final int filterFlag;
     private final String name;
 
-    SoldierEquipmentSlot(Type pType, int pIndex, int pFilterFlag, String pName) {
-        this.type = pType;
-        this.index = pIndex;
-        this.filterFlag = pFilterFlag;
-        this.name = pName;
+    SoldierEquipmentSlot(Type type, int index, int filterFlag, String name) {
+        this.type = type;
+        this.index = index;
+        this.filterFlag = filterFlag;
+        this.name = name;
     }
 
     @Override

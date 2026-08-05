@@ -11,7 +11,6 @@ import net.bumblebee.claysoldiers.entity.common.*;
 import net.bumblebee.claysoldiers.entity.common.inventory.ClaySoldierInventory;
 import net.bumblebee.claysoldiers.entity.common.inventory.ClaySoldierInventoryHandler;
 import net.bumblebee.claysoldiers.entity.common.soldier.status.SoldierStatusHolder;
-import net.bumblebee.claysoldiers.entity.common.soldier.status.SoldierStatusManager;
 import net.bumblebee.claysoldiers.entity.goal.*;
 import net.bumblebee.claysoldiers.entity.goal.target.*;
 import net.bumblebee.claysoldiers.entity.goal.workgoal.IWorkGoal;
@@ -166,7 +165,7 @@ public class AbstractClaySoldierEntity extends ClayMobTeamOwnerEntity implements
     private final EntityType<? extends AbstractClaySoldierEntity> type;
 
     protected AbstractClaySoldierEntity(EntityType<? extends AbstractClaySoldierEntity> pEntityType, Level pLevel, AttackTypeProperty defaultAttackType) {
-        this(pEntityType, pLevel, defaultAttackType, SoldierStatusManager::initDefault);
+        this(pEntityType, pLevel, defaultAttackType, SoldierStatusHolder::initDefault);
         this.setSpawnedFrom(ModItems.CLAY_SOLDIER.get().getDefaultInstance(), true);
         this.delayedScale = getSoldierSize();
 
@@ -206,7 +205,7 @@ public class AbstractClaySoldierEntity extends ClayMobTeamOwnerEntity implements
     protected void registerGoals() {
         this.goalSelector.addGoal(1, new ClaySodlierBreathAirGoal(this));
         this.goalSelector.addGoal(2, new ClayMobSitGoal(this));
-        this.goalSelector.addGoal(3, new UseAssignedPoiGoal(this, 1.2));
+        this.goalSelector.addGoal(3, new UseAssignedPoiGoal(this, 1.2, 0));
         this.goalSelector.addGoal(3, new FindNearestPoiGoal(this));
         this.goalSelector.addGoal(3, new ClaySoldierMountGoal(this, 1.2f, false));
 
@@ -229,7 +228,7 @@ public class AbstractClaySoldierEntity extends ClayMobTeamOwnerEntity implements
     @Override
     public void addAdditionalSaveData(@NonNull ValueOutput output) {
         super.addAdditionalSaveData(output);
-        inventory.save(output);
+        output.store(ClaySoldierInventory.INVENTORY_TAG, ClaySoldierInventory.DIRECT_CODEC, inventory);
 
         output.putShort(FUSE_TAG, (short) this.maxSwell);
         output.putByte(EXPLOSION_RADIUS_TAG, (byte) this.explosionRadius);
@@ -247,7 +246,7 @@ public class AbstractClaySoldierEntity extends ClayMobTeamOwnerEntity implements
     @Override
     public void readAdditionalSaveData(@NonNull ValueInput input) {
         super.readAdditionalSaveData(input);
-        inventory.load(input);
+        input.read(ClaySoldierInventory.INVENTORY_TAG, ClaySoldierInventory.DIRECT_CODEC).ifPresent(inventory::copyFrom);
 
         this.maxSwell = input.getShortOr(FUSE_TAG, (short) 30);
         this.maxSwell = input.getShortOr(FUSE_TAG, (short) 30);
@@ -260,17 +259,20 @@ public class AbstractClaySoldierEntity extends ClayMobTeamOwnerEntity implements
         this.setVeryAngry(input.getBooleanOr(VERY_ANGRY_TAG, false));
         this.setOffsetColor(input.read(OFFSET_COLOR_TAG, ColorHelper.CODEC).orElse(ColorHelper.EMPTY));
 
-
-        querySpecialProperties();
-
-        initCombinedProperties();
-        updateOtherProperties();
-
         delayedScale = getScale();
 
         input.read(REVIVE_TYPE_COOLDOWN_TAG, ReviveType.COOLDOWN_MAP_CODEC).ifPresent(reviveTypeCooldown::putAll);
 
         skinVariantId = input.getIntOr(SKIN_VARIANT_ID_TAG, 0);
+
+        afterInventoryLoad();
+    }
+
+    public void afterInventoryLoad() {
+        querySpecialProperties();
+
+        initCombinedProperties();
+        updateOtherProperties();
     }
 
     @Override
@@ -446,7 +448,7 @@ public class AbstractClaySoldierEntity extends ClayMobTeamOwnerEntity implements
             return ItemStack.EMPTY;
         }
 
-        List<SoldierEquipmentSlot> possibleSlots = effect.slots();
+        List<SoldierEquipmentSlot> possibleSlots = new ArrayList<>(effect.slots());
 
         if (possibleSlots.isEmpty()) {
             var capEquip = effect.getCustomEquipCapability(stack);
@@ -459,6 +461,13 @@ public class AbstractClaySoldierEntity extends ClayMobTeamOwnerEntity implements
             slotCallBack.capability();
             return resultStack;
         }
+
+        inventory.forEach((slot, item) -> {
+            var e = item.effect();
+            if (e != null) {
+                possibleSlots.removeAll(e.occupiedSlots(slot));
+            }
+        });
 
         ItemStackWithEffect currentItem = null;
         boolean canReplaceCurrentItem = false;
@@ -498,15 +507,20 @@ public class AbstractClaySoldierEntity extends ClayMobTeamOwnerEntity implements
         if (!attackTypeSelf.compatibleWith(attackTypeStack)) {
             return false;
         }
+        if (!effect.canPickUp(s -> inventory.getItemBySlot(s).isEmpty())) {
+            return false;
+        }
+
 
         if (effect.throwable()) {
-            if (attackTypeStack.isSupportive()) {
-                return effect.throwableType(RangedAttackType.HELPING);
+            if (attackTypeStack.isSupportive() && !effect.throwableType(RangedAttackType.HELPING)) {
+                return false;
             }
-            if (attackTypeStack.fightsBack()) {
-                return effect.throwableType(RangedAttackType.HARM);
+            if (attackTypeStack.fightsBack() && !effect.throwableType(RangedAttackType.HARM)) {
+                return false;
             }
         }
+
 
         return true;
     }
@@ -712,7 +726,7 @@ public class AbstractClaySoldierEntity extends ClayMobTeamOwnerEntity implements
             amount = amount - (amount * Math.clamp(allProperties().explosionResistance() * 0.08f, 0, 1));
         }
 
-        amount = allProperties().damageBlock().blocked(this.random, amount, source.is(DamageTypes.THROWN) || source.is(ModDamageTypes.CLAY_HURT));
+        amount = allProperties().damageBlock().blocked(this.random, amount, source.is(DamageTypes.THROWN) || source.is(ModDamageTypes.CLAY_HURT), this.getChanceLuck());
 
 
         return super.hurtServer(serverLevel, source, amount);
@@ -1310,6 +1324,11 @@ public class AbstractClaySoldierEntity extends ClayMobTeamOwnerEntity implements
         return (float) this.getAttributeValue(Attributes.LUCK) + allProperties().getLuck();
     }
 
+    @Override
+    public float getChanceLuck() {
+        return allProperties().getLuck();
+    }
+
     public boolean hasShieldInHand(InteractionHand hand) {
         if (hand == InteractionHand.MAIN_HAND) {
             return getItemBySlot(SoldierEquipmentSlot.MAINHAND).isShield();
@@ -1470,7 +1489,7 @@ public class AbstractClaySoldierEntity extends ClayMobTeamOwnerEntity implements
     @Override
     protected OptionalInt openMenuScreen(Player player) {
         return ClaySoldiersCommon.COMMON_HOOKS.openMenu(player,
-                new SimpleMenuProvider((id, inventory, player1) -> new ClaySoldierMenu(id, inventory, this), getInventoryName()),
+                new SimpleMenuProvider((id, inventory, player1) -> ClaySoldierMenu.forClaySoldier(id, inventory, this), getInventoryName()),
                 this.getId()
         );
     }

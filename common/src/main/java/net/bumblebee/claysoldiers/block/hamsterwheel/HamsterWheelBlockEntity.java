@@ -3,6 +3,7 @@ package net.bumblebee.claysoldiers.block.hamsterwheel;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.block.soldiercontainer.BlockEntityWithSingleSoldier;
 import net.bumblebee.claysoldiers.capability.AssignableWorksiteCapability;
+import net.bumblebee.claysoldiers.energy.BatteryProperties;
 import net.bumblebee.claysoldiers.entity.common.ClayMobEntity;
 import net.bumblebee.claysoldiers.entity.common.StatInfoDisplay;
 import net.bumblebee.claysoldiers.entity.common.soldier.AbstractClaySoldierEntity;
@@ -15,10 +16,11 @@ import net.minecraft.core.Direction;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.world.Containers;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.item.Items;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
@@ -26,6 +28,7 @@ import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NonNull;
 
 import java.util.List;
 
@@ -52,19 +55,36 @@ public class HamsterWheelBlockEntity extends BlockEntityWithSingleSoldier implem
             return WORKSITE_ID;
         }
     };
-    private final HamsterWheelEnergyStorage energyStorage;
+    @Nullable
+    private HamsterWheelEnergyStorage energyStorage = null;
 
     private long lastEnergySend = 0;
     private float rotationTick = 0;
 
-    public HamsterWheelBlockEntity(BlockPos pPos, BlockState pBlockState) {
-        super(ModBlockEntities.HAMSTER_WHEEL_BLOCK_ENTITY.get(), pPos, pBlockState, ModPoiTypes.SINGLE_SOLDIER_CONTAINER_POI_KEY, ModPoiTypes.SINGLE_SOLDIER_CONTAINER.get());
-        energyStorage = ClaySoldiersCommon.CAPABILITY_MANGER.createEnergyStorage(this);
+    public HamsterWheelBlockEntity(BlockPos pPos, BlockState state) {
+        super(ModBlockEntities.HAMSTER_WHEEL_BLOCK_ENTITY.get(), pPos, state, ModPoiTypes.SINGLE_SOLDIER_CONTAINER_POI_KEY, ModPoiTypes.SINGLE_SOLDIER_CONTAINER.get());
+        setEnergyStorage(state);
     }
 
+    @SuppressWarnings("deprecation")
+    @Override
+    public void setBlockState(@NonNull BlockState state) {
+        super.setBlockState(state);
+        int currentEnergyStored = energyStorage == null ? 0 : energyStorage.energyStored();
+        setEnergyStorage(state);
+        if (currentEnergyStored > 0) {
+            energyStorage.setEnergy(currentEnergyStored);
+        }
+    }
+
+    private void setEnergyStorage(BlockState current) {
+        BatteryProperties multiplier = current.getValue(HamsterWheelBlock.BATTERY_PROPERTY).getBatteryProperty();
+        if (multiplier != null) {
+            energyStorage = ClaySoldiersCommon.ENERGY_HELPER.createEnergyStorage(this, multiplier.capacity(), multiplier.maxInsert(), multiplier.maxExtract());
+        }
+    }
 
     public void clientTick() {
-        //todo
         if (hasSoldier()) {
             //Todo
             float speed = getSoldierSpeedFactor();
@@ -94,7 +114,7 @@ public class HamsterWheelBlockEntity extends BlockEntityWithSingleSoldier implem
     public @Nullable HamsterWheelEnergyStorage getEnergyStorage(@Nullable Direction direction) {
         if (hasEnergyStorage()) {
             if (direction == null) {
-                return energyStorage.asViewOnly();
+                return energyStorage;
             }
             return direction.getOpposite() == getBlockState().getValue(HamsterWheelBlock.FACING) ? energyStorage : null;
         }
@@ -108,16 +128,20 @@ public class HamsterWheelBlockEntity extends BlockEntityWithSingleSoldier implem
         return null;
     }
 
+    public void setStartingEnergy(int amount) {
+        if (energyStorage == null) {
+            ClaySoldiersCommon.ERROR_HANDLER.warn("Try to set energy for a Hamster Wheel with out an EnergyStorage");
+        } else {
+            energyStorage.setEnergy(energyStorage.energyStored() + amount);
+        }
+    }
+
     public boolean hasEnergyStorage() {
         return HamsterWheelBlock.hasPowerConnection(getBlockState());
     }
 
     public boolean hasSecondBattery() {
-        return getBlockState().getValue(HamsterWheelBlock.BATTERY_PROPERTY) == BatteryProperty.DUAL;
-    }
-
-    public int getEnergyCapacityMultiplier() {
-        return getBlockState().getValue(HamsterWheelBlock.BATTERY_PROPERTY).getCapacityMultiplier();
+        return getBlockState().getValue(HamsterWheelBlock.BATTERY_PROPERTY) == HamsterWheelBatteryProperty.DUAL;
     }
 
 
@@ -130,27 +154,63 @@ public class HamsterWheelBlockEntity extends BlockEntityWithSingleSoldier implem
 
 
     @Override
-    protected void saveAdditional(@NotNull ValueOutput pTag) {
-        super.saveAdditional(pTag);
-        energyStorage.save(pTag);
+    protected void saveAdditional(@NotNull ValueOutput output) {
+        super.saveAdditional(output);
+        if (energyStorage != null) {
+            output.putInt(HamsterWheelEnergyStorage.TAG_KEY, energyStorage.energyStored());
+        }
     }
 
     @Override
-    protected void loadAdditional(@NotNull ValueInput pTag) {
-        super.loadAdditional(pTag);
-        energyStorage.load(pTag);
+    protected void loadAdditional(@NotNull ValueInput tag) {
+        super.loadAdditional(tag);
+        if (energyStorage != null) {
+            int energy = Math.min(tag.getIntOr(HamsterWheelEnergyStorage.TAG_KEY, 0), energyStorage.maxEnergyStored());
+            energyStorage.setEnergy(energy);
+        }
     }
 
+    @Override
+    protected void saveToUpdateTag(ValueOutput output) {
+        if (energyStorage != null) {
+            output.putLong(HamsterWheelEnergyStorage.TAG_KEY, energyStorage.energyStored());
+        }
+    }
 
     public void serverTick() {
-        if (hasEnergyStorage() && hasSoldier()) {
-            energyStorage.generate(getSoldierData().getAdjustedSpeed());
+        if (hasEnergyStorage()) {
+            int generated = hasSoldier() ? HamsterWheelEnergyStorage.energyGeneratedPerTick(getSoldierData().getAdjustedSpeed()) : 0;
+            energyStorage.generate(generated);
+            energyStorage.distribute();
         }
         if (hasEnergyStorage() && Math.abs(lastEnergySend - energyStorage.energyStored()) > 2) {
             ClaySoldiersCommon.NETWORK_MANGER.sendToPlayersTrackingBlockEntity(this, new HamsterWheelEnergyPayload(energyStorage.energyStored(), getBlockPos()));
             lastEnergySend = energyStorage.energyStored();
             setChanged();
         }
+    }
+
+    @Override
+    public void preRemoveSideEffects(BlockPos pos, BlockState state) {
+        super.preRemoveSideEffects(pos, state);
+        if (level instanceof ServerLevel) {
+            HamsterWheelBatteryProperty batteryState = state.getValue(HamsterWheelBlock.BATTERY_PROPERTY);
+            if (batteryState == HamsterWheelBatteryProperty.SINGLE || batteryState == HamsterWheelBatteryProperty.DUAL) {
+                ItemStack battery = HamsterWheelBlock.BATTERY_ITEM.get().getDefaultInstance();
+                int energyRemaining = energyStorage.energyStored() - ClaySoldiersCommon.ENERGY_HELPER.insert(battery, energyStorage.energyStored());
+                Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), battery);
+                if (batteryState == HamsterWheelBatteryProperty.DUAL) {
+                    ItemStack secondBattery = HamsterWheelBlock.BATTERY_ITEM.get().getDefaultInstance();
+                    ClaySoldiersCommon.ENERGY_HELPER.insert(secondBattery, energyRemaining);
+                    Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), secondBattery);
+                }
+            }
+        }
+
+    }
+
+    public Direction getFacing() {
+        return getBlockState().getValue(HamsterWheelBlock.FACING);
     }
 
     @Override
@@ -171,16 +231,8 @@ public class HamsterWheelBlockEntity extends BlockEntityWithSingleSoldier implem
     }
 
     @Override
-    public void preRemoveSideEffects(BlockPos pos, BlockState state) {
-        super.preRemoveSideEffects(pos, state);
-        if (HamsterWheelBlock.hasPowerConnection(state)) {
-            Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), Items.REDSTONE.getDefaultInstance());
-        }
-    }
-
-    @Override
     public void getStatDisplay(List<Component> list, LivingEntity viewer) {
-        String energyUnit = ClaySoldiersCommon.PLATFORM.getEnergyUnitName();
+        String energyUnit = ClaySoldiersCommon.ENERGY_HELPER.getEnergyUnitName();
         list.add(getBlockState().getBlock().getName());
         addSoldierDataView(list, viewer, true);
 
@@ -189,7 +241,7 @@ public class HamsterWheelBlockEntity extends BlockEntityWithSingleSoldier implem
                     Component.translatable(StatInfoDisplay.ENERGY_LANG, energyStorage.energyStored() + energyUnit, energyStorage.maxEnergyStored() + energyUnit).withStyle(ChatFormatting.GRAY)
             ));
             list.add(CommonComponents.space().append(
-                    Component.translatable(StatInfoDisplay.GENERATION_LANG, HamsterWheelEnergyStorage.energyGeneratedPerTick(hasSoldier() ? 0 : getSoldierData().getAdjustedSpeed()) + energyUnit).withStyle(ChatFormatting.GRAY)
+                    Component.translatable(StatInfoDisplay.GENERATION_LANG, HamsterWheelEnergyStorage.energyGeneratedPerTick(hasSoldier() ? getSoldierData().getAdjustedSpeed() : 0) + energyUnit).withStyle(ChatFormatting.GRAY)
             ));
         }
     }

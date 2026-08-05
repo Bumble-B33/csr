@@ -35,10 +35,7 @@ public class SoldierPoiWithItem extends SoldierPoiWithSource<ItemEntity> {
     public void onUse(ItemEntity source, AbstractClaySoldierEntity soldier) {
         assert getPoi() != null;
         source.setExtendedLifetime();
-        float breakChance = getPoi().getBreakChance();
-        if (breakChance <= 0) {
-            return;
-        }
+
         if (source.getItem().isEmpty()) {
             source.discard();
             return;
@@ -47,7 +44,7 @@ public class SoldierPoiWithItem extends SoldierPoiWithSource<ItemEntity> {
         if (source.level().isClientSide()) {
             return;
         }
-        if (source.getRandom().nextFloat() <= breakChance) {
+        if (getPoi().shouldBreak(soldier.getRandom())) {
             source.getItem().shrink(1);
             take(source, soldier);
             if (source.getItem().isEmpty()) {

@@ -1,6 +1,8 @@
 package net.bumblebee.claysoldiers.entity.client;
 
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
+import net.bumblebee.claysoldiers.datamap.HoldingPose;
+import net.bumblebee.claysoldiers.datamap.SoldierEquipmentSlot;
 import net.bumblebee.claysoldiers.entity.client.renderstates.AbstractClaySoldierRenderState;
 import net.bumblebee.claysoldiers.entity.common.soldier.AbstractClaySoldierEntity;
 import net.minecraft.client.model.AnimationUtils;
@@ -27,6 +29,7 @@ public class ClaySoldierModel extends HumanoidModel<AbstractClaySoldierRenderSta
 
     private static final float SCALE = AbstractClaySoldierEntity.DEFAULT_SCALE;
     protected static final CubeDeformation SHRINK_DEFORMATION = new CubeDeformation(SCALE, SCALE, SCALE);
+    public static final float TWO_HANDED_Y_ROT = 0.25f;
 
     public ClaySoldierModel(ModelPart pRoot) {
         super(pRoot);
@@ -45,26 +48,6 @@ public class ClaySoldierModel extends HumanoidModel<AbstractClaySoldierRenderSta
     public void setupAnim(AbstractClaySoldierRenderState claySoldier) {
         super.setupAnim(claySoldier);
 
-        if (claySoldier.isZombie && (!claySoldier.isBaby || claySoldier.getMainHandItemStack() == ItemStack.EMPTY)) {
-            boolean animateAttack = claySoldier.swingAnimationType != SwingAnimationType.STAB;
-            if (animateAttack) {
-                float attackTime = claySoldier.attackTime;
-                float armDrop = -(float) Math.PI / (claySoldier.isAggressive ? 1.5F : 2.25F);
-                float attackYRotModifier = Mth.sin(attackTime * (float) Math.PI);
-                float attackXRotModifier = Mth.sin((1.0F - (1.0F - attackTime) * (1.0F - attackTime)) * (float) Math.PI);
-                rightArm.zRot = 0.0F;
-                rightArm.yRot = -(0.1F - attackYRotModifier * 0.6F);
-                rightArm.xRot = armDrop;
-                rightArm.xRot += attackYRotModifier * 1.2F - attackXRotModifier * 0.4F;
-                leftArm.zRot = 0.0F;
-                leftArm.yRot = 0.1F - attackYRotModifier * 0.6F;
-                leftArm.xRot = armDrop;
-                leftArm.xRot += attackYRotModifier * 1.2F - attackXRotModifier * 0.4F;
-            }
-
-
-        }
-        AnimationUtils.bobArms(rightArm, leftArm, claySoldier.ageInTicks);
 
         animateArms(claySoldier);
 
@@ -74,18 +57,56 @@ public class ClaySoldierModel extends HumanoidModel<AbstractClaySoldierRenderSta
     }
 
     private void animateArms(AbstractClaySoldierRenderState claySoldier) {
+
+
+        if (claySoldier.isZombie && (!claySoldier.isBaby || claySoldier.getMainHandItemStack() == ItemStack.EMPTY)) {
+            animateZombieArms(claySoldier);
+            AnimationUtils.bobArms(rightArm, leftArm, claySoldier.ageInTicks);
+        }
+
+        if (claySoldier.getItemBySlot(SoldierEquipmentSlot.MAINHAND).getHoldingPose() == HoldingPose.TWO_HANDED_BLOCK
+            || claySoldier.getItemBySlot(SoldierEquipmentSlot.OFFHAND).getHoldingPose() == HoldingPose.TWO_HANDED_BLOCK
+        ) {
+            animateZombieArms(claySoldier);
+            this.rightArm.yRot = -TWO_HANDED_Y_ROT;
+            this.leftArm.yRot = TWO_HANDED_Y_ROT;
+            AnimationUtils.bobArms(rightArm, leftArm, claySoldier.ageInTicks);
+        }
+
+        animateNormalArms(claySoldier);
+    }
+
+    private void animateZombieArms(AbstractClaySoldierRenderState claySoldier) {
+        boolean animateAttack = claySoldier.swingAnimationType != SwingAnimationType.STAB;
+        if (animateAttack) {
+            float attackTime = claySoldier.attackTime;
+            float armDrop = -(float) Math.PI / (claySoldier.isAggressive ? 1.5F : 2.25F);
+            float attackYRotModifier = Mth.sin(attackTime * (float) Math.PI);
+            float attackXRotModifier = Mth.sin((1.0F - (1.0F - attackTime) * (1.0F - attackTime)) * (float) Math.PI);
+            rightArm.zRot = 0.0F;
+            rightArm.yRot = -(0.1F - attackYRotModifier * 0.6F);
+            rightArm.xRot = armDrop;
+            rightArm.xRot += attackYRotModifier * 1.2F - attackXRotModifier * 0.4F;
+            leftArm.zRot = 0.0F;
+            leftArm.yRot = 0.1F - attackYRotModifier * 0.6F;
+            leftArm.xRot = armDrop;
+            leftArm.xRot += attackYRotModifier * 1.2F - attackXRotModifier * 0.4F;
+        }
+    }
+
+    private void animateNormalArms(AbstractClaySoldierRenderState claySoldier) {
         boolean isRightHanded = claySoldier.mainArm == HumanoidArm.RIGHT;
-        boolean right = isRightHanded ? claySoldier.hasShieldInHand(InteractionHand.MAIN_HAND) : claySoldier.hasShieldInHand(InteractionHand.OFF_HAND);
-        boolean left = isRightHanded ? claySoldier.hasShieldInHand(InteractionHand.OFF_HAND) : claySoldier.hasShieldInHand(InteractionHand.MAIN_HAND);
-        if (right) {
+        boolean rightShield = isRightHanded ? claySoldier.hasShieldInHand(InteractionHand.MAIN_HAND) : claySoldier.hasShieldInHand(InteractionHand.OFF_HAND);
+        boolean leftShield = isRightHanded ? claySoldier.hasShieldInHand(InteractionHand.OFF_HAND) : claySoldier.hasShieldInHand(InteractionHand.MAIN_HAND);
+        if (rightShield) {
             this.rightArm.xRot = -Mth.PI / (2.45F);
             this.rightArm.yRot = -0.5f;
         }
-        if (left) {
+        if (leftShield) {
             this.leftArm.xRot = -Mth.PI / (2.45F);
             this.leftArm.yRot = 0.5f;
         }
-        if (claySoldier.isFallingWithGlider || !claySoldier.carriedItemRenderState.isEmpty()) {
+        if (claySoldier.isFallingWithGlider || (!claySoldier.carriedItemRenderState.isEmpty() && !claySoldier.holdsBattery)) {
             this.leftArm.xRot = -Mth.PI;
             this.rightArm.xRot = -Mth.PI;
             this.rightArm.yRot = 0;

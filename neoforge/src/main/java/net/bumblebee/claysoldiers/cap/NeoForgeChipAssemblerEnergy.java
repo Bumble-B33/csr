@@ -1,41 +1,47 @@
 package net.bumblebee.claysoldiers.cap;
 
-import net.bumblebee.claysoldiers.block.chipassembler.ChipEnergyStorage;
+import net.bumblebee.claysoldiers.block.chipassembler.UsingEnergyStorage;
 import net.neoforged.neoforge.transfer.energy.SimpleEnergyHandler;
 import net.neoforged.neoforge.transfer.transaction.Transaction;
 
-public class NeoForgeChipAssemblerEnergy extends SimpleEnergyHandler implements ChipEnergyStorage {
-    public NeoForgeChipAssemblerEnergy() {
-        super(ChipEnergyStorage.MAX_CAPACITY, ChipEnergyStorage.MAX_CAPACITY, 0);
+import java.util.function.IntConsumer;
+
+public class NeoForgeChipAssemblerEnergy extends SimpleEnergyHandler implements UsingEnergyStorage {
+    private final IntConsumer onChange;
+
+    public NeoForgeChipAssemblerEnergy(IntConsumer onChange, int capacity, int maxInsert, int maxExtract) {
+        super(capacity, maxInsert, maxExtract);
+        this.onChange = onChange;
     }
 
     @Override
-    public long getEnergyStored() {
-        return getAmountAsLong();
+    protected void onEnergyChanged(int previousAmount) {
+        onChange.accept(previousAmount);
+    }
+
+    @Override
+    public int energyStored() {
+        return getAmountAsInt();
     }
 
     @Override
     public int insert(int amount) {
         int i;
-        try (Transaction tx = Transaction.openRoot()) {
-            i = insert(amount, tx);
-        }
+        Transaction tx = Transaction.openRoot();
+        i = insert(amount, tx);
+        tx.commit();
+
         return i;
     }
 
     @Override
-    public void set(int amount) {
-        this.energy = amount;
+    public void setEnergy(int amount) {
+        set(Math.min(capacity, amount));
     }
 
     @Override
-    public void remove(int amount) {
-        this.energy -= amount;
-    }
-
-    @Override
-    public long getMaxCapacity() {
-        return getCapacityAsLong();
+    public int maxEnergyStored() {
+        return getCapacityAsInt();
     }
 
     @Override

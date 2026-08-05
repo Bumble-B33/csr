@@ -7,13 +7,11 @@ import com.mojang.serialization.Decoder;
 import com.mojang.serialization.JsonOps;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.block.soldiercontainer.ClayMobContainer;
-import net.bumblebee.claysoldiers.block.chipassembler.ChipEnergyStorage;
-import net.bumblebee.claysoldiers.block.hamsterwheel.HamsterWheelBlockEntity;
-import net.bumblebee.claysoldiers.block.hamsterwheel.HamsterWheelEnergyStorage;
 import net.bumblebee.claysoldiers.capability.*;
 import net.bumblebee.claysoldiers.datamap.SoldierHoldableEffect;
 import net.bumblebee.claysoldiers.item.itemeffectholder.ItemStackWithEffect;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.FileToIdConverter;
 import net.minecraft.resources.Identifier;
@@ -67,11 +65,6 @@ public abstract class AbstractCapabilityManger extends SimpleJsonResourceReloadL
         return ifEnabledOrNull(Types.THROW, stack, ThrowableItemCapability.THROWABLE_ITEM_MAP.get(stack.getItem()));
     }
 
-    public abstract HamsterWheelEnergyStorage createEnergyStorage(HamsterWheelBlockEntity hamsterWheelBlockEntity);
-
-    public abstract ChipEnergyStorage createEnergyChipStorage();
-
-
     private <T> @Nullable T ifEnabledOrNull(Types type, ItemStack stack, T cap) {
         return Objects.requireNonNullElse(ENABLED_MAP.get(type).get(stack.getItem()), new EnabledHolder()).isEnabled() ? cap : null;
     }
@@ -90,11 +83,13 @@ public abstract class AbstractCapabilityManger extends SimpleJsonResourceReloadL
         return builder.toString();
     }
 
-    public abstract IBlockCache<IBlockStorageAccess> create(ServerLevel level, BlockPos pos);
+    public abstract IBlockCache<IBlockStorageAccess> createStorageCache(ServerLevel level, BlockPos pos);
 
-    public abstract IBlockCache<BlueprintRequestHandler> createBlueprint(ServerLevel level, BlockPos pos);
+    public abstract IBlockCache<BlueprintRequestHandler> createBlueprintCache(ServerLevel level, BlockPos pos);
 
     public abstract IBlockCache<AssignableWorksiteCapability> createPoiCache(ServerLevel level, BlockPos pos);
+
+    public abstract IBlockCache<EnergyCapability> createEnergyCache(ServerLevel level, BlockPos pos, Direction side);
 
     public abstract @Nullable ClayMobContainer getClayMobContainer(ServerLevel level, BlockPos pos, BlockState state, @Nullable BlockEntity blockEntity);
 

@@ -31,13 +31,12 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
 
 public class ModLootTableProvider extends LootTableProvider {
-    public ModLootTableProvider(PackOutput pOutput, CompletableFuture<HolderLookup.Provider> pRegistries) {
+    public ModLootTableProvider(PackOutput pOutput, CompletableFuture<HolderLookup.Provider> registries) {
         super(pOutput, Set.of(), List.of(
                 new SubProviderEntry(BlockLootTableProvider::new, LootContextParamSets.BLOCK),
                 new SubProviderEntry(BossLootTableProvider::new, LootContextParamSets.ENTITY),
                 new SubProviderEntry(ChestLootSubProvider::new, LootContextParamSets.CHEST)
-
-        ), pRegistries);
+        ), registries);
     }
 
     private static class BlockLootTableProvider extends BlockLootSubProvider {
@@ -51,9 +50,9 @@ public class ModLootTableProvider extends LootTableProvider {
             dropSelf(ModBlocks.EASEL_BLOCK.get());
             dropSelf(ModBlocks.ESCRITOIRE_BLOCK.get());
             dropSelf(ModBlocks.CHIP_ASSEMBLER.get());
+            dropSelf(ModBlocks.SOLDIER_CHARGING_PAD.get());
             dropOther(ModBlocks.SUGAR_CANE_HAMMOCK.get(), Items.SUGAR_CANE);
             dropOther(ModBlocks.CACTUS_HOUSE.get(), Items.CACTUS);
-
         }
 
         @Override

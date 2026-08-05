@@ -41,8 +41,8 @@ public class AbstractClaySoldierRenderState extends ClayMobRenderState {
     public int id;
     public int skinVariantId;
 
-    public boolean offhandOccupied;
-    public boolean mainhandOccupied;
+    public boolean disableOffhandRender;
+    public boolean disableMainHandRender;
     public boolean isAlive;
     public boolean isFalling;
     public float fallFlyingTimeInTicks;
@@ -63,6 +63,7 @@ public class AbstractClaySoldierRenderState extends ClayMobRenderState {
     public boolean hasOffsetColor;
 
     private final Map<SoldierEquipmentSlot, ItemStackWithEffect> inventory = new EnumMap<>(SoldierEquipmentSlot.class);
+    public final ItemStackRenderState twoHandedItem = new ItemStackRenderState();
 
     public float capeFlap;
     public float capeLean;
@@ -78,6 +79,7 @@ public class AbstractClaySoldierRenderState extends ClayMobRenderState {
     public Vec3 fishingHookDis = Vec3.ZERO;
     public FishingHookRenderState fishingHookRenderState = new FishingHookRenderState();
     public boolean isFishingHookEnchanted = false;
+    public boolean holdsBattery = false;
 
     public boolean hasShieldInHand(InteractionHand hand) {
         return hand == InteractionHand.MAIN_HAND ? hasShieldInMainHand : hasShieldInOffhand;
@@ -92,6 +94,7 @@ public class AbstractClaySoldierRenderState extends ClayMobRenderState {
             inventory.put(slot, claySoldierEntity.getItemBySlot(slot));
         }
     }
+
 
     public float fallFlyingScale() {
         return Mth.clamp(this.fallFlyingTimeInTicks * this.fallFlyingTimeInTicks / 100.0F, 0.0F, 1.0F);

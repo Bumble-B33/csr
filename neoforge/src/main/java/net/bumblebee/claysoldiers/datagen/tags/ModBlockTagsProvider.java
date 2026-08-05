@@ -19,8 +19,8 @@ public class ModBlockTagsProvider extends BlockTagsProvider {
 
     @Override
     protected void addTags(HolderLookup.Provider provider) {
-        tag(BlockTags.NEEDS_STONE_TOOL).add(ModBlocks.HAMSTER_WHEEL_BLOCK.get(), ModBlocks.CHIP_ASSEMBLER.get());
-        tag(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.HAMSTER_WHEEL_BLOCK.get(), ModBlocks.CHIP_ASSEMBLER.get());
+        tag(BlockTags.NEEDS_STONE_TOOL).add(ModBlocks.HAMSTER_WHEEL_BLOCK.get(), ModBlocks.CHIP_ASSEMBLER.get(), ModBlocks.SOLDIER_CHARGING_PAD.get());
+        tag(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.HAMSTER_WHEEL_BLOCK.get(), ModBlocks.CHIP_ASSEMBLER.get(), ModBlocks.SOLDIER_CHARGING_PAD.get());
         tag(BlockTags.MINEABLE_WITH_AXE).add(ModBlocks.ESCRITOIRE_BLOCK.get());
 
         tag(ModTags.Blocks.BLUEPRINT_BLACK_LISTED)

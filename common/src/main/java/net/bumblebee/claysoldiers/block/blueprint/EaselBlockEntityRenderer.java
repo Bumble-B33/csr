@@ -22,7 +22,6 @@ import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.client.resources.model.sprite.SpriteGetter;
 import net.minecraft.core.Vec3i;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
@@ -47,10 +46,10 @@ public class EaselBlockEntityRenderer implements BlockEntityRenderer<EaselBlockE
     private final ModelPart blueprint;
 
     public EaselBlockEntityRenderer(BlockEntityRendererProvider.Context pContext) {
-        this(pContext.entityModelSet(), pContext.sprites());
+        this(pContext.entityModelSet());
     }
 
-    public EaselBlockEntityRenderer(EntityModelSet set, SpriteGetter materials) {
+    public EaselBlockEntityRenderer(EntityModelSet set) {
         this.stand = set.bakeLayer(STAND_LAYER_LOCATION);
         this.blueprint = set.bakeLayer(BLUEPRINT_LAYER_LOCATION);
     }

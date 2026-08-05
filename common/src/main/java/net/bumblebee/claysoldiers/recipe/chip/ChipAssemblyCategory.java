@@ -18,7 +18,6 @@ public enum ChipAssemblyCategory implements StringRepresentable {
     private static final IntFunction<ChipAssemblyCategory> BY_ID = ByIdMap.continuous((e) -> e.id, values(), ByIdMap.OutOfBoundsStrategy.ZERO);
     public static final StreamCodec<ByteBuf, ChipAssemblyCategory> STREAM_CODEC = ByteBufCodecs.idMapper(BY_ID, (e) -> e.id);
 
-
     private final int id;
     private final String serializedName;
 

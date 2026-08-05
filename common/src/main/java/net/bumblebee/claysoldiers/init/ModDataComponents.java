@@ -1,5 +1,6 @@
 package net.bumblebee.claysoldiers.init;
 
+import com.mojang.serialization.Codec;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.blueprint.BlueprintData;
 import net.bumblebee.claysoldiers.claysoldierchips.ClaySoldierChip;
@@ -11,7 +12,9 @@ import net.bumblebee.claysoldiers.item.blueprint.BlueprintItem;
 import net.bumblebee.claysoldiers.item.claypouch.ClayPouchContent;
 import net.bumblebee.claysoldiers.item.disruptor.DisruptorKillRange;
 import net.bumblebee.claysoldiers.team.ClayMobTeam;
+import net.bumblebee.claysoldiers.util.PoiPosInfo;
 import net.minecraft.core.component.DataComponentType;
+import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.resources.ResourceKey;
 
 import java.util.function.Supplier;
@@ -35,10 +38,10 @@ public final class ModDataComponents {
                     .networkSynchronized(ClayBrushItem.Mode.STREAM_CODEC)
                     .build());
 
-    public static final Supplier<DataComponentType<ClayBrushItem.PoiPos>> POI_POS = ClaySoldiersCommon.PLATFORM.registerDataComponent("poi_pos",
-            () -> DataComponentType.<ClayBrushItem.PoiPos>builder()
-                    .persistent(ClayBrushItem.PoiPos.CODEC)
-                    .networkSynchronized(ClayBrushItem.PoiPos.STREAM_CODEC)
+    public static final Supplier<DataComponentType<PoiPosInfo>> POI_POS = ClaySoldiersCommon.PLATFORM.registerDataComponent("poi_pos",
+            () -> DataComponentType.<PoiPosInfo>builder()
+                    .persistent(PoiPosInfo.CODEC)
+                    .networkSynchronized(PoiPosInfo.STREAM_CODEC)
                     .build());
 
     public static final Supplier<DataComponentType<ResourceKey<BlueprintData>>> BLUEPRINT_DATA = ClaySoldiersCommon.PLATFORM.registerDataComponent("blueprint_data",
@@ -73,8 +76,8 @@ public final class ModDataComponents {
                     .networkSynchronized(TestItem.Mode.STREAM_CODEC)
                     .build()), null);
 
-    public static final Supplier<DataComponentType<ClaySoldierChip<?>>> CLAY_SOLDIER_CHIP = ClaySoldiersCommon.PLATFORM.registerDataComponent("clay_soldier_chip",
-            () -> DataComponentType.<ClaySoldierChip<?>>builder()
+    public static final Supplier<DataComponentType<ClaySoldierChip>> CLAY_SOLDIER_CHIP = ClaySoldiersCommon.PLATFORM.registerDataComponent("clay_soldier_chip",
+            () -> DataComponentType.<ClaySoldierChip>builder()
                     .persistent(ClaySoldierChip.CODEC)
                     .networkSynchronized(ClaySoldierChip.STREAM_CODEC)
                     .build()
@@ -86,6 +89,14 @@ public final class ModDataComponents {
                     .networkSynchronized(ClaySoldierChipAddon.STREAM_CODEC)
                     .build()
     );
+
+    public static final Supplier<DataComponentType<Integer>> CLAY_SOLDIER_CHIP_ADDON_ACCELERATION = ClaySoldiersCommon.PLATFORM.registerDataComponent("clay_soldier_chip_addon_acceleration",
+            () -> DataComponentType.<Integer>builder()
+                    .persistent(Codec.intRange(1, 64))
+                    .networkSynchronized(ByteBufCodecs.VAR_INT)
+                    .build()
+    );
+
 
     public static void init() {
     }

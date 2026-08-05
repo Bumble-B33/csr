@@ -4,7 +4,8 @@ import com.mojang.serialization.Codec;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.capability.AssignableWorksiteCapability;
 import net.bumblebee.claysoldiers.capability.IBlockCache;
-import net.bumblebee.claysoldiers.entity.common.soldier.status.SoldierStatusManager;
+import net.bumblebee.claysoldiers.entity.ClayDamageSources;
+import net.bumblebee.claysoldiers.entity.common.soldier.status.SoldierStatusHolder;
 import net.bumblebee.claysoldiers.entity.goal.UseAssignedPoiGoal;
 import net.bumblebee.claysoldiers.init.*;
 import net.bumblebee.claysoldiers.item.BrickedItemHolder;
@@ -16,8 +17,10 @@ import net.bumblebee.claysoldiers.team.OwnerQuery;
 import net.bumblebee.claysoldiers.team.TeamHolder;
 import net.bumblebee.claysoldiers.team.loyalty.TeamLoyaltyManger;
 import net.bumblebee.claysoldiers.team.loyalty.TeamPlayerData;
+import net.bumblebee.claysoldiers.util.PoiPosInfo;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ItemParticleOption;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
@@ -97,8 +100,8 @@ public abstract class ClayMobEntity extends PathfinderMob implements TeamHolder,
     private ItemStack spawnedFrom = ItemStack.EMPTY;
     private boolean dropSpawnedFrom = false;
 
-    @Nullable
-    private BlockPos poiPos = null;
+    @NotNull
+    private PoiPosInfo poiInfo = PoiPosInfo.EMPTY;
     @Nullable
     private IBlockCache<AssignableWorksiteCapability> poiPosCapability;
 
@@ -111,10 +114,9 @@ public abstract class ClayMobEntity extends PathfinderMob implements TeamHolder,
     private TeamPlayerData.PlayerData cachedTeamOwner = null;
     private long lastOwnerChange = -1;
 
-
     protected ClayMobEntity(EntityType<? extends ClayMobEntity> entityType, Level level) {
         super(entityType, level);
-        this.clayDamageSources = ClaySoldiersCommon.PLATFORM.createClayDamageSources(level.registryAccess());
+        this.clayDamageSources = new ClayDamageSources(level.registryAccess());
         setPlayerTeamData(level);
         setPersistenceRequired();
     }
@@ -179,7 +181,7 @@ public abstract class ClayMobEntity extends PathfinderMob implements TeamHolder,
         }
         output.store(SITTING_TAG, OrderedCommand.CODEC, this.orderedCommand);
         output.putBoolean(WAXED_TAG, this.isWaxed());
-        output.storeNullable(POI_POS_TAG, BlockPos.CODEC, getPoiPos());
+        output.storeNullable(POI_POS_TAG, PoiPosInfo.CODEC, getPoiInfo());
     }
 
     @Override
@@ -200,7 +202,7 @@ public abstract class ClayMobEntity extends PathfinderMob implements TeamHolder,
             setPose(Pose.SITTING);
         }
         this.setWaxed(input.getBooleanOr(WAXED_TAG, false));
-        setPoiPos(input.read(POI_POS_TAG, BlockPos.CODEC).orElse(null));
+        setPoiInfo(input.read(POI_POS_TAG, PoiPosInfo.CODEC).orElse(PoiPosInfo.EMPTY));
     }
 
     public static Optional<ItemStack> getSpawnedFromFromTag(ValueInput tag) {
@@ -524,8 +526,8 @@ public abstract class ClayMobEntity extends PathfinderMob implements TeamHolder,
         }
         if (mode == ClayBrushItem.Mode.POI) {
             if (!level().isClientSide() && player instanceof ServerPlayer serverPlayer) {
-                setPoiPos(ClayBrushItem.getPoiPos(itemInHand));
-                if (poiPos != null) {
+                setPoiInfo(ClayBrushItem.getPoiPos(itemInHand));
+                if (!poiInfo.isEmpty()) {
                     ModCritirions.CLAY_BRUSH_COMMAND_TRIGGER.get().trigger(serverPlayer, mode);
                 }
                 serverPlayer.sendSystemMessage(getPoiSetDisplayName(), true);
@@ -544,7 +546,7 @@ public abstract class ClayMobEntity extends PathfinderMob implements TeamHolder,
         }
         BlockState blockState = level().getBlockState(getPoiPos());
         if (blockState.isAir()) {
-            setPoiPos(null);
+            setPoiInfo(PoiPosInfo.EMPTY);
             return Component.translatable(WORK_POI_INVALID_LANG, Component.translatable(Blocks.AIR.getDescriptionId()));
         }
         return Component.translatable(blockState.getBlock().getDescriptionId()).append(" (" + getPoiPos().toShortString() + ")");
@@ -579,7 +581,6 @@ public abstract class ClayMobEntity extends PathfinderMob implements TeamHolder,
             this.level().addParticle(particleOptions, this.getRandomX(0.5), this.getRandomY() + 0.25, this.getRandomZ(0.5), xSpeed, ySpeed, zSpeed);
         }
     }
-
 
 
     @Override
@@ -697,18 +698,16 @@ public abstract class ClayMobEntity extends PathfinderMob implements TeamHolder,
     protected void modifyPickResult(ItemStack stack) {
     }
 
+    public float getChanceLuck() {
+        return 0;
+    }
+
     /**
      * @return the current status of the ClayMob, returns {@code null} to indicate the ClayMob does not do anything special
      */
     @Nullable
     public Component getWorkStatus() {
-        if (isInSittingPose()) {
-            return Component.translatable(SoldierStatusManager.SITTING_LANG);
-        }
-        if (ignoresOwner()) {
-            return Component.translatable(SoldierStatusManager.IGNORING_OWNER_LANG);
-        }
-        return usingPoi() ? Component.literal(SoldierStatusManager.USING_POI_LANG) : null;
+        return SoldierStatusHolder.clayMobWorkStatus(this);
     }
 
     /**
@@ -809,17 +808,24 @@ public abstract class ClayMobEntity extends PathfinderMob implements TeamHolder,
      * May be {@code null} to indicate there is no saved poi.
      */
     public @Nullable BlockPos getPoiPos() {
-        return poiPos;
+        return poiInfo.getPos();
     }
 
-    /**
-     * Sets a new PoiPos.
-     *
-     * @param pos the new PoiPos
-     */
-    public void setPoiPos(@Nullable BlockPos pos) {
-        poiPos = pos;
-        boolean hasPos = pos != null;
+    public @Nullable Direction getPoiSide() {
+        return poiInfo.side();
+    }
+
+    public @NonNull PoiPosInfo getPoiInfo() {
+        return poiInfo;
+    }
+
+    public void clearPoiInfo() {
+        setPoiInfo(PoiPosInfo.EMPTY);
+    }
+
+    public void setPoiInfo(@NonNull PoiPosInfo pos) {
+        poiInfo = pos;
+        boolean hasPos = !pos.isEmpty();
         entityData.set(HAS_POI_POS, hasPos);
         if (level() instanceof ServerLevel serverLevel) {
             poiPosCapability = hasPos ? UseAssignedPoiGoal.createCache(this, serverLevel) : null;

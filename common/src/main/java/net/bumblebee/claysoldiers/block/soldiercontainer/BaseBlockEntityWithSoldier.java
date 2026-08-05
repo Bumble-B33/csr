@@ -18,7 +18,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.WalkAnimationState;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -194,8 +193,13 @@ public abstract class BaseBlockEntityWithSoldier extends BlockEntity implements 
     public final CompoundTag getUpdateTag(HolderLookup.Provider pRegistries) {
         var output = TagValueOutput.createWithContext(ClaySoldiersCommon.PROBLEM_REPORTER, pRegistries);
         queue.saveAdditional(output, true);
+        saveToUpdateTag(output);
 
         return output.buildResult();
+    }
+
+    protected void saveToUpdateTag(ValueOutput output) {
+
     }
 
 

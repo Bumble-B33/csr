@@ -3,6 +3,7 @@ package net.bumblebee.claysoldiers.clayremovalcondition;
 import com.mojang.serialization.Codec;
 import io.netty.buffer.ByteBuf;
 import net.bumblebee.claysoldiers.entity.common.soldier.AbstractClaySoldierEntity;
+import net.bumblebee.claysoldiers.util.Chance;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.StreamCodec;
@@ -10,27 +11,33 @@ import net.minecraft.network.codec.StreamCodec;
 public class OnUseCondition extends RemovalCondition {
     public static final Codec<OnUseCondition> MELEE_CODEC = createForType(RemovalConditionContext.Type.MELEE_ATTACK);
     public static final Codec<OnUseCondition> RANGED_CODEC = createForType(RemovalConditionContext.Type.RANGED_ATTACK);
-    public static final StreamCodec<ByteBuf, OnUseCondition> MELEE_STREAM_CODEC = createChacneStreamCodec(OnUseCondition::melee);
-    public static final StreamCodec<ByteBuf, OnUseCondition> RANGED_STREAM_CODEC = createChacneStreamCodec(OnUseCondition::ranged);
+    public static final StreamCodec<ByteBuf, OnUseCondition> MELEE_STREAM_CODEC = createChanceStreamCodec(OnUseCondition::melee);
+    public static final StreamCodec<ByteBuf, OnUseCondition> RANGED_STREAM_CODEC = createChanceStreamCodec(OnUseCondition::ranged);
     public static final String MELEE_LANG_KEY = COMPONENT_PREFIX + ".on_use.melee";
     public static final String RANGED_LANG_KEY = COMPONENT_PREFIX + ".on_use.ranged";
     public static final String ERROR_LANG_KEY = COMPONENT_PREFIX + ".on_use.error";
 
 
-    public static OnUseCondition melee(float chance) {
+    public static OnUseCondition melee(Chance chance) {
         return new OnUseCondition(RemovalConditionContext.Type.MELEE_ATTACK, chance);
     }
-    public static OnUseCondition ranged(float chance) {
+    public static OnUseCondition melee(float chance) {
+        return melee(Chance.of(chance));
+    }
+    public static OnUseCondition ranged(Chance chance) {
         return new OnUseCondition(RemovalConditionContext.Type.RANGED_ATTACK, chance);
     }
+    public static OnUseCondition ranged(float chance) {
+        return ranged(Chance.of(chance));
+    }
 
-    private OnUseCondition(RemovalConditionContext.Type type, float chance) {
+    private OnUseCondition(RemovalConditionContext.Type type, Chance chance) {
         super(chance, type);
     }
 
     @Override
     public boolean shouldRemove(AbstractClaySoldierEntity soldier, RemovalConditionContext context) {
-        return baseTest(context.getType(), soldier.getRandom());
+        return baseTest(context.getType(), soldier.getRandom(), soldier.getChanceLuck());
     }
 
     @Override

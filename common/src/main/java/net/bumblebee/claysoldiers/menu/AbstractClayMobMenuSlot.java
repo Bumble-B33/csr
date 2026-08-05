@@ -7,6 +7,7 @@ import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
+import org.jspecify.annotations.NonNull;
 
 public abstract class AbstractClayMobMenuSlot extends Slot {
     private final static Container EMPTY_INVENTORY = new SimpleContainer(0);
@@ -36,7 +37,7 @@ public abstract class AbstractClayMobMenuSlot extends Slot {
     /**
      * Returns the display name of the Slot.
      */
-    public abstract Component getDisplayName();
+    public abstract @NonNull Component getDisplayName();
     /**
      * Returns whether the Inventory can be edited.
      */

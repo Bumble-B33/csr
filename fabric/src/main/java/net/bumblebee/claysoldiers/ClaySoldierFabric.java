@@ -2,12 +2,12 @@ package net.bumblebee.claysoldiers;
 
 import com.mojang.serialization.Codec;
 import net.bumblebee.claysoldiers.block.soldiercontainer.ClayMobContainer;
-import net.bumblebee.claysoldiers.block.hamsterwheel.BatteryProperty;
 import net.bumblebee.claysoldiers.blueprint.BlueprintManager;
 import net.bumblebee.claysoldiers.capability.AssignableWorksiteCapability;
 import net.bumblebee.claysoldiers.capability.BlueprintRequestHandler;
 import net.bumblebee.claysoldiers.commands.ColorHelperArgumentType;
 import net.bumblebee.claysoldiers.datamap.FabricDataMapLoader;
+import net.bumblebee.claysoldiers.energy.BatteryProperties;
 import net.bumblebee.claysoldiers.init.*;
 import net.bumblebee.claysoldiers.integration.ExternalMods;
 import net.bumblebee.claysoldiers.integration.accessories.ModAccessories;
@@ -46,6 +46,7 @@ import net.minecraft.world.InteractionResult;
 import org.jetbrains.annotations.Nullable;
 import org.jspecify.annotations.NonNull;
 import team.reborn.energy.api.EnergyStorage;
+import team.reborn.energy.api.base.SimpleEnergyItem;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -54,7 +55,6 @@ import java.util.function.BiConsumer;
 public class ClaySoldierFabric implements ModInitializer {
     private static final Identifier BLUEPRINT_ID = Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "csr_blueprint");
     public static final Identifier CSR_DEFAULT_PACK_ID = Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, ClaySoldiersCommon.CSR_DEFAULT_DATA_PACK_PATH);
-
 
     public static final BlockApiLookup<BlueprintRequestHandler, Void> BLUEPRINT_REQUEST_HANDLER_LOOKUP =
             BlockApiLookup.get(Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "blueprint_request_handler"), BlueprintRequestHandler.class, Void.class);
@@ -71,9 +71,10 @@ public class ClaySoldierFabric implements ModInitializer {
     public void onInitialize() {
         ClaySoldiersCommon.init();
 
-        ModRegistries.register(r -> {});
+        ModRegistries.register(_ -> {
+        });
         RecipeSynchronization.synchronizeRecipeSerializer(ModRecipes.CHIP_ASSEMBLY_SERIALIZER.get());
-
+        RecipeSynchronization.synchronizeRecipeSerializer(ModRecipes.ADDON_CHIP_SERIALIZER.get());
 
         ClaySoldiersCommon.NETWORK_MANGER.forEach(data -> {
             PayloadTypeRegistry.clientboundPlay().register(data.id(), data.codec());
@@ -161,15 +162,23 @@ public class ClaySoldierFabric implements ModInitializer {
         ModCapabilities.registerBlueprint((type, lookup) -> BLUEPRINT_REQUEST_HANDLER_LOOKUP.registerForBlockEntities((o, _) -> lookup.apply(o), type));
         ModCapabilities.registerAssignablePoi((type, lookup) -> ASSIGNABLE_POI_LOOKUP.registerForBlockEntities((o, _) -> lookup.apply(o), type));
         ModCapabilities.registerClayMobContainer((type, lookup) -> CLAY_MOB_CONTAINER_LOOKUP.registerForBlockEntities((o, _) -> lookup.apply(o), type));
+        ModCapabilities.registerItemEnergy((lookup, items) -> {
+            EnergyStorage.ITEM.registerForItems((itemStack, containerItemContext) -> {
+                BatteryProperties max = lookup.apply(itemStack);
+                if (max == null) {
+                    return null;
+                }
+                return SimpleEnergyItem.createStorage(containerItemContext, max.capacity(), max.maxInsert(), max.maxExtract());
+            }, items);
+        });
+
 
         SimpleConfigFabric config = SimpleConfigFabric.of(ClaySoldiersCommon.MOD_ID).provider(namespace ->
                 """
                         # Whether the Inventory of a clay soldier can be edited via the menu. May cause loss of items.
                         %s=false
-                        # Hamster Wheel Energy Capacity
-                        %s=3000
                         # Hamster Wheel Energy Generation Speed
-                        %s=1
+                        %s=3
                         # Enable/Disabled the Recipe to craft Shear Blades from Shears
                         %s=true
                         # Whether Clay Soldiers should drop their Inventory on death
@@ -178,14 +187,19 @@ public class ClaySoldierFabric implements ModInitializer {
                         %s=0.5f
                         # When true Chips can only be installed into Clay Soldiers loyal to the player
                         %s=true
+                        # Energy Transfer Rate for Clay Soldiers with batteries
+                        %s=15
+                        # Charging Pad Energy Transfer Rate for the Player
+                        %s=15
                         """.formatted(
                         IConfig.SOLDIER_MODIFY_MENU_KEY,
-                        IConfig.HAMSTER_WHEEL_CAPACITY_KEY,
                         IConfig.HAMSTER_WHEEL_SPEED_KEY,
                         IConfig.SHEAR_BLADE_RECIPE_KEY,
                         IConfig.SOLDIER_DROP_INVENTORY_KEY,
                         IConfig.SOLDIER_DROP_SELF_KEY,
-                        IConfig.CHIP_REQUIRES_LOYALTY_KEY
+                        IConfig.CHIP_REQUIRES_LOYALTY_KEY,
+                        IConfig.BASE_SOLDIER_ENERGY_TRANSFER_RATE_KEY,
+                        IConfig.CHARGING_PAD_PLAYER_RATE_KEY
                 )).request();
 
         if (config.isBroken()) {
@@ -195,13 +209,14 @@ public class ClaySoldierFabric implements ModInitializer {
         }
 
         FabricConfig.init(
-                config.getPositiveLong(IConfig.HAMSTER_WHEEL_CAPACITY_KEY, 3000, BatteryProperty.getMaxSupportedEnergy()),
-                config.getPositiveLong(IConfig.HAMSTER_WHEEL_SPEED_KEY, 3, Long.MAX_VALUE),
+                config.getPositiveInt(IConfig.HAMSTER_WHEEL_SPEED_KEY, 3, Integer.MAX_VALUE),
                 config.getBoolean(IConfig.SOLDIER_MODIFY_MENU_KEY, false),
                 config.getBoolean(IConfig.SHEAR_BLADE_RECIPE_KEY, true),
                 config.getFloatPercent(IConfig.SOLDIER_DROP_INVENTORY_KEY, 0.5f),
                 config.getBoolean(IConfig.SOLDIER_DROP_SELF_KEY, true),
-                config.getBoolean(IConfig.CHIP_REQUIRES_LOYALTY_KEY, true)
+                config.getBoolean(IConfig.CHIP_REQUIRES_LOYALTY_KEY, true),
+                config.getPositiveInt(IConfig.BASE_SOLDIER_ENERGY_TRANSFER_RATE_KEY, 15, Integer.MAX_VALUE),
+                config.getNonNegativeInt(IConfig.CHARGING_PAD_PLAYER_RATE_KEY, 15, Integer.MAX_VALUE)
         );
     }
 

@@ -6,27 +6,46 @@ import com.mojang.datafixers.util.Pair;
 import com.mojang.datafixers.util.Unit;
 import com.mojang.serialization.*;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
-import net.bumblebee.claysoldiers.soldierproperties.SoldierProperty;
-import net.bumblebee.claysoldiers.soldierproperties.SoldierPropertyMap;
-import net.bumblebee.claysoldiers.soldierproperties.SoldierPropertyType;
-import net.bumblebee.claysoldiers.soldierproperties.SoldierPropertyTypes;
+import net.bumblebee.claysoldiers.soldierproperties.*;
+import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NonNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
-public class SoldierPropertyMapCodec implements Codec<SoldierPropertyMap> {
+public abstract class SoldierPropertyMapCodec<A extends SoldierPropertyMapReader> implements Codec<A> {
     private static final Codec<SoldierPropertyType<?>> TYPE_CODEC = SoldierPropertyTypes.CODEC;
-    private final Collection<Supplier<? extends SoldierPropertyType<?>>> ignored;
+    private Collection<Supplier<? extends SoldierPropertyType<?>>> ignored;
+    private @Nullable Collection<? extends SoldierPropertyType<?>> mappedToIgnore;
 
-    public SoldierPropertyMapCodec(Collection<Supplier<? extends SoldierPropertyType<?>>> ignored) {
+    protected SoldierPropertyMapCodec(@NonNull Collection<Supplier<? extends SoldierPropertyType<?>>> ignored) {
         this.ignored = ignored;
     }
 
-    public SoldierPropertyMapCodec() {
-        this(Set.of());
+    public static Codec<SoldierPropertyMap> map() {
+        return map(List.of());
+    }
+
+    public static Codec<SoldierPropertyMap> map(Collection<Supplier<? extends SoldierPropertyType<?>>> ignored) {
+        return new SoldierPropertyMapCodec<>(ignored) {
+            @Override
+            protected SoldierPropertyMap create(List<? extends SoldierProperty<?>> entries) {
+                return new SoldierPropertyMap(entries);
+            }
+        };
+    }
+
+    public static Codec<SoldierPropertyMapReader> immutable(Collection<Supplier<? extends SoldierPropertyType<?>>> ignored) {
+        return new SoldierPropertyMapCodec<>(List.of()) {
+            @Override
+            protected SoldierPropertyMapReader create(List<? extends SoldierProperty<?>> entries) {
+                return SoldierPropertyMap.of(entries);
+            }
+        };
     }
 
     private <V> Codec<V> getSecond(SoldierPropertyType<V> type) {
@@ -34,12 +53,15 @@ public class SoldierPropertyMapCodec implements Codec<SoldierPropertyMap> {
     }
 
     @Override
-    public <T> DataResult<Pair<SoldierPropertyMap, T>> decode(DynamicOps<T> ops, T input) {
+    public <T> DataResult<Pair<A, T>> decode(DynamicOps<T> ops, T input) {
         return ops.getMap(input).setLifecycle(Lifecycle.stable()).flatMap(map -> decode(ops, map)).map(spMap -> Pair.of(spMap, input));
     }
 
-    public <T> DataResult<SoldierPropertyMap> decode(final DynamicOps<T> ops, final MapLike<T> input) {
-        List<? extends SoldierPropertyType<?>> toIgnore = ignored.stream().map(Supplier::get).toList();
+    private <T> DataResult<A> decode(final DynamicOps<T> ops, final MapLike<T> input) {
+        if (mappedToIgnore == null) {
+            mappedToIgnore = ignored.stream().map(Supplier::get).toList();
+            ignored = null;
+        }
 
         final ImmutableMap.Builder<SoldierPropertyType<?>, Supplier<?>> read = ImmutableMap.builder();
         final ImmutableList.Builder<Pair<T, T>> failed = ImmutableList.builder();
@@ -65,17 +87,17 @@ public class SoldierPropertyMapCodec implements Codec<SoldierPropertyMap> {
         final List<? extends SoldierProperty<?>> elements = read.build().entrySet()
                 .stream().map(entry -> createProperty(entry.getKey(), entry.getValue().get()))
                 .filter(p -> {
-                    var shouldIgnore = toIgnore.contains(p.type());
+                    var shouldIgnore = mappedToIgnore.contains(p.type());
                     if (shouldIgnore) {
                         ClaySoldiersCommon.ERROR_HANDLER.error("Parsing a Soldier Property (%s), that should be ignored by the Codec".formatted(p));
                     }
                     return !shouldIgnore;
                 })
                 .toList();
-        SoldierPropertyMap soldierPropertyMap = new SoldierPropertyMap(elements);
+        A soldierPropertyMap = create(elements);
 
         List<String> exceptions = new ArrayList<>();
-        soldierPropertyMap.validate(e -> exceptions.add(e.getMessage()));
+        validate(soldierPropertyMap, exceptions::add);
         if (!exceptions.isEmpty()) {
             return DataResult.error(exceptions::toString);
         }
@@ -85,12 +107,14 @@ public class SoldierPropertyMapCodec implements Codec<SoldierPropertyMap> {
         return result.map(unit -> soldierPropertyMap).setPartial(soldierPropertyMap).mapError(e -> e + " missed input: " + errors);
     }
 
+    protected abstract A create(List<? extends SoldierProperty<?>> entries);
+
     @Override
-    public <T> DataResult<T> encode(SoldierPropertyMap input, DynamicOps<T> ops, T prefix) {
+    public <T> DataResult<T> encode(A input, DynamicOps<T> ops, T prefix) {
         return encode(input, ops, ops.mapBuilder()).build(prefix);
     }
 
-    private <T> RecordBuilder<T> encode(final SoldierPropertyMap input, final DynamicOps<T> ops, final RecordBuilder<T> prefix) {
+    private <T> RecordBuilder<T> encode(final SoldierPropertyMapReader input, final DynamicOps<T> ops, final RecordBuilder<T> prefix) {
         for (var entry : input) {
             encodeSingle(entry, ops, prefix);
         }
@@ -103,6 +127,10 @@ public class SoldierPropertyMapCodec implements Codec<SoldierPropertyMap> {
         prefix.add(
                 TYPE_CODEC.encodeStart(ops, input.type()),
                 getSecond(input.type()).encodeStart(ops, input.value()));
+    }
+
+    protected void validate(A soldierProperties, Consumer<String> exceptionHandler) {
+        SoldierPropertyMap.validate(soldierProperties, exceptionHandler);
     }
 
     @SuppressWarnings("unchecked")

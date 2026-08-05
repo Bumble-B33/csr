@@ -54,6 +54,9 @@ dependencies {
 
     //modCompileOnlyApi("io.wispforest:accessories-fabric:${accessories_version}+${minecraft_version}")
     include(api("teamreborn:energy:${fabric_energy_version}"))
+
+    //Todo remove
+    runtimeOnly("maven.modrinth:techreborn:6.0.5")
 }
 
 loom {

@@ -16,5 +16,6 @@ public class ModParticleProvider extends ParticleDescriptionProvider {
         spriteSet(ModParticles.SMALL_ANGRY_PARTICLE.get(), Identifier.withDefaultNamespace("angry"));
         spriteSet(ModParticles.SMALL_HAPPY_PARTICLE.get(), Identifier.withDefaultNamespace("glint"));
         spriteSet(ModParticles.SMALL_WAXED_PARTICLE.get(), Identifier.withDefaultNamespace("glow"));
+        spriteSet(ModParticles.CHARGING_PARTICLE.get(), Identifier.withDefaultNamespace("shriek"));
     }
 }

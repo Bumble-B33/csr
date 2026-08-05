@@ -3,6 +3,7 @@ package net.bumblebee.claysoldiers.item.itemeffectholder;
 import com.mojang.serialization.Codec;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.capability.ThrowableItemCapability;
+import net.bumblebee.claysoldiers.datamap.HoldingPose;
 import net.bumblebee.claysoldiers.datamap.SoldierHoldableEffect;
 import net.bumblebee.claysoldiers.datamap.armor.SoldierMultiWearable;
 import net.bumblebee.claysoldiers.datamap.armor.accessories.SoldierAccessoryKey;
@@ -64,6 +65,10 @@ public class ItemStackWithEffect extends ItemStackEffectHolder<SoldierHoldableEf
             return ClaySoldiersCommon.DATA_MAP.getEffect(stack);
         }
         return effect;
+    }
+
+    public HoldingPose getHoldingPose() {
+        return effect == null ? HoldingPose.NONE : effect.holdingPose();
     }
 
 

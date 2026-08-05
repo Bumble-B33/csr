@@ -28,51 +28,27 @@ import java.util.Set;
 import java.util.function.Supplier;
 
 public final class CodecUtils {
-    public static final Codec<Float> CHANCE_CODEC = Codec.either(Codec.floatRange(0, 1f), Codec.STRING).comapFlatMap(
-            CodecUtils::getFromChanceEither,
-            CodecUtils::createChanceEither
-    );
-    private static DataResult<Float> getFromChanceEither(Either<Float, String> either) {
-        if (either.left().isPresent()) {
-            return DataResult.success(either.left().get());
-        }
-        String parsedString = either.right().orElseThrow();
-        if (parsedString.equals("always")) {
-            return DataResult.success(1F);
-        } else if (parsedString.equals("never")) {
-            return DataResult.success(0F);
-        }
-        return DataResult.error(() -> "Cannot parse %s as a chance, needs to be [0.0 - 1.0], 'always' or 'never'".formatted(parsedString));
-    }
-    private static Either<Float, String> createChanceEither(float chance) {
-        if (chance >= 1) {
-            return Either.right("always");
-        } else if (chance <= 0) {
-            return Either.right("never");
-        }
-        return Either.left(chance);
-    }
-
+    private static final int MAX_SECONDS = (Integer.MAX_VALUE / 20) - 1;
     public static final Codec<Integer> TIME_CODEC = Codec.either(ExtraCodecs.NON_NEGATIVE_INT, Codec.STRING).comapFlatMap(
             CodecUtils::getTimeFromEither, time -> time % 20 == 0 ? Either.right(time / 20 + "s") : Either.left(time)
     );
-    public static DataResult<Integer> getTimeFromEither(Either<Integer, String> either) {
+    private static DataResult<Integer> getTimeFromEither(Either<Integer, String> either) {
         if (either.left().isPresent()) {
             return DataResult.success(either.left().get());
         }
         String[] split = either.right().orElseThrow().split("s");
 
         if (split.length != 1) {
-            return DataResult.error(() -> "Cannot parse %s as a time, needs to be [0 - %d] followed by 's'".formatted(either.right().orElseThrow(), Integer.MAX_VALUE / 20));
+            return DataResult.error(() -> "Cannot parse %s as a time, needs to be [0 - %d] followed by 's'".formatted(either.right().orElseThrow(), MAX_SECONDS));
         }
         try {
             int parsed = Integer.parseInt(split[0]);
-            if (parsed < 0 || parsed >= Integer.MAX_VALUE / 20) {
-                return DataResult.error(() -> "Cannot parse %s as a time as seconds, needs to be [0 - %d] followed by 's'".formatted(split[0], Integer.MAX_VALUE / 20));
+            if (parsed < 0 || parsed >= MAX_SECONDS) {
+                return DataResult.error(() -> "Cannot parse %s as a time as seconds, needs to be [0 - %d] followed by 's'".formatted(split[0], MAX_SECONDS));
             }
             return DataResult.success(parsed * 20);
         } catch (NumberFormatException e) {
-            return DataResult.error(() -> "Cannot parse %s as a time as seconds, needs to be [0 - %d] followed by 's'".formatted(split[0], Integer.MAX_VALUE / 20));
+            return DataResult.error(() -> "Cannot parse %s as a time as seconds, needs to be [0 - %d] followed by 's'".formatted(split[0], MAX_SECONDS));
         }
     }
 

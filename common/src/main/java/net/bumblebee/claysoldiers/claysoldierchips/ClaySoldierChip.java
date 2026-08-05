@@ -1,13 +1,13 @@
 package net.bumblebee.claysoldiers.claysoldierchips;
 
 import com.mojang.serialization.Codec;
-import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.claysoldierchips.addon.ClaySoldierChipAddon;
 import net.bumblebee.claysoldiers.entity.common.ClayMobEntity;
 import net.bumblebee.claysoldiers.entity.common.programmable.ProgrammableClaySoldierEntity;
 import net.bumblebee.claysoldiers.entity.goal.ClayMobSitGoal;
+import net.bumblebee.claysoldiers.init.ModDataComponents;
 import net.bumblebee.claysoldiers.init.ModRegistries;
 import net.minecraft.core.Holder;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -18,55 +18,48 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.StringRepresentable;
-import net.minecraft.util.Unit;
 import net.minecraft.util.Util;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.world.level.ItemLike;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NonNull;
 
 import java.util.*;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Supplier;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.*;
 import java.util.stream.Stream;
 
-public abstract class ClaySoldierChip<T> {
-    private static final StreamCodec<RegistryFriendlyByteBuf, ClaySoldierChip.Type<?>> TYPE_STREAM_CODEC = ByteBufCodecs.registry(ModRegistries.CLAY_SOLDIER_MODULES);
-    public static final StreamCodec<RegistryFriendlyByteBuf, ClaySoldierChip<?>> STREAM_CODEC = new StreamCodec<>() {
-        @Override
-        public ClaySoldierChip<?> decode(RegistryFriendlyByteBuf registryFriendlyByteBuf) {
-            var type = TYPE_STREAM_CODEC.decode(registryFriendlyByteBuf);
-            return type.decode(registryFriendlyByteBuf);
-        }
+public abstract class ClaySoldierChip {
+    private static final StreamCodec<RegistryFriendlyByteBuf, ClaySoldierChip.Type> TYPE_STREAM_CODEC = ByteBufCodecs.registry(ModRegistries.CLAY_SOLDIER_MODULES);
+    public static final StreamCodec<RegistryFriendlyByteBuf, ClaySoldierChip> STREAM_CODEC = StreamCodec.composite(
+            TYPE_STREAM_CODEC, ClaySoldierChip::getType,
+            ClaySoldierChipAddon.LIST_STREAM_CODEC, ClaySoldierChip::getAddons,
+            Type::create
+    );
+    private static final Codec<ClaySoldierChip.Type> TYPE_CODEC = ModRegistries.CLAY_SOLDIER_MODULES_REGISTRY.byNameCodec();
+    public static final Codec<ClaySoldierChip> CODEC = RecordCodecBuilder.create(in -> in.group(
+            TYPE_CODEC.fieldOf("type").forGetter(ClaySoldierChip::getType),
+            ClaySoldierChipAddon.LIST_CODEC.optionalFieldOf("addons", List.of()).forGetter(ClaySoldierChip::getAddons)
+    ).apply(in, Type::create));
 
-        @Override
-        public void encode(RegistryFriendlyByteBuf registryFriendlyByteBuf, ClaySoldierChip<?> claySoldierChip) {
-            TYPE_STREAM_CODEC.encode(registryFriendlyByteBuf, claySoldierChip.getType());
-            claySoldierChip.encode(registryFriendlyByteBuf);
-        }
-    };
-    private static final Codec<ClaySoldierChip.Type<?>> TYPE_CODEC = ModRegistries.CLAY_SOLDIER_MODULES_REGISTRY.byNameCodec();
-    public static final Codec<ClaySoldierChip<?>> CODEC = TYPE_CODEC.dispatch(ClaySoldierChip::getType, Type::createMapCodec);
-    protected static final String LANG_PREFIX = "clay_soldier.chip." + ClaySoldiersCommon.MOD_ID + ".";
-
-    public static final String NO_MODI = LANG_PREFIX + ".data.no_additional_modi";
+    protected static final String LANG_PREFIX = "clay_soldier_chip." + ClaySoldiersCommon.MOD_ID + ".";
+    public static final Map<Supplier<ClaySoldierChip.Type>, Item> BY_ITEM = new ConcurrentHashMap<>();
 
     @Nullable
     private AddonInfo addonInfo;
-    protected final T data;
     protected final List<ClaySoldierChipAddon> addons;
+    private final int acceleration;
 
-    protected ClaySoldierChip(T data, List<ClaySoldierChipAddon> addons) {
-        this.data = data;
+    protected ClaySoldierChip(List<ClaySoldierChipAddon> addons) {
         this.addons = addons;
+        this.acceleration = addons.stream().reduce(0, (count, addon) -> count + addon.getOrDefault(ModDataComponents.CLAY_SOLDIER_CHIP_ADDON_ACCELERATION.get(), 0), Integer::sum);
     }
 
-    public ClaySoldierChip<T> withSoldier(ProgrammableClaySoldierEntity soldier) {
+    public ClaySoldierChip withSoldier(ProgrammableClaySoldierEntity soldier) {
         return this;
     }
 
@@ -84,7 +77,7 @@ public abstract class ClaySoldierChip<T> {
         goalAdder.accept(0, new ClayMobSitGoal(soldier));
     }
 
-    public abstract Type<T> getType();
+    public abstract Type getType();
 
     public boolean requiresItemPickUp(ItemStack stack) {
         return false;
@@ -142,21 +135,10 @@ public abstract class ClaySoldierChip<T> {
 
     public void appendDebugInfo(Consumer<String> appender) {
         appender.accept("Chip: " + this.getClass().getSimpleName());
-        appender.accept(" Data: " + data);
+        appender.accept(" Addons: " + this.getAddons());
     }
 
-    public void readAdditional(ValueInput input) {
-
-    }
-
-    public void saveAdditional(ValueOutput output) {
-
-    }
-
-    protected void encode(RegistryFriendlyByteBuf byteBuf) {
-        getType().streamCodec.encode(byteBuf, data);
-        ClaySoldierChipAddon.LIST_STREAM_CODEC.encode(byteBuf, addons);
-    }
+    public void appendItemHoverText(ItemStack stack,  Consumer<Component> tooltipAdder) {}
 
     // Addons
     public List<ClaySoldierChipAddon> getAddons() {
@@ -169,7 +151,7 @@ public abstract class ClaySoldierChip<T> {
      * @param addons to apply
      * @return the new {@code ClaySoldierChip}
      */
-    public @Nullable ClaySoldierChip<?> addAddons(List<ClaySoldierChipAddon> addons) {
+    public @Nullable ClaySoldierChip addAddons(List<ClaySoldierChipAddon> addons) {
         if (addons.isEmpty()) {
             return this;
         }
@@ -178,14 +160,14 @@ public abstract class ClaySoldierChip<T> {
             return null;
         }
         if (this.addons.isEmpty()) {
-            return getType().factory.create(data, List.copyOf(addons));
+            return getType().create(List.copyOf(addons));
         }
 
-        return getType().factory.create(data, Stream.concat(this.addons.stream(), addons.stream()).toList());
+        return getType().create(Stream.concat(this.addons.stream(), addons.stream()).toList());
     }
 
     public boolean canApplyAddons(List<ClaySoldierChipAddon> addonsToApply) {
-        if (addonsToApply.size() > getAllowedAddonsCount()) {
+        if (addonsToApply.size() > getAllowedAddonsCount() - addons.size()) {
             return false;
         }
         List<ClaySoldierChipAddon> appliedAddons = new ArrayList<>(getAddons());
@@ -219,19 +201,8 @@ public abstract class ClaySoldierChip<T> {
         return getAddons().contains(addon);
     }
 
-    public int addonCount(ClaySoldierChipAddon addon) {
-        return getAddonCount(getAddons(), addon);
-    }
-
-    public static int getAddonCount(Collection<ClaySoldierChipAddon> addons, ClaySoldierChipAddon toFind) {
-        int count = 0;
-        for (var ad : addons) {
-            if (ad.equals(toFind)) {
-                count++;
-            }
-        }
-
-        return count;
+    public int getAccelerationAddonCount() {
+        return acceleration;
     }
 
     @NotNull
@@ -242,71 +213,59 @@ public abstract class ClaySoldierChip<T> {
         return addonInfo;
     }
 
-    public boolean is(TagKey<ClaySoldierChip.Type<?>> tag) {
+    public boolean is(TagKey<ClaySoldierChip.Type> tag) {
         return getType().is(tag);
     }
     
     @Override
     public String toString() {
-        return "%s{%s, addons=%s}".formatted(this.getClass().getSimpleName(), data, getAddons());
+        return "%s{addons=%s}".formatted(this.getClass().getSimpleName(), getAddons());
     }
 
     @Override
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
-        ClaySoldierChip<?> that = (ClaySoldierChip<?>) o;
+        ClaySoldierChip that = (ClaySoldierChip) o;
         if (getType() != that.getType()) {
             return false;
         }
 
-        return Objects.equals(data, that.data) && Objects.equals(addons, that.addons);
+        return Objects.equals(addons, that.addons);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getType(), data, addons);
+        return Objects.hash(getType(), addons);
     }
 
-    public static class Type<T> {
-        private final Factory<T> factory;
+    public static class Type implements ItemLike {
+        private final Factory factory;
         private final AddonInfo addonInfo;
-        private final StreamCodec<RegistryFriendlyByteBuf, T> streamCodec;
-        private final MapCodec<ClaySoldierChip<T>> mapCodec;
 
         @Nullable
         private String descriptionId;
         @Nullable
-        private Holder.Reference<Type<?>> holder;
+        private Holder.Reference<Type> holder;
+        private @Nullable Item item;
 
-        public Type(Factory<T> factory, AddonInfo addonInfo, MapCodec<T> dataCodec, StreamCodec<RegistryFriendlyByteBuf, T> streamCodec) {
+        public Type(Factory factory, AddonInfo addonInfo) {
             this.factory = factory;
             this.addonInfo = addonInfo;
-            this.streamCodec = streamCodec;
-            this.mapCodec = RecordCodecBuilder.mapCodec(in -> in.group(
-                    dataCodec.forGetter(c -> c.data),
-                    ClaySoldierChipAddon.LIST_CODEC.optionalFieldOf("addons", List.of()).forGetter(c -> c.addons)
-            ).apply(in, factory::create));
         }
 
-        public static Type<Unit> create(Function<List<ClaySoldierChipAddon>, ? extends ClaySoldierChip<Unit>> instance, AddonInfo addonInfo) {
-            return new Type<>(
-                    (_, addons) -> instance.apply(addons), addonInfo, MapCodec.unit(Unit.INSTANCE), Unit.STREAM_CODEC.cast()
+        private ClaySoldierChip create(List<ClaySoldierChipAddon> addons) {
+            return factory.create(addons);
+        }
+
+        public static Type empty(Supplier<? extends ClaySoldierChip> instance) {
+            return new Type(
+                    (_) -> instance.get(), AddonInfo.EMPTY
             );
-        }
-
-        public static Type<Unit> empty(Supplier<? extends ClaySoldierChip<Unit>> instance) {
-            return new Type<>(
-                    (_, _) -> instance.get(), AddonInfo.EMPTY, Unit.CODEC.optionalFieldOf("data", Unit.INSTANCE), Unit.STREAM_CODEC.cast()
-            );
-        }
-
-        private MapCodec<ClaySoldierChip<T>> createMapCodec() {
-            return mapCodec;
         }
 
         public String getDescriptionId() {
             if (descriptionId == null) {
-                descriptionId = Util.makeDescriptionId("clay_soldier_module", getOrCreateReference().key().identifier());
+                descriptionId = Util.makeDescriptionId("clay_soldier_chip", getOrCreateReference().key().identifier());
             }
             return descriptionId;
         }
@@ -315,7 +274,7 @@ public abstract class ClaySoldierChip<T> {
             return Component.translatable(getDescriptionId());
         }
 
-        private Holder.Reference<Type<?>> getOrCreateReference() {
+        private Holder.Reference<Type> getOrCreateReference() {
             if (holder == null) {
                 holder = ModRegistries.CLAY_SOLDIER_MODULES_REGISTRY.get(
                         ModRegistries.CLAY_SOLDIER_MODULES_REGISTRY.getKey(this)
@@ -324,11 +283,7 @@ public abstract class ClaySoldierChip<T> {
             return holder;
         }
 
-        public ClaySoldierChip<T> decode(RegistryFriendlyByteBuf buf) {
-            return factory.create(streamCodec.decode(buf), ClaySoldierChipAddon.LIST_STREAM_CODEC.decode(buf));
-        }
-
-        public boolean is(TagKey<ClaySoldierChip.Type<?>> tag) {
+        public boolean is(TagKey<ClaySoldierChip.Type> tag) {
             return getOrCreateReference().is(tag);
         }
 
@@ -336,10 +291,31 @@ public abstract class ClaySoldierChip<T> {
         public String toString() {
             return getDescriptionId();
         }
+
+        @Override
+        public @NonNull Item asItem() {
+            if (item == null) {
+                var it = BY_ITEM.entrySet().iterator();
+                while (it.hasNext()) {
+                    var k = it.next();
+                    if (k.getKey().get() == this) {
+                        item = k.getValue();
+                        it.remove();
+                        break;
+                    }
+                }
+            }
+            if (item == null) {
+                throw new IllegalArgumentException("Item cannot be null");
+            }
+
+            return item;
+        }
     }
 
-    public interface Factory<T> {
-        ClaySoldierChip<T> create(T data, List<ClaySoldierChipAddon> addons);
+    @FunctionalInterface
+    public interface Factory {
+        ClaySoldierChip create(List<ClaySoldierChipAddon> addons);
     }
 
     public enum ItemLayer implements StringRepresentable {

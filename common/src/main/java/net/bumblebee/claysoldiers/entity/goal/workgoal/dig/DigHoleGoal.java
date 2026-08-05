@@ -10,15 +10,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-
 public class DigHoleGoal extends AbstractWorkGoal {
-    public static final String DIG_LANG = STATUS_LANG_KEY.formatted(ClaySoldiersCommon.MOD_ID, "dig");
-    public static final String BREAKING_LANG = STATUS_LANG_KEY.formatted(ClaySoldiersCommon.MOD_ID, "dig.breaking");
-    public static final String UNBREAKABLE_BLOCK = STATUS_LANG_KEY.formatted(ClaySoldiersCommon.MOD_ID, "dig.unbreakable_block");
-
-    private static final byte BREAKING_ID = 2;
-    private static final byte UNBREAKABLE_ID = 4;
+    public static final String DIG_LANG = JOB_LANG_KEY.formatted(ClaySoldiersCommon.MOD_ID, "dig");
 
     private final Level level;
     @Nullable
@@ -33,7 +26,7 @@ public class DigHoleGoal extends AbstractWorkGoal {
     private BlockPos breakingPos;
 
     public DigHoleGoal(ProgrammableClaySoldierEntity soldier, ClayMobWorkAccess workSelector) {
-        super(soldier, workSelector, List.of(BREAK_LANG, SEARCHING_LANG, BREAKING_LANG, REQUIRES_POI_LANG, UNBREAKABLE_BLOCK));
+        super(soldier, workSelector);
         this.level = soldier.level();
         if (!level.isClientSide()) {
             this.digBreakManger = DigBreakManger.get();
@@ -51,7 +44,13 @@ public class DigHoleGoal extends AbstractWorkGoal {
     @Override
     public void tick() {
         if (lastPoiPos == null) {
+            workStatus.setRequiresPoi();
             lastPoiPos = getPoiPos();
+            return;
+        }
+
+        if (!ClaySoldiersCommon.COMMON_HOOKS.canEntityGrief(getServerLevel(soldier), soldier)) {
+            workStatus.setCannotBreakBlocks();
             return;
         }
 
@@ -79,7 +78,7 @@ public class DigHoleGoal extends AbstractWorkGoal {
                 breakBlock(currentPos);
             }
         } else {
-            setStatus(SEARCHING_ID);
+            workStatus.setSearching();
         }
 
     }
@@ -107,10 +106,10 @@ public class DigHoleGoal extends AbstractWorkGoal {
     @Override
     public boolean canUse() {
         if (getPoiPos() == null) {
-            setStatus(REQUIRES_POI_ID);
+            workStatus.setRequiresPoi();
             return false;
         }
-        setStatus(SEARCHING_ID);
+        workStatus.setSearching();
         return true;
     }
 
@@ -140,8 +139,8 @@ public class DigHoleGoal extends AbstractWorkGoal {
         switch (digBreakManger.increaseBreakProgress(pos, level)) {
             case -2: lastPoiPos = null;
             case -1: level.destroyBlock(pos, true, soldier);
-            case 0: setStatus(BREAKING_ID);
-            default: setStatus(UNBREAKABLE_ID);
+            case 0: workStatus.setBreaking();
+            default: workStatus.setUnbreakableBlock();
         }
     }
 

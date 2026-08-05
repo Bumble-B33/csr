@@ -3,8 +3,10 @@ package net.bumblebee.claysoldiers.block;
 import com.google.common.base.Suppliers;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.data.AtlasIds;
@@ -13,7 +15,15 @@ import net.minecraft.resources.Identifier;
 import java.util.function.Supplier;
 
 public class BatteryContentRenderer {
+    private static final Identifier ENERGY_PORT_TEXTURE = Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "textures/block/energy_port.png");
+    private static final Identifier ENERGY_PORT_OVERLAY_TEXTURE = Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "textures/block/energy_port_overlay.png");
+
+    public static final RenderType ENERGY_PORT_REDNER_TYPE = RenderTypes.entityCutout(ENERGY_PORT_TEXTURE);
+    public static final RenderType ENERGY_PORT_REDNER_OVERLAY_TYPE = RenderTypes.entityCutout(ENERGY_PORT_OVERLAY_TEXTURE);
+
+
     private static final Identifier BATTERY_CONTENT_TEXTURE = Identifier.fromNamespaceAndPath("minecraft", "block/water_still");
+    private static final Supplier<TextureAtlasSprite> DEFAULT_TEXTURE = Suppliers.memoize(() -> Minecraft.getInstance().getAtlasManager().getAtlasOrThrow(AtlasIds.BLOCKS).getSprite(BATTERY_CONTENT_TEXTURE));
 
     private final Supplier<TextureAtlasSprite> sprite;
 
@@ -26,9 +36,13 @@ public class BatteryContentRenderer {
     private final float z0;
 
     public static BatteryContentRenderer ofDefaultTexture(int x, int z, int height) {
-        return new BatteryContentRenderer(Suppliers.memoize(() -> Minecraft.getInstance().getAtlasManager().getAtlasOrThrow(AtlasIds.BLOCKS).getSprite(BATTERY_CONTENT_TEXTURE)),
+        return ofDefaultTexture(x, 0, z, height);
+    }
+
+    public static BatteryContentRenderer ofDefaultTexture(float x, float y, float z, int height) {
+        return new BatteryContentRenderer(DEFAULT_TEXTURE,
                 height, 3f, 3f,
-                x, 0, z
+                x, y, z
         );
     }
 
@@ -44,12 +58,12 @@ public class BatteryContentRenderer {
         this.z0 = z0;
     }
 
-    public void submitBatteryContent(long energyStored, long maxEnergyStored, SubmitNodeCollector nodeCollector, PoseStack poseStack, int packedLight) {
-        if (energyStored <= 0 || maxEnergyStored <= 0) {
+    public void submitBatteryContent(float fillRatio, SubmitNodeCollector nodeCollector, PoseStack poseStack, int packedLight) {
+        if (fillRatio <= 0) {
             return;
         }
+        fillRatio = Math.min(fillRatio, 1f);
 
-        float fillRatio = (float) energyStored / maxEnergyStored;
 
         float fluidTop = y0 + Math.max(0.1f, batteryHeight * fillRatio);
 
@@ -110,11 +124,16 @@ public class BatteryContentRenderer {
                 packedLight);
     }
 
+
+    public void submitBatteryContent(long energyStored, long maxEnergyStored, SubmitNodeCollector nodeCollector, PoseStack poseStack, int packedLight) {
+        submitBatteryContent((float) energyStored / maxEnergyStored, nodeCollector, poseStack, packedLight);
+    }
+
     public static void drawQuad(SubmitNodeCollector nodeCollector, PoseStack poseStack,
                                 float x1, float y1, float z1, float x2, float y2, float z2, float x3, float y3, float z3, float x4, float y4, float z4,
                                 float u0, float v0, float u1, float v1,
                                 int packedLight) {
-        int color = 0xF73FFFE4;
+        int color = ClaySoldiersCommon.ENERGY_HELPER.getEnergyColor();
         nodeCollector.submitCustomGeometry(poseStack, Minecraft.useShaderTransparency() ? RenderTypes.solidMovingBlock() : RenderTypes.translucentMovingBlock(),
 
                 (pose, vertexConsumer) -> {

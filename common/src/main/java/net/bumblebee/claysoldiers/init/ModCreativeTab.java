@@ -7,6 +7,7 @@ import net.bumblebee.claysoldiers.team.ClayMobTeamManger;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.function.Consumer;
@@ -37,6 +38,18 @@ public final class ModCreativeTab {
         for (var items : BlueprintManager.getBlueprintItems(holders)) {
             out.accept(items);
         }
+    }
+
+    public static void addBattery(Item item, Consumer<ItemStack> out) {
+        var empty = item.getDefaultInstance();
+        var full = item.getDefaultInstance();
+
+        var helper = ClaySoldiersCommon.ENERGY_HELPER;
+
+        full.set(helper.getComponent(helper.getMaxEnergyStorage(full)));
+
+        out.accept(empty);
+        out.accept(full);
     }
 
     public static void init() {

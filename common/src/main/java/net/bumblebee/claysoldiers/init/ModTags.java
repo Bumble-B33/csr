@@ -58,7 +58,7 @@ public final class ModTags {
         public static final TagKey<Item> INGOTS_COPPER = commonTag("ingots/copper");
 
         public static final TagKey<Item> CHIP = create("clay_soldier_chip");
-
+        public static final TagKey<Item> BATTERY = create("battery");
 
         public static final TagKey<Item> WRENCH = commonTag("tools/wrench");
 
@@ -127,9 +127,9 @@ public final class ModTags {
     }
 
     public static final class ClaySoldierChips {
-        public static final TagKey<ClaySoldierChip.Type<?>> REQUIRES_POI_POS = create("requires_poi_pos");
+        public static final TagKey<ClaySoldierChip.Type> REQUIRES_POI_POS = create("requires_poi_pos");
 
-        private static TagKey<ClaySoldierChip.Type<?>> create(String name) {
+        private static TagKey<ClaySoldierChip.Type> create(String name) {
             return TagKey.create(ModRegistries.CLAY_SOLDIER_MODULES, Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, name));
         }
     }

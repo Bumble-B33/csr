@@ -1,13 +1,9 @@
 package net.bumblebee.claysoldiers.entity.common.programmable;
 
 import net.bumblebee.claysoldiers.claysoldierchips.ClaySoldierChip;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.Optional;
+import org.jspecify.annotations.Nullable;
 
 public interface ProgrammableClayMobAccess {
-    ProgrammableClayMobAccess EMPTY = () -> null;
 
-    @Nullable
-    ClaySoldierChip<?> getInstalledChip();
+    @Nullable ClaySoldierChip getInstalledChip();
 }

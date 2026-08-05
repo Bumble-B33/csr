@@ -29,6 +29,7 @@ import net.minecraft.util.ExtraCodecs;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -211,9 +212,9 @@ public class FabricDataMapLoader extends SimpleJsonResourceReloadListener<JsonEl
         updateClientMap(SOLDIER_HOLDABLE_MAP, map, "soldier_holdable");
     }
 
-    public static void updateSoldierWearable(Map<Holder<Item>, SoldierMultiWearable> map, RegistryAccess registryAccess) {
+    public static void updateSoldierWearable(Map<Holder<Item>, SoldierMultiWearable> map, Level level) {
         updateClientMap(SOLDIER_WEARABLE_MAP, map, "soldier_wearable");
-        SOLDIER_WEARABLE_MAP.values().forEach(w -> w.forEachWearableEffect(e -> e.buildTrims(registryAccess)));
+        SOLDIER_WEARABLE_MAP.values().forEach(w -> w.forEachWearableEffect(e -> e.buildTrims(level.registryAccess())));
     }
 
     public static void updateSoldierItemPoi(Map<Holder<Item>, SoldierPoi> map) {

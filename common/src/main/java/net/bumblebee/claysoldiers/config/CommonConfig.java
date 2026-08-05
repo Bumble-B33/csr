@@ -3,9 +3,11 @@ package net.bumblebee.claysoldiers.config;
 public interface CommonConfig {
     boolean canModifyClayMobMenu();
 
-    long getHamsterWheelEnergyCapacity();
-
-    long getHamsterWheelSpeed();
+    int getHamsterWheelSpeed();
 
     boolean shearBladeRecipeEnabled();
+
+    int baseSoldierEnergyTransferRate();
+
+    int chargingPadRatePlayerInventory();
 }

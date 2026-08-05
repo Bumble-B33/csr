@@ -1,13 +1,10 @@
 package net.bumblebee.claysoldiers.entity.goal.workgoal;
 
-import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 
 public interface IWorkGoal {
-    String STATUS_LANG_KEY = "clay_soldier_work.%s.status.%s";
     String JOB_LANG_KEY = "clay_soldier_work.%s.job.%s";
-    String DEFAULT_STATUS_LANG = STATUS_LANG_KEY.formatted(ClaySoldiersCommon.MOD_ID, "working");
 
     /**
      * Returns the display name of this goal.
@@ -27,12 +24,7 @@ public interface IWorkGoal {
         return false;
     }
 
-    /**
-     * Converts the given status id into a display name.
-     */
-    default Component decodeStatus(byte id) {
-        return Component.translatable(DEFAULT_STATUS_LANG);
-    }
+    Component getWorkStatus();
 
     default String asString() {
         return this.getClass().getSimpleName();

@@ -57,11 +57,13 @@ public class PlaceSeedsGoal extends AbstractWorkGoal {
 
     @Override
     public void tick() {
+
+
         if (soldier.getCarriedStack().isEmpty()) {
             getSeedFromChest();
-            setStatus(CARRYING_ID);
+            workStatus.setCarrying();
         } else {
-            setStatus(SEARCHING_ID);
+            workStatus.setSearching();
             if (farmLandPos == null) {
                 findNearestBlock();
                 moveMobToBlock();
@@ -84,7 +86,7 @@ public class PlaceSeedsGoal extends AbstractWorkGoal {
     }
 
     private void getSeedFromChest() {
-        if (moveToPoi()) {
+        if (moveToPoi(2d)) {
             if (getCapCacheResetIfInvalid() != null) {
                 assert getCapCache() != null;
                 var cap = getCapCache().getCapability();
@@ -94,8 +96,8 @@ public class PlaceSeedsGoal extends AbstractWorkGoal {
                 soldier.setCarriedStack(cap.tryExtracting(stack -> stack.is(SEEDS), 1));
             }
             if (soldier.getCarriedStack().isEmpty()) {
-                setStatus(CANNOT_FIND_ITEM_ID);
                 takeAShortBreak(false);
+                workStatus.setCannotFindItem();
             }
         }
 
@@ -140,10 +142,9 @@ public class PlaceSeedsGoal extends AbstractWorkGoal {
             }
         }
         takeAShortBreak(true);
+        workStatus.setBreak();
         return false;
     }
-
-
 
     protected void moveMobToBlock() {
         if (farmLandPos == null) {

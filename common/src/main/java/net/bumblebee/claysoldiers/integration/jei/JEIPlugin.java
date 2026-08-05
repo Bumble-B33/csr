@@ -1,5 +1,6 @@
 package net.bumblebee.claysoldiers.integration.jei;
 
+import com.google.common.base.Suppliers;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
 import mezz.jei.api.constants.RecipeTypes;
@@ -15,6 +16,7 @@ import net.bumblebee.claysoldiers.init.ModBlocks;
 import net.bumblebee.claysoldiers.init.ModDataComponents;
 import net.bumblebee.claysoldiers.init.ModItems;
 import net.bumblebee.claysoldiers.init.ModTags;
+import net.bumblebee.claysoldiers.recipe.BatteryCombiningRecipe;
 import net.bumblebee.claysoldiers.util.ComponentFormating;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
@@ -55,18 +57,24 @@ public class JEIPlugin implements IModPlugin {
             registration.addRecipes(RecipeTypes.CRAFTING, createShearBladeRecipe());
         }
 
-        registration.addRecipes(RecipeTypes.SMELTING, ClaySoldierCookingRecipe.createCookingRecipe(SmeltingRecipe::new, 100));
-        registration.addRecipes(RecipeTypes.BLASTING, ClaySoldierCookingRecipe.createCookingRecipe(BlastingRecipe::new, 50));
-        registration.addRecipes(RecipeTypes.CAMPFIRE_COOKING, ClaySoldierCookingRecipe.createCookingRecipe(CampfireCookingRecipe::new, 200));
-        registration.addRecipes(RecipeTypes.SMOKING, ClaySoldierCookingRecipe.createCookingRecipe(SmokingRecipe::new, 300));
+        registration.addRecipes(RecipeTypes.CRAFTING, List.of(
+                new RecipeHolder<>(ResourceKey.create(Registries.RECIPE, Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "jei_battery_combining")), BatteryCombiningRecipe.INSTANCE.asShapeless())
+        ));
+
+        registration.addRecipes(RecipeTypes.SMELTING, ClaySoldierCookingRecipe.createCookingRecipe(SmeltingRecipe::new, 100, registries));
+        registration.addRecipes(RecipeTypes.BLASTING, ClaySoldierCookingRecipe.createCookingRecipe(BlastingRecipe::new, 50, registries));
+        registration.addRecipes(RecipeTypes.CAMPFIRE_COOKING, ClaySoldierCookingRecipe.createCookingRecipe(CampfireCookingRecipe::new, 200, registries));
+        registration.addRecipes(RecipeTypes.SMOKING, ClaySoldierCookingRecipe.createCookingRecipe(SmokingRecipe::new, 300, registries));
 
         registration.addRecipes(BlueprintRecipeCategory.TYPE, BlueprintManager.getBlueprintItems(registries));
 
         ClaySoldiersCommon.CLIENT_RECIPE_ACCESS.whenBasicRecipesAreLoaded(r -> registration.addRecipes(ChipAssemblyRecipeCategory.TYPE, r));
 
+        registration.addRecipes(ChipAssemblyRecipeCategory.TYPE, ChipAssemblerAddonRecipes.recipes());
+
         BuiltInRegistries.ITEM.get(ModTags.Items.SOLDIER_HOLDABLE).ifPresentOrElse(set -> {
             addItemToInfo(registration, set.stream().map(Holder::value), ClaySoldiersCommon.DATA_MAP::getEffect, ComponentFormating::addHoldableTooltip);
-        }, () -> ClaySoldiersCommon.LOGGER.error("Could not load JEI Info for Clay Soldier Holdable Items"));
+        }, () -> ClaySoldiersCommon.ERROR_HANDLER.error("JEI: Could not load Info for Clay Soldier Holdable Items"));
 
         BuiltInRegistries.ITEM.get(ModTags.Items.SOLDIER_POI).ifPresentOrElse(set -> {
             addItemToInfo(registration, set.stream().map(Holder::value), ClaySoldiersCommon.DATA_MAP::getItemPoi, (poi, list) -> {
@@ -77,7 +85,7 @@ public class JEIPlugin implements IModPlugin {
                 list.add(Component.translatable(ComponentFormating.SOLDIER_POI_BLOCK).withStyle(ChatFormatting.DARK_GRAY));
                 ComponentFormating.addPoiTooltip(poi, list);
             });
-        }, () -> ClaySoldiersCommon.LOGGER.error("Could not load JEI Info for Clay Soldier POIs "));
+        }, () -> ClaySoldiersCommon.ERROR_HANDLER.error("JEI: Could not load Info for Clay Soldier POIs "));
     }
 
     @Override
@@ -113,6 +121,9 @@ public class JEIPlugin implements IModPlugin {
 
         registration.registerSubtypeInterpreter(ModItems.BLUEPRINT.get(), DataComponentSubtypeInterpreter.BLUEPRINT);
         registration.registerSubtypeInterpreter(ModItems.BLANK_CHIP.get(), DataComponentSubtypeInterpreter.CLAY_SOLDIER_CHIP);
+
+        registration.registerSubtypeInterpreter(ModItems.SMALL_BATTERY.get(), DataComponentSubtypeInterpreter.ENERGY);
+        registration.registerSubtypeInterpreter(ModItems.LARGE_BATTERY.get(), DataComponentSubtypeInterpreter.ENERGY);
     }
 
     @Override
@@ -134,7 +145,8 @@ public class JEIPlugin implements IModPlugin {
     private enum DataComponentSubtypeInterpreter implements ISubtypeInterpreter<ItemStack> {
         CLAY_SOLDIER_PUPPET(ModDataComponents.CLAY_MOB_TEAM_COMPONENT::get),
         BLUEPRINT(ModDataComponents.BLUEPRINT_DATA::get),
-        CLAY_SOLDIER_CHIP(ModDataComponents.CLAY_SOLDIER_CHIP::get);
+        CLAY_SOLDIER_CHIP(ModDataComponents.CLAY_SOLDIER_CHIP::get),
+        ENERGY(Suppliers.memoize(() -> ClaySoldiersCommon.ENERGY_HELPER.getComponent(0).type()));
 
         private final Supplier<DataComponentType<?>> dataComponent;
 

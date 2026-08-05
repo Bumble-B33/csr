@@ -26,10 +26,12 @@ import java.util.function.Supplier;
 public class SoldierPropertyMap implements SoldierPropertyMapReader {
     public static final Set<Supplier<? extends SoldierPropertyType<?>>> IGNORED_NON_ITEM = new HashSet<>(Set.of(SoldierPropertyTypes.ATTACK_TYPE, SoldierPropertyTypes.EVACUATION, SoldierPropertyTypes.THROWABLE));
 
-    public static final Codec<SoldierPropertyMap> CODEC = new SoldierPropertyMapCodec();
-    public static final Codec<SoldierPropertyMap> CODEC_FOR_NON_ITEM = new SoldierPropertyMapCodec(IGNORED_NON_ITEM);
+    public static final Codec<SoldierPropertyMap> CODEC = SoldierPropertyMapCodec.map();
+    public static final Codec<SoldierPropertyMap> CODEC_FOR_NON_ITEM = SoldierPropertyMapCodec.map(IGNORED_NON_ITEM);
+    public static final Codec<SoldierPropertyMapReader> IMMUTABLE_NON_ITEM_CODEC = SoldierPropertyMapCodec.immutable(IGNORED_NON_ITEM);
 
-    public static final StreamCodec<RegistryFriendlyByteBuf, SoldierPropertyMap> STREAM_CODEC = new SoldierPropertyMapStreamCodec();
+    public static final StreamCodec<RegistryFriendlyByteBuf, SoldierPropertyMap> STREAM_CODEC = SoldierPropertyMapStreamCodec.map();
+    public static final StreamCodec<RegistryFriendlyByteBuf, SoldierPropertyMapReader> IMMUTABLE_STREAM_CODEC = SoldierPropertyMapStreamCodec.immutable();
 
     public static final SoldierPropertyMap EMPTY_MAP = new SoldierPropertyMap(null, s -> Set.of());
 
@@ -47,30 +49,34 @@ public class SoldierPropertyMap implements SoldierPropertyMapReader {
         this(collection, HashSet::new);
     }
 
+    public static SoldierPropertyMapReader of(Collection<? extends SoldierProperty<?>> collection) {
+        return new SoldierPropertyMap(collection, Set::copyOf);
+    }
+
     public static SoldierPropertyMap of(SoldierProperty<?>... properties) {
         return new SoldierPropertyMap(properties, Set::of);
     }
 
     /**
      * Adds a new {@code SoldierProperty} to this map. Removes any existing {@code SoldierProperty} of the same type.
+     *
      * @param identifier the property to add
-     * @param value the value of the property
-     * @return whether the {@code SoldierProperty} could be added.
+     * @param value      the value of the property
      * @throws UnsupportedOperationException if the operation is not supported by underlying set
      */
-    public <T> boolean addPropertyForce(SoldierPropertyType<T> identifier, T value) {
-        return addPropertyForce(new SoldierProperty<>(identifier, value));
+    public <T> void addPropertyForce(SoldierPropertyType<T> identifier, T value) {
+        addPropertyForce(new SoldierProperty<>(identifier, value));
     }
 
     /**
      * Adds a new {@code SoldierProperty} to this map. Removes any existing {@code SoldierProperty} of the same type.
+     *
      * @param property the property to add
-     * @return whether the {@code SoldierProperty} could be added.
      * @throws UnsupportedOperationException if the operation is not supported by underlying set
      */
-    public boolean addPropertyForce(SoldierProperty<?> property) {
+    public void addPropertyForce(SoldierProperty<?> property) {
         set.remove(property);
-        return set.add(property);
+        set.add(property);
     }
 
     /**
@@ -149,18 +155,17 @@ public class SoldierPropertyMap implements SoldierPropertyMapReader {
 
     /**
      * Validates this SoldierPropertyMap by thrown an Exception.
-     * @throws IllegalStateException stating what was wrong
      */
-    public void validate(Consumer<IllegalStateException> exceptionHandler) {
-        switch (getValueOrDfault(SoldierPropertyTypes.THROWABLE.get())) {
+    public static void validate(SoldierPropertyMapReader map, Consumer<String> exceptionHandler) {
+        switch (map.getValueOrDfault(SoldierPropertyTypes.THROWABLE.get())) {
             case HARM -> {
-                if (attackType().isSupportive()) {
-                    exceptionHandler.accept(new IllegalStateException("Cannot have a harmful ranged attack with an supportive attack type"));
+                if (map.attackType().isSupportive()) {
+                    exceptionHandler.accept("Cannot have a harmful ranged attack with an supportive attack type");
                 }
             }
             case HELPING -> {
-                if (!attackType().isSupportive()) {
-                    exceptionHandler.accept(new IllegalStateException("Cannot have a supportive ranged attack with an non supportive attack type"));
+                if (!map.attackType().isSupportive()) {
+                    exceptionHandler.accept("Cannot have a supportive ranged attack with an non supportive attack type");
                 }
             }
         }
@@ -171,6 +176,7 @@ public class SoldierPropertyMap implements SoldierPropertyMapReader {
         set.clear();
     }
 
+    @Override
     public int size() {
         return set.size();
     }
@@ -320,12 +326,12 @@ public class SoldierPropertyMap implements SoldierPropertyMapReader {
         }
 
         public SoldierPropertyMap build() {
-            map.validate(this::throwException);
+            SoldierPropertyMap.validate(map, this::throwException);
             return map;
         }
 
-        private void throwException(IllegalStateException exception) {
-            throw exception;
+        private void throwException(String exception) {
+            throw new IllegalArgumentException(exception);
         }
     }
 }

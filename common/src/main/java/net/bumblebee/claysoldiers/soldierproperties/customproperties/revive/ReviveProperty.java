@@ -5,6 +5,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.bumblebee.claysoldiers.entity.common.soldier.AbstractClaySoldierEntity;
 import net.bumblebee.claysoldiers.soldierproperties.combined.ValueCombiner;
 import net.bumblebee.claysoldiers.soldierproperties.translation.ITranslatableProperty;
+import net.bumblebee.claysoldiers.util.Chance;
 import net.bumblebee.claysoldiers.util.codec.CodecUtils;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.CommonComponents;
@@ -24,13 +25,13 @@ public class ReviveProperty implements ITranslatableProperty {
     public static final Codec<ReviveProperty> CODEC = RecordCodecBuilder.create(in -> in.group(
             ReviveType.CODEC.fieldOf("type").forGetter(s -> s.reviveType),
             Codec.INT.fieldOf("priority").forGetter(s -> s.priority),
-            CodecUtils.CHANCE_CODEC.optionalFieldOf("chance", 1f).forGetter(s -> s.reviveChance),
+            Chance.CODEC.optionalFieldOf("chance", Chance.ALWAYS).forGetter(s -> s.reviveChance),
             CodecUtils.TIME_CODEC.optionalFieldOf("cooldown", 0).forGetter(s -> s.cooldown)
     ).apply(in, ReviveProperty::new));
     public static final StreamCodec<RegistryFriendlyByteBuf, ReviveProperty> STREAM_CODEC = StreamCodec.composite(
             ReviveType.STREAM_CODEC, s -> s.reviveType,
             ByteBufCodecs.VAR_INT, s -> s.priority,
-            ByteBufCodecs.FLOAT, s -> s.reviveChance,
+            Chance.STREAM_CODEC, s -> s.reviveChance,
             ByteBufCodecs.VAR_INT, s -> s.cooldown,
             ReviveProperty::new
     );
@@ -50,8 +51,15 @@ public class ReviveProperty implements ITranslatableProperty {
 
     private final int priority;
     private final ReviveType reviveType;
-    private final float reviveChance;
+    private final Chance reviveChance;
     private final int cooldown;
+
+    public ReviveProperty(ReviveType reviveType, int priority, Chance chance, int cooldown) {
+        this.priority = priority;
+        this.reviveType = reviveType;
+        this.reviveChance = chance;
+        this.cooldown = cooldown;
+    }
 
     public ReviveProperty(ReviveType reviveType, int priority) {
         this(reviveType, priority, 1f, 0);
@@ -59,7 +67,7 @@ public class ReviveProperty implements ITranslatableProperty {
     public ReviveProperty(ReviveType reviveType, int priority, float chance, int cooldown) {
         this.priority = priority;
         this.reviveType = reviveType;
-        this.reviveChance = chance;
+        this.reviveChance = Chance.of(chance);
         this.cooldown = cooldown;
     }
 
@@ -67,7 +75,7 @@ public class ReviveProperty implements ITranslatableProperty {
         if (!reviver.isReviveTypeOffCooldown(reviveType)) {
             return ReviveResult.FAIL;
         }
-        if (reviveChance <= 0 || level.getRandom().nextFloat() > reviveChance) {
+        if (!reviveChance.testWithLuck(level.getRandom(), toRevive.getChanceLuck())) {
                 return ReviveResult.FAIL;
         }
 

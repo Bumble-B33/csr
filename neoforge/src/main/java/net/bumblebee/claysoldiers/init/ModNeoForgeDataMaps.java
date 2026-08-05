@@ -13,7 +13,7 @@ import net.minecraft.world.level.block.Block;
 import net.neoforged.neoforge.registries.datamaps.DataMapType;
 import net.neoforged.neoforge.registries.datamaps.RegisterDataMapTypesEvent;
 
-public class NeoForgeDataMaps {
+public class ModNeoForgeDataMaps {
     public static final DataMapType<Item, SoldierHoldableEffect> SOLDIER_HOLDABLE = DataMapType.builder(
             Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "soldier_holdable"), Registries.ITEM, SoldierHoldableEffect.CODEC
     ).synced(SoldierHoldableEffect.CODEC, true)
@@ -37,10 +37,10 @@ public class NeoForgeDataMaps {
 
 
     public static void registerDataMaps(RegisterDataMapTypesEvent event) {
-        event.register(NeoForgeDataMaps.SOLDIER_HOLDABLE);
-        event.register(NeoForgeDataMaps.SOLDIER_ITEM_POI);
-        event.register(NeoForgeDataMaps.SOLDIER_BLOCK_POI);
-        event.register(NeoForgeDataMaps.SOLDIER_ARMOR);
-        event.register(NeoForgeDataMaps.SOLDIER_VEHICLE_PROPERTIES);
+        event.register(ModNeoForgeDataMaps.SOLDIER_HOLDABLE);
+        event.register(ModNeoForgeDataMaps.SOLDIER_ITEM_POI);
+        event.register(ModNeoForgeDataMaps.SOLDIER_BLOCK_POI);
+        event.register(ModNeoForgeDataMaps.SOLDIER_ARMOR);
+        event.register(ModNeoForgeDataMaps.SOLDIER_VEHICLE_PROPERTIES);
     }
 }

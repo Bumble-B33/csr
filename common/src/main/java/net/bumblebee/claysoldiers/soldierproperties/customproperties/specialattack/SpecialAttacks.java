@@ -6,7 +6,7 @@ import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.entity.common.ClayMobEntity;
 import net.bumblebee.claysoldiers.entity.common.soldier.ZombieClaySoldierEntity;
 import net.bumblebee.claysoldiers.init.ModEffects;
-import net.bumblebee.claysoldiers.soldierproperties.combined.ValueCombiner;
+import net.bumblebee.claysoldiers.util.Chance;
 import net.bumblebee.claysoldiers.util.EffectHolder;
 import net.bumblebee.claysoldiers.util.codec.CodecUtils;
 import net.minecraft.ChatFormatting;
@@ -19,7 +19,6 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.tags.EntityTypeTags;
-import net.minecraft.util.ExtraCodecs;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.*;
@@ -193,26 +192,38 @@ public final class SpecialAttacks {
         public static final Codec<CritAttack> CODEC = RecordCodecBuilder.create(in -> in.group(
                 SpecialAttackType.CODEC.fieldOf("attack_type").forGetter(CritAttack::getAttackType),
                 Codec.FLOAT.optionalFieldOf("damage", 0f).forGetter(CritAttack::getDamage),
-                CodecUtils.CHANCE_CODEC.optionalFieldOf("chance", 0.5f).forGetter(c -> c.chance)
+                Chance.CODEC.optionalFieldOf("chance", Chance.HALF).forGetter(c -> c.chance)
         ).apply(in, CritAttack::new));
         public static final StreamCodec<RegistryFriendlyByteBuf, CritAttack> STREAM_CODEC = StreamCodec.composite(
                 SpecialAttackType.STREAM_CODEC, CritAttack::getAttackType,
                 ByteBufCodecs.FLOAT, CritAttack::getDamage,
-                ByteBufCodecs.FLOAT, c -> c.chance,
+                Chance.STREAM_CODEC, c -> c.chance,
                 CritAttack::new
         );
         public static final String DISPLAY_NAME_KEY = DISPLAY_KEY_PREFIX + "crit";
 
-        private final float chance;
+        private final Chance chance;
 
-        public CritAttack(SpecialAttackType attackType, float bonusDamage, float chance) {
+        public CritAttack(SpecialAttackType attackType, float bonusDamage, Chance chance) {
             super(CRIT_ATTACK_SERIALIZER, attackType, bonusDamage);
             this.chance = chance;
         }
 
+        public CritAttack(SpecialAttackType attackType, float bonusDamage, float chance) {
+            this(attackType, bonusDamage, Chance.of(chance));
+        }
+
         @Override
         public boolean condition(LivingEntity attacker, Entity target) {
-            return attacker.getRandom().nextFloat() >= chance;
+            float luck = 0f;
+            if (attacker instanceof ClayMobEntity soldier) {
+                luck += soldier.getChanceLuck();
+            }
+            if (target instanceof ClayMobEntity soldier) {
+                luck -= soldier.getChanceLuck();
+            }
+
+            return chance.testWithLuck(attacker.getRandom(), luck);
         }
 
         @Override

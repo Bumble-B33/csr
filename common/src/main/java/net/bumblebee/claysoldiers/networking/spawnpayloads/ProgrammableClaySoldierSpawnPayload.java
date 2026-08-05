@@ -23,18 +23,18 @@ public class ProgrammableClaySoldierSpawnPayload implements IClientPayload {
             ProgrammableClaySoldierSpawnPayload::new
     );
     private final int entity;
-    private final ClaySoldierChip<?> chip;
+    private final ClaySoldierChip chip;
     private final ItemStack carriedItemStack;
     private final byte workStatus;
 
-    public ProgrammableClaySoldierSpawnPayload(int entity, @NotNull ClaySoldierChip<?> chip, ItemStack carriedItemStack, byte workStatus) {
+    public ProgrammableClaySoldierSpawnPayload(int entity, @NotNull ClaySoldierChip chip, ItemStack carriedItemStack, byte workStatus) {
         this.entity = entity;
         this.chip = chip;
         this.carriedItemStack = carriedItemStack;
         this.workStatus = workStatus;
     }
 
-    public ProgrammableClaySoldierSpawnPayload(ProgrammableClaySoldierEntity entity, ClaySoldierChip<?> chip) {
+    public ProgrammableClaySoldierSpawnPayload(ProgrammableClaySoldierEntity entity, ClaySoldierChip chip) {
         this(entity.getId(), chip, entity.getCarriedStack(), entity.getDataWorkStatus());
     }
 

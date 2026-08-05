@@ -107,28 +107,24 @@ public class ClayStaffModel extends Model<ClayStaffRenderState> {
         );
     }
 
-    public static void submitAsItem(ClayStaffModel model, ClayStaffRenderState state, PoseStack poseStack, SubmitNodeCollector nodeCollector, int packedLight, int packedOverlay, boolean foil, int outline) {
-        if (model == null) {
-            return;
-        }
-
+    public void submitAsItem(ClayStaffRenderState state, PoseStack poseStack, SubmitNodeCollector nodeCollector, int packedLight, int packedOverlay, boolean foil, int outline) {
         poseStack.pushPose();
         poseStack.scale(1.0F, -1.0F, -1.0F);
 
 
         if (state.hasDoll) {
-            model.submitDoll(poseStack, nodeCollector, packedLight, packedOverlay);
+            this.submitDoll(poseStack, nodeCollector, packedLight, packedOverlay);
 
         }
-        nodeCollector.submitModel(model, state, poseStack, model.renderType(ClayStaffModel.TEXTURE), packedLight, packedOverlay, 0, null);
+        nodeCollector.submitModel(this, state, poseStack, renderType(ClayStaffModel.TEXTURE), packedLight, packedOverlay, 0, null);
 
         if (foil) {
             nodeCollector.order(1)
                     .submitModel(
-                            model,
+                            this,
                             state,
                             poseStack,
-                            ItemFeatureRenderer.getFoilRenderType(model.renderType(ClayStaffModel.TEXTURE), false),
+                            ItemFeatureRenderer.getFoilRenderType(renderType(ClayStaffModel.TEXTURE), false),
                             packedLight,
                             OverlayTexture.NO_OVERLAY,
                             outline,

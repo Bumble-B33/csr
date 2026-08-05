@@ -3,7 +3,6 @@ package net.bumblebee.claysoldiers.team.loyalty;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.bumblebee.claysoldiers.team.ClayMobTeam;
-import net.minecraft.core.Holder;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.ComponentSerialization;

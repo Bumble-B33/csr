@@ -4,9 +4,8 @@ import com.mojang.serialization.Codec;
 import io.netty.buffer.ByteBuf;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.entity.common.soldier.AbstractClaySoldierEntity;
-import net.bumblebee.claysoldiers.util.codec.CodecUtils;
+import net.bumblebee.claysoldiers.util.Chance;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.util.RandomSource;
 
@@ -14,12 +13,17 @@ import java.util.function.Function;
 
 public abstract class RemovalCondition {
     public static final String COMPONENT_PREFIX = "clay_removal_condition." + ClaySoldiersCommon.MOD_ID + ".";
-    public static final Codec<Float> CHANCE_CODEC = CodecUtils.CHANCE_CODEC;
-    private final float chance;
+    public static final Codec<Chance> CHANCE_CODEC = Chance.CODEC;
+    private final Chance chance;
     private final RemovalConditionContext.Type type;
 
-    protected RemovalCondition(float chance, RemovalConditionContext.Type type) {
+    protected RemovalCondition(Chance chance, RemovalConditionContext.Type type) {
         this.chance = chance;
+        this.type = type;
+    }
+
+    protected RemovalCondition(float chance, RemovalConditionContext.Type type) {
+        this.chance = Chance.of(chance);
         this.type = type;
     }
 
@@ -27,7 +31,7 @@ public abstract class RemovalCondition {
 
     public abstract Component getDisplayName();
 
-    public float getChance() {
+    public Chance getChance() {
         return chance;
     }
     public RemovalConditionContext.Type getType() {
@@ -38,11 +42,11 @@ public abstract class RemovalCondition {
      * Test if this {@code RemovalCondition} is for the correct Type.
      * @return this {@code RemovalCondition} is for the correct Type.
      */
-    protected boolean baseTest(RemovalConditionContext.Type toTest, RandomSource randomSource) {
-        return type == toTest && randomSource.nextFloat() <= getChance();
+    protected boolean baseTest(RemovalConditionContext.Type toTest, RandomSource random, float luck) {
+        return type == toTest && chance.testWithLuck(random, luck * -1f);
     }
 
-    protected static <T extends RemovalCondition> StreamCodec<ByteBuf, T> createChacneStreamCodec(Function<Float, T> factory) {
-        return ByteBufCodecs.FLOAT.map(factory, RemovalCondition::getChance);
+    protected static <T extends RemovalCondition> StreamCodec<ByteBuf, T> createChanceStreamCodec(Function<Chance, T> factory) {
+        return Chance.STREAM_CODEC.map(factory, RemovalCondition::getChance);
     }
 }

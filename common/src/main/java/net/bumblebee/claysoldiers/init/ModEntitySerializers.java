@@ -6,12 +6,10 @@ import net.bumblebee.claysoldiers.entity.common.programmable.ClaySoldierFishingD
 import net.bumblebee.claysoldiers.team.ClayMobTeam;
 import net.bumblebee.claysoldiers.util.color.ColorHelper;
 import net.minecraft.core.Holder;
-import net.minecraft.core.UUIDUtil;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.syncher.EntityDataSerializer;
 
 import java.util.Optional;
-import java.util.UUID;
 import java.util.function.BiConsumer;
 
 public final class ModEntitySerializers {

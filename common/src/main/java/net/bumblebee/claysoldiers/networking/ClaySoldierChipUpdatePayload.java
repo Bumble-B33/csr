@@ -20,9 +20,9 @@ public class ClaySoldierChipUpdatePayload implements IClientPayload {
     );
 
     private final int entityId;
-    private final ClaySoldierChip<?> chip;
+    private final ClaySoldierChip chip;
 
-    public ClaySoldierChipUpdatePayload(int entity, ClaySoldierChip<?> chip) {
+    public ClaySoldierChipUpdatePayload(int entity, ClaySoldierChip chip) {
         this.entityId = entity;
         this.chip = chip;
     }

@@ -1,7 +1,6 @@
 package net.bumblebee.claysoldiers.team;
 
 import com.mojang.serialization.Codec;
-import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.bumblebee.claysoldiers.init.ModRegistries;
 import net.bumblebee.claysoldiers.team.loyalty.TeamLoyaltyManger;

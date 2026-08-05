@@ -36,36 +36,36 @@ public class BuildBlueprintGoal extends AbstractWorkGoal {
     }
 
     @Override
-    public boolean canUse() {
-        if (isOnBreak()) {
-            return false;
-        }
-        return getPoiPos() != null && getCapCacheResetIfInvalid() != null;
-    }
-
-    @Override
-    public boolean canContinueToUse() {
-        return super.canContinueToUse();
-    }
-
-
-    @Override
     public void tick() {
+        if (isOnBreak()) {
+            return;
+        }
+        if (getPoiInfo().isEmpty()) {
+            workStatus.setRequiresPoi();
+            takeAShortBreak(false);
+            return;
+        }
+        if (getCapCacheResetIfInvalid() == null) {
+            workStatus.setRequiresPoi();
+            takeAShortBreak(false);
+            return;
+        }
+
         if (easelPos == null) {
-            setStatus(REQUIRES_POI_ID);
+            workStatus.setRequiresPoi();
             easelPos = findNearestBlock().map(this::getBlueprintCache).orElse(null);
             return;
         }
 
         if (request == null) {
             if (bringBack) {
-                setStatus(RETURNING_ID);
+                workStatus.setReturning();
                 if (returnCarried()) {
                     bringBack = false;
                 }
             } else {
                 getRequestJob();
-                setStatus(SEARCHING_ID);
+                workStatus.setSearching();
             }
         } else if (request.isCancelled() || request.isFinished()) {
             bringBack = !soldier.getCarriedStack().isEmpty();
@@ -73,7 +73,7 @@ public class BuildBlueprintGoal extends AbstractWorkGoal {
         } else if (request.hasStarted()) {
             getRequestFromStorage();
         } else if (request.isPlacing()) {
-            setStatus(CARRYING_ID);
+            workStatus.setCarrying();
             if (moveToRequest()) {
                 placeBlock();
             }
@@ -81,7 +81,7 @@ public class BuildBlueprintGoal extends AbstractWorkGoal {
     }
 
     private void getRequestFromStorage() {
-        if (moveToPoi()) {
+        if (moveToPoi(2d)) {
             assert getCapCache() != null;
             var storage = getCapCache().getCapability();
             if (storage != null) {
@@ -95,7 +95,7 @@ public class BuildBlueprintGoal extends AbstractWorkGoal {
                     request.setPlacing();
                 } else {
                     takeAShortBreak(true);
-                    setStatus(CANNOT_FIND_ITEM_ID);
+                    workStatus.setCannotFindItem();
                 }
 
             } else {
@@ -106,7 +106,7 @@ public class BuildBlueprintGoal extends AbstractWorkGoal {
     }
 
     private boolean returnCarried() {
-        if (moveToPoi()) {
+        if (moveToPoi(2d)) {
             assert getCapCache() != null;
             var storage = getCapCache().getCapability();
             if (storage != null) {
@@ -203,7 +203,7 @@ public class BuildBlueprintGoal extends AbstractWorkGoal {
 
     private IBlockCache<BlueprintRequestHandler> getBlueprintCache(BlockPos pos) {
         if (pos != null) {
-            return ClaySoldiersCommon.CAPABILITY_MANGER.createBlueprint((ServerLevel) soldier.level(), pos);
+            return ClaySoldiersCommon.CAPABILITY_MANGER.createBlueprintCache((ServerLevel) soldier.level(), pos);
         }
         return null;
     }

@@ -168,10 +168,10 @@ public class SimpleConfigFabric {
         });
     }
 
-    public long getPositiveLong(String key, long def, long max) {
+    public int getPositiveInt(String key, int def, int max) {
         return getConfig(key, def, val -> {
             try {
-                long value = Long.parseLong(val);
+                int value = Integer.parseInt(val);
                 if (value <= 0) {
                     return OptionalWithError.empty(value + " is not positive using the default %s");
                 } else if (value > max) {
@@ -179,7 +179,23 @@ public class SimpleConfigFabric {
                 }
                 return OptionalWithError.of(value);
             } catch (NumberFormatException e) {
-                return OptionalWithError.empty(val + " cannot be parsed as long using the default %s");
+                return OptionalWithError.empty(val + " cannot be parsed as int using the default %s");
+            }
+        });
+    }
+
+    public int getNonNegativeInt(String key, int def, int max) {
+        return getConfig(key, def, val -> {
+            try {
+                int value = Integer.parseInt(val);
+                if (value < 0) {
+                    return OptionalWithError.empty(value + " is negative using the default %s");
+                } else if (value > max) {
+                    return OptionalWithError.partial(max, value + " is to big using the max: " + max);
+                }
+                return OptionalWithError.of(value);
+            } catch (NumberFormatException e) {
+                return OptionalWithError.empty(val + " cannot be parsed as int using the default %s");
             }
         });
     }

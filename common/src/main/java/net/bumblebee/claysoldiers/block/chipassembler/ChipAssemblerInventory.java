@@ -166,6 +166,7 @@ public class ChipAssemblerInventory {
         public float height() {
             return height;
         }
+
         public float scale() {
             return scale;
         }
@@ -173,8 +174,6 @@ public class ChipAssemblerInventory {
         public float x() {
             return (minX + maxX) / 2;
         }
-
-
 
         public float z() {
             return (minZ + maxZ) / 2;

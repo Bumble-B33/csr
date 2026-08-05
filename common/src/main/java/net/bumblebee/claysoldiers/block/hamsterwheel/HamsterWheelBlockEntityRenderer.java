@@ -17,7 +17,6 @@ import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.client.resources.model.sprite.SpriteGetter;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.util.profiling.Profiler;
@@ -36,6 +35,8 @@ public class HamsterWheelBlockEntityRenderer implements BlockEntityRenderer<Hams
 
     public static final ModelLayerLocation STAND_LAYER_LOCATION = createLayerLocation("stand");
     public static final ModelLayerLocation POWER_LAYER_LOCATION = createLayerLocation("power");
+    public static final ModelLayerLocation POWER_OVERLAY_LAYER_LOCATION = createLayerLocation("power_overlay");
+
     public static final ModelLayerLocation BATTERY_LEFT_LOCATION = createLayerLocation("battery_left");
     public static final ModelLayerLocation BATTERY_RIGHT_LOCATION = createLayerLocation("battery_right");
 
@@ -46,6 +47,8 @@ public class HamsterWheelBlockEntityRenderer implements BlockEntityRenderer<Hams
 
     private final ModelPart stand;
     private final ModelPart powerConnection;
+    private final ModelPart powerConnectionOverlay;
+
     private final ModelPart batteryLeft;
     private final ModelPart batteryRight;
 
@@ -53,12 +56,13 @@ public class HamsterWheelBlockEntityRenderer implements BlockEntityRenderer<Hams
 
 
     public HamsterWheelBlockEntityRenderer(BlockEntityRendererProvider.Context context) {
-        this(context.entityModelSet(), context.sprites());
+        this(context.entityModelSet());
     }
 
-    public HamsterWheelBlockEntityRenderer(EntityModelSet modelSet, SpriteGetter materials) {
+    public HamsterWheelBlockEntityRenderer(EntityModelSet modelSet) {
         this.stand = modelSet.bakeLayer(STAND_LAYER_LOCATION);
         this.powerConnection = modelSet.bakeLayer(POWER_LAYER_LOCATION);
+        this.powerConnectionOverlay = modelSet.bakeLayer(POWER_OVERLAY_LAYER_LOCATION);
         this.wheelModel = new HamsterWheelModel(modelSet.bakeLayer(HamsterWheelModel.LAYER_LOCATION));
         this.batteryLeft = modelSet.bakeLayer(BATTERY_LEFT_LOCATION);
         this.batteryRight = modelSet.bakeLayer(BATTERY_RIGHT_LOCATION);
@@ -109,7 +113,8 @@ public class HamsterWheelBlockEntityRenderer implements BlockEntityRenderer<Hams
         if (hamsterWheelRenderState.hasEnergyStorage) {
             profiler.push("batteryRender");
 
-            nodeCollector.submitModelPart(powerConnection, poseStack, RENDER_TYPE_BLOCK, hamsterWheelRenderState.lightCoords, OverlayTexture.NO_OVERLAY, null, -1, hamsterWheelRenderState.breakProgress);
+            nodeCollector.submitModelPart(powerConnectionOverlay, poseStack, BatteryContentRenderer.ENERGY_PORT_REDNER_OVERLAY_TYPE, hamsterWheelRenderState.lightCoords, OverlayTexture.NO_OVERLAY, null, ClaySoldiersCommon.ENERGY_HELPER.getEnergyColor(), hamsterWheelRenderState.breakProgress);
+            nodeCollector.submitModelPart(powerConnection, poseStack, BatteryContentRenderer.ENERGY_PORT_REDNER_TYPE, hamsterWheelRenderState.lightCoords, OverlayTexture.NO_OVERLAY, null, -1, hamsterWheelRenderState.breakProgress);
             nodeCollector.submitModelPart(batteryLeft, poseStack, RENDER_TYPE_BLOCK, hamsterWheelRenderState.lightCoords, OverlayTexture.NO_OVERLAY, null, -1, hamsterWheelRenderState.breakProgress);
             batteryContentLeft.submitBatteryContent(hamsterWheelRenderState.energyStored, hamsterWheelRenderState.maxEnergyStored, nodeCollector, poseStack, hamsterWheelRenderState.lightCoords);
 
@@ -145,10 +150,6 @@ public class HamsterWheelBlockEntityRenderer implements BlockEntityRenderer<Hams
         nodeCollector.submitModel(wheelModel, HamsterWheelRenderState.EMPTY, pPoseStack, RENDER_TYPE_BLOCK, pPackedLight, pPackedOverlay, 0, null);
     }
 
-    private void renderBatterContent(HamsterWheelRenderState entity, SubmitNodeCollector nodeCollector, PoseStack poseStack, int packedLight) {
-        batteryContentLeft.submitBatteryContent(entity.energyStored, entity.maxEnergyStored, nodeCollector, poseStack, packedLight);
-    }
-
     public void getExtents(Consumer<Vector3fc> set) {
         PoseStack poseStack = new PoseStack();
         stand.getExtentsForGui(poseStack, set);
@@ -171,14 +172,26 @@ public class HamsterWheelBlockEntityRenderer implements BlockEntityRenderer<Hams
         PartDefinition partdefinition = meshdefinition.getRoot();
 
         partdefinition.addOrReplaceChild("power_connection", CubeListBuilder.create()
-                        .texOffs(0, 8).addBox(-4.0F, -12.0F, 7.999F, 8.0F, 8.0F, 0.0F)
-                        .texOffs(16, 8).addBox(-3.0F, -11.0F, 6.997F, 6.0F, 6.0F, 1.0F)
-                        .texOffs(6, 21).addBox(0.5F, -6.0F, 6.998F, 1.0F, 6.0F, 1.0F)
-                        .texOffs(0, 0).addBox(-1.5F, -6.0F, 6.998F, 1.0F, 6.0F, 1.0F)
-                        .texOffs(24, 15).addBox(-0.75F, -8.535F, 6.0F, 1.0F, 1.0F, 1.0F),
+                        .texOffs(16, 0).addBox(-4.0F, -12.0F, 7.998F, 8.0F, 8.0F, 0.0F)
+                        .texOffs(0, 16).addBox(-3.0F, -11.0F, 6.996F, 6.0F, 6.0F, 1.0F)
+                        .texOffs(14, 16).addBox(-1.5F, -6.0F, 6.997F, 1.0F, 6.0F, 1.0F)
+                        .texOffs(18, 16).addBox(0.5F, -6.0F, 6.997F, 1.0F, 6.0F, 1.0F)
+                        .texOffs(22, 16).addBox(-0.75F, -8.535F, 6.0F, 1.0F, 1.0F, 1.0F),
                 PartPose.offsetAndRotation(8, 0.0F, 8, 0, 0, Mth.PI));
 
+
         return LayerDefinition.create(meshdefinition, 32, 32);
+    }
+    public static LayerDefinition createPowerOverlayLayer() {
+        MeshDefinition meshdefinition = new MeshDefinition();
+        PartDefinition partdefinition = meshdefinition.getRoot();
+
+        partdefinition.addOrReplaceChild("power_connection", CubeListBuilder.create()
+                        .texOffs(16, 0).addBox(-4.0F, -12.0F, 7.999F, 8.0F, 8.0F, 0.0F),
+                PartPose.offsetAndRotation(8, 0.0F, 8, 0, 0, Mth.PI));
+
+
+        return LayerDefinition.create(meshdefinition, 16, 16);
     }
 
     private static LayerDefinition createBatteryBase(PartPose offsetAndRot) {

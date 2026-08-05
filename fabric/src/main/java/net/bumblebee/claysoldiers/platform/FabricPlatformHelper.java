@@ -10,6 +10,7 @@ import net.bumblebee.claysoldiers.claysoldierpredicate.ClayPredicate;
 import net.bumblebee.claysoldiers.claysoldierpredicate.ClayPredicateSerializer;
 import net.bumblebee.claysoldiers.entity.common.boss.BossClaySoldierBehaviour;
 import net.bumblebee.claysoldiers.init.*;
+import net.bumblebee.claysoldiers.item.BatteryItem;
 import net.bumblebee.claysoldiers.platform.services.IPlatformHelper;
 import net.bumblebee.claysoldiers.soldieritemtypes.ItemGenerator;
 import net.bumblebee.claysoldiers.soldierproperties.SoldierPropertyType;
@@ -27,16 +28,14 @@ import net.minecraft.advancements.CriterionTrigger;
 import net.minecraft.advancements.criterion.EntitySubPredicate;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
-import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.component.DataComponentType;
-import net.minecraft.core.particles.SimpleParticleType;
+import net.minecraft.core.particles.ParticleType;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.world.damagesource.DamageSources;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -87,11 +86,6 @@ public class FabricPlatformHelper implements IPlatformHelper {
     }
 
     @Override
-    public String getEnergyUnitName() {
-        return " E";
-    }
-
-    @Override
     public <T extends Item> ItemLikeSupplier<T> registerItem(String id, Function<Item.Properties, T> item) {
         Identifier location = Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, id);
         var unpacked = item.apply(new Item.Properties().setId(ResourceKey.create(Registries.ITEM, location)));
@@ -126,7 +120,7 @@ public class FabricPlatformHelper implements IPlatformHelper {
     }
 
     @Override
-    public Supplier<SimpleParticleType> registerParticle(String id, Supplier<SimpleParticleType> particleTye) {
+    public <T extends ParticleType<?>> Supplier<T> registerParticleType(String id, Supplier<T> particleTye) {
         return defaultRegistration(BuiltInRegistries.PARTICLE_TYPE, id, particleTye);
     }
 
@@ -212,7 +206,7 @@ public class FabricPlatformHelper implements IPlatformHelper {
 
 
     @Override
-    public <T> Supplier<ClaySoldierChip.Type<T>> registerClaySoldierModule(String name, Supplier<ClaySoldierChip.Type<T>> chipType) {
+    public Supplier<ClaySoldierChip.Type> registerClaySoldierModule(String name, Supplier<ClaySoldierChip.Type> chipType) {
         return defaultRegistration(ModRegistries.CLAY_SOLDIER_MODULES_REGISTRY, name, chipType);
     }
 
@@ -285,6 +279,8 @@ public class FabricPlatformHelper implements IPlatformHelper {
             for (Item item : ClaySoldiersCommon.PLATFORM.getAllItems()) {
                 if (item == ModItems.BLUEPRINT.get()) {
                     ModCreativeTab.modifyBlueprint(output::accept, itemDisplayParameters.holders());
+                } else if (item instanceof BatteryItem batteryItem) {
+                    ModCreativeTab.addBattery(batteryItem, output::accept);
                 } else {
                     output.accept(item);
                 }
@@ -300,11 +296,6 @@ public class FabricPlatformHelper implements IPlatformHelper {
     public Supplier<PoiType> registerPoiType(ResourceKey<PoiType> id, Supplier<PoiType> poiType) {
         var type = PoiHelper.register(id.identifier(), poiType.get().maxTickets(), poiType.get().validRange(), poiType.get().matchingStates());
         return () -> type;
-    }
-
-    @Override
-    public DamageSources createClayDamageSources(RegistryAccess registryAccess) {
-        return new ClayDamageSources(registryAccess);
     }
 
     private <B, T extends B> Supplier<T> defaultRegistration(Registry<B> registry, String id, Supplier<T> value) {

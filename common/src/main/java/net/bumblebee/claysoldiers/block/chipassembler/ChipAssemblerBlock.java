@@ -3,6 +3,7 @@ package net.bumblebee.claysoldiers.block.chipassembler;
 import com.mojang.math.OctahedralGroup;
 import com.mojang.serialization.MapCodec;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
+import net.bumblebee.claysoldiers.block.BlockEntityWithEnergy;
 import net.bumblebee.claysoldiers.init.ModBlockEntities;
 import net.bumblebee.claysoldiers.init.ModTags;
 import net.minecraft.core.BlockPos;
@@ -83,15 +84,18 @@ public class ChipAssemblerBlock extends BaseEntityBlock {
 
     @Override
     protected InteractionResult useItemOn(ItemStack itemStack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
-        if (player.getItemInHand(hand).is(ModTags.Items.WRENCH)) {
+        if (itemStack.is(ModTags.Items.WRENCH)) {
             level.setBlock(pos, rotate(state, Rotation.CLOCKWISE_90), 3);
             return InteractionResult.SUCCESS;
         }
+        if (itemStack.is(ModTags.Items.BATTERY)) {
+            return BlockEntityWithEnergy.fillFromBattery(itemStack, level, pos);
+        }
 
         if (hand == InteractionHand.MAIN_HAND && level.getBlockEntity(pos) instanceof ChipAssemblerBlockEntity chipAssembler) {
-            if (level instanceof ServerLevel serverLevel) {
+            if (level instanceof ServerLevel) {
                 Optional<ItemStack> res;
-                res = chipAssembler.insert(player.getItemInHand(hand), hitResult);
+                res = chipAssembler.insert(itemStack, hitResult);
                 res.ifPresent(s -> player.setItemInHand(hand, s));
                 return res.isPresent() ? InteractionResult.SUCCESS_SERVER : InteractionResult.TRY_WITH_EMPTY_HAND;
             }

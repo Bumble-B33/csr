@@ -115,7 +115,7 @@ public final class ModTagProvider {
         }
     }
 
-    private static class ChipTagProvider extends IntrinsicHolderTagsProvider<ClaySoldierChip.Type<?>> {
+    private static class ChipTagProvider extends IntrinsicHolderTagsProvider<ClaySoldierChip.Type> {
         public ChipTagProvider(PackOutput output, CompletableFuture<HolderLookup.Provider> lookupProvider) {
             super(output, ModRegistries.CLAY_SOLDIER_MODULES, lookupProvider, ChipTagProvider::keyExtractor, ClaySoldiersCommon.MOD_ID);
         }
@@ -129,11 +129,12 @@ public final class ModTagProvider {
                             ClaySoldierChips.BUILD_BLUEPRINT_TYPE.get(),
                             ClaySoldierChips.PLACE_SEEDS_TYPE.get(),
                             ClaySoldierChips.PICK_UP_ITEMS_TYPE.get(),
-                            ClaySoldierChips.BEEKEEPING_TYPE.get()
+                            ClaySoldierChips.BEEKEEPING_TYPE.get(),
+                            ClaySoldierChips.ELECTRICIAN_TYPE.get()
                     );
         }
 
-        private static ResourceKey<ClaySoldierChip.Type<?>> keyExtractor(ClaySoldierChip.Type<?> type) {
+        private static ResourceKey<ClaySoldierChip.Type> keyExtractor(ClaySoldierChip.Type type) {
             return ModTagProvider.keyExtractor(ModRegistries.CLAY_SOLDIER_MODULES_REGISTRY, type);
         }
     }

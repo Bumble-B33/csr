@@ -1,6 +1,5 @@
 package net.bumblebee.claysoldiers.integration.jade.providers;
 
-import net.bumblebee.claysoldiers.entity.client.FakeClaySoldierAccess;
 import net.bumblebee.claysoldiers.entity.common.ClayMobEntity;
 import net.bumblebee.claysoldiers.entity.common.soldier.AbstractClaySoldierEntity;
 import net.bumblebee.claysoldiers.init.ModTags;

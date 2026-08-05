@@ -1,18 +1,22 @@
 package net.bumblebee.claysoldiers.entity.common.programmable;
 
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
+import net.bumblebee.claysoldiers.capability.EnergyCapability;
 import net.bumblebee.claysoldiers.claysoldierchips.ClaySoldierChip;
 import net.bumblebee.claysoldiers.claysoldierchips.EmptyClaySoldierChip;
 import net.bumblebee.claysoldiers.claysoldierchips.addon.ClaySoldierChipAddons;
+import net.bumblebee.claysoldiers.claysoldierchips.work.ElectricianChip;
 import net.bumblebee.claysoldiers.datamap.SoldierSlotCallback;
 import net.bumblebee.claysoldiers.entity.common.StatInfoDisplay;
 import net.bumblebee.claysoldiers.entity.common.soldier.AbstractClaySoldierEntity;
-import net.bumblebee.claysoldiers.entity.common.soldier.status.SoldierStatusManager;
+import net.bumblebee.claysoldiers.entity.common.soldier.status.SoldierStatusHolder;
 import net.bumblebee.claysoldiers.entity.goal.workgoal.ClaySoldierFishGoal;
 import net.bumblebee.claysoldiers.init.ModCritirions;
 import net.bumblebee.claysoldiers.init.ModEntitySerializers;
+import net.bumblebee.claysoldiers.init.ModTags;
 import net.bumblebee.claysoldiers.item.ClayBrushItem;
 import net.bumblebee.claysoldiers.item.chip.ClaySoldierChipItem;
+import net.bumblebee.claysoldiers.menu.soldier.ProgrammableClaySoldierMenu;
 import net.bumblebee.claysoldiers.networking.ClaySoldierChipUpdatePayload;
 import net.bumblebee.claysoldiers.networking.SoldierCarriedChangePayload;
 import net.bumblebee.claysoldiers.networking.spawnpayloads.ProgrammableClaySoldierSpawnPayload;
@@ -30,6 +34,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityReference;
 import net.minecraft.world.entity.EntityType;
@@ -46,6 +51,7 @@ import org.jspecify.annotations.NonNull;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.UUID;
 
 public class ProgrammableClaySoldierEntity extends AbstractClaySoldierEntity implements ProgrammableClayMobAccess {
@@ -61,19 +67,38 @@ public class ProgrammableClaySoldierEntity extends AbstractClaySoldierEntity imp
     public static final String CHIP_TAG = "clay_soldier_chip";
 
     @NotNull
-    private ClaySoldierChip<?> brain;
+    private ClaySoldierChip brain;
     private ItemStack carriedStack = ItemStack.EMPTY;
 
     @Nullable
     private Vec3 clientBobberPos = null;
     private final ClaySoldierFishingTicker fishingTicker;
+    private final EnergyCapability energyCapability;
 
-    public ProgrammableClaySoldierEntity(EntityType<? extends AbstractClaySoldierEntity> pEntityType, Level level) {
-        super(pEntityType, level, AttackTypeProperty.ROBOT, (s) -> SoldierStatusManager.initProgrammable((ProgrammableClaySoldierEntity) s));
+    public ProgrammableClaySoldierEntity(EntityType<? extends AbstractClaySoldierEntity> entityType, Level level) {
+        super(entityType, level, AttackTypeProperty.ROBOT, (s) -> SoldierStatusHolder.initProgrammable((ProgrammableClaySoldierEntity) s));
         this.inWallDamage = (w, e) -> w ? 0.1f : 0.2f;
         this.setCanPickUpLoot(true);
         this.brain = EmptyClaySoldierChip.EMPTY;
         this.fishingTicker = new ClaySoldierFishingTicker(this);
+        this.energyCapability = new EnergyCapability() {
+            @Override
+            public int insert(int amount) {
+                ItemStack carriedStack = getCarriedStack();
+                if (carriedStack.isEmpty()) {
+                    return 0;
+                }
+                return ClaySoldiersCommon.ENERGY_HELPER.insert(carriedStack, amount);
+            }
+
+            @Override
+            public int extract(int wanted) {
+                if (carriedStack.isEmpty()) {
+                    return 0;
+                }
+                return ClaySoldiersCommon.ENERGY_HELPER.extract(carriedStack, wanted);
+            }
+        };
     }
 
     @Override
@@ -84,7 +109,6 @@ public class ProgrammableClaySoldierEntity extends AbstractClaySoldierEntity imp
     public void addAdditionalSaveData(@NonNull ValueOutput output) {
         super.addAdditionalSaveData(output);
         output.store(CHIP_TAG, ClaySoldierChip.CODEC, brain);
-        brain.saveAdditional(output);
         brain.reset();
 
         if (!carriedStack.isEmpty()) {
@@ -98,7 +122,6 @@ public class ProgrammableClaySoldierEntity extends AbstractClaySoldierEntity imp
     public void readAdditionalSaveData(@NonNull ValueInput input) {
         super.readAdditionalSaveData(input);
         setupChip(input.read(CHIP_TAG, ClaySoldierChip.CODEC).orElse(EmptyClaySoldierChip.EMPTY));
-        brain.readAdditional(input);
 
         carriedStack = input.read(CARRIED_ITEM_TAG, ItemStack.CODEC).orElse(ItemStack.EMPTY);
         setOwnerUUID(input.read(OWNER_UUID_TAG, UUIDUtil.CODEC).orElse(null));
@@ -129,14 +152,13 @@ public class ProgrammableClaySoldierEntity extends AbstractClaySoldierEntity imp
     @Override
     protected InteractionResult mobInteract(Player player, InteractionHand hand) {
         ItemStack itemInHand = player.getItemInHand(hand);
-        ClaySoldierChip<?> chip = ClaySoldierChipItem.getChipFromItem(itemInHand);
+        ClaySoldierChip chip = ClaySoldierChipItem.getChipFromItem(itemInHand);
         if (chip != null) {
             if (level() instanceof ServerLevel) {
                 if (ClaySoldiersCommon.CONFIG.getServerConfig().chipRequiresLoyalty() && !isOwnedBy(player)) {
                     return InteractionResult.FAIL;
                 }
-                BlockPos pos = ClayBrushItem.getPoiPos(itemInHand);
-                this.setPoiPos(pos);
+                this.setPoiInfo(ClayBrushItem.getPoiPos(itemInHand));
 
                 itemInHand.shrink(1);
                 player.addItem(ClaySoldierChipItem.create(getInstalledChip()));
@@ -187,6 +209,10 @@ public class ProgrammableClaySoldierEntity extends AbstractClaySoldierEntity imp
 
     public void setCarriedStack(ItemStack carriedStack) {
         this.carriedStack = carriedStack;
+        updateCarriedStack();
+    }
+
+    public void updateCarriedStack() {
         if (!level().isClientSide()) {
             ClaySoldiersCommon.NETWORK_MANGER.sendToPlayersTrackingEntity(this, new SoldierCarriedChangePayload(this.getId(), carriedStack));
         }
@@ -236,7 +262,13 @@ public class ProgrammableClaySoldierEntity extends AbstractClaySoldierEntity imp
         if (!getCarriedStack().isEmpty()) {
             this.dropItemStack(getCarriedStack());
         }
-        this.dropItemStack(ClaySoldierChipItem.create(getInstalledChip()));
+        ClaySoldierChip chip = getInstalledChip();
+        ItemStack stack = ClaySoldierChipItem.create(getInstalledChip());
+        if (chip.is(ModTags.ClaySoldierChips.REQUIRES_POI_POS)) {
+            ClaySoldierChipItem.setPoiInfo(stack, getPoiInfo());
+        }
+        this.dropItemStack(stack);
+
     }
 
     @Override
@@ -253,7 +285,7 @@ public class ProgrammableClaySoldierEntity extends AbstractClaySoldierEntity imp
 
     }
 
-    public void setupChip(@NotNull ClaySoldierChip<?> chip) {
+    public void setupChip(@NotNull ClaySoldierChip chip) {
         clearChip();
         brain = chip.withSoldier(this);
         if (level() instanceof ServerLevel serverLevel) {
@@ -286,7 +318,7 @@ public class ProgrammableClaySoldierEntity extends AbstractClaySoldierEntity imp
 
     @Override
     @NotNull
-    public ClaySoldierChip<?> getInstalledChip() {
+    public ClaySoldierChip getInstalledChip() {
         return brain;
     }
 
@@ -419,6 +451,10 @@ public class ProgrammableClaySoldierEntity extends AbstractClaySoldierEntity imp
         }
     }
 
+    public boolean holdsBattery() {
+        return getCarriedStack().is(ModTags.Items.BATTERY);
+    }
+
     @Override
     public void tick() {
         super.tick();
@@ -468,5 +504,21 @@ public class ProgrammableClaySoldierEntity extends AbstractClaySoldierEntity imp
         } else {
             super.setOrderedCommand(command);
         }
+    }
+
+    @Override
+    protected OptionalInt openMenuScreen(Player player) {
+        return ClaySoldiersCommon.COMMON_HOOKS.openMenu(player,
+                new SimpleMenuProvider((id, inventory, _) -> new ProgrammableClaySoldierMenu(id, inventory, this), getInventoryName()),
+                this.getId()
+        );
+    }
+
+    public int insertEnergy(int toInsert) {
+        return energyCapability.insert(toInsert);
+    }
+
+    public int getEnergyForCharging() {
+        return getInstalledChip() instanceof ElectricianChip energy ? energy.getTransferRate() : 0;
     }
 }

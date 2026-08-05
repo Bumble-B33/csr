@@ -10,6 +10,7 @@ import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -25,20 +26,27 @@ public final class ThrowableTransform {
     public static final Codec<ThrowableTransform> CODEC = RecordCodecBuilder.create(in -> in.group(
             Identifier.CODEC.optionalFieldOf("newModel").forGetter(ThrowableTransform::newModel)
     ).apply(in, m -> new ThrowableTransform(m.orElse(null))));
-    public static final StreamCodec<ByteBuf, ThrowableTransform> STREAM_CODEC = ByteBufCodecs.optional(Identifier.STREAM_CODEC).map(m -> new ThrowableTransform(m.orElse(null)), ThrowableTransform::newModel);
+    public static final StreamCodec<ByteBuf, ThrowableTransform> STREAM_CODEC = ByteBufCodecs.optional(Identifier.STREAM_CODEC).map(m -> ThrowableTransform.create(m.orElse(null)), ThrowableTransform::newModel);
     private final Identifier newModel;
 
-    private ThrowableTransform(Identifier newModel) {
+    private ThrowableTransform(@Nullable Identifier newModel) {
         this.newModel = newModel;
     }
 
-    private Optional<Identifier> newModel() {
-        return Optional.ofNullable(newModel);
+    private static ThrowableTransform create(@Nullable Identifier newModel) {
+        if (newModel == null) {
+            return DEFAULT;
+        }
+        return new ThrowableTransform(newModel);
     }
 
     public static ThrowableTransform of(@NonNull Identifier model) {
         Objects.requireNonNull(model);
         return new ThrowableTransform(model);
+    }
+
+    private Optional<Identifier> newModel() {
+        return Optional.ofNullable(newModel);
     }
 
     public ItemStackWithEffect transform(@NonNull ItemStackWithEffect throwable) {

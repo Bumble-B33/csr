@@ -87,10 +87,10 @@ public class ClayPouchContent implements TooltipComponent {
     }
 
     /**
-     * Returns a value between [1 - 13]
+     * Returns a value between [1 - {@link Item#MAX_BAR_WIDTH}]
      */
     public int getFillPercent(int maxCapacity) {
-        return (int) Math.clamp(((count * 13f) / maxCapacity), 1, 13);
+        return (int) Math.clamp(((count * (float) Item.MAX_BAR_WIDTH) / maxCapacity), 1, Item.MAX_BAR_WIDTH);
     }
 
     public int getCount() {

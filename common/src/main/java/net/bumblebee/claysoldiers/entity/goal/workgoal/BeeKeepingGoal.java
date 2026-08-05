@@ -1,5 +1,6 @@
 package net.bumblebee.claysoldiers.entity.goal.workgoal;
 
+import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.claysoldierchips.ClayMobWorkAccess;
 import net.bumblebee.claysoldiers.entity.common.programmable.ProgrammableClaySoldierEntity;
 import net.minecraft.core.BlockPos;
@@ -22,11 +23,9 @@ import java.util.function.Predicate;
 public class BeeKeepingGoal extends AbstractWorkGoal {
     private static final Predicate<ItemStack> SHEARS = s -> s.is(Items.SHEARS);
     private static final Predicate<ItemStack> GLASS_BOTTLE = s -> s.is(Items.GLASS_BOTTLE);
+    public static final String BEE_KEEPING_LANG = JOB_LANG_KEY.formatted(ClaySoldiersCommon.MOD_ID, "bee_keeping");
 
-    private static final List<JobItemRequest> REQUIRED_TOOLS = List.of(
-      new JobItemRequest(SHEARS, 1),
-      new JobItemRequest(GLASS_BOTTLE, Items.GLASS_BOTTLE.getDefaultMaxStackSize())
-    );
+    private static List<JobItemRequest> REQUIRED_TOOLS;
     @Nullable
     private BlockPos beehivePos;
 
@@ -34,29 +33,36 @@ public class BeeKeepingGoal extends AbstractWorkGoal {
     private final int verticalSearchRange;
 
     public BeeKeepingGoal(ProgrammableClaySoldierEntity soldier, ClayMobWorkAccess workAccess, SearchRange searchRange) {
-        super(soldier, workAccess, List.of(BREAK_LANG, SEARCHING_LANG, CARRYING_LANG, REQUIRES_POI_LANG));
+        super(soldier, workAccess);
 
         this.verticalSearchRange = searchRange.verticalRange();
         this.horizontalSearchRange = searchRange.horizontalRange();
+        if (REQUIRED_TOOLS == null) {
+            REQUIRED_TOOLS = List.of(
+                    new JobItemRequest(SHEARS, 1),
+                    new JobItemRequest(GLASS_BOTTLE, Items.GLASS_BOTTLE.getDefaultMaxStackSize())
+            );
+        }
     }
+
 
     @Override
     public Component getDisplayName() {
-        return null;
-    }
-
-    @Override
-    public boolean canUse() {
-        return !isOnBreak();
+        return Component.translatable(BEE_KEEPING_LANG);
     }
 
     @Override
     public void tick() {
+        if (isOnBreak()) {
+            return;
+        }
+
         if (hasBottle() || hasShears()) {
             if (beehivePos != null) {
                 if (!isValidHive(beehivePos)) {
                     beehivePos = null;
                     takeAShortBreak(false);
+                    workStatus.setNoHive();
                 } else {
                     if (moveToPos(beehivePos, 1)) {
                         harvestBeehive(beehivePos);
@@ -64,9 +70,10 @@ public class BeeKeepingGoal extends AbstractWorkGoal {
                 }
             } else {
                 beehivePos = findNearestValidPos(soldier.blockPosition(), 0, verticalSearchRange, horizontalSearchRange, this::isValidHive);
-                setStatus(SEARCHING_ID);
+                workStatus.setNoHive();
             }
         } else {
+            workStatus.setRequiresSheersOrBottle();
             if (acquireJobItem(REQUIRED_TOOLS)) {
                 takeAShortBreak(false);
             }
@@ -105,8 +112,7 @@ public class BeeKeepingGoal extends AbstractWorkGoal {
                     soldier,
                     beehivePos
             );
-            soldier.getCarriedStack().hurtAndBreak(1, level, null, s -> {
-            });
+            soldier.getCarriedStack().hurtAndBreak(1, level, null, _ -> {});
             level.gameEvent(soldier, GameEvent.SHEAR, beehivePos);
         } else if (hasBottle()) {
             soldier.spawnAtLocation(level, new ItemStack(Items.HONEY_BOTTLE));
@@ -140,7 +146,6 @@ public class BeeKeepingGoal extends AbstractWorkGoal {
         if (state.hasProperty(BlockStateProperties.LEVEL_HONEY)) {
             return state.getValue(BlockStateProperties.LEVEL_HONEY) >= BeehiveBlock.MAX_HONEY_LEVELS;
         }
-
 
         return false;
     }

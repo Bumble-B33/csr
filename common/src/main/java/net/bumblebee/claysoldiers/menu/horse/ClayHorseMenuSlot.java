@@ -6,6 +6,7 @@ import net.bumblebee.claysoldiers.menu.AbstractClayMobMenuSlot;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import org.jspecify.annotations.NonNull;
 
 public abstract class ClayHorseMenuSlot extends AbstractClayMobMenuSlot {
     public static final String ARMOR_SLOT_NAME = SoldierEquipmentSlot.SOLDIER_SLOT_PREFIX + "horse.armor";
@@ -29,7 +30,7 @@ public abstract class ClayHorseMenuSlot extends AbstractClayMobMenuSlot {
             }
 
             @Override
-            public Component getDisplayName() {
+            public @NonNull Component getDisplayName() {
                 return Component.translatable(ARMOR_SLOT_NAME);
             }
         };
@@ -48,7 +49,7 @@ public abstract class ClayHorseMenuSlot extends AbstractClayMobMenuSlot {
             }
 
             @Override
-            public Component getDisplayName() {
+            public @NonNull Component getDisplayName() {
                 return Component.translatable(HORN_SLOT_NAME);
             }
         };

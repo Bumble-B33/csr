@@ -19,19 +19,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public class ClaySoldierScreen extends AbstractClayMobScreen<AbstractClaySoldierEntity, ClaySoldierMenu> {
+public class ClaySoldierScreen<T extends ClaySoldierMenu> extends AbstractClayMobScreen<AbstractClaySoldierEntity, T> {
     public static final String PREVIOUS_CLAY_TEAM_LABEL = "gui.label." + ClaySoldiersCommon.MOD_ID + ".previous_clay_team";
     public static final String REVIVE_TYPE_COOLDOWN = "gui.label." + ClaySoldiersCommon.MOD_ID + ".revive_type_cooldown";
     public static final String REVIVE_TYPE_COOLDOWN_ENTRY = "gui.label." + ClaySoldiersCommon.MOD_ID + ".revive_type_cooldown_entry";
     public static final String SOLDIER_PROPERTIES = "gui.label." + ClaySoldiersCommon.MOD_ID + ".soldier_properties";
 
-    public static final float REVIVE_SCALE = 0.75f;
-
     private static final Identifier TEXTURE =
             Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "textures/gui/container/clay_soldier_inventory.png");
 
-    public ClaySoldierScreen(ClaySoldierMenu pMenu, Inventory pPlayerInventory, Component pTitle) {
-        super(pMenu, pPlayerInventory, pTitle, 176, 192);
+    public ClaySoldierScreen(T menu, Inventory playerInventory, Component title) {
+        super(menu, playerInventory, title, 176, 192);
         this.teamPropertiesY = 16;
     }
 
@@ -39,11 +37,13 @@ public class ClaySoldierScreen extends AbstractClayMobScreen<AbstractClaySoldier
     public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
         final int x = (width - imageWidth) / 2;
         final int y = (height - imageHeight) / 2;
-        graphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, x, y, 0, 0, imageWidth, imageHeight+2, 256, 256);
+        graphics.blit(RenderPipelines.GUI_TEXTURED, getBackGroundTexture(), x, y, 0, 0, imageWidth, imageHeight+2, 256, 256);
         renderSource(graphics, x + 26, y + 18, x + 75, y + 78, 60, 0.0625F, mouseX, mouseY);
-
     }
 
+    protected Identifier getBackGroundTexture() {
+        return TEXTURE;
+    }
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor pGuiGraphics, int pMouseX, int pMouseY, float pPartialTick) {

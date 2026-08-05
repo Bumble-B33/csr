@@ -21,7 +21,7 @@ import java.util.OptionalInt;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-public abstract class WorkGoalChip<T, G extends Goal & IWorkGoal> extends ClaySoldierChip<T> {
+public abstract class WorkGoalChip<G extends Goal & IWorkGoal> extends ClaySoldierChip {
 
     private ClayMobWorkAccess workAccess;
     private ProgrammableClaySoldierEntity soldier;
@@ -30,8 +30,8 @@ public abstract class WorkGoalChip<T, G extends Goal & IWorkGoal> extends ClaySo
     private final int baseColor;
     private final int connectionColor;
 
-    protected WorkGoalChip(T data, List<ClaySoldierChipAddon> addons, Identifier assetId, int baseColor, int connectionColor) {
-        super(data, addons);
+    protected WorkGoalChip(List<ClaySoldierChipAddon> addons, Identifier assetId, int baseColor, int connectionColor) {
+        super(addons);
         this.assetId = assetId;
         this.baseColor = baseColor;
         this.connectionColor = connectionColor;
@@ -45,7 +45,7 @@ public abstract class WorkGoalChip<T, G extends Goal & IWorkGoal> extends ClaySo
     }
 
     @Override
-    public WorkGoalChip<T, G> withSoldier(ProgrammableClaySoldierEntity soldier) {
+    public WorkGoalChip<G> withSoldier(ProgrammableClaySoldierEntity soldier) {
         if (soldier.level().isClientSide() && this.soldier != null) {
             return this;
         }
@@ -72,12 +72,12 @@ public abstract class WorkGoalChip<T, G extends Goal & IWorkGoal> extends ClaySo
 
     @Override
     public boolean shouldStayAtWork() {
-        return soldier.getPoiPos() != null;
+        return !soldier.getPoiInfo().isEmpty();
     }
 
     @Override
     public Component getWorkStatusDisplayName(@NotNull ClayMobEntity soldier) {
-        return goal.decodeStatus(workAccess.getDataWorkStatus());
+        return goal.getWorkStatus();
     }
 
     @Override

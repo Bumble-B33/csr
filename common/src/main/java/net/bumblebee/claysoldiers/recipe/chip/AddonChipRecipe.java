@@ -28,7 +28,7 @@ public class AddonChipRecipe extends ChipAssemblyRecipe {
 
     @Override
     public boolean matches(ChipInput input, Level level) {
-        ClaySoldierChip<?> chip = ClaySoldierChipItem.getChipFromItem(input.getChip());
+        ClaySoldierChip chip = ClaySoldierChipItem.getChipFromItem(input.getChip());
         if (chip == null) {
             return false;
         }
@@ -50,7 +50,7 @@ public class AddonChipRecipe extends ChipAssemblyRecipe {
     @Override
     public ItemStack assemble(ChipInput input) {
         ItemStack chipItem = input.getChip().copyWithCount(1);
-        ClaySoldierChip<?> chip = ClaySoldierChipItem.getChipFromItem(chipItem);
+        ClaySoldierChip chip = ClaySoldierChipItem.getChipFromItem(chipItem);
         if (chip == null) {
             ClaySoldiersCommon.ERROR_HANDLER.warn("Matching Recipe with Illegal State");
             return chipItem;
@@ -64,13 +64,23 @@ public class AddonChipRecipe extends ChipAssemblyRecipe {
                 addons.add(addon);
             }
         }
-        ClaySoldierChip<?> chipWithAddons = chip.addAddons(addons);
+        ClaySoldierChip chipWithAddons = chip.addAddons(addons);
         if (chipWithAddons == null) {
             ClaySoldiersCommon.ERROR_HANDLER.warn("Matching Recipe but cannot apply addons");
             return chipItem;
         }
         return ClaySoldierChipItem.addChip(chipItem.copyWithCount(1), chipWithAddons);
     }
+
+    public ChipAssemblyInfo getRecipeInfo() {
+        return recipeInfo;
+    }
+
+    public CommonInfo getCommonInfo() {
+        return info;
+    }
+
+
 
     @Override
     public RecipeSerializer<? extends AddonChipRecipe> getSerializer() {

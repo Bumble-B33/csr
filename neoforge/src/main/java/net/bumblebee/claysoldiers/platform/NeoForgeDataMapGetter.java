@@ -3,7 +3,7 @@ package net.bumblebee.claysoldiers.platform;
 import net.bumblebee.claysoldiers.datamap.SoldierEquipmentSlot;
 import net.bumblebee.claysoldiers.datamap.SoldierHoldableEffect;
 import net.bumblebee.claysoldiers.datamap.armor.SoldierMultiWearable;
-import net.bumblebee.claysoldiers.init.NeoForgeDataMaps;
+import net.bumblebee.claysoldiers.init.ModNeoForgeDataMaps;
 import net.bumblebee.claysoldiers.platform.services.IDataMapGetter;
 import net.bumblebee.claysoldiers.soldierpoi.SoldierPoi;
 import net.bumblebee.claysoldiers.soldierproperties.SoldierVehicleProperties;
@@ -25,27 +25,27 @@ public class NeoForgeDataMapGetter implements IDataMapGetter {
 
     @Override
     public @Nullable SoldierHoldableEffect getEffect(ItemStack stack) {
-        return stack.typeHolder().getData(NeoForgeDataMaps.SOLDIER_HOLDABLE);
+        return stack.typeHolder().getData(ModNeoForgeDataMaps.SOLDIER_HOLDABLE);
     }
 
     @Override
     public @Nullable SoldierHoldableEffect getEffect(Item item) {
-        return item.builtInRegistryHolder().getData(NeoForgeDataMaps.SOLDIER_HOLDABLE);
+        return item.builtInRegistryHolder().getData(ModNeoForgeDataMaps.SOLDIER_HOLDABLE);
     }
 
     @Override
     public @Nullable SoldierMultiWearable getArmor(ItemStack stack) {
-        return stack.typeHolder().getData(NeoForgeDataMaps.SOLDIER_ARMOR);
+        return stack.typeHolder().getData(ModNeoForgeDataMaps.SOLDIER_ARMOR);
     }
 
     @Override
     public @Nullable SoldierPoi getItemPoi(ItemStack stack) {
-        return stack.typeHolder().getData(NeoForgeDataMaps.SOLDIER_ITEM_POI);
+        return stack.typeHolder().getData(ModNeoForgeDataMaps.SOLDIER_ITEM_POI);
     }
 
     @Override
     public @Nullable SoldierPoi getItemPoi(Item item) {
-        return item.builtInRegistryHolder().getData(NeoForgeDataMaps.SOLDIER_ITEM_POI);
+        return item.builtInRegistryHolder().getData(ModNeoForgeDataMaps.SOLDIER_ITEM_POI);
     }
 
     @Override
@@ -54,12 +54,12 @@ public class NeoForgeDataMapGetter implements IDataMapGetter {
         if (key == null) {
             return null;
         }
-        return BuiltInRegistries.BLOCK.getData(NeoForgeDataMaps.SOLDIER_BLOCK_POI, key);
+        return BuiltInRegistries.BLOCK.getData(ModNeoForgeDataMaps.SOLDIER_BLOCK_POI, key);
     }
 
     @Override
     public @Nullable SoldierVehicleProperties getVehicleProperties(EntityType<?> type) {
-        return type.builtInRegistryHolder().getData(NeoForgeDataMaps.SOLDIER_VEHICLE_PROPERTIES);
+        return type.builtInRegistryHolder().getData(ModNeoForgeDataMaps.SOLDIER_VEHICLE_PROPERTIES);
     }
 
     @Override

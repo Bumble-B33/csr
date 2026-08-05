@@ -1,18 +1,16 @@
 package net.bumblebee.claysoldiers.init;
 
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
-import net.bumblebee.claysoldiers.claysoldierchips.ClaySoldierChip;
-import net.bumblebee.claysoldiers.claysoldierchips.CombatChip;
-import net.bumblebee.claysoldiers.claysoldierchips.EmptyClaySoldierChip;
-import net.bumblebee.claysoldiers.claysoldierchips.PoiChip;
+import net.bumblebee.claysoldiers.claysoldierchips.*;
 import net.bumblebee.claysoldiers.claysoldierchips.addon.ClaySoldierChipAddon;
 import net.bumblebee.claysoldiers.claysoldierchips.addon.ClaySoldierChipAddons;
 import net.bumblebee.claysoldiers.claysoldierchips.work.*;
+import net.bumblebee.claysoldiers.energy.BatteryProperties;
 import net.bumblebee.claysoldiers.entity.common.ClayMobEntity;
 import net.bumblebee.claysoldiers.entity.common.variant.ClayHorseVariants;
 import net.bumblebee.claysoldiers.entity.common.variant.NameableVariant;
 import net.bumblebee.claysoldiers.entity.common.variant.VariantHolder;
-import net.bumblebee.claysoldiers.entity.goal.workgoal.SearchRange;
+import net.bumblebee.claysoldiers.item.BatteryItem;
 import net.bumblebee.claysoldiers.item.BrickedClaySoldierItem;
 import net.bumblebee.claysoldiers.item.ClayBrushItem;
 import net.bumblebee.claysoldiers.item.TestItem;
@@ -26,7 +24,9 @@ import net.bumblebee.claysoldiers.item.disruptor.ClayMobKillItem;
 import net.bumblebee.claysoldiers.item.disruptor.DisruptorKillRange;
 import net.bumblebee.claysoldiers.platform.ItemLikeSupplier;
 import net.bumblebee.claysoldiers.team.ClayMobTeamManger;
+import net.bumblebee.claysoldiers.util.PoiPosInfo;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.component.TypedDataComponent;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.entity.EntityType;
@@ -59,7 +59,7 @@ public class ModItems {
     public static final ItemLikeSupplier<Item> CLAY_COOKIE = ClaySoldiersCommon.PLATFORM.registerItem("clay_cookie",
             Item::new);
     public static final Supplier<ClayBrushItem> CLAY_BRUSH = ClaySoldiersCommon.PLATFORM.registerItem("clay_brush",
-            p -> new ClayBrushItem(p.stacksTo(1).rarity(Rarity.UNCOMMON).component(ModDataComponents.CLAY_BRUSH_MODE.get(), ClayBrushItem.Mode.COMMAND).component(ModDataComponents.POI_POS.get(), ClayBrushItem.PoiPos.EMPTY)));
+            p -> new ClayBrushItem(p.stacksTo(1).rarity(Rarity.UNCOMMON).component(ModDataComponents.CLAY_BRUSH_MODE.get(), ClayBrushItem.Mode.COMMAND).component(ModDataComponents.POI_POS.get(), PoiPosInfo.EMPTY)));
     public static final ItemLikeSupplier<Item> CLAY_GOGGLES = ClaySoldiersCommon.PLATFORM.registerItem("clay_goggles",
             p -> new Item(p.humanoidArmor(ModArmorMaterials.CLAY_ARMOR_MATERIAL, ArmorType.HELMET).rarity(Rarity.UNCOMMON)));
 
@@ -84,6 +84,12 @@ public class ModItems {
     public static final ItemLikeSupplier<ClayPouchItem> CLAY_POUCH = ClaySoldiersCommon.PLATFORM.registerItem("clay_pouch",
             p -> new ClayPouchItem(p.stacksTo(1).rarity(Rarity.UNCOMMON)));
 
+    public static final ItemLikeSupplier<Item> SMALL_BATTERY = ClaySoldiersCommon.PLATFORM.registerItem("small_battery",
+            p -> createBatteryItem(p, ClaySoldiersCommon.ENERGY_HELPER.getComponent(0), 1));
+    public static final ItemLikeSupplier<Item> LARGE_BATTERY = ClaySoldiersCommon.PLATFORM.registerItem("large_battery",
+            p -> createBatteryItem(p, ClaySoldiersCommon.ENERGY_HELPER.getComponent(0), 2));
+
+
     public static final ItemLikeSupplier<ClaySoldierChipItem> BLANK_CHIP = ClaySoldiersCommon.PLATFORM.registerItem("clay_soldier_chip",
             p -> createChip(p, EmptyClaySoldierChip.EMPTY));
 
@@ -94,21 +100,22 @@ public class ModItems {
     public static final ItemLikeSupplier<ClaySoldierChipItem> DIG_CHIP = ClaySoldiersCommon.PLATFORM.registerItem("dig_clay_soldier_chip",
             p -> createChip(p, DigChip.create()));
     public static final ItemLikeSupplier<ClaySoldierChipItem> PICK_UP_ITEMS_CHIP = ClaySoldiersCommon.PLATFORM.registerItem("pick_up_items_clay_soldier_chip",
-            p -> createChip(p, PickUpItemsChip.create(new SearchRange(8))));
+            p -> createChip(p, PickUpItemsChip.create()));
 
     public static final ItemLikeSupplier<ClaySoldierChipItem> PLACE_SEEDS_CHIP = ClaySoldiersCommon.PLATFORM.registerItem("place_seed_clay_soldier_chip",
-            p -> createChip(p, PlaceSeedsChip.create(new SearchRange(16, 2))));
+            p -> createChip(p, PlaceSeedsChip.create()));
 
     public static final ItemLikeSupplier<ClaySoldierChipItem> BREAK_CROPS_CHIP = ClaySoldiersCommon.PLATFORM.registerItem("break_crops_clay_soldier_chip",
-            p -> createChip(p, BreakCropsChip.create(new SearchRange(16, 2))));
+            p -> createChip(p, BreakCropsChip.create()));
 
     public static final ItemLikeSupplier<ClaySoldierChipItem> FISHING_CHIP = ClaySoldiersCommon.PLATFORM.registerItem("fishing_clay_soldier_chip",
-            p -> createChip(p, FishingChip.create(new SearchRange(16, 2))));
+            p -> createChip(p, FishingChip.create()));
     public static final ItemLikeSupplier<ClaySoldierChipItem> BLUEPRINT_CHIP = ClaySoldiersCommon.PLATFORM.registerItem("build_blueprint_clay_soldier_chip",
-            p -> createChip(p, BlueprintChip.create(new SearchRange(16, 2))));
+            p -> createChip(p, BlueprintChip.create()));
     public static final ItemLikeSupplier<ClaySoldierChipItem> BEE_KEEPING_CHIP = ClaySoldiersCommon.PLATFORM.registerItem("bee_keeping_clay_soldier_chip",
-            p -> createChip(p, BeeKeepingChip.create(new SearchRange(8, 2))));
-
+            p -> createChip(p, BeeKeepingChip.create()));
+    public static final ItemLikeSupplier<ClaySoldierChipItem> ELECTRICIAN_CHIP = ClaySoldiersCommon.PLATFORM.registerItem("electrician_clay_soldier_chip",
+            p -> createChip(p, ElectricianChip.create()));
 
 
     public static final ItemLikeSupplier<Item> BLANK_ADDON = ClaySoldiersCommon.PLATFORM.registerItem("blank_addon", Item::new);
@@ -127,6 +134,8 @@ public class ModItems {
             p -> createAddon(p, ClaySoldierChipAddons.TARGET_IGNORE_BABIES_ADDON));
     public static final ItemLikeSupplier<Item> ACCELERATION_ADDON = ClaySoldiersCommon.PLATFORM.registerItem("acceleration_addon",
             p -> createAddon(p, ClaySoldierChipAddons.ACCELERATION_ADDON));
+    public static final ItemLikeSupplier<Item> UPGRADED_ACCELERATION_ADDON = ClaySoldiersCommon.PLATFORM.registerItem("upgraded_acceleration_addon",
+            p -> createAddon(p, ClaySoldierChipAddons.UPGRADED_ACCELERATION_ADDON));
 
     public static final Supplier<? extends MultiSpawnItem<?>> CAKE_HORSE = registerSpawnItemVariant("horse", ModEntityTypes.CLAY_HORSE_ENTITY, ClayHorseVariants.CAKE, ClayHorseVariants.CLAY_HORSE_ITEM_BY_VARIANT);
     public static final Supplier<? extends MultiSpawnItem<?>> GRASS_HORSE = registerSpawnItemVariant("horse", ModEntityTypes.CLAY_HORSE_ENTITY, ClayHorseVariants.GRASS, ClayHorseVariants.CLAY_HORSE_ITEM_BY_VARIANT);
@@ -150,11 +159,20 @@ public class ModItems {
     }
 
     public static Item createAddon(Item.Properties properties, @NotNull ClaySoldierChipAddon addon) {
-        return new Item(properties.stacksTo(16).component(ModDataComponents.CLAY_SOLDIER_CHIP_ADDON.get(), addon));
+        var item = new Item(properties.stacksTo(16).component(ModDataComponents.CLAY_SOLDIER_CHIP_ADDON.get(), addon));
+        ClaySoldierChipAddon.BY_ITEM.put(addon, item);
+
+        return item;
     }
 
-    public static ClaySoldierChipItem createChip(Item.Properties properties, @NotNull ClaySoldierChip<?> chip) {
-        return new ClaySoldierChipItem(properties.stacksTo(16).component(ModDataComponents.CLAY_SOLDIER_CHIP.get(), chip));
+    public static ClaySoldierChipItem createChip(Item.Properties properties, @NotNull ClaySoldierChip chip) {
+        ClaySoldierChipItem item = new ClaySoldierChipItem(properties.stacksTo(16).component(ModDataComponents.CLAY_SOLDIER_CHIP.get(), chip));
+        ClaySoldierChip.BY_ITEM.put(chip::getType, item);
+        return item;
+    }
+
+    public static <T> BatteryItem createBatteryItem(Item.Properties properties, TypedDataComponent<T> component, int capacityMultiplier) {
+        return ClaySoldiersCommon.ENERGY_HELPER.createBatteryItem(properties.stacksTo(1).component(component.type(), component.value()), BatteryProperties.of(capacityMultiplier).allowInsertion().allowExtraction().build());
     }
 
     public static void init() {

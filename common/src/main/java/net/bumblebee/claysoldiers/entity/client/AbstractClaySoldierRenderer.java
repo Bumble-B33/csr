@@ -2,11 +2,15 @@ package net.bumblebee.claysoldiers.entity.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
+import net.bumblebee.claysoldiers.datamap.HoldingPose;
 import net.bumblebee.claysoldiers.datamap.SoldierEquipmentSlot;
 import net.bumblebee.claysoldiers.entity.client.accesories.AccessoryRenderLayer;
 import net.bumblebee.claysoldiers.entity.client.renderstates.AbstractClaySoldierRenderState;
 import net.bumblebee.claysoldiers.entity.client.renderstates.ClayMobRenderState;
+import net.bumblebee.claysoldiers.entity.common.VampiricClayMob;
+import net.bumblebee.claysoldiers.entity.common.programmable.ProgrammableClayMobAccess;
 import net.bumblebee.claysoldiers.entity.common.soldier.AbstractClaySoldierEntity;
+import net.bumblebee.claysoldiers.item.itemeffectholder.ItemStackWithEffect;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.ArmorModelSet;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
@@ -60,26 +64,26 @@ public abstract class AbstractClaySoldierRenderer extends HumanoidMobRenderer<Ab
     }
 
     @Override
-    public void submit(AbstractClaySoldierRenderState claySoldier, PoseStack pPoseStack, SubmitNodeCollector nodeCollector, CameraRenderState cameraRenderState) {
-        pPoseStack.pushPose();
+    public void submit(AbstractClaySoldierRenderState claySoldier, PoseStack poseStack, SubmitNodeCollector nodeCollector, CameraRenderState cameraRenderState) {
+        poseStack.pushPose();
         if (claySoldier.ridingPose == AbstractClaySoldierEntity.RidingPose.FIREWORK) {
-            pPoseStack.translate(0, -0.33, 0);
+            poseStack.translate(0, -0.33, 0);
         }
-        pPoseStack.pushPose();
+        poseStack.pushPose();
         if (claySoldier.hasPose(Pose.SLEEPING)) {
             Direction direction = claySoldier.bedOrientation;
             if (direction != null) {
                 float f3 = claySoldier.eyeHeight - 0.1F;
-                pPoseStack.translate((float) (-direction.getStepX()) * f3, 0.0F, (float) (-direction.getStepZ()) * f3);
+                poseStack.translate((float) (-direction.getStepX()) * f3, 0.0F, (float) (-direction.getStepZ()) * f3);
             }
         }
 
         float scale = claySoldier.scale;
-        pPoseStack.scale(scale, scale, scale);
-        this.setupRotations(claySoldier, pPoseStack, claySoldier.bodyRot, 1f);
-        pPoseStack.scale(-1.0F, -1.0F, 1.0F);
-        this.scale(claySoldier, pPoseStack);
-        pPoseStack.translate(0.0F, -1.501F, 0.0F);
+        poseStack.scale(scale, scale, scale);
+        this.setupRotations(claySoldier, poseStack, claySoldier.bodyRot, 1f);
+        poseStack.scale(-1.0F, -1.0F, 1.0F);
+        this.scale(claySoldier, poseStack);
+        poseStack.translate(0.0F, -1.501F, 0.0F);
 
 
         boolean bodyVisible = this.isBodyVisible(claySoldier);
@@ -89,24 +93,25 @@ public abstract class AbstractClaySoldierRenderer extends HumanoidMobRenderer<Ab
         if (rendertype != null) {
             int overlay = getOverlayCoords(claySoldier, this.getWhiteOverlayProgress(claySoldier));
             int color = getColor(claySoldier);
-            nodeCollector.submitModel(this.model, claySoldier, pPoseStack, rendertype, claySoldier.lightCoords, overlay, ARGB.color(isInvisible ? 0x26 : 0xFF, color), null, claySoldier.outlineColor, null);
+            nodeCollector.submitModel(this.model, claySoldier, poseStack, rendertype, claySoldier.lightCoords, overlay, ARGB.color(isInvisible ? 0x26 : 0xFF, color), null, claySoldier.outlineColor, null);
         }
 
         if (shouldRenderLayers(claySoldier) && !this.layers.isEmpty()) {
             this.model.setupAnim(claySoldier);
 
             for (RenderLayer<AbstractClaySoldierRenderState, ClaySoldierModel> renderlayer : this.layers) {
-                renderlayer.submit(pPoseStack, nodeCollector, claySoldier.lightCoords, claySoldier, claySoldier.yRot, claySoldier.xRot);
+                renderlayer.submit(poseStack, nodeCollector, claySoldier.lightCoords, claySoldier, claySoldier.yRot, claySoldier.xRot);
             }
         }
 
-        submitCarried(claySoldier, pPoseStack, nodeCollector, claySoldier.lightCoords, OverlayTexture.NO_OVERLAY);
+        submitCarried(claySoldier, poseStack, nodeCollector, claySoldier.lightCoords, OverlayTexture.NO_OVERLAY);
+        submitSpecialHoldingPose(claySoldier, poseStack, nodeCollector, claySoldier.lightCoords, OverlayTexture.NO_OVERLAY);
 
-        pPoseStack.popPose();
-        pPoseStack.popPose();
+        poseStack.popPose();
+        poseStack.popPose();
 
         if (claySoldier.nameTag != null) {
-            submitNameDisplay(claySoldier, pPoseStack, nodeCollector, cameraRenderState);
+            submitNameDisplay(claySoldier, poseStack, nodeCollector, cameraRenderState);
         }
 
 
@@ -127,15 +132,13 @@ public abstract class AbstractClaySoldierRenderer extends HumanoidMobRenderer<Ab
         claySoldierRenderState.hasShieldInOffhand = claySoldierEntity.hasShieldInHand(InteractionHand.OFF_HAND);
         claySoldierRenderState.hasShieldInMainHand = claySoldierEntity.hasShieldInHand(InteractionHand.MAIN_HAND);
 
-        this.itemModelResolver.updateForLiving(claySoldierRenderState.carriedItemRenderState, claySoldierEntity.getCarriedStack(), ItemDisplayContext.FIXED, claySoldierEntity);
-        claySoldierRenderState.renderCarried = true;
+        claySoldierRenderState.disableOffhandRender = claySoldierEntity.handsOccupied(SoldierEquipmentSlot.OFFHAND);
+        claySoldierRenderState.disableMainHandRender = claySoldierEntity.handsOccupied(SoldierEquipmentSlot.MAINHAND);
 
         claySoldierRenderState.ridingPose = claySoldierEntity.getRidingPose();
         claySoldierRenderState.id = claySoldierEntity.getId();
         claySoldierRenderState.skinVariantId = claySoldierEntity.getSkinVariant();
 
-        claySoldierRenderState.offhandOccupied = claySoldierEntity.handsOccupied(SoldierEquipmentSlot.OFFHAND);
-        claySoldierRenderState.mainhandOccupied = claySoldierEntity.handsOccupied(SoldierEquipmentSlot.MAINHAND);
 
         claySoldierRenderState.isAlive = claySoldierEntity.isAlive();
         claySoldierRenderState.isFalling = claySoldierEntity.isFalling();
@@ -153,8 +156,38 @@ public abstract class AbstractClaySoldierRenderer extends HumanoidMobRenderer<Ab
 
         claySoldierRenderState.setUpInventory(claySoldierEntity);
         claySoldierRenderState.fallFlyingTimeInTicks = (float) claySoldierEntity.getFallFlyingTicks() + partialTick;
+
+        this.itemModelResolver.updateForLiving(claySoldierRenderState.carriedItemRenderState, claySoldierEntity.getCarriedStack(), ItemDisplayContext.FIXED, claySoldierEntity);
+        claySoldierRenderState.renderCarried = true;
+
+
+        ItemStackWithEffect twoHandedItem = ItemStackWithEffect.EMPTY;
+
+        if (claySoldierEntity.getItemBySlot(SoldierEquipmentSlot.MAINHAND).getHoldingPose() == HoldingPose.TWO_HANDED_BLOCK) {
+            twoHandedItem = claySoldierEntity.getItemBySlot(SoldierEquipmentSlot.MAINHAND);
+            claySoldierRenderState.disableMainHandRender = true;
+            claySoldierRenderState.disableOffhandRender = true;
+        } else if (claySoldierEntity.getItemBySlot(SoldierEquipmentSlot.OFFHAND).getHoldingPose() == HoldingPose.TWO_HANDED_BLOCK) {
+            twoHandedItem = claySoldierEntity.getItemBySlot(SoldierEquipmentSlot.OFFHAND);
+            claySoldierRenderState.disableMainHandRender = true;
+            claySoldierRenderState.disableOffhandRender = true;
+        }
+
+        this.itemModelResolver.updateForLiving(claySoldierRenderState.twoHandedItem, twoHandedItem.stack(), ItemDisplayContext.FIXED, claySoldierEntity);
+
+
         AbstractClaySoldierRenderState.extractCloakState(claySoldierEntity, claySoldierRenderState, partialTick);
         AbstractClaySoldierRenderState.extractAccessoryRenderState(claySoldierEntity, claySoldierRenderState, itemModelResolver);
+
+        if (claySoldierEntity instanceof ProgrammableClayMobAccess programmable) {
+            var chip = programmable.getInstalledChip();
+            if (chip != null) {
+                claySoldierRenderState.moduleTexture = chip.assetId();
+            }
+        }
+        if (claySoldierEntity instanceof VampiricClayMob vampire) {
+            claySoldierRenderState.isNightForVampire = vampire.isNightForVampire();
+        }
     }
 
     /**
@@ -180,7 +213,6 @@ public abstract class AbstractClaySoldierRenderer extends HumanoidMobRenderer<Ab
             return;
         }
 
-
         pPoseStack.pushPose();
         pPoseStack.translate(0, -0.55, 0);
 
@@ -191,8 +223,24 @@ public abstract class AbstractClaySoldierRenderer extends HumanoidMobRenderer<Ab
 
         soldier.carriedItemRenderState.submit(pPoseStack, nodeCollector, pPackedLight, pPackedOverleay, 0);
         pPoseStack.popPose();
+    }
+
+    private void submitSpecialHoldingPose(AbstractClaySoldierRenderState state, PoseStack poseStack, SubmitNodeCollector nodeCollector, int packedLight, int packedOverlay) {
+        if (state.twoHandedItem.isEmpty()) {
+            return;
+        }
+        poseStack.pushPose();
+
+        this.model.translateToHand(state, HumanoidArm.RIGHT, poseStack);
+
+        poseStack.mulPose(Axis.ZP.rotation(ClaySoldierModel.TWO_HANDED_Y_ROT));
+
+        poseStack.translate(0.3f, 0.7f, 0f);
 
 
+        state.twoHandedItem.submit(poseStack, nodeCollector, packedLight, packedOverlay, state.outlineColor);
+
+        poseStack.popPose();
     }
 
     private void scaleExplode(AbstractClaySoldierRenderState claySoldier, PoseStack pPoseStack) {
@@ -242,12 +290,13 @@ public abstract class AbstractClaySoldierRenderer extends HumanoidMobRenderer<Ab
 
         @Override
         protected void submitArmWithItem(AbstractClaySoldierRenderState renderState, ItemStackRenderState stackRenderState, ItemStack itemStack, HumanoidArm arm, PoseStack poseStack, SubmitNodeCollector nodeCollector, int packedLight) {
-            if (arm == HumanoidArm.LEFT && renderState.offhandOccupied) {
+            if (arm == HumanoidArm.LEFT && renderState.disableOffhandRender) {
                 return;
             }
-            if (arm == HumanoidArm.RIGHT && renderState.mainhandOccupied) {
+            if (arm == HumanoidArm.RIGHT && renderState.disableMainHandRender) {
                 return;
             }
+
             super.submitArmWithItem(renderState, stackRenderState, itemStack, arm, poseStack, nodeCollector, packedLight);
         }
     }

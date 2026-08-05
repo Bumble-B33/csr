@@ -85,7 +85,7 @@ public class ChipAssemblyRecipeCategory implements IRecipeCategory<BasicChipAsse
         addEnergy(builder, recipe);
     }
 
-    protected void addBuiltTime(IRecipeExtrasBuilder builder, ChipAssemblyRecipe recipe) {
+    private void addBuiltTime(IRecipeExtrasBuilder builder, ChipAssemblyRecipe recipe) {
         int builtTime = recipe.adjustedBuiltTime();
         if (builtTime > 0) {
             int builtTimeSeconds = builtTime / 20;
@@ -100,10 +100,10 @@ public class ChipAssemblyRecipeCategory implements IRecipeCategory<BasicChipAsse
 
     }
 
-    protected void addEnergy(IRecipeExtrasBuilder builder, ChipAssemblyRecipe recipe) {
+    private void addEnergy(IRecipeExtrasBuilder builder, ChipAssemblyRecipe recipe) {
         int energyCost = recipe.energyCost() * recipe.adjustedBuiltTime();
         if (energyCost > 0) {
-            Component experienceString = Component.literal(energyCost + ClaySoldiersCommon.PLATFORM.getEnergyUnitName());
+            Component experienceString = Component.literal(energyCost + ClaySoldiersCommon.ENERGY_HELPER.getEnergyUnitName());
             builder.addText(experienceString, getWidth() - 20, 10)
                     .setPosition(0, 0, getWidth() - 20, getHeight(), HorizontalAlignment.RIGHT, VerticalAlignment.BOTTOM)
                     .setTextAlignment(HorizontalAlignment.RIGHT)

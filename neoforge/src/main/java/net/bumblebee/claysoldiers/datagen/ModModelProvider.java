@@ -5,6 +5,7 @@ import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.block.SpecialItemRenderers;
 import net.bumblebee.claysoldiers.block.cacti.ClayCactusBlock;
 import net.bumblebee.claysoldiers.datamap.ThrowableTransform;
+import net.bumblebee.claysoldiers.entity.client.programmable.BatteryContainerModel;
 import net.bumblebee.claysoldiers.entity.client.programmable.ProgrammableClaySoldierRenderer;
 import net.bumblebee.claysoldiers.init.ModBlocks;
 import net.bumblebee.claysoldiers.init.ModItems;
@@ -37,11 +38,13 @@ import java.util.*;
 
 public class ModModelProvider extends ModelProvider {
     private static final ModelTemplate SPECIAL_BLOCK = ExtendedModelTemplateBuilder.builder()
+            .requiredTextureSlot(TextureSlot.PARTICLE)
             .parent(Identifier.withDefaultNamespace("block/block"))
             .build();
 
     public static final ModelTemplate CLAY_STAFF_MODEL = ExtendedModelTemplateBuilder.builder()
             .parent(Identifier.withDefaultNamespace("item/generated"))
+            .requiredTextureSlot(TextureSlot.PARTICLE)
             .guiLight(UnbakedModel.GuiLight.FRONT)
             .transform(ItemDisplayContext.THIRD_PERSON_RIGHT_HAND, t -> t.rotation(0, 30, 0).translation(11, 17, 4.5f))
             .transform(ItemDisplayContext.THIRD_PERSON_LEFT_HAND, t -> t.rotation(0, -30, 0).translation(11, 17, 4.5f))
@@ -51,6 +54,7 @@ public class ModModelProvider extends ModelProvider {
             .transform(ItemDisplayContext.FIXED, t -> t.rotation(0, 180, 0).translation(-2, 4, 0.5f))
             .transform(ItemDisplayContext.GROUND, t -> t.rotation(0, 0, 0).translation(4, 16, 0.75f))
             .build();
+
     private static final TextureSlot LAYER3 = TextureSlot.create("layer3");
 
     public static ModelTemplate CLAY_SOLDIER_CHIP_ADDON_OVERLAY = ExtendedModelTemplateBuilder.builder()
@@ -84,6 +88,7 @@ public class ModModelProvider extends ModelProvider {
         itemModels.generateFlatItem(ModItems.TERRACOTTA_DISRUPTOR.get(), ModelTemplates.FLAT_ITEM);
         itemModels.generateFlatItem(ModItems.CLAY_GOGGLES.get(), ModelTemplates.FLAT_ITEM);
         itemModels.generateFlatItem(ModItems.SLIME_BOOTS.get(), ModelTemplates.FLAT_ITEM);
+        itemModels.generateFlatItem(ModItems.STATOMETER.get(), ModelTemplates.FLAT_ITEM);
 
         itemModels.generateFlatItem(ModItems.TEST_ITEM.get(), ModelTemplates.FLAT_ITEM);
 
@@ -101,14 +106,17 @@ public class ModModelProvider extends ModelProvider {
                 ItemModelGenerators.createFlatModelDispatch(
                         ItemModelUtils.plainModel(itemModels.createFlatItemModel(ModItems.CLAY_STAFF.get(), ModelTemplates.FLAT_ITEM)),
                         new SpecialModelWrapper.Unbaked(
-                                ModelLocationUtils.getModelLocation(ModItems.CLAY_STAFF.get(), "_in_hand"),
+                                CLAY_STAFF_MODEL.create(ModelLocationUtils.getModelLocation(ModItems.CLAY_STAFF.get(), "_in_hand"), TextureMapping.particle(Blocks.OAK_LOG), itemModels.modelOutput),
                                 Optional.empty(),
                                 new SpecialItemRenderers.ClayStaffSpecialRenderer.Unbaked()
                         )
                 )
 
         );
-        CLAY_STAFF_MODEL.create(ModelLocationUtils.getModelLocation(ModItems.CLAY_STAFF.get(), "_in_hand"), new TextureMapping(), itemModels.modelOutput);
+
+        generateBattery(ModItems.SMALL_BATTERY.get(), 6, itemModels);
+        generateBattery(ModItems.LARGE_BATTERY.get(), 9, itemModels);
+
 
         itemModels.generateFlatItem(ModItems.BLANK_ADDON.get(), ModelTemplates.FLAT_ITEM);
         generateAddon(ModItems.RANGE_ADDON.get(), ModItems.BLANK_ADDON.get(), itemModels);
@@ -118,11 +126,12 @@ public class ModModelProvider extends ModelProvider {
         generateAddon(ModItems.TARGET_MONSTER_ADDON.get(), ModItems.BLANK_ADDON.get(), itemModels);
         generateAddon(ModItems.TARGET_IGNORE_BABIES_ADDON.get(), ModItems.BLANK_ADDON.get(), itemModels);
         generateAddon(ModItems.ACCELERATION_ADDON.get(), ModItems.BLANK_ADDON.get(), itemModels);
+        generateAddon(ModItems.UPGRADED_ACCELERATION_ADDON.get(), ModItems.BLANK_ADDON.get(), itemModels);
+
 
         ItemModel.Unbaked fishingRodModel = ItemModelUtils.plainModel(
                 ModelLocationUtils.getModelLocation(Items.FISHING_ROD, "_cast")
         );
-
 
         itemModels.itemModelOutput.register(
                 ProgrammableClaySoldierRenderer.FISHING_ROD_CAST_MODEL,
@@ -132,37 +141,6 @@ public class ModModelProvider extends ModelProvider {
                 )
         );
 
-
-        createThrown(itemModels, ThrowableTransform.SWEET_BERRY_MODEL);
-        createThrown(itemModels, ThrowableTransform.GLOW_BERRY_MODEL);
-
-        TextureMapping texturemapping = new TextureMapping()
-                .put(TextureSlot.PARTICLE, TextureMapping.getBlockTexture(Blocks.SPRUCE_PLANKS))
-                .put(TextureSlot.BOTTOM, TextureMapping.getBlockTexture(Blocks.SPRUCE_PLANKS))
-                .put(TextureSlot.TOP, TextureMapping.getBlockTexture(ModBlocks.ESCRITOIRE_BLOCK.get(), "_top"))
-                .put(TextureSlot.SIDE, TextureMapping.getBlockTexture(ModBlocks.ESCRITOIRE_BLOCK.get(), "_side"));
-
-        blockModels.blockStateOutput.accept(BlockModelGenerators.createSimpleBlock(
-                        ModBlocks.ESCRITOIRE_BLOCK.get(),
-                        BlockModelGenerators.plainVariant(ModelTemplates.CUBE_BOTTOM_TOP.create(ModBlocks.ESCRITOIRE_BLOCK.get(), texturemapping, blockModels.modelOutput))
-                )
-        );
-
-        blockModels.createNonTemplateHorizontalBlock(ModBlocks.CHIP_ASSEMBLER.get());
-
-
-        blockModels.createParticleOnlyBlock(ModBlocks.HAMSTER_WHEEL_BLOCK.get(), Blocks.COPPER_BLOCK);
-        blockModels.createParticleOnlyBlock(ModBlocks.EASEL_BLOCK.get(), Blocks.OAK_PLANKS);
-
-        blockModels.createCrossBlock(ModBlocks.SUGAR_CANE_HAMMOCK.get(), BlockModelGenerators.PlantType.TINTED);
-
-        createCactusHome(blockModels, ModBlocks.CACTUS_HOUSE.get(), ClayCactusBlock.COUNT.getPossibleValues().stream().max(Integer::compareTo).orElse(0));
-
-        blockModels.generateSimpleSpecialItemModel(ModBlocks.HAMSTER_WHEEL_BLOCK.get(), Optional.empty(), new SpecialItemRenderers.HamsterWheelSpecialRenderer.Unbaked());
-        blockModels.generateSimpleSpecialItemModel(ModBlocks.EASEL_BLOCK.get(), Optional.empty(), new SpecialItemRenderers.EaselBlockSpecialRenderer.Unbaked());
-
-        SPECIAL_BLOCK.create(ModBlocks.HAMSTER_WHEEL_BLOCK.asItem(), TextureMapping.particle(Blocks.COPPER_BLOCK), itemModels.modelOutput);
-        SPECIAL_BLOCK.create(ModBlocks.EASEL_BLOCK.asItem(), TextureMapping.particle(Blocks.OAK_PLANKS), itemModels.modelOutput);
 
         var inHand = ItemModelUtils.tintedModel(
                 ModelTemplates.FLAT_ITEM.create(ModItems.CLAY_SOLDIER.get(), TextureMapping.layer0(ModItems.CLAY_SOLDIER.get()), itemModels.modelOutput),
@@ -185,10 +163,8 @@ public class ModModelProvider extends ModelProvider {
         generateClayBrush(ModItems.CLAY_BRUSH.get(), itemModels);
 
         itemModels.generateFlatItem(ModItems.BLUEPRINT_PAGE.get(), ModelTemplates.FLAT_ITEM);
-
         generateBlueprint(ModItems.BLUEPRINT.get(), ModItems.BLUEPRINT_PAGE.asItem(), itemModels);
 
-        itemModels.generateFlatItem(ModItems.STATOMETER.get(), ModelTemplates.FLAT_ITEM);
 
         var chipModel = createChipModel(ModItems.BLANK_CHIP.asItem(), itemModels);
 
@@ -202,7 +178,42 @@ public class ModModelProvider extends ModelProvider {
         itemModels.itemModelOutput.accept(ModItems.FISHING_CHIP.get(), chipModel);
         itemModels.itemModelOutput.accept(ModItems.BLUEPRINT_CHIP.get(), chipModel);
         itemModels.itemModelOutput.accept(ModItems.BEE_KEEPING_CHIP.get(), chipModel);
+        itemModels.itemModelOutput.accept(ModItems.ELECTRICIAN_CHIP.get(), chipModel);
 
+
+        createThrown(itemModels, ThrowableTransform.SWEET_BERRY_MODEL);
+        createThrown(itemModels, ThrowableTransform.GLOW_BERRY_MODEL);
+
+        TextureMapping texturemapping = new TextureMapping()
+                .put(TextureSlot.PARTICLE, TextureMapping.getBlockTexture(Blocks.SPRUCE_PLANKS))
+                .put(TextureSlot.BOTTOM, TextureMapping.getBlockTexture(Blocks.SPRUCE_PLANKS))
+                .put(TextureSlot.TOP, TextureMapping.getBlockTexture(ModBlocks.ESCRITOIRE_BLOCK.get(), "_top"))
+                .put(TextureSlot.SIDE, TextureMapping.getBlockTexture(ModBlocks.ESCRITOIRE_BLOCK.get(), "_side"));
+
+        blockModels.blockStateOutput.accept(BlockModelGenerators.createSimpleBlock(
+                        ModBlocks.ESCRITOIRE_BLOCK.get(),
+                        BlockModelGenerators.plainVariant(ModelTemplates.CUBE_BOTTOM_TOP.create(ModBlocks.ESCRITOIRE_BLOCK.get(), texturemapping, blockModels.modelOutput))
+                )
+        );
+
+        blockModels.createNonTemplateHorizontalBlock(ModBlocks.CHIP_ASSEMBLER.get());
+        blockModels.registerSimpleTintedItemModel(ModBlocks.CHIP_ASSEMBLER.get(), ModelLocationUtils.getModelLocation(ModBlocks.CHIP_ASSEMBLER.get()), ClaySoldiersClient.EnergyItemTintSource.INSTANCE);
+        blockModels.createNonTemplateHorizontalBlock(ModBlocks.SOLDIER_CHARGING_PAD.get());
+        blockModels.registerSimpleTintedItemModel(ModBlocks.SOLDIER_CHARGING_PAD.get(), ModelLocationUtils.getModelLocation(ModBlocks.SOLDIER_CHARGING_PAD.get()), ClaySoldiersClient.EnergyItemTintSource.INSTANCE);
+
+
+        blockModels.createParticleOnlyBlock(ModBlocks.HAMSTER_WHEEL_BLOCK.get(), Blocks.COPPER_BLOCK);
+        blockModels.createParticleOnlyBlock(ModBlocks.EASEL_BLOCK.get(), Blocks.OAK_PLANKS);
+
+        blockModels.createCrossBlock(ModBlocks.SUGAR_CANE_HAMMOCK.get(), BlockModelGenerators.PlantType.TINTED);
+
+        createCactusHome(blockModels, ModBlocks.CACTUS_HOUSE.get(), ClayCactusBlock.COUNT.getPossibleValues().stream().max(Integer::compareTo).orElse(0));
+
+        blockModels.generateSimpleSpecialItemModel(ModBlocks.HAMSTER_WHEEL_BLOCK.get(), Optional.empty(), new SpecialItemRenderers.HamsterWheelSpecialRenderer.Unbaked());
+        SPECIAL_BLOCK.create(ModBlocks.HAMSTER_WHEEL_BLOCK.asItem(), TextureMapping.particle(Blocks.COPPER_BLOCK), itemModels.modelOutput);
+
+        blockModels.generateSimpleSpecialItemModel(ModBlocks.EASEL_BLOCK.get(), Optional.empty(), new SpecialItemRenderers.EaselBlockSpecialRenderer.Unbaked());
+        SPECIAL_BLOCK.create(ModBlocks.EASEL_BLOCK.asItem(), TextureMapping.particle(Blocks.OAK_PLANKS), itemModels.modelOutput);
     }
 
     private void generateClayPouch(Item pouch, ItemModelGenerators modelGenerators) {
@@ -265,6 +276,17 @@ public class ModModelProvider extends ModelProvider {
                 ));
     }
 
+    private void generateBattery(Item item, int height, ItemModelGenerators modelGenerators) {
+        BatteryContainerModel.validateHeight(height, true);
+
+        modelGenerators.itemModelOutput.accept(item, new SpecialModelWrapper.Unbaked(
+                SPECIAL_BLOCK.create(item, TextureMapping.particle(Blocks.REDSTONE_BLOCK), modelGenerators.modelOutput),
+                Optional.empty(),
+                new SpecialItemRenderers.BatteryContainerRenderer.Unbaked(height)
+        ));
+
+    }
+
     private void generateAddon(Item addon, Item blankAddon, ItemModelGenerators modelGenerators) {
         Identifier model = modelGenerators.generateLayeredItem(
                 addon, TextureMapping.getItemTexture(blankAddon),
@@ -300,7 +322,6 @@ public class ModModelProvider extends ModelProvider {
         );
     }
 
-
     private static void createThrown(ItemModelGenerators modelGenerators, Identifier model) {
         modelGenerators.itemModelOutput.register(
                 model,
@@ -311,7 +332,6 @@ public class ModModelProvider extends ModelProvider {
                 )
         );
     }
-
 
     private static void createCactusHome(BlockModelGenerators modelGenerators, Block cactus, int count) {
         var dispatchBuilder = PropertyDispatch.initial(ClayCactusBlock.COUNT);

@@ -4,7 +4,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.netty.buffer.ByteBuf;
 import net.bumblebee.claysoldiers.soldierproperties.combined.ValueCombiner;
-import net.bumblebee.claysoldiers.util.codec.CodecUtils;
+import net.bumblebee.claysoldiers.util.Chance;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
@@ -26,14 +26,14 @@ public class DamageBlock {
         }
     };
     public static final ValueCombiner<DamageBlock> COMBINER = CombinedDamageBlock::new;
-    public static final ToIntFunction<DamageBlock> TO_INT = (d) -> d.blockAmount > 0 && d.blockChance > 0 ? 1 : 0;
+    public static final ToIntFunction<DamageBlock> TO_INT = (d) -> d.blockAmount <= 0 && d.blockChance.isEmpty() ? 0 : 1;
     public static final Codec<DamageBlock> CODEC = RecordCodecBuilder.create(in -> in.group(
-            CodecUtils.CHANCE_CODEC.fieldOf("chance").forGetter(d -> d.blockChance),
+            Chance.CODEC.fieldOf("chance").forGetter(d -> d.blockChance),
             ExtraCodecs.POSITIVE_FLOAT.fieldOf("amountRequired").forGetter(d -> d.blockAmount),
             Codec.BOOL.optionalFieldOf("pierceable", true).forGetter(d -> d.pierceable)
     ).apply(in, DamageBlock::new));
     public static final StreamCodec<ByteBuf, DamageBlock> STREAM_CODEC = StreamCodec.composite(
-            ByteBufCodecs.FLOAT, d -> d.blockChance,
+            Chance.STREAM_CODEC, d -> d.blockChance,
             ByteBufCodecs.FLOAT, d -> d.blockAmount,
             ByteBufCodecs.BOOL, d -> d.pierceable,
             DamageBlock::new
@@ -45,12 +45,18 @@ public class DamageBlock {
         return list;
     };
 
-    private final float blockChance;
+    private final Chance blockChance;
     private final float blockAmount;
     private final boolean pierceable;
 
-    public DamageBlock(float blockChance, float blockAmount, boolean pierceable) {
+    public DamageBlock(Chance blockChance, float blockAmount, boolean pierceable) {
         this.blockChance = blockChance;
+        this.blockAmount = blockAmount;
+        this.pierceable = pierceable;
+    }
+
+    public DamageBlock(float blockChance, float blockAmount, boolean pierceable) {
+        this.blockChance = Chance.of(blockChance);
         this.blockAmount = blockAmount;
         this.pierceable = pierceable;
     }
@@ -59,12 +65,12 @@ public class DamageBlock {
         this(blockChance, blockAmount, true);
     }
 
-    public float blocked(RandomSource random, float damage, boolean isPiercing) {
-        if (blockChance <= 0 || blockAmount <= 0) {
+    public float blocked(RandomSource random, float damage, boolean isPiercing, float luck) {
+        if (blockChance.isEmpty() || blockAmount <= 0) {
             return damage;
         }
 
-        if ((!isPiercing || pierceable) && random.nextFloat() > blockChance) {
+        if ((!isPiercing || pierceable) && blockChance.testWithLuck(random, luck)) {
             float newDamage = damage - blockAmount;
             return newDamage < 0 ? 0 : newDamage;
         }
@@ -76,23 +82,23 @@ public class DamageBlock {
 
     @Override
     public String toString() {
-        if (blockAmount <= 0 || blockChance <= 0) {
+        if (blockAmount <= 0 || blockChance.isEmpty()) {
             return "DamageBlock(Empty)";
         }
 
-        return "DamageBlock(Chance: %f, Amount: %f)".formatted(blockChance, blockAmount);
+        return "DamageBlock(Chance: %f, Amount: %f)".formatted(blockChance.getPercent(), blockAmount);
     }
 
-    public String asString() {
-        if (blockAmount <= 0 || blockChance <= 0) {
+    private String asString() {
+        if (blockAmount <= 0 || blockChance.isEmpty()) {
             return "";
         }
 
-        return " (Chance: %.2f Amount: %.2f)".formatted(blockChance, blockAmount);
+        return " (Chance: %.2f Amount: %.2f)".formatted(blockChance.getPercent(), blockAmount);
     }
 
     protected void appendNameToList(List<Component> tooltip) {
-        if (blockAmount <= 0 || blockChance <= 0) {
+        if (blockAmount <= 0 || blockChance.isEmpty()) {
             return;
         }
         tooltip.add(CommonComponents.space().append(asString()).withStyle(ChatFormatting.DARK_GRAY));
@@ -109,9 +115,9 @@ public class DamageBlock {
         }
 
         @Override
-        public float blocked(RandomSource random, float damage, boolean isPiercing) {
-            float newDamage = damageBlock1.blocked(random, damage, isPiercing);
-            return damageBlock2.blocked(random, newDamage, isPiercing);
+        public float blocked(RandomSource random, float damage, boolean isPiercing, float luck) {
+            float newDamage = damageBlock1.blocked(random, damage, isPiercing, luck);
+            return damageBlock2.blocked(random, newDamage, isPiercing, luck);
         }
 
         @Override

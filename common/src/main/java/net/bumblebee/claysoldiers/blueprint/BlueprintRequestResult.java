@@ -37,6 +37,9 @@ public class BlueprintRequestResult {
     }
 
     public static BlueprintRequestResult success(ItemStack remainder) {
+        if (remainder.isEmpty()) {
+            return SUCCESS_USED;
+        }
         return new BlueprintRequestResult(true, remainder);
     }
 }

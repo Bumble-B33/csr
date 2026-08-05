@@ -46,7 +46,7 @@ public class ClientClaySoldierEntity extends AbstractClaySoldierEntity implement
     private boolean waxed = false;
     private int skinVariantId = 0;
     @Nullable
-    private ClaySoldierChip<?> installedChip;
+    private ClaySoldierChip installedChip;
 
     public final WalkAnimationState fakeWalkState;
 
@@ -203,7 +203,7 @@ public class ClientClaySoldierEntity extends AbstractClaySoldierEntity implement
     }
 
     @Override
-    public @Nullable ClaySoldierChip<?> getInstalledChip() {
+    public @Nullable ClaySoldierChip getInstalledChip() {
         return installedChip;
     }
 

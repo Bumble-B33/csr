@@ -2,7 +2,6 @@ package net.bumblebee.claysoldiers.datamap.armor;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import io.netty.buffer.ByteBuf;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.util.codec.CodecUtils;
 import net.bumblebee.claysoldiers.util.color.ColorHelper;
@@ -26,23 +25,23 @@ import java.util.*;
 
 public class SoldierWearableEffect {
     public static final Codec<SoldierWearableEffect> CODEC = RecordCodecBuilder.create(in -> in.group(
-                    ArmorModel.CODEC.optionalFieldOf("model", ArmorModel.EMPTY).forGetter(s -> s.armorModel),
+                    ResourceKey.codec(EquipmentAssets.ROOT_ID).optionalFieldOf("model").forGetter(s -> Optional.ofNullable(s.armorModel)),
                     ColorHelper.CODEC.optionalFieldOf("color", ColorHelper.EMPTY).forGetter(SoldierWearableEffect::getColorHelper),
                     CodecUtils.singularOrPluralCodecOptional(SoldierArmorTrim.CODEC, "trim").forGetter(SoldierWearableEffect::trims),
                     Codec.BOOL.optionalFieldOf("offset_color", false).forGetter(s -> s.offsetColor))
-            .apply(in, SoldierWearableEffect::new)
+            .apply(in, ((model, color, trims, offsetColor) -> new SoldierWearableEffect(model.orElse(null), color, trims, offsetColor)))
     );
     public static final StreamCodec<RegistryFriendlyByteBuf, SoldierWearableEffect> STREAM_CODEC = StreamCodec.composite(
-            ArmorModel.STREAM_CODEC, s -> s.armorModel,
+            ByteBufCodecs.optional(ResourceKey.streamCodec(EquipmentAssets.ROOT_ID)), s -> Optional.ofNullable(s.armorModel),
             ColorHelper.STREAM_CODEC, SoldierWearableEffect::getColorHelper,
             SoldierArmorTrim.STREAM_CODEC.apply(ByteBufCodecs.collection(HashSet::new)), SoldierWearableEffect::trims,
             ByteBufCodecs.BOOL, SoldierWearableEffect::isAffectedByOffsetColor,
-            SoldierWearableEffect::new
+            (model, color, trim, offestColor) ->  new SoldierWearableEffect(model.orElse(null), color, trim, offestColor)
     );
 
     private final ColorHelper color;
-    @NotNull
-    private final ArmorModel armorModel;
+    @Nullable
+    private final ResourceKey<EquipmentAsset> armorModel;
     private final boolean shouldRenderArmor;
     protected final Set<SoldierArmorTrim> trims;
     private final boolean offsetColor;
@@ -50,12 +49,12 @@ public class SoldierWearableEffect {
     private List<TrimHolder> finishedArmorTrims;
 
 
-    protected SoldierWearableEffect(ArmorModel model, ColorHelper color, Set<SoldierArmorTrim> trims, boolean offsetColor) {
+    protected SoldierWearableEffect(@Nullable ResourceKey<EquipmentAsset> model, ColorHelper color, Set<SoldierArmorTrim> trims, boolean offsetColor) {
         this.color = color;
         this.armorModel = model;
         this.trims = trims;
         this.offsetColor = offsetColor;
-        this.shouldRenderArmor = model.assetId != null;
+        this.shouldRenderArmor = model != null;
     }
 
     public ColorHelper getColorHelper() {
@@ -67,7 +66,7 @@ public class SoldierWearableEffect {
     }
     @Nullable
     public ResourceKey<EquipmentAsset> getAssetId() {
-        return armorModel.assetId;
+        return armorModel;
     }
 
     private Set<SoldierArmorTrim> trims() {
@@ -150,56 +149,23 @@ public class SoldierWearableEffect {
         }
     }
 
-    protected static final class ArmorModel {
-        private static final ArmorModel EMPTY = new ArmorModel(null);
-        private static final Codec<ArmorModel> CODEC = RecordCodecBuilder.create(in -> in.group(
-                Identifier.CODEC.optionalFieldOf("asset").forGetter(ArmorModel::getAssetId)
-        ).apply(in, s -> s.map(ArmorModel::of).orElse(EMPTY)));
-
-        private static final StreamCodec<ByteBuf, ArmorModel> STREAM_CODEC = ByteBufCodecs.optional(Identifier.STREAM_CODEC)
-                .map(s -> s.map(ArmorModel::of).orElse(EMPTY), ArmorModel::getAssetId);
-
-        @Nullable
-        private final ResourceKey<EquipmentAsset> assetId;
-
-        private ArmorModel(@Nullable ResourceKey<EquipmentAsset> asset) {
-            this.assetId = asset;
-        }
-
-        private static ArmorModel of(@NotNull Identifier Identifier) {
-            return new ArmorModel(ResourceKey.create(EquipmentAssets.ROOT_ID, Identifier));
-        }
-
-        public Optional<Identifier> getAssetId() {
-            if (assetId == null) {
-                return Optional.empty();
-            }
-            return Optional.of(assetId.identifier());
-        }
-
-        @Override
-        public String toString() {
-            return "ArmorModel[%s]".formatted(assetId == null ? "Empty" : assetId);
-        }
-    }
-
     public record TrimHolder(ArmorTrim trim, ColorHelper color) {}
 
     public static Builder armor(@NotNull ResourceKey<EquipmentAsset> armorCopy) {
-        return new Builder(new ArmorModel(armorCopy));
+        return new Builder(armorCopy);
     }
 
     public static Builder empty() {
-        return new Builder(ArmorModel.EMPTY);
+        return new Builder(null);
     }
 
     public static class Builder {
         private final Set<SoldierWearableEffect.SoldierArmorTrim> trims = new HashSet<>();
         private ColorHelper color = ColorHelper.EMPTY;
-        private final ArmorModel armorCopy;
+        private final ResourceKey<EquipmentAsset> armorCopy;
         private boolean offsetColor = false;
 
-        private Builder(@NotNull ArmorModel armorCopy) {
+        private Builder(@Nullable ResourceKey<EquipmentAsset> armorCopy) {
             this.armorCopy = armorCopy;
         }
 

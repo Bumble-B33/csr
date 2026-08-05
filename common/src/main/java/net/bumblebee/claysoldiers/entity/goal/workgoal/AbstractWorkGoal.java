@@ -5,55 +5,37 @@ import net.bumblebee.claysoldiers.capability.IBlockCache;
 import net.bumblebee.claysoldiers.capability.IBlockStorageAccess;
 import net.bumblebee.claysoldiers.claysoldierchips.ClayMobWorkAccess;
 import net.bumblebee.claysoldiers.entity.common.programmable.ProgrammableClaySoldierEntity;
+import net.bumblebee.claysoldiers.util.PoiPosInfo;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NonNull;
 
 import java.util.Collection;
-import java.util.List;
-import java.util.Stack;
 import java.util.function.Predicate;
 
 public abstract class AbstractWorkGoal extends Goal implements IWorkGoal {
-    public static final String BREAK_LANG = STATUS_LANG_KEY.formatted(ClaySoldiersCommon.MOD_ID, "on_break");
-    public static final String STUCK_LANG = STATUS_LANG_KEY.formatted(ClaySoldiersCommon.MOD_ID, "stuck");
-    public static final String SEARCHING_LANG = STATUS_LANG_KEY.formatted(ClaySoldiersCommon.MOD_ID, "searching_item");
-    public static final String CARRYING_LANG = STATUS_LANG_KEY.formatted(ClaySoldiersCommon.MOD_ID, "carrying");
-    public static final String REQUIRES_POI_LANG = STATUS_LANG_KEY.formatted(ClaySoldiersCommon.MOD_ID, "requires_poi");
-    public static final String RETURNING_LANG = JOB_LANG_KEY.formatted(ClaySoldiersCommon.MOD_ID, "returning");
-    public static final String CANNOT_FIND_ITEM_LANG = JOB_LANG_KEY.formatted(ClaySoldiersCommon.MOD_ID, "cannot_find_item");
-
-    protected static final byte BREAK_ID = 0;
-    protected static final byte SEARCHING_ID = 1;
-    protected static final byte CARRYING_ID = 2;
-    protected static final byte REQUIRES_POI_ID = 3;
-    protected static final byte RETURNING_ID = 4;
-    protected static final byte CANNOT_FIND_ITEM_ID = 5;
-
     private static final int MAX_BREAK_TIME = 60;
-    private static final byte MAX_STATUSES = Byte.MAX_VALUE;
 
     protected final ProgrammableClaySoldierEntity soldier;
-    protected final ClayMobWorkAccess workAccess;
     private IBlockCache<IBlockStorageAccess> capCache;
     private int breakTime = 0;
-    private final List<? extends Component> statuses;
+    protected final ClayMobWorkAccess workStatus;
 
-    public AbstractWorkGoal(ProgrammableClaySoldierEntity soldier, ClayMobWorkAccess workAccess) {
-        this(soldier, workAccess, List.of(BREAK_LANG, SEARCHING_LANG, CARRYING_LANG, REQUIRES_POI_LANG, RETURNING_LANG, CANNOT_FIND_ITEM_LANG));
-    }
-    protected AbstractWorkGoal(ProgrammableClaySoldierEntity soldier, ClayMobWorkAccess workAccess, List<String> statusesKey) {
+
+    protected AbstractWorkGoal(ProgrammableClaySoldierEntity soldier, ClayMobWorkAccess workAccess) {
         this.soldier = soldier;
-        this.workAccess = workAccess;
-        if (statusesKey.size() >= MAX_STATUSES) {
-            throw new IllegalArgumentException("Cannot have more than %s Statuses per WorkGoal".formatted(MAX_STATUSES));
-        }
-        this.statuses = statusesKey.stream().map(Component::translatable).toList();
+        this.workStatus = workAccess;
+    }
+
+    @Override
+    public boolean canUse() {
+        return true;
     }
 
     @Nullable
@@ -61,9 +43,13 @@ public abstract class AbstractWorkGoal extends Goal implements IWorkGoal {
         return soldier.getPoiPos();
     }
 
+    protected @NonNull PoiPosInfo getPoiInfo() {
+        return soldier.getPoiInfo();
+    }
+
     protected void setCapCache() {
         if (getPoiPos() != null) {
-            capCache = ClaySoldiersCommon.CAPABILITY_MANGER.create((ServerLevel) soldier.level(), getPoiPos());
+            capCache = ClaySoldiersCommon.CAPABILITY_MANGER.createStorageCache((ServerLevel) soldier.level(), getPoiPos());
         } else {
             capCache = null;
         }
@@ -98,9 +84,9 @@ public abstract class AbstractWorkGoal extends Goal implements IWorkGoal {
      * Move this soldier to the poi, if there is one.
      * @return whether it has reached the poi.
      */
-    protected boolean moveToPoi() {
+    protected boolean moveToPoi(double distance) {
         BlockPos pos = getPoiPos();
-        return moveToPos(pos, 2d);
+        return moveToPos(pos, distance);
     }
 
     /**
@@ -121,20 +107,12 @@ public abstract class AbstractWorkGoal extends Goal implements IWorkGoal {
     }
 
     /**
-     * Sets the status id of this work.
-     */
-    public void setStatus(byte status) {
-        workAccess.setDataWorkStatus(status);
-    }
-
-    /**
      * Lets the soldier take a short break, if it is allowed to.
      * @param force forces the break
      */
     protected void takeAShortBreak(boolean force) {
         if (force || soldier.isAllowedBreak()) {
             breakTime = MAX_BREAK_TIME + (getRandom().nextInt(1, 4) * 7);
-            setStatus(BREAK_ID);
         }
     }
 
@@ -143,11 +121,8 @@ public abstract class AbstractWorkGoal extends Goal implements IWorkGoal {
     }
 
     @Override
-    public Component decodeStatus(byte id) {
-        if (statuses.size() <= id || id < 0) {
-            return IWorkGoal.super.decodeStatus(id);
-        }
-        return statuses.get(id);
+    public Component getWorkStatus() {
+        return workStatus.getWorkStatus();
     }
 
     @Nullable
@@ -169,13 +144,19 @@ public abstract class AbstractWorkGoal extends Goal implements IWorkGoal {
         return null;
     }
 
+    /**
+     *
+     * @param tools the possible tools
+     * @return whether the soldier has reached to poi
+     */
     protected boolean acquireJobItem(Collection<JobItemRequest> tools) {
-        if (!moveToPoi()) {
+        if (!moveToPoi(2d)) {
             return false;
         }
         if (tools.isEmpty() || !soldier.getCarriedStack().isEmpty()) {
             ClaySoldiersCommon.ERROR_HANDLER.warn("Required Tools is empty");
-            soldier.setPoiPos(null);
+            soldier.clearPoiInfo();
+            takeAShortBreak(true);
             return true;
         }
 
@@ -193,10 +174,29 @@ public abstract class AbstractWorkGoal extends Goal implements IWorkGoal {
                 soldier.setCarriedStack(res);
             }
         }
-        soldier.setPoiPos(null);
         return true;
     }
 
     protected record JobItemRequest(Predicate<ItemStack> test, int amount) {}
 
+    protected void pushToWardsPosition(double x, double z) {
+        double xDif = x - soldier.getX();
+        double zDif = z - soldier.getZ();
+        double absMax = Mth.absMax(xDif, zDif);
+        if (absMax >= 0.01F) {
+            absMax = Math.sqrt(absMax);
+            xDif /= absMax;
+            zDif /= absMax;
+            double invertedAbsMax = 1.0 / absMax;
+            if (invertedAbsMax > 1.0) {
+                invertedAbsMax = 1.0;
+            }
+
+            xDif *= invertedAbsMax;
+            zDif *= invertedAbsMax;
+            xDif *= 0.05F;
+            zDif *= 0.05F;
+            soldier.setDeltaMovement(soldier.getDeltaMovement().add(xDif, 0, zDif));
+        }
+    }
 }

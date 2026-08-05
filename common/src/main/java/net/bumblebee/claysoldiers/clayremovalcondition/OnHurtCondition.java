@@ -4,6 +4,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.netty.buffer.ByteBuf;
 import net.bumblebee.claysoldiers.entity.common.soldier.AbstractClaySoldierEntity;
+import net.bumblebee.claysoldiers.util.Chance;
 import net.minecraft.advancements.criterion.DamageSourcePredicate;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -16,25 +17,26 @@ public class OnHurtCondition extends RemovalCondition {
 
     public static final Codec<OnHurtCondition> CODEC = RecordCodecBuilder.create(in -> in.group(
             DamageSourcePredicate.CODEC.optionalFieldOf("condition", DamageSourcePredicate.Builder.damageType().build()).forGetter(s -> s.predicate),
-            CHANCE_CODEC.optionalFieldOf("chance", 1f).forGetter(RemovalCondition::getChance)
+            CHANCE_CODEC.optionalFieldOf("chance", Chance.ALWAYS).forGetter(RemovalCondition::getChance)
     ).apply(in, OnHurtCondition::new));
     public static final StreamCodec<ByteBuf, OnHurtCondition> STREAM_CODEC = StreamCodec.composite(
             ByteBufCodecs.fromCodec(DamageSourcePredicate.CODEC), c -> c.predicate,
-            ByteBufCodecs.FLOAT, RemovalCondition::getChance,
+            Chance.STREAM_CODEC, RemovalCondition::getChance,
             OnHurtCondition::new
     );
 
-    public OnHurtCondition(DamageSourcePredicate predicate, float chance) {
+    public OnHurtCondition(DamageSourcePredicate predicate, Chance chance) {
         super(chance, RemovalConditionContext.Type.HURT);
         this.predicate = predicate;
     }
+
     public OnHurtCondition(DamageSourcePredicate.Builder predicate, float chance) {
-        this(predicate.build(), chance);
+        this(predicate.build(), Chance.of(chance));
     }
 
     @Override
     public boolean shouldRemove(AbstractClaySoldierEntity soldier, RemovalConditionContext context) {
-        if (baseTest(context.getType(), soldier.getRandom())) {
+        if (baseTest(context.getType(), soldier.getRandom(), soldier.getChanceLuck())) {
             assert context.getDamageSource() != null;
             return predicate.matches((ServerLevel) soldier.level(), soldier.position(), context.getDamageSource());
         }

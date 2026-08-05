@@ -1,6 +1,7 @@
 package net.bumblebee.claysoldiers.entity.goal.workgoal;
 
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
+import net.bumblebee.claysoldiers.capability.IBlockStorageAccess;
 import net.bumblebee.claysoldiers.claysoldierchips.ClayMobWorkAccess;
 import net.bumblebee.claysoldiers.datamap.SoldierEquipmentSlot;
 import net.bumblebee.claysoldiers.entity.common.ClayMobEntity;
@@ -30,57 +31,63 @@ public class PickUpItemsGoal extends AbstractWorkGoal {
 
     @Override
     public boolean canUse() {
-        if (isOnBreak()) {
-            return false;
-        }
-        return !getItemsInArea().isEmpty();
+        return true;
     }
 
     @Override
     public boolean canContinueToUse() {
-        if (isOnBreak()) {
-            return false;
-        }
-        return !getItemsInArea().isEmpty();
+        return true;
     }
 
     public void pushToWardsItem(ItemEntity itemEntity) {
-        pushToWardsItem(soldier, itemEntity);
+        pushToWardsPosition(itemEntity.getX(), itemEntity.getZ());
     }
 
     @Override
     public void tick() {
+        if (isOnBreak()) {
+            return;
+        }
+
         if (soldier.getCarriedStack().isEmpty()) {
-            setStatus(SEARCHING_ID);
+            workStatus.setSearching();
             List<ItemEntity> list = getItemsInArea();
-            if (soldier.getItemBySlot(SoldierEquipmentSlot.MAINHAND).isEmpty() && !list.isEmpty()) {
+            if (!list.isEmpty()) {
                 soldier.getNavigation().moveTo(list.getFirst(), 1.2F);
                 if (soldier.getNavigation().isDone()) {
                     pushToWardsItem(list.getFirst());
                 }
-
             }
-        } else {
-            BlockPos pos = getPoiPos();
-            if (pos != null) {
-                setStatus(CARRYING_ID);
-                if (pos.closerToCenterThan(soldier.position(), 2f)) {
-                    this.soldier.getNavigation().stop();
-                    if (getCapCache() != null && pos.equals(getCapCache().pos())) {
-                        var cap = getCapCache().getCapability();
-                        if (cap != null) {
-                            soldier.setCarriedStack(cap.tryInserting(soldier.getCarriedStack()));
-                        }
+            return;
+        }
 
-                        takeAShortBreak(false);
+        BlockPos pos = getPoiPos();
+        if (pos == null) {
+            workStatus.setNoChest();
+            takeAShortBreak(false);
+            return;
+        }
+        if (getCapCache() == null) {
+            setCapCache();
+            workStatus.setNoChest();
+            takeAShortBreak(false);
+            return;
+        }
+        if (!pos.equals(getCapCache().pos())) {
+            return;
+        }
+        IBlockStorageAccess cap = getCapCache().getCapability();
+        if (cap == null) {
+            soldier.clearPoiInfo();
+            workStatus.setNoChest();
+            takeAShortBreak(false);
+            return;
+        }
 
-                    } else {
-                        setCapCache();
-                    }
-                } else {
-                    this.soldier.getNavigation().moveTo(pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5, 1.2);
-                }
-            }
+        workStatus.setCarrying();
+        if (moveToPoi(2f)) {
+            soldier.setCarriedStack(cap.tryInserting(soldier.getCarriedStack()));
+            workStatus.setBreak();
         }
     }
 
@@ -95,33 +102,9 @@ public class PickUpItemsGoal extends AbstractWorkGoal {
     }
 
     private List<ItemEntity> getItemsInArea() {
-        return getItemsInArea(soldier, horizontalSearchRange, verticalSearchRange, ALLOWED_ITEMS);
+        return soldier.level().getEntitiesOfClass(ItemEntity.class, soldier.getBoundingBox().inflate(horizontalSearchRange, verticalSearchRange, horizontalSearchRange), ALLOWED_ITEMS);
     }
 
-    public static List<ItemEntity> getItemsInArea(ClayMobEntity soldier, float searchRange, float verticalSearchRange, Predicate<ItemEntity> allowed) {
-        return soldier.level().getEntitiesOfClass(ItemEntity.class, soldier.getBoundingBox().inflate(searchRange, verticalSearchRange, searchRange), allowed);
-    }
-
-    public static void pushToWardsItem(ClayMobEntity soldier, ItemEntity itemEntity) {
-        double xDif = itemEntity.getX() - soldier.getX();
-        double zDif = itemEntity.getZ() - soldier.getZ();
-        double absMax = Mth.absMax(xDif, zDif);
-        if (absMax >= 0.01F) {
-            absMax = Math.sqrt(absMax);
-            xDif /= absMax;
-            zDif /= absMax;
-            double invertedAbsMax = 1.0 / absMax;
-            if (invertedAbsMax > 1.0) {
-                invertedAbsMax = 1.0;
-            }
-
-            xDif *= invertedAbsMax;
-            zDif *= invertedAbsMax;
-            xDif *= 0.05F;
-            zDif *= 0.05F;
-            soldier.setDeltaMovement(soldier.getDeltaMovement().add(xDif, 0, zDif));
-        }
-    }
 
     @Override
     public Component getDisplayName() {

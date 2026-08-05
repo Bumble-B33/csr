@@ -9,8 +9,8 @@ import java.util.Map;
 public class ChipAssemblerRenderState extends BlockEntityRenderState {
     public final Map<ChipAssemblerInventory.Slot, ItemStackRenderState> map;
     public float yRot;
-    public long storedEnergy;
-    public long maxEnergyStored;
+    public int storedEnergy;
+    public int maxEnergyStored;
     public float progress;
     public int startProgress;
 

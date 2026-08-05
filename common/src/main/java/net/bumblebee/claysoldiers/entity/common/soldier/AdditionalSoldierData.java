@@ -1,13 +1,10 @@
 package net.bumblebee.claysoldiers.entity.common.soldier;
 
 import com.mojang.serialization.Codec;
-import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.entity.common.ClayMobEntity;
 import net.bumblebee.claysoldiers.util.codec.EntityTypesCodecs;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -28,7 +25,7 @@ public final class AdditionalSoldierData {
     ).apply(in, AdditionalSoldierData::new));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, AdditionalSoldierData> STREAM_CODEC = StreamCodec.composite(
-            EntityTypesCodecs.createClaySoldierLikeStream(), AdditionalSoldierData::soldierType,
+            EntityTypesCodecs.createClaySoldierLikeStreamCodec(), AdditionalSoldierData::soldierType,
             ByteBufCodecs.COMPOUND_TAG, AdditionalSoldierData::tag,
             AdditionalSoldierData::new
     );

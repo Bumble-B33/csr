@@ -7,10 +7,10 @@ import net.bumblebee.claysoldiers.claypoifunction.ClayPoiSource;
 import net.bumblebee.claysoldiers.claypoifunction.ClaySoldierInventorySetter;
 import net.bumblebee.claysoldiers.claysoldierpredicate.ClayPredicate;
 import net.bumblebee.claysoldiers.claysoldierpredicate.ClaySoldierInventoryQuery;
-import net.bumblebee.claysoldiers.util.codec.CodecUtils;
+import net.bumblebee.claysoldiers.util.Chance;
 import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.util.RandomSource;
 
 import java.util.List;
 
@@ -23,31 +23,33 @@ public class SoldierPoi {
     public static final Codec<SoldierPoi> CODEC = RecordCodecBuilder.create(in -> in.group(
             ClayPoiFunction.CODEC.listOf().fieldOf("effect").forGetter(p -> p.effects),
             ClayPredicate.CODEC.fieldOf("predicate").forGetter(p -> p.canUse),
-            CodecUtils.CHANCE_CODEC.optionalFieldOf("break_chance", 0f).forGetter(p -> p.breakChance)
+            Chance.CODEC.optionalFieldOf("break_chance", Chance.NEVER).forGetter(p -> p.breakChance)
             ).apply(in, SoldierPoi::new));
     public static final StreamCodec<RegistryFriendlyByteBuf, SoldierPoi> STREAM_CODEC = StreamCodec.composite(
             ClayPoiFunction.LIST_STREAM_CODEC, p -> p.effects,
             ClayPredicate.STREAM_CODEC, SoldierPoi::getPredicate,
-            ByteBufCodecs.FLOAT, SoldierPoi::getBreakChance,
+            Chance.STREAM_CODEC, s -> s.breakChance,
             SoldierPoi::new
     );
 
     private final List<ClayPoiFunction<?>> effects;
     private final ClayPredicate<?> canUse;
-    private final float breakChance;
+    private final Chance breakChance;
 
-    public SoldierPoi(List<ClayPoiFunction<?>> effects, ClayPredicate<?> canUse, float breakChance) {
+    public SoldierPoi(List<ClayPoiFunction<?>> effects, ClayPredicate<?> canUse, Chance breakChance) {
         this.effects = effects;
         this.canUse = canUse;
         this.breakChance = breakChance;
     }
-    public SoldierPoi(ClayPoiFunction<?> effect, ClayPredicate<?> canUse, float breakChance) {
+
+    public SoldierPoi(ClayPoiFunction<?> effect, ClayPredicate<?> canUse, Chance breakChance) {
         this(List.of(effect), canUse, breakChance);
     }
 
-    public float getBreakChance() {
-        return breakChance;
+    public boolean shouldBreak(RandomSource random) {
+        return breakChance.test(random);
     }
+
     public boolean canPerformEffect(ClaySoldierInventoryQuery soldier) {
         return canUse.test(soldier);
     }

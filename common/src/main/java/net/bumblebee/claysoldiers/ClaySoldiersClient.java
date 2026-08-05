@@ -4,6 +4,8 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import net.bumblebee.claysoldiers.block.SpecialItemRenderers;
 import net.bumblebee.claysoldiers.block.blueprint.EaselBlockEntityRenderer;
+import net.bumblebee.claysoldiers.block.chargingpad.SoldierChargingPadBlock;
+import net.bumblebee.claysoldiers.block.chargingpad.SoldierChargingPadBlockEntityRenderer;
 import net.bumblebee.claysoldiers.block.chipassembler.ChipAssemblerArmModel;
 import net.bumblebee.claysoldiers.block.chipassembler.ChipAssemblerBlockEntityRenderer;
 import net.bumblebee.claysoldiers.block.hammock.SugarCaneHammockBlockEntityRenderer;
@@ -20,6 +22,7 @@ import net.bumblebee.claysoldiers.entity.client.boss.BossClaySoldierRenderer;
 import net.bumblebee.claysoldiers.entity.client.boss.ClayBlockProjectileRenderer;
 import net.bumblebee.claysoldiers.entity.client.boss.VampireBatRenderer;
 import net.bumblebee.claysoldiers.entity.client.horse.*;
+import net.bumblebee.claysoldiers.entity.client.programmable.BatteryContainerModel;
 import net.bumblebee.claysoldiers.entity.client.programmable.ClaySoldierChipModel;
 import net.bumblebee.claysoldiers.entity.client.programmable.ProgrammableClaySoldierRenderer;
 import net.bumblebee.claysoldiers.entity.client.undead.VampireClaySoldierRenderer;
@@ -37,14 +40,23 @@ import net.bumblebee.claysoldiers.item.claymobspawn.ClaySoldierSpawnItem;
 import net.bumblebee.claysoldiers.item.claypouch.ClayPouchContent;
 import net.bumblebee.claysoldiers.item.claypouch.ClientClayPouchTooltip;
 import net.bumblebee.claysoldiers.item.claystaff.ClayStaffModel;
+import net.bumblebee.claysoldiers.menu.escritoire.EscritoireScreen;
+import net.bumblebee.claysoldiers.menu.horse.ClayHorseScreen;
+import net.bumblebee.claysoldiers.menu.soldier.ClaySoldierMenu;
+import net.bumblebee.claysoldiers.menu.soldier.ClaySoldierScreen;
+import net.bumblebee.claysoldiers.menu.soldier.ProgrammableClaySoldierScreen;
+import net.bumblebee.claysoldiers.particles.ChargingParticle;
 import net.bumblebee.claysoldiers.particles.ScaledParticleProviderAdapter;
 import net.bumblebee.claysoldiers.platform.services.IClientHooks;
 import net.bumblebee.claysoldiers.util.ComponentFormating;
 import net.bumblebee.claysoldiers.util.color.ColorHelper;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.color.block.BlockTintSource;
 import net.minecraft.client.color.block.BlockTintSources;
 import net.minecraft.client.color.item.ItemTintSource;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.inventory.MenuAccess;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.ModelLayerLocation;
@@ -55,12 +67,10 @@ import net.minecraft.client.particle.*;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
 import net.minecraft.client.renderer.entity.ArmorModelSet;
-import net.minecraft.client.renderer.entity.ArrowRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.ThrownItemRenderer;
 import net.minecraft.client.renderer.item.properties.numeric.RangeSelectItemModelProperty;
 import net.minecraft.client.renderer.special.SpecialModelRenderer;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleType;
 import net.minecraft.network.chat.Component;
@@ -70,13 +80,15 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.ItemOwner;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
-import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -87,6 +99,7 @@ import java.util.function.Supplier;
 
 public class ClaySoldiersClient {
     public static final IClientHooks CLIENT_HOOKS =  ClaySoldiersCommon.load(IClientHooks.class);
+    private static final BlockTintSource ENERGY_BLOCK_TINT_SOURCE = _ -> ClaySoldiersCommon.ENERGY_HELPER.getEnergyColor();
 
     public static boolean hasPlayerClayGogglesEquipped() {
         for (var predicate : ClaySoldiersCommon.IS_WEARING_GOGGLES) {
@@ -108,7 +121,6 @@ public class ClaySoldiersClient {
         event.accept(ClaySoldierModel.LEGGINGS_LAYER_LOCATION, set::legs);
         event.accept(ClaySoldierModel.BOOTS_LAYER_LOCATION, set::feet);
 
-
         event.accept(ClaySoldierSnorkelModel.SNORKEL_LAYER_LOCATION, ClaySoldierSnorkelModel::createSnorkelLayer);
         event.accept(ClaySoldierCapeModel.LAYER_LOCATION, ClaySoldierCapeModel::createSoldierCapeLayer);
         event.accept(ClaySoldierShieldModel.LAYER_LOCATION, ClaySoldierShieldModel::createShieldLayer);
@@ -125,6 +137,8 @@ public class ClaySoldiersClient {
         event.accept(ClayHorseHornModel.LAYER_LOCATION, ClayHorseHornModel::createHornLayer);
 
         event.accept(HamsterWheelBlockEntityRenderer.POWER_LAYER_LOCATION, HamsterWheelBlockEntityRenderer::createPowerLayer);
+        event.accept(HamsterWheelBlockEntityRenderer.POWER_OVERLAY_LAYER_LOCATION, HamsterWheelBlockEntityRenderer::createPowerOverlayLayer);
+
         event.accept(HamsterWheelBlockEntityRenderer.STAND_LAYER_LOCATION, HamsterWheelBlockEntityRenderer::createStandLayer);
         event.accept(HamsterWheelBlockEntityRenderer.BATTERY_LEFT_LOCATION, HamsterWheelBlockEntityRenderer::createBatteryLeft);
         event.accept(HamsterWheelBlockEntityRenderer.BATTERY_RIGHT_LOCATION, HamsterWheelBlockEntityRenderer::createBatteryRight);
@@ -137,10 +151,12 @@ public class ClaySoldiersClient {
         event.accept(ClayStaffModel.LAYER_LOCATION, ClayStaffModel::createStaffLayer);
         event.accept(ClayStaffModel.SOLDIER_LAYER_LOCATION, ClayStaffModel::createSoldierDollLayer);
 
-        event.accept(ChipAssemblerBlockEntityRenderer.BATTER_LEFT_LAYER, ChipAssemblerBlockEntityRenderer::createLeftBatteryLayer);
+        event.accept(ChipAssemblerBlockEntityRenderer.BATTER_LAYER, ChipAssemblerBlockEntityRenderer::createLeftBatteryLayer);
         event.accept(ChipAssemblerBlockEntityRenderer.ARM_LAYER, ChipAssemblerArmModel::createLayer);
 
         event.accept(SugarCaneHammockBlockEntityRenderer.LAYER_LOCATION, SugarCaneHammockBlockEntityRenderer::createHammockLayer);
+
+        BatteryContainerModel.registerLayers(event);
     }
 
     public static void registerBlockRenderers(BlockEntityRendererFactory event) {
@@ -148,6 +164,7 @@ public class ClaySoldiersClient {
         event.registerBlockEntityRenderer(ModBlockEntities.EASEL_BLOCK_ENTITY.get(), EaselBlockEntityRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.CHIP_ASSEMBLER_BLOCK_ENTITY.get(), ChipAssemblerBlockEntityRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.SUGAR_CANE_HAMMOCK_BLOCK_ENTITY.get(), SugarCaneHammockBlockEntityRenderer::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.SOLDIER_CHARGING_PAD.get(), SoldierChargingPadBlockEntityRenderer::new);
 
     }
 
@@ -248,6 +265,22 @@ public class ClaySoldiersClient {
         }
     }
 
+    public enum EnergyItemTintSource implements ItemTintSource {
+        INSTANCE;
+
+        private static final MapCodec<EnergyItemTintSource> MAP_CODEC = MapCodec.unit(INSTANCE);
+
+        @Override
+        public int calculate(ItemStack itemStack, @Nullable ClientLevel clientLevel, @Nullable LivingEntity livingEntity) {
+            return ClaySoldiersCommon.ENERGY_HELPER.getEnergyColor();
+        }
+
+        @Override
+        public MapCodec<? extends ItemTintSource> type() {
+            return MAP_CODEC;
+        }
+    }
+
     public enum ClayBrushConditionalProperty implements RangeSelectItemModelProperty {
         INSTANCE;
 
@@ -284,6 +317,8 @@ public class ClaySoldiersClient {
 
     public static void registerBlockColorHandlers(final BiConsumer<List<BlockTintSource>, Block> event) {
         event.accept(List.of(BlockTintSources.sugarCane()), ModBlocks.SUGAR_CANE_HAMMOCK.get());
+        event.accept(List.of(ENERGY_BLOCK_TINT_SOURCE), ModBlocks.CHIP_ASSEMBLER.get());
+        event.accept(List.of(ENERGY_BLOCK_TINT_SOURCE), ModBlocks.SOLDIER_CHARGING_PAD.get());
     }
 
     public static void registerItemColorHandlers(final BiConsumer<Identifier, MapCodec<? extends ItemTintSource>> event) {
@@ -291,6 +326,8 @@ public class ClaySoldiersClient {
         event.accept(Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_pouch"), ClayPouchItemTintSource.MAP_CODEC);
         event.accept(Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_soldier_chip"), ClaySoldierChipTintSource.MAP_CODEC);
         event.accept(Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_soldier_chip_addon"), ClaySoldierChipAddonTintSource.MAP_CODEC);
+        event.accept(Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "energy"), EnergyItemTintSource.MAP_CODEC);
+
     }
 
     public static void registerItemModelCondition(final BiConsumer<Identifier, MapCodec<? extends RangeSelectItemModelProperty>> event) {
@@ -302,6 +339,8 @@ public class ClaySoldiersClient {
         event.accept(Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_staff_renderer"), SpecialItemRenderers.ClayStaffSpecialRenderer.Unbaked.MAP_CODEC);
         event.accept(Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "hamster_wheel_renderer"), SpecialItemRenderers.HamsterWheelSpecialRenderer.Unbaked.MAP_CODEC);
         event.accept(Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "easel_renderer"), SpecialItemRenderers.EaselBlockSpecialRenderer.Unbaked.MAP_CODEC);
+        event.accept(Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "battery_container"), SpecialItemRenderers.BatteryContainerRenderer.Unbaked.MAP_CODEC);
+
     }
 
     public static void registerEntityInsideShader(BiConsumer<EntityType<?>, Identifier> event) {
@@ -311,20 +350,24 @@ public class ClaySoldiersClient {
     public static void registerTooltipComponent(ClientTooltipFactory event) {
         event.register(BlueprintTooltip.class, tooltip -> new ClientBlueprintTooltip(tooltip.requirements()));
         event.register(ClayPouchContent.class, ClientClayPouchTooltip::new);
-
     }
 
     public static void registerParticles(ParticleRegistration event) {
-        event.registerSpriteSet(ModParticles.SMALL_HEART_PARTICLE.get(), pSprites -> new ScaledParticleProviderAdapter(new HeartParticle.Provider(pSprites), 0.35f));
-        event.registerSpriteSet(ModParticles.SMALL_ANGRY_PARTICLE.get(), pSprites -> new ScaledParticleProviderAdapter(new HeartParticle.AngryVillagerProvider(pSprites), 0.35f));
-        event.registerSpriteSet(ModParticles.SMALL_HAPPY_PARTICLE.get(), pSprites -> new ScaledParticleProviderAdapter(new SuspendedTownParticle.HappyVillagerProvider(pSprites), 1.1f));
-        event.registerSpriteSet(ModParticles.SMALL_WAXED_PARTICLE.get(), pSprites -> new ScaledParticleProviderAdapter(new GlowParticle.WaxOnProvider(pSprites), 0.5f));
+        event.registerSpriteSet(ModParticles.SMALL_HEART_PARTICLE.get(), sprites -> new ScaledParticleProviderAdapter(new HeartParticle.Provider(sprites), 0.35f));
+        event.registerSpriteSet(ModParticles.SMALL_ANGRY_PARTICLE.get(), sprites -> new ScaledParticleProviderAdapter(new HeartParticle.AngryVillagerProvider(sprites), 0.35f));
+        event.registerSpriteSet(ModParticles.SMALL_HAPPY_PARTICLE.get(), sprites -> new ScaledParticleProviderAdapter(new SuspendedTownParticle.HappyVillagerProvider(sprites), 1.1f));
+        event.registerSpriteSet(ModParticles.SMALL_WAXED_PARTICLE.get(), sprites -> new ScaledParticleProviderAdapter(new GlowParticle.WaxOnProvider(sprites), 0.5f));
+        event.registerSpriteSet(ModParticles.CHARGING_PARTICLE.get(), ChargingParticle.Provider::new);
     }
 
     /**
      * @param player viewing the tooltip, might be null during start up
      */
     public static void tooltipEvent(@Nullable Player player, ItemStack stack, List<Component> tooltip) {
+        if (stack.getItem() == ModBlocks.SOLDIER_CHARGING_PAD.asItem()) {
+            tooltip.add(Component.translatable(SoldierChargingPadBlock.CHARGING_TOOLTIP_LANG, ClaySoldiersCommon.CONFIG.getCommonConfig().baseSoldierEnergyTransferRate(), ClaySoldiersCommon.ENERGY_HELPER.getEnergyUnitName()).withStyle(ChatFormatting.GRAY));
+        }
+
         if (player == null || (!Minecraft.getInstance().hasAltDown() && !CLIENT_HOOKS.hasSoldierTabOpen())) {
             return;
         }
@@ -332,7 +375,18 @@ public class ClaySoldiersClient {
         ComponentFormating.addHoldableTooltip(ClaySoldiersCommon.DATA_MAP.getEffect(stack), tooltip);
         ComponentFormating.addPoiTooltip(ClaySoldiersCommon.DATA_MAP.getItemPoi(stack), tooltip);
         ComponentFormating.addPoiTooltip(ClaySoldiersCommon.DATA_MAP.getBlockPoi(stack), tooltip);
-        ComponentFormating.formatClayHorseProperties(ClaySoldiersCommon.DATA_MAP.getHorseArmor(stack.getItem()), tooltip);
+        ComponentFormating.formatClayHorseProperties(ClaySoldiersCommon.DATA_MAP.getHorseArmor(stack), tooltip);
+    }
+
+    public static void registerMenuScreenEvent(RegisterMenuEvent event) {
+        event.register(ModMenuTypes.CLAY_SOLDIER_MENU.get(), ClaySoldiersClient::createClaySoldierScreen);
+        event.register(ModMenuTypes.CLAY_HORSE_MENU.get(), ClayHorseScreen::new);
+        event.register(ModMenuTypes.ESCRITOIRE_MENU.get(), EscritoireScreen::new);
+        event.register(ModMenuTypes.PROGRAMMABLE_CLAY_SOLDIER_MENU.get(), ProgrammableClaySoldierScreen::new);
+    }
+
+    private static ClaySoldierScreen<ClaySoldierMenu> createClaySoldierScreen(ClaySoldierMenu menu, Inventory inventory, Component title) {
+        return new ClaySoldierScreen<>(menu, inventory, title);
     }
 
     public interface ClientTooltipFactory {
@@ -351,4 +405,11 @@ public class ClaySoldiersClient {
         <T extends ParticleOptions> void registerSpriteSet(ParticleType<T> type, Function<SpriteSet, ParticleProvider<T>> engine);
     }
 
+    public interface ScreenConstructor<T extends AbstractContainerMenu, U extends Screen & MenuAccess<T>> {
+        U create(T menu, Inventory inventory, final Component title);
+    }
+
+    public interface RegisterMenuEvent {
+        <M extends AbstractContainerMenu, U extends Screen & MenuAccess<M>> void register(MenuType<? extends M> type, ScreenConstructor<M, U> factory);
+    }
 }

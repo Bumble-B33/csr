@@ -20,8 +20,9 @@ public class FindNearestPoiGoal extends Goal {
     private static final int SEARCH_RANGE = 10;
     private static final int VERTICAL_SEARCH_RANGE = 4;
     private static final int VERTICAL_SEARCH_START = 0;
-    protected final int randomInterval;
     private final AbstractClaySoldierEntity clayMob;
+    private final int randomInterval;
+
     @Nullable
     private SoldierPoiWithSource<?> target = null;
 

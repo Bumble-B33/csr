@@ -10,7 +10,6 @@ import net.bumblebee.claysoldiers.init.ModEntityTypes;
 import net.bumblebee.claysoldiers.item.ClayBrushItem;
 import net.bumblebee.claysoldiers.item.chip.ClaySoldierChipItem;
 import net.bumblebee.claysoldiers.soldierproperties.customproperties.AttackTypeProperty;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -53,9 +52,9 @@ public class ClaySoldierEntity extends AbstractClaySoldierEntity implements Vamp
     }
 
     @Override
-    public void setVampOwner(@Nullable ClayMobEntity pOwner) {
-        this.vampOwnerUUID = pOwner != null ? pOwner.getUUID() : null;
-        this.cachedVampOwner = pOwner;
+    public void setVampOwner(@Nullable ClayMobEntity owner) {
+        this.vampOwnerUUID = owner != null ? owner.getUUID() : null;
+        this.cachedVampOwner = owner;
     }
 
     @Nullable
@@ -122,21 +121,20 @@ public class ClaySoldierEntity extends AbstractClaySoldierEntity implements Vamp
     @Override
     protected InteractionResult mobInteract(Player player, InteractionHand hand) {
         ItemStack itemInHand = player.getItemInHand(hand);
-        ClaySoldierChip<?> chip = ClaySoldierChipItem.getChipFromItem(itemInHand);
+        ClaySoldierChip chip = ClaySoldierChipItem.getChipFromItem(itemInHand);
         if (chip != null) {
 
             if (level() instanceof ServerLevel) {
                 if (ClaySoldiersCommon.CONFIG.getServerConfig().chipRequiresLoyalty() && !isOwnedBy(player)) {
                     return InteractionResult.FAIL;
                 }
-                BlockPos pos = ClayBrushItem.getPoiPos(itemInHand);
 
                 convertToSoldier(ModEntityTypes.PROGRAMMABLE_CLAY_SOLDIER_ENTITY.get(), s -> {
                     s.setupChip(chip);
                     s.setClayTeamType(getClayTeamHolder());
                     s.stopRiding();
                     s.setOwnerUUID(player);
-                    s.setPoiPos(pos);
+                    s.setPoiInfo(ClayBrushItem.getPoiPos(itemInHand));
                 });
                 if (player instanceof ServerPlayer serverPlayer) {
                     ModCritirions.FEED_CLAY_SOLDIER_TRIGGER.get().triggerChip(serverPlayer, itemInHand);

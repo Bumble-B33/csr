@@ -24,11 +24,9 @@ import org.jetbrains.annotations.Nullable;
 
 public class BreakCropGoal extends MoveToBlockGoal implements IWorkGoal {
     public static final String BREAK_CROPS_LANG = JOB_LANG_KEY.formatted(ClaySoldiersCommon.MOD_ID, "breaking_crops");
-    public static final String CROP_BREAK_DISALLOWED = JOB_LANG_KEY.formatted(ClaySoldiersCommon.MOD_ID, "breaking_crops.disallowed");
+
     private int ticksSinceReachedGoal;
     private static final int WAIT_AFTER_BLOCK_FOUND = 20;
-    private static final byte BREAKING_BLOCK_STATUS = 0;
-    private static final byte CANT_BREAK_BLOCK_STATUS = 1;
     private final ClayMobWorkAccess workAccess;
 
     public BreakCropGoal(PathfinderMob mob, ClayMobWorkAccess workAccess, double speedModifier, SearchRange searchRange) {
@@ -36,17 +34,13 @@ public class BreakCropGoal extends MoveToBlockGoal implements IWorkGoal {
         this.workAccess = workAccess;
     }
 
-    public BreakCropGoal(PathfinderMob mob, ClayMobWorkAccess workAccess, SearchRange searchRange) {
-        this(mob, workAccess, 1, searchRange);
-    }
-
     @Override
     public boolean canUse() {
         if (!ClaySoldiersCommon.COMMON_HOOKS.canEntityGrief(getServerLevel(this.mob.level()), this.mob)) {
-            workAccess.setDataWorkStatus(CANT_BREAK_BLOCK_STATUS);
+            workAccess.setCannotBreakCrops();
             return false;
         }
-        workAccess.setDataWorkStatus(BREAKING_BLOCK_STATUS);
+        workAccess.setBreakingCrop();
 
 
         if (this.nextStartTick > 0) {
@@ -187,10 +181,7 @@ public class BreakCropGoal extends MoveToBlockGoal implements IWorkGoal {
     }
 
     @Override
-    public Component decodeStatus(byte id) {
-        if (id == CANT_BREAK_BLOCK_STATUS) {
-            return Component.translatable(CROP_BREAK_DISALLOWED);
-        }
-        return IWorkGoal.super.decodeStatus(id);
+    public Component getWorkStatus() {
+        return workAccess.getWorkStatus();
     }
 }

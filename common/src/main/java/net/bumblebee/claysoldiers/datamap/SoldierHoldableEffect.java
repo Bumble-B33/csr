@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jspecify.annotations.NonNull;
 
 import java.util.*;
+import java.util.function.Predicate;
 
 public final class SoldierHoldableEffect {
     public static final Codec<SoldierHoldableEffect> CODEC = RecordCodecBuilder.create(in -> in.group(
@@ -37,7 +38,8 @@ public final class SoldierHoldableEffect {
             ClayPredicate.CODEC.optionalFieldOf("predicate", ClayPredicates.ConstantPredicate.getAlwaysTruePredicate()).forGetter(SoldierHoldableEffect::predicate),
             ClayPoiFunction.CODEC.listOf().optionalFieldOf("on_pick", List.of()).forGetter(s -> s.onPickUpFunction),
             RemovalConditionType.PAIR_CODEC.optionalFieldOf("removal_condition", Map.of()).forGetter(s -> s.removalConditionType),
-            ThrowableTransform.CODEC.optionalFieldOf("throwable_transform", ThrowableTransform.DEFAULT).forGetter(s -> s.throwableTransform)
+            ThrowableTransform.CODEC.optionalFieldOf("throwable_transform", ThrowableTransform.DEFAULT).forGetter(s -> s.throwableTransform),
+            HoldingPose.CODEC.optionalFieldOf("holding_pose", HoldingPose.NONE).forGetter(s -> s.holdingPose)
     ).apply(in, (SoldierHoldableEffect::new)));
     public static final StreamCodec<RegistryFriendlyByteBuf, SoldierHoldableEffect> STREAM_CODEC = new StreamCodec<>() {
         @Override
@@ -51,7 +53,8 @@ public final class SoldierHoldableEffect {
                     ClayPredicate.STREAM_CODEC.decode(registryFriendlyByteBuf),
                     ClayPoiFunction.LIST_STREAM_CODEC.decode(registryFriendlyByteBuf),
                     RemovalConditionType.PAIR_STREAM_CODEC.decode(registryFriendlyByteBuf),
-                    ThrowableTransform.STREAM_CODEC.decode(registryFriendlyByteBuf)
+                    ThrowableTransform.STREAM_CODEC.decode(registryFriendlyByteBuf),
+                    HoldingPose.STREAM_CODEC.decode(registryFriendlyByteBuf)
             );
         }
 
@@ -66,6 +69,7 @@ public final class SoldierHoldableEffect {
             ClayPoiFunction.LIST_STREAM_CODEC.encode(byteBuf, soldierHoldableEffect.onPickUpFunction);
             RemovalConditionType.PAIR_STREAM_CODEC.encode(byteBuf, soldierHoldableEffect.removalConditionType);
             ThrowableTransform.STREAM_CODEC.encode(byteBuf, soldierHoldableEffect.throwableTransform);
+            HoldingPose.STREAM_CODEC.encode(byteBuf, soldierHoldableEffect.holdingPose);
         }
     };
 
@@ -78,8 +82,10 @@ public final class SoldierHoldableEffect {
     private final List<ClayPoiFunction<?>> onPickUpFunction;
     private final Map<RemovalConditionType<?>, RemovalCondition> removalConditionType;
     private final ThrowableTransform throwableTransform;
+    private final HoldingPose holdingPose;
+    private final List<SoldierEquipmentSlot> otherOccupiedSlots;
 
-    private SoldierHoldableEffect(SoldierPropertyMap properties, List<SoldierEquipmentSlot> slots, int pickUpPriority, float dropRate, int maxStackSize, ClayPredicate<?> predicate, List<ClayPoiFunction<?>> onPickUpFunction, Map<RemovalConditionType<?>, RemovalCondition> removalConditionType, ThrowableTransform throwableTransform) {
+    private SoldierHoldableEffect(SoldierPropertyMap properties, List<SoldierEquipmentSlot> slots, int pickUpPriority, float dropRate, int maxStackSize, ClayPredicate<?> predicate, List<ClayPoiFunction<?>> onPickUpFunction, Map<RemovalConditionType<?>, RemovalCondition> removalConditionType, ThrowableTransform throwableTransform, HoldingPose holdingPose) {
         this.properties = properties;
         this.slots = slots;
         this.pickUpPriority = pickUpPriority;
@@ -89,6 +95,8 @@ public final class SoldierHoldableEffect {
         this.removalConditionType = removalConditionType;
         this.maxStackSize = maxStackSize;
         this.throwableTransform = throwableTransform;
+        this.holdingPose = holdingPose;
+        this.otherOccupiedSlots = holdingPose.getRequiredSlots();
     }
 
     public float damage() {
@@ -156,14 +164,35 @@ public final class SoldierHoldableEffect {
         return throwableTransform.transform(stack);
     }
 
+    public HoldingPose holdingPose() {
+        return holdingPose;
+    }
+
+    public boolean canPickUp(Predicate<SoldierEquipmentSlot> isSlotEmpty) {
+        return holdingPose.test(isSlotEmpty);
+    }
+
+    public List<SoldierEquipmentSlot> occupiedSlots(SoldierEquipmentSlot toExclude) {
+        if (otherOccupiedSlots.isEmpty()) {
+            return List.of();
+        }
+
+        var list = new ArrayList<>(otherOccupiedSlots);
+        list.remove(toExclude);
+        return list;
+    }
+
     public void validate() throws IllegalStateException {
         this.getRemovalConditions().forEach(r -> {
-            if (r.getChance() <= 0) {
+            if (r.getChance().isEmpty()) {
                 throw new IllegalStateException("Effect has a Removal Condition with Chance 0");
             }
         });
         if (!throwableTransform.isEmpty() && !throwable()) {
             throw new IllegalStateException("Effect has a Throwable Transform but cannot be thrown");
+        }
+        if (holdingPose == HoldingPose.TWO_HANDED_BLOCK && (!slots.contains(SoldierEquipmentSlot.MAINHAND) || slots.size() != 1)) {
+            throw new IllegalStateException("Effect has a Holding Pose that but no Main Hand equipment slot");
         }
 
     }
@@ -210,7 +239,7 @@ public final class SoldierHoldableEffect {
         private final Map<RemovalConditionType<?>, RemovalCondition> removalConditionType = new HashMap<>();
         private int maxStackSize = 1;
         private ThrowableTransform throwableTransform = ThrowableTransform.DEFAULT;
-
+        private HoldingPose holdingPose = HoldingPose.NONE;
 
         public Builder(SoldierPropertyMap properties) {
             this.properties = properties;
@@ -269,8 +298,13 @@ public final class SoldierHoldableEffect {
             return this;
         }
 
+        public Builder setHoldingPose(HoldingPose holdingPose) {
+            this.holdingPose = holdingPose;
+            return this;
+        }
+
         public SoldierHoldableEffect build() {
-            return new SoldierHoldableEffect(properties, slots, pickUpPriority, dropRate, maxStackSize, predicate, onPickUpFunction, removalConditionType, throwableTransform);
+            return new SoldierHoldableEffect(properties, slots, pickUpPriority, dropRate, maxStackSize, predicate, onPickUpFunction, removalConditionType, throwableTransform, holdingPose);
         }
     }
 }

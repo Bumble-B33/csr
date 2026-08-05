@@ -52,12 +52,8 @@ public interface IDataMapGetter {
         return item instanceof BlockItem blockItem ? getBlockPoi(blockItem.getBlock()) : null;
     }
 
-    default ClayHorseWearableProperties getHorseArmor(Item item) {
-        return ClayHorseItemMap.get(item);
-    }
-
     default ClayHorseWearableProperties getHorseArmor(ItemStack item) {
-        return getHorseArmor(item.getItem());
+        return ClayHorseItemMap.get(item.getItem());
     }
 
     @Nullable

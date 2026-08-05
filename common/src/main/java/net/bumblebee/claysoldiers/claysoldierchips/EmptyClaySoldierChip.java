@@ -2,18 +2,16 @@ package net.bumblebee.claysoldiers.claysoldierchips;
 
 import net.bumblebee.claysoldiers.entity.common.programmable.ProgrammableClaySoldierEntity;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.util.Unit;
 import net.minecraft.world.entity.ai.goal.Goal;
 
 import java.util.List;
 import java.util.function.BiConsumer;
 
-public class EmptyClaySoldierChip extends ClaySoldierChip<Unit> {
-    public static final String EMPTY_CHIP_DATA_LANG = LANG_PREFIX + ".data.empty";
+public class EmptyClaySoldierChip extends ClaySoldierChip {
     public static final EmptyClaySoldierChip EMPTY = new EmptyClaySoldierChip();
 
     private EmptyClaySoldierChip() {
-        super(Unit.INSTANCE, List.of());
+        super(List.of());
     }
 
     @Override
@@ -21,7 +19,7 @@ public class EmptyClaySoldierChip extends ClaySoldierChip<Unit> {
     }
 
     @Override
-    public Type<Unit> getType() {
+    public Type getType() {
         return ClaySoldierChips.EMPTY_TYPE.get();
     }
 }

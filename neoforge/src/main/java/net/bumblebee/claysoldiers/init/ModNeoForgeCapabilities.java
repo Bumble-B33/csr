@@ -1,14 +1,20 @@
 package net.bumblebee.claysoldiers.init;
 
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
+import net.bumblebee.claysoldiers.ClaySoldiersNeoForge;
 import net.bumblebee.claysoldiers.block.soldiercontainer.ClayMobContainer;
 import net.bumblebee.claysoldiers.capability.AssignableWorksiteCapability;
 import net.bumblebee.claysoldiers.capability.BlueprintRequestHandler;
+import net.bumblebee.claysoldiers.energy.BatteryProperties;
 import net.minecraft.resources.Identifier;
-import net.neoforged.neoforge.capabilities.*;
+import net.neoforged.neoforge.capabilities.BlockCapability;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import net.neoforged.neoforge.transfer.energy.EnergyHandler;
+import net.neoforged.neoforge.transfer.energy.ItemAccessEnergyHandler;
 
-public class NeoForgeCapabilities {
+public class ModNeoForgeCapabilities {
+
     public static final BlockCapability<BlueprintRequestHandler, Void> BLUEPRINT_REQUEST_CAP =
             BlockCapability.createVoid(
                     Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "blueprint_request_handler"),
@@ -37,5 +43,15 @@ public class NeoForgeCapabilities {
 
         ModCapabilities.registerEnergy((type, lookup) ->
                 event.registerBlockEntity(Capabilities.Energy.BLOCK, type, (b, c) -> (EnergyHandler) lookup.apply(b, c)));
+
+        ModCapabilities.registerItemEnergy((lookup, items) -> {
+            event.registerItem(Capabilities.Energy.ITEM, (stack, context) -> {
+                BatteryProperties properties = lookup.apply(stack);
+                if (properties == null) {
+                    return null;
+                }
+                return new ItemAccessEnergyHandler(context, ClaySoldiersNeoForge.BATTERY_ENERGY.get(), properties.capacity(), properties.maxInsert(), properties.maxExtract());
+            }, items);
+        });
     }
 }

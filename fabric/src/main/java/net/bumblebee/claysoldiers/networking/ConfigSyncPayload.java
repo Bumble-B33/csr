@@ -9,17 +9,18 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.Identifier;
 
-public record ConfigSyncPayload(long hamsterWheelSpeed, boolean shearBladeRecipeEnabled) implements CustomPacketPayload {
-    public static final Type<ConfigSyncPayload> ID = new Type<>(Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "blueprint_config"));
+public record ConfigSyncPayload(int hamsterWheelSpeed, boolean shearBladeRecipeEnabled, int soldierTransferRate, int chargingPadPlayerRate) implements CustomPacketPayload {
+    public static final Type<ConfigSyncPayload> ID = new Type<>(Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "fabric_config"));
     public static final StreamCodec<ByteBuf, ConfigSyncPayload> STREAM_CODEC = StreamCodec.composite(
-            ByteBufCodecs.VAR_LONG, ConfigSyncPayload::hamsterWheelSpeed,
+            ByteBufCodecs.VAR_INT, ConfigSyncPayload::hamsterWheelSpeed,
             ByteBufCodecs.BOOL, ConfigSyncPayload::shearBladeRecipeEnabled,
+            ByteBufCodecs.VAR_INT, ConfigSyncPayload::soldierTransferRate,
+            ByteBufCodecs.VAR_INT, ConfigSyncPayload::chargingPadPlayerRate,
             ConfigSyncPayload::new
     );
 
     public void handleClient(ClientPlayNetworking.Context context) {
-        FabricConfig.hamsterWheelSpeed = hamsterWheelSpeed;
-        FabricConfig.setShearBladeRecipeEnabled(shearBladeRecipeEnabled);;
+        FabricConfig.initSynced(hamsterWheelSpeed, shearBladeRecipeEnabled, soldierTransferRate, chargingPadPlayerRate);
         FabricConfig.logConfig("On Client Receive", true);
     }
 

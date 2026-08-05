@@ -1,11 +1,6 @@
 package net.bumblebee.claysoldiers.entity.common;
 
-import net.minecraft.core.Holder;
-import net.minecraft.core.RegistryAccess;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.world.clock.ServerClockManager;
-import net.minecraft.world.clock.WorldClock;
-import net.minecraft.world.clock.WorldClocks;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.MoonPhase;
 import net.minecraft.world.timeline.Timeline;

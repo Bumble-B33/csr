@@ -1,8 +1,6 @@
 package net.bumblebee.claysoldiers.recipe.chip;
 
 import com.mojang.serialization.MapCodec;
-import net.bumblebee.claysoldiers.block.chipassembler.ChipAssemblerBlockEntity;
-import net.bumblebee.claysoldiers.block.chipassembler.ChipEnergyStorage;
 import net.bumblebee.claysoldiers.init.ModRecipes;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
@@ -42,8 +40,6 @@ public abstract class ChipAssemblyRecipe implements Recipe<ChipInput> {
     public int totalEnergyCost() {
         return energyPerTick * adjustedBuiltTime();
     }
-
-
 
     @Override
     public boolean showNotification() {

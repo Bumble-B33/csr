@@ -18,19 +18,8 @@ import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-
 public class ClaySoldierFishGoal extends AbstractWorkGoal {
-    public static final String FISH_LANG = STATUS_LANG_KEY.formatted(ClaySoldiersCommon.MOD_ID, "fish");
-    public static final String IS_ANKER_LANG = STATUS_LANG_KEY.formatted(ClaySoldiersCommon.MOD_ID, "fish.anker");
-    public static final String SEARCHING_FOR_WATER_LANG = STATUS_LANG_KEY.formatted(ClaySoldiersCommon.MOD_ID, "fish.searching_water");
-    public static final String SEARCHING_ANKER_LANG = STATUS_LANG_KEY.formatted(ClaySoldiersCommon.MOD_ID, "fish.searching_anker");
-    public static final String FISHING_LANG = STATUS_LANG_KEY.formatted(ClaySoldiersCommon.MOD_ID, "fish.fishing");
-
-    public static final byte IS_ANKER_ID = 1;
-    public static final byte SEARCHING_FOR_WATER_ID = 2;
-    public static final byte SEARCHING_ANKER_ID = 3;
-    public static final byte FISHING_ID = 4;
+    public static final String FISH_LANG = JOB_LANG_KEY.formatted(ClaySoldiersCommon.MOD_ID, "fish");
 
     private final int horizontalSearchRange;
     private final int verticalSearchRange;
@@ -39,13 +28,7 @@ public class ClaySoldierFishGoal extends AbstractWorkGoal {
     private BlockPos waterPos;
 
     public ClaySoldierFishGoal(ProgrammableClaySoldierEntity soldier, ClayMobWorkAccess workAccess, SearchRange searchRange) {
-        super(soldier, workAccess, List.of(
-                BREAK_LANG,
-                IS_ANKER_LANG,
-                SEARCHING_FOR_WATER_LANG,
-                SEARCHING_ANKER_LANG,
-                FISHING_LANG
-        ));
+        super(soldier, workAccess);
         this.verticalSearchRange = searchRange.verticalRange();
         this.horizontalSearchRange = searchRange.horizontalRange();
     }
@@ -56,18 +39,13 @@ public class ClaySoldierFishGoal extends AbstractWorkGoal {
     }
 
     @Override
-    public boolean canUse() {
-        return true;
-    }
-
-    @Override
     public void tick() {
         boolean fishingAnkerState = false;
 
         if (hasFishingRod(soldier)) {
             if (waterPos != null && isNearbyWater(waterPos)) {
                 fishingAnkerState = true;
-                setStatus(IS_ANKER_ID);
+                workStatus.setIsAnker();
                 soldier.lookAt(EntityAnchorArgument.Anchor.FEET, new Vec3(waterPos));
             } else {
                 if (waterPos != null) {
@@ -79,18 +57,18 @@ public class ClaySoldierFishGoal extends AbstractWorkGoal {
                 } else {
                     waterPos = findNearbyWater(true);
                 }
-                setStatus(SEARCHING_FOR_WATER_ID);
+                workStatus.setSearchingForWater();
             }
         } else {
             var anker = findClaySoldierAnker();
-            setStatus(SEARCHING_ANKER_ID);
+            workStatus.setSearchingAnker();
             if (anker != null) {
                 if (soldier.distanceTo(anker) > 2) {
                     soldier.getNavigation().moveTo(anker, 1.3f);
                 } else if (!anker.isFishing()) {
                     waterPos = findNearbyWater(false);
                     if (waterPos != null && isWaterAt(waterPos)) {
-                        setStatus(FISHING_ID);
+                        workStatus.setFishing();
                         anker.setFishingIfPossible(waterPos);
                     }
                 }

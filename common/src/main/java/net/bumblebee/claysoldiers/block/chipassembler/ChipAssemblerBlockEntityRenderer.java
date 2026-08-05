@@ -31,7 +31,7 @@ public class ChipAssemblerBlockEntityRenderer implements BlockEntityRenderer<Chi
     private static final Identifier CHIP_ASSEMBLER_TEXTURE = Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "textures/block/chip_assembler.png");
     private static final RenderType RENDER_TYPE_BLOCK = RenderTypes.entityCutout(CHIP_ASSEMBLER_TEXTURE);
 
-    public static final ModelLayerLocation BATTER_LEFT_LAYER = createLayerLocation("battery_left");
+    public static final ModelLayerLocation BATTER_LAYER = createLayerLocation("battery");
     public static final ModelLayerLocation ARM_LAYER = createLayerLocation("arm");
 
     private final ItemModelResolver itemModelResolver;
@@ -41,7 +41,7 @@ public class ChipAssemblerBlockEntityRenderer implements BlockEntityRenderer<Chi
 
     public ChipAssemblerBlockEntityRenderer(BlockEntityRendererProvider.Context context) {
         this.itemModelResolver = context.itemModelResolver();
-        this.batteryLeft = context.bakeLayer(BATTER_LEFT_LAYER);
+        this.batteryLeft = context.bakeLayer(BATTER_LAYER);
         this.batteryContentRenderer = BatteryContentRenderer.ofDefaultTexture(13, 13, 10);
         this.armModel = new ChipAssemblerArmModel(context.bakeLayer(ARM_LAYER));
     }
@@ -80,6 +80,7 @@ public class ChipAssemblerBlockEntityRenderer implements BlockEntityRenderer<Chi
         nodeCollector.submitModelPart(batteryLeft, poseStack, RENDER_TYPE_BLOCK, state.lightCoords, OverlayTexture.NO_OVERLAY, null, -1, state.breakProgress);
         batteryContentRenderer.submitBatteryContent(state.storedEnergy, state.maxEnergyStored, nodeCollector, poseStack, state.lightCoords);
 
+
         if (state.progress >= 0 || state.startProgress >= 0) {
             submitProgressBar((state.startProgress - state.progress) / state.startProgress, nodeCollector, poseStack, state.lightCoords);
         }
@@ -95,8 +96,8 @@ public class ChipAssemblerBlockEntityRenderer implements BlockEntityRenderer<Chi
         blockEntity.getInventory().forEach((s, i) -> itemModelResolver.updateForTopItem(state.map.get(s), i, ItemDisplayContext.FIXED, blockEntity.getLevel(), null, seed + s.ordinal()));
         state.yRot = blockEntity.getBlockState().getValue(HamsterWheelBlock.FACING).getOpposite().toYRot();
 
-        state.storedEnergy = blockEntity.getEnergyStorage(null).getEnergyStored();
-        state.maxEnergyStored = blockEntity.getEnergyStorage(null).getMaxCapacity();
+        state.storedEnergy = blockEntity.getEnergyStorage(null).energyStored();
+        state.maxEnergyStored = blockEntity.getEnergyStorage(null).maxEnergyStored();
         state.progress = blockEntity.getProgress() - partialTicks;
         state.startProgress = blockEntity.getProgressStart();
 
@@ -110,7 +111,11 @@ public class ChipAssemblerBlockEntityRenderer implements BlockEntityRenderer<Chi
         MeshDefinition meshdefinition = new MeshDefinition();
         PartDefinition partdefinition = meshdefinition.getRoot();
 
-        partdefinition.addOrReplaceChild("battery", CubeListBuilder.create().texOffs(52, 34).addBox(-2.0F, -10.02F, -1.0F, 3.0F, 10.0F, 3.0F, new CubeDeformation(0.01F)).texOffs(56, 32).addBox(-1.0F, -10.5F, 0.0F, 1.0F, 1.0F, 1.0F).texOffs(60, 30).addBox(1.02F, -1.5F, 0.0F, 1.0F, 1.0F, 1.0F).texOffs(60, 32).addBox(1.02F, -3.5F, 0.0F, 1.0F, 1.0F, 1.0F), offset);
+        partdefinition.addOrReplaceChild("battery", CubeListBuilder.create()
+                .texOffs(52, 34).addBox(-2.0F, -10.02F, -1.0F, 3.0F, 10.0F, 3.0F, new CubeDeformation(0.01F))
+                .texOffs(56, 32).addBox(-1.0F, -10.5F, 0.0F, 1.0F, 1.0F, 1.0F)
+                .texOffs(60, 30).addBox(1.02F, -1.5F, 0.0F, 1.0F, 1.0F, 1.0F)
+                .texOffs(60, 32).addBox(1.02F, -3.5F, 0.0F, 1.0F, 1.0F, 1.0F), offset);
 
         return LayerDefinition.create(meshdefinition, 64, 64);
     }

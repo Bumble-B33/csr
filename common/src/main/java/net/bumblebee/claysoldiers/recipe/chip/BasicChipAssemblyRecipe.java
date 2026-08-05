@@ -4,7 +4,6 @@ import com.mojang.serialization.DataResult;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.bumblebee.claysoldiers.block.chipassembler.ChipAssemblerBlockEntity;
-import net.bumblebee.claysoldiers.block.chipassembler.ChipEnergyStorage;
 import net.bumblebee.claysoldiers.init.ModRecipes;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -107,8 +106,8 @@ public class BasicChipAssemblyRecipe extends ChipAssemblyRecipe {
     }
 
     private static DataResult<BasicChipAssemblyRecipe> validate(BasicChipAssemblyRecipe recipe) {
-        int totalEnergyStorage = ChipEnergyStorage.MAX_CAPACITY + ChipAssemblerBlockEntity.CHIP_RECIPE_EXTRA_REQUIRED_ENERGY;
-        int totalRequiredEnergy = recipe.totalEnergyCost();
+        int totalEnergyStorage = ChipAssemblerBlockEntity.BATTERY_PROPERTIES.capacity();
+        int totalRequiredEnergy = recipe.totalEnergyCost() + ChipAssemblerBlockEntity.CHIP_RECIPE_EXTRA_REQUIRED_ENERGY;
         if (totalEnergyStorage >= totalRequiredEnergy) {
             return DataResult.success(recipe);
         }

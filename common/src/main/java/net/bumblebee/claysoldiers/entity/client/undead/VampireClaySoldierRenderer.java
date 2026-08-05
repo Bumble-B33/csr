@@ -2,8 +2,6 @@ package net.bumblebee.claysoldiers.entity.client.undead;
 
 import net.bumblebee.claysoldiers.entity.client.ClaySoldierRenderer;
 import net.bumblebee.claysoldiers.entity.client.renderstates.AbstractClaySoldierRenderState;
-import net.bumblebee.claysoldiers.entity.common.VampiricClayMob;
-import net.bumblebee.claysoldiers.entity.common.soldier.AbstractClaySoldierEntity;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 
 public class VampireClaySoldierRenderer extends ClaySoldierRenderer {
@@ -16,14 +14,6 @@ public class VampireClaySoldierRenderer extends ClaySoldierRenderer {
     @Override
     protected int getColor(AbstractClaySoldierRenderState soldier) {
         return shiftColor(super.getColor(soldier));
-    }
-
-    @Override
-    public void extractRenderState(AbstractClaySoldierEntity claySoldierEntity, AbstractClaySoldierRenderState claySoldierRenderState, float partialTick) {
-        super.extractRenderState(claySoldierEntity, claySoldierRenderState, partialTick);
-        if (claySoldierEntity instanceof VampiricClayMob vampire) {
-            claySoldierRenderState.isNightForVampire = vampire.isNightForVampire();
-        }
     }
 
     public static int shiftColor(int color) {

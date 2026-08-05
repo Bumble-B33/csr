@@ -37,6 +37,11 @@ public interface SoldierPropertyMapReader extends Iterable<SoldierProperty<?>> {
         public boolean isEmpty() {
             return true;
         }
+
+        @Override
+        public int size() {
+            return 0;
+        }
     };
 
     /**
@@ -185,4 +190,6 @@ public interface SoldierPropertyMapReader extends Iterable<SoldierProperty<?>> {
     Iterator<SoldierProperty<?>> iterator();
 
     boolean isEmpty();
+
+    int size();
 }

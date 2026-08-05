@@ -11,7 +11,6 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 
 import java.util.HashSet;
@@ -29,7 +28,7 @@ public final class EntityTypesCodecs {
         return BuiltInRegistries.ENTITY_TYPE.byNameCodec().comapFlatMap(EntityTypesCodecs::castClaySoldierLike, Function.identity());
     }
 
-    public static <T extends ClayMobEntity & ClaySoldierLike> StreamCodec<RegistryFriendlyByteBuf, EntityType<T>> createClaySoldierLikeStream() {
+    public static <T extends ClayMobEntity & ClaySoldierLike> StreamCodec<RegistryFriendlyByteBuf, EntityType<T>> createClaySoldierLikeStreamCodec() {
         return new StreamCodec<>() {
             @Override
             @SuppressWarnings("unchecked")

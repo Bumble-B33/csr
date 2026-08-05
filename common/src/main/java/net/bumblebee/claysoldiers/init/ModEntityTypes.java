@@ -1,6 +1,7 @@
 package net.bumblebee.claysoldiers.init;
 
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
+import net.bumblebee.claysoldiers.claysoldierchips.work.ElectricianChip;
 import net.bumblebee.claysoldiers.entity.common.ClayWraithEntity;
 import net.bumblebee.claysoldiers.entity.common.boss.BossBatEntity;
 import net.bumblebee.claysoldiers.entity.common.boss.BossClaySoldierEntity;
@@ -21,55 +22,24 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 
 import java.util.function.Supplier;
 
 public class ModEntityTypes {
-    public static final Supplier<EntityType<ClaySoldierEntity>> CLAY_SOLDIER_ENTITY =
-            ClaySoldiersCommon.PLATFORM.registerEntity("clay_soldier", () -> EntityType.Builder.of(ClaySoldierEntity::new, MobCategory.CREATURE)
-                    .sized(0.6F * AbstractClaySoldierEntity.DEFAULT_SCALE, 1.95F * AbstractClaySoldierEntity.DEFAULT_SCALE)
-                    .ridingOffset(-0.7F * AbstractClaySoldierEntity.DEFAULT_SCALE)
-                    .immuneTo(ModBlocks.CACTUS_HOUSE.get(), Blocks.CACTUS)
-                    .build(ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_soldier")))
-            );
 
-    public static final Supplier<EntityType<ZombieClaySoldierEntity>> ZOMBIE_CLAY_SOLDIER_ENTITY =
-            ClaySoldiersCommon.PLATFORM.registerEntity("zombie_clay_soldier", () -> EntityType.Builder.of(ZombieClaySoldierEntity::new, MobCategory.CREATURE)
-                    .sized(0.6F * AbstractClaySoldierEntity.DEFAULT_SCALE, 1.95F * AbstractClaySoldierEntity.DEFAULT_SCALE)
-                    .ridingOffset(-0.7F * AbstractClaySoldierEntity.DEFAULT_SCALE)
-                    .build(ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "zombie_clay_soldier")))
-
-            );
-    public static final Supplier<EntityType<VampireClaySoldierEntity>> VAMPIRE_CLAY_SOLDIER_ENTITY =
-            ClaySoldiersCommon.PLATFORM.registerEntity("vampire_clay_soldier", () -> EntityType.Builder.of(VampireClaySoldierEntity::new, MobCategory.CREATURE)
-                    .sized(0.6F * AbstractClaySoldierEntity.DEFAULT_SCALE, 1.95F * AbstractClaySoldierEntity.DEFAULT_SCALE)
-                    .ridingOffset(-0.7F * AbstractClaySoldierEntity.DEFAULT_SCALE)
-                    .build(ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "vampire_clay_soldier")))
-            );
-
-    public static final Supplier<EntityType<BossClaySoldierEntity>> BOSS_CLAY_SOLDIER_ENTITY =
-            ClaySoldiersCommon.PLATFORM.registerEntity("boss_clay_soldier", () -> EntityType.Builder.of(
-                            BossClaySoldierEntity::new, MobCategory.CREATURE)
-                    .sized(0.6F * AbstractClaySoldierEntity.DEFAULT_SCALE, 1.95F * AbstractClaySoldierEntity.DEFAULT_SCALE)
-                    .ridingOffset(-0.7F * AbstractClaySoldierEntity.DEFAULT_SCALE)
-                    .build(ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "boss_clay_soldier")))
-            );
-
-    public static final Supplier<EntityType<ProgrammableClaySoldierEntity>> PROGRAMMABLE_CLAY_SOLDIER_ENTITY =
-            ClaySoldiersCommon.PLATFORM.registerEntity("programmable_clay_soldier", () -> EntityType.Builder.of(
-                            ProgrammableClaySoldierEntity::new, MobCategory.MISC)
-                    .sized(0.6F * AbstractClaySoldierEntity.DEFAULT_SCALE, 1.95F * AbstractClaySoldierEntity.DEFAULT_SCALE)
-                    .ridingOffset(-0.7F * AbstractClaySoldierEntity.DEFAULT_SCALE)
-                    .build(ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "programmable_clay_soldier")))
-            );
+    public static final Supplier<EntityType<ClaySoldierEntity>> CLAY_SOLDIER_ENTITY = registerClaySoldierType("clay_soldier", ClaySoldierEntity::new, MobCategory.CREATURE);
+    public static final Supplier<EntityType<ZombieClaySoldierEntity>> ZOMBIE_CLAY_SOLDIER_ENTITY = registerClaySoldierType("zombie_clay_soldier", ZombieClaySoldierEntity::new, MobCategory.CREATURE);
+    public static final Supplier<EntityType<VampireClaySoldierEntity>> VAMPIRE_CLAY_SOLDIER_ENTITY = registerClaySoldierType("vampire_clay_soldier", VampireClaySoldierEntity::new, MobCategory.CREATURE);
+    public static final Supplier<EntityType<BossClaySoldierEntity>> BOSS_CLAY_SOLDIER_ENTITY = registerClaySoldierType("boss_clay_soldier", BossClaySoldierEntity::new, MobCategory.CREATURE);
+    public static final Supplier<EntityType<ProgrammableClaySoldierEntity>> PROGRAMMABLE_CLAY_SOLDIER_ENTITY = registerClaySoldierType("programmable_clay_soldier", ProgrammableClaySoldierEntity::new, MobCategory.MISC);
 
     public static final Supplier<EntityType<ClayHorseEntity>> CLAY_HORSE_ENTITY =
             ClaySoldiersCommon.PLATFORM.registerEntity("clay_horse", () -> EntityType.Builder.of(ClayHorseEntity::new, MobCategory.CREATURE)
                     .sized(1.4F * ClayHorseEntity.SCALE, 1.4F * ClayHorseEntity.SCALE)
                     .clientTrackingRange(10)
                     .eyeHeight(1.52F * ClayHorseEntity.SCALE)
+                    .immuneTo(Blocks.CACTUS, ModBlocks.CACTUS_HOUSE.get())
                     .build(ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_horse")))
             );
 
@@ -78,6 +48,7 @@ public class ModEntityTypes {
                     .sized(1.4F * ClayHorseEntity.SCALE, 1.4F * ClayHorseEntity.SCALE)
                     .clientTrackingRange(10)
                     .eyeHeight(1.52F * ClayPegasusEntity.DEFAULT_SCALE)
+                    .immuneTo(Blocks.CACTUS, ModBlocks.CACTUS_HOUSE.get())
                     .build(ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_pegasus")))
             );
 
@@ -125,8 +96,6 @@ public class ModEntityTypes {
     );
 
 
-
-
     public static final Supplier<EntityType<ClayWraithEntity>> CLAY_WRAITH =
             ClaySoldiersCommon.PLATFORM.registerEntity("clay_wraith", () -> EntityType.Builder.of(ClayWraithEntity::new, MobCategory.MISC)
                     .sized(0.6F * AbstractClaySoldierEntity.DEFAULT_SCALE, 0.35f).fireImmune()
@@ -139,6 +108,15 @@ public class ModEntityTypes {
                     .clientTrackingRange(5)
                     .build(ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "vampire_bat")))
             );
+
+    public static <T extends AbstractClaySoldierEntity> Supplier<EntityType<T>> registerClaySoldierType(String id, EntityType.EntityFactory<T> factory, MobCategory category) {
+        return ClaySoldiersCommon.PLATFORM.registerEntity(id, () -> EntityType.Builder.of(factory, category)
+                .sized(0.6F * AbstractClaySoldierEntity.DEFAULT_SCALE, 1.95F * AbstractClaySoldierEntity.DEFAULT_SCALE)
+                .ridingOffset(-0.7F * AbstractClaySoldierEntity.DEFAULT_SCALE)
+                .immuneTo(Blocks.CACTUS, ModBlocks.CACTUS_HOUSE.get())
+                .build(ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, id)))
+        );
+    }
 
     public static void init() {
     }

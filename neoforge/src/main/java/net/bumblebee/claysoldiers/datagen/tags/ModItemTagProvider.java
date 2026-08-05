@@ -11,6 +11,7 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
+import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.common.Tags;
 import net.neoforged.neoforge.common.data.BlockTagCopyingItemTagProvider;
 
@@ -72,8 +73,10 @@ public class ModItemTagProvider extends BlockTagCopyingItemTagProvider {
                 ModItems.PICK_UP_ITEMS_CHIP.get(),
                 ModItems.FISHING_CHIP.get(),
                 ModItems.BLUEPRINT_CHIP.get(),
-                ModItems.BEE_KEEPING_CHIP.get()
+                ModItems.BEE_KEEPING_CHIP.get(),
+                ModItems.ELECTRICIAN_CHIP.get()
         );
+        this.tag(ModTags.Items.BATTERY).add(ModItems.SMALL_BATTERY.get(), ModItems.LARGE_BATTERY.get());
     }
 
     @SafeVarargs

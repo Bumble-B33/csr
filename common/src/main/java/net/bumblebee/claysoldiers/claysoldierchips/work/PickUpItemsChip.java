@@ -12,25 +12,35 @@ import net.minecraft.resources.Identifier;
 
 import java.util.List;
 
-public class PickUpItemsChip extends WorkGoalChip<SearchRange, PickUpItemsGoal> {
+public class PickUpItemsChip extends WorkGoalChip<PickUpItemsGoal> {
     private static final Identifier PICK_UP_ASSET = Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "pick_up");
+    private static final PickUpItemsChip NO_ADDON = new PickUpItemsChip(List.of());
+    private static final SearchRange DEFAULT_SEARCH_RANGE = new SearchRange(8);
+
     public static final AddonInfo ADDON_INFO = AddonInfo.NO_BREAK_AND_RANGE;
 
-    public PickUpItemsChip(SearchRange data, List<ClaySoldierChipAddon> addons) {
-        super(data, addons, PICK_UP_ASSET, 0x866525, 0xF9F9F9);
+    private PickUpItemsChip(List<ClaySoldierChipAddon> addons) {
+        super(addons, PICK_UP_ASSET, 0x866525, 0xF9F9F9);
     }
 
-    public static PickUpItemsChip create(SearchRange searchRange) {
-        return new PickUpItemsChip(searchRange, List.of());
+    public static PickUpItemsChip create() {
+        return NO_ADDON;
+    }
+
+    public static PickUpItemsChip create(List<ClaySoldierChipAddon> addons) {
+        if (addons.isEmpty()) {
+            return NO_ADDON;
+        }
+        return new PickUpItemsChip(addons);
     }
 
     @Override
     protected PickUpItemsGoal createGoal(ProgrammableClaySoldierEntity soldier, ClayMobWorkAccess workAccess) {
-        return new PickUpItemsGoal(soldier, workAccess, scaleRange(data));
+        return new PickUpItemsGoal(soldier, workAccess, scaleRange(DEFAULT_SEARCH_RANGE));
     }
 
     @Override
-    public Type<SearchRange> getType() {
+    public Type getType() {
         return ClaySoldierChips.PICK_UP_ITEMS_TYPE.get();
     }
 

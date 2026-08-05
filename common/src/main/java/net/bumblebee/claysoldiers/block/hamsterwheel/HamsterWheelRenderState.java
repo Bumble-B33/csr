@@ -13,8 +13,8 @@ public class HamsterWheelRenderState extends BlockEntityRenderState {
     public FakeClaySoldierAccess clientClaySoldierEntity;
     public float partialTicks;
     public boolean hasEnergy;
-    public long energyStored;
-    public long maxEnergyStored;
+    public int energyStored;
+    public int maxEnergyStored;
 
     public HamsterWheelRenderState() {
         this.rotation = 0;
@@ -24,7 +24,7 @@ public class HamsterWheelRenderState extends BlockEntityRenderState {
         this.clientClaySoldierEntity = null;
         this.partialTicks = 0f;
         this.hasEnergy = false;
-        this.energyStored = 0L;
-        this.maxEnergyStored = 0L;
+        this.energyStored = 0;
+        this.maxEnergyStored = 0;
     }
 }

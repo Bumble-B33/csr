@@ -18,11 +18,9 @@ import net.minecraft.advancements.criterion.EntitySubPredicate;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
-import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.component.DataComponentType;
-import net.minecraft.core.particles.SimpleParticleType;
+import net.minecraft.core.particles.ParticleType;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.world.damagesource.DamageSources;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -63,8 +61,6 @@ public interface IPlatformHelper {
 
     boolean isClient();
 
-    String getEnergyUnitName();
-
     default <T> T ifDevEv(Supplier<T> action, T elseValue) {
         return isDevEnv() ? action.get() : elseValue;
     }
@@ -76,7 +72,9 @@ public interface IPlatformHelper {
     <T extends Block> Supplier<T> registerBlockWithoutItem(String id, Function<BlockBehaviour.Properties, T> block, BlockBehaviour.Properties properties);
 
     <T extends BlockEntity> Supplier<BlockEntityType<T>> registerBlockEntity(String id, BlockEntityFactory<T> factory, List<Supplier<? extends Block>> blocks);
-    Supplier<SimpleParticleType> registerParticle(String id, Supplier<SimpleParticleType> particleTye);
+
+    <T extends ParticleType<?>> Supplier<T> registerParticleType(String id, Supplier<T> particleTye);
+
     <T extends Entity> Supplier<EntityType<T>> registerEntity(String id, Supplier<EntityType<T>> entityType);
     <T> Supplier<DataComponentType<T>> registerDataComponent(String id, Supplier<DataComponentType<T>> dataComponent);
     <T extends AbstractContainerMenu> Supplier<MenuType<T>> registerMenuType(String id, MenuFactory<T> menu);
@@ -95,7 +93,7 @@ public interface IPlatformHelper {
 
     <T extends LootItemFunction> Supplier<MapCodec<T>> registerLootItemFunction(String name, Supplier<MapCodec<T>> lootItemFunction);
 
-    <T> Supplier<ClaySoldierChip.Type<T>> registerClaySoldierModule(String name, Supplier<ClaySoldierChip.Type<T>> chipType);
+    Supplier<ClaySoldierChip.Type> registerClaySoldierModule(String name, Supplier<ClaySoldierChip.Type> chipType);
 
     <T extends ClaySoldierChipAddon> T registerClaySoldierChipAddon(String name, T addon);
 
@@ -115,8 +113,6 @@ public interface IPlatformHelper {
     Holder<MobEffect> registerMobEffect(String id, Supplier<MobEffect> effect);
     Supplier<PoiType> registerPoiType(ResourceKey<PoiType> id, Supplier<PoiType> poiType);
 
-    DamageSources createClayDamageSources(RegistryAccess registryAccess);
-
     CreativeModeTab.DisplayItemsGenerator createGeneratorForAll();
 
     interface BlockEntityFactory<T extends BlockEntity> {
@@ -125,4 +121,5 @@ public interface IPlatformHelper {
     interface MenuFactory<T extends AbstractContainerMenu> {
         T create(int id, Inventory inventory, int extraData);
     }
+
 }

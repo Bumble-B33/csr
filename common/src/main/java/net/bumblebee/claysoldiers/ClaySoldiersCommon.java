@@ -28,7 +28,10 @@ import net.bumblebee.claysoldiers.soldierproperties.customproperties.specialatta
 import net.bumblebee.claysoldiers.team.ClayMobTeamManger;
 import net.bumblebee.claysoldiers.team.loyalty.TeamLoyaltyManger;
 import net.bumblebee.claysoldiers.util.ErrorHandler;
-import net.minecraft.core.*;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.Registry;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
@@ -44,13 +47,10 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.BlockHitResult;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,6 +72,7 @@ public class ClaySoldiersCommon {
     public static final IDataMapGetter DATA_MAP = load(IDataMapGetter.class);
     public static final NetworkManger NETWORK_MANGER = load(NetworkManger.class);
     public static final ICommonHooks COMMON_HOOKS = load(ICommonHooks.class);
+    public static final IEnergyHelper ENERGY_HELPER = load(IEnergyHelper.class);
     public static final AbstractCapabilityManger CAPABILITY_MANGER = load(AbstractCapabilityManger.class);
     public static final IConfig CONFIG = load(IConfig.class);
     public static final ErrorHandler ERROR_HANDLER = new ErrorHandler(LOGGER, PLATFORM.isDevEnv());
@@ -93,8 +94,8 @@ public class ClaySoldiersCommon {
             p -> p.getMainHandItem().is(ModTags.Items.STAT_ITEM)
     ));
 
-    @NotNull
-    public static Supplier<@Nullable Player> clientPlayer = () -> null;
+
+    public static @NonNull Supplier<@Nullable Player> clientPlayer = () -> null;
 
     public static final ClientRecipeAccess CLIENT_RECIPE_ACCESS = ClientRecipeAccess.INSTANCE;
 
@@ -145,7 +146,9 @@ public class ClaySoldiersCommon {
         NETWORK_MANGER.registerS2CPayload(ClayBossSpawnPayload.ID, ClayBossSpawnPayload.STREAM_CODEC);
         NETWORK_MANGER.registerS2CPayload(ProgrammableClaySoldierSpawnPayload.ID, ProgrammableClaySoldierSpawnPayload.STREAM_CODEC);
 
-        NETWORK_MANGER.registerS2CPayload(ChipAssemblyEnergyPayload.ID, ChipAssemblyEnergyPayload.STREAM_CODEC);
+        NETWORK_MANGER.registerS2CPayload(BlockEntityEnergyPayload.ID, BlockEntityEnergyPayload.STREAM_CODEC);
+
+        NETWORK_MANGER.registerS2CPayload(ChargingParticlePayload.ID, ChargingParticlePayload.STREAM_CODEC);
 
         NETWORK_MANGER.registerS2CPayload(BlueprintPlacePayload.ID, BlueprintPlacePayload.STREAM_CODEC);
     }

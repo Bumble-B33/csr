@@ -1,7 +1,6 @@
 package net.bumblebee.claysoldiers.init;
 
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
-import net.bumblebee.claysoldiers.integration.ExternalMods;
 import net.bumblebee.claysoldiers.integration.jei.JEIShapelessRecipe;
 import net.bumblebee.claysoldiers.recipe.*;
 import net.bumblebee.claysoldiers.recipe.chip.AddonChipRecipe;
@@ -33,6 +32,10 @@ public final class ModRecipes {
     );
     public static final Supplier<RecipeSerializer<BlastingRecipe>> CLAY_SOLDIER_BLASTING = ClaySoldiersCommon.PLATFORM.registerRecipe("clay_soldier_blasting",
             () -> ClaySoldierCookingRecipe.serializer(ClaySoldierCookingRecipe.blasting())
+    );
+
+    public static final Supplier<RecipeSerializer<BatteryCombiningRecipe>> BATTERY_COMBING = ClaySoldiersCommon.PLATFORM.registerRecipe("battery_combing",
+            () -> new RecipeSerializer<>(BatteryCombiningRecipe.CODEC, BatteryCombiningRecipe.STREAM_CODEC)
     );
 
     public static final RecipeBookCategory CHIP_ASSEMBLY = ClaySoldiersCommon.PLATFORM.registerRecipeBookCategory("chip_assembly", new RecipeBookCategory());

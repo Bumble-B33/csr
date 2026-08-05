@@ -5,8 +5,8 @@ import net.bumblebee.claysoldiers.init.ModDataComponents;
 import net.bumblebee.claysoldiers.init.ModItems;
 import net.bumblebee.claysoldiers.team.ClayMobTeam;
 import net.bumblebee.claysoldiers.team.ClayMobTeamManger;
-import net.minecraft.client.Minecraft;
 import net.minecraft.core.Holder;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.component.DataComponentPatch;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
@@ -24,10 +24,10 @@ public final class ClaySoldierCookingRecipe {
 
     private static final String ID = "jei." + ClaySoldiersCommon.MOD_ID + ".soldier.%s.%s";
 
-    public static <T extends AbstractCookingRecipe> List<RecipeHolder<T>> createCookingRecipe(CookingRecipeBuilder<T> factory, int smeltingTime) {
+    public static <T extends AbstractCookingRecipe> List<RecipeHolder<T>> createCookingRecipe(CookingRecipeBuilder<T> factory, int smeltingTime, RegistryAccess registries) {
         var res = new ArrayList<RecipeHolder<T>>();
 
-        Holder.Reference<ClayMobTeam> team = ClayMobTeamManger.getDefault(Minecraft.getInstance().level.registryAccess());
+        Holder.Reference<ClayMobTeam> team = ClayMobTeamManger.getDefault(registries);
         ItemStackTemplate output = new ItemStackTemplate(ModItems.BRICKED_CLAY_SOLDIER.get(), DataComponentPatch.builder().set(ModDataComponents.CLAY_MOB_TEAM_COMPONENT.get(), team.key()).build());
         Ingredient input = Ingredient.of(ModItems.CLAY_SOLDIER);
 

@@ -38,15 +38,11 @@ public class SoldierPoiWithBlock extends SoldierPoiWithSource<SoldierPoiWithBloc
     @Override
     public void onUse(BlockPoiData source, AbstractClaySoldierEntity soldier) {
         assert getPoi() != null;
-        float breakChance = getPoi().getBreakChance();
-        if (breakChance <= 0) {
-            return;
-        }
 
         if (soldier.level().isClientSide()) {
             return;
         }
-        if (soldier.getRandom().nextFloat() <= breakChance) {
+        if (getPoi().shouldBreak(soldier.getRandom())) {
             soldier.level().destroyBlock(source.pos, false, soldier);
         }
     }

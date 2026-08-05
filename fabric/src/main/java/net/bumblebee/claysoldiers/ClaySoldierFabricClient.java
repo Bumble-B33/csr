@@ -1,12 +1,8 @@
 package net.bumblebee.claysoldiers;
 
-import net.bumblebee.claysoldiers.init.ModMenuTypes;
 import net.bumblebee.claysoldiers.init.ModRecipes;
 import net.bumblebee.claysoldiers.integration.ExternalMods;
 import net.bumblebee.claysoldiers.integration.accessories.ModAccessoryRenderers;
-import net.bumblebee.claysoldiers.menu.escritoire.EscritoireScreen;
-import net.bumblebee.claysoldiers.menu.horse.ClayHorseScreen;
-import net.bumblebee.claysoldiers.menu.soldier.ClaySoldierScreen;
 import net.bumblebee.claysoldiers.networking.ConfigSyncPayload;
 import net.bumblebee.claysoldiers.networking.DataMapPayloadBuilder;
 import net.bumblebee.claysoldiers.platform.services.NetworkManger;
@@ -20,10 +16,10 @@ import net.fabricmc.fabric.api.client.rendering.v1.BlockColorRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.ClientTooltipComponentCallback;
 import net.fabricmc.fabric.api.client.rendering.v1.ModelLayerRegistry;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.color.block.BlockColors;
-import net.minecraft.client.color.block.BlockTintSources;
 import net.minecraft.client.color.item.ItemTintSources;
 import net.minecraft.client.gui.screens.MenuScreens;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.inventory.MenuAccess;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
 import net.minecraft.client.particle.ParticleProvider;
 import net.minecraft.client.particle.SpriteSet;
@@ -33,6 +29,8 @@ import net.minecraft.client.renderer.item.properties.numeric.RangeSelectItemMode
 import net.minecraft.client.renderer.special.SpecialModelRenderers;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleType;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
 
 import java.util.HashMap;
@@ -46,7 +44,7 @@ public class ClaySoldierFabricClient implements ClientModInitializer {
     public void onInitializeClient() {
         ClientLifecycleEvents.CLIENT_STARTED.register(client -> ClaySoldiersCommon.clientPlayer = () -> client.player);
 
-        ClientRecipeSynchronizedEvent.EVENT.register((client, recipes) -> {
+        ClientRecipeSynchronizedEvent.EVENT.register((_, recipes) -> {
             ClaySoldiersCommon.setClientRecipes(recipes.getAllOfType(ModRecipes.CHIP_ASSEMBLY_TYPE));
         });
 
@@ -84,9 +82,11 @@ public class ClaySoldierFabricClient implements ClientModInitializer {
         DataMapPayloadBuilder.registerAllReceiver();
         ClientPlayNetworking.registerGlobalReceiver(ConfigSyncPayload.ID, ConfigSyncPayload::handleClient);
 
-        MenuScreens.register(ModMenuTypes.CLAY_SOLDIER_MENU.get(), ClaySoldierScreen::new);
-        MenuScreens.register(ModMenuTypes.CLAY_HORSE_MENU.get(), ClayHorseScreen::new);
-        MenuScreens.register(ModMenuTypes.ESCRITOIRE_MENU.get(), EscritoireScreen::new);
+        ClaySoldiersClient.registerMenuScreenEvent(new ClaySoldiersClient.RegisterMenuEvent() {
+            public <M extends AbstractContainerMenu, U extends Screen & MenuAccess<M>> void register(MenuType<? extends M> type, ClaySoldiersClient.ScreenConstructor<M, U> factory) {
+                MenuScreens.register(type, factory::create);
+            }
+        });
 
         ClientTooltipComponentCallback.EVENT.register(tooltipComponent -> {
             var factory = CLIENT_TOOLTIP_MAP.get(tooltipComponent.getClass());

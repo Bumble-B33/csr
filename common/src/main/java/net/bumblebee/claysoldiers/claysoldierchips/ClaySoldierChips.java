@@ -1,69 +1,57 @@
 package net.bumblebee.claysoldiers.claysoldierchips;
 
-import com.mojang.serialization.MapCodec;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.claysoldierchips.work.*;
-import net.bumblebee.claysoldiers.entity.goal.workgoal.SearchRange;
-import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.util.ExtraCodecs;
-import net.minecraft.util.Unit;
 
 import java.util.function.Supplier;
 
 public final class ClaySoldierChips {
-    public static final Supplier<ClaySoldierChip.Type<Unit>> EMPTY_TYPE = ClaySoldiersCommon.PLATFORM.registerClaySoldierModule("empty_module", () -> ClaySoldierChip.Type.empty(
+    public static final Supplier<ClaySoldierChip.Type> EMPTY_TYPE = ClaySoldiersCommon.PLATFORM.registerClaySoldierModule("empty_module", () -> ClaySoldierChip.Type.empty(
             () -> EmptyClaySoldierChip.EMPTY
     ));
-    public static final Supplier<ClaySoldierChip.Type<Unit>> USE_POI = ClaySoldiersCommon.PLATFORM.registerClaySoldierModule("assignable_poi", () -> ClaySoldierChip.Type.create(
-            PoiChip::new,
+    public static final Supplier<ClaySoldierChip.Type> USE_POI = ClaySoldiersCommon.PLATFORM.registerClaySoldierModule("assignable_poi", () -> new ClaySoldierChip.Type(
+            PoiChip::create,
             PoiChip.ADDON_INFO
 
     ));
-    public static final Supplier<ClaySoldierChip.Type<Unit>> COMBAT_TYPE = ClaySoldiersCommon.PLATFORM.registerClaySoldierModule("combat_module", () -> ClaySoldierChip.Type.create(
-            CombatChip::new,
+    public static final Supplier<ClaySoldierChip.Type> COMBAT_TYPE = ClaySoldiersCommon.PLATFORM.registerClaySoldierModule("combat_module", () -> new ClaySoldierChip.Type(
+            CombatChip::create,
             CombatChip.ADDON_INFO
     ));
 
-    public static final Supplier<ClaySoldierChip.Type<SearchRange>> PICK_UP_ITEMS_TYPE = ClaySoldiersCommon.PLATFORM.registerClaySoldierModule("pick_up_items_module", () -> new ClaySoldierChip.Type<>(
-            PickUpItemsChip::new,
-            PickUpItemsChip.ADDON_INFO,
-            SearchRange.CODEC.fieldOf("search_range"),
-            SearchRange.STREAM_CODEC.cast()
+    public static final Supplier<ClaySoldierChip.Type> PICK_UP_ITEMS_TYPE = ClaySoldiersCommon.PLATFORM.registerClaySoldierModule("pick_up_items_module", () -> new ClaySoldierChip.Type(
+            PickUpItemsChip::create,
+            PickUpItemsChip.ADDON_INFO
     ));
-    public static final Supplier<ClaySoldierChip.Type<SearchRange>> BREAK_CROPS_TYPE = ClaySoldiersCommon.PLATFORM.registerClaySoldierModule("break_crops_module", () -> new ClaySoldierChip.Type<SearchRange>(
-            BreakCropsChip::new,
-            BreakCropsChip.ADDON_INFO,
-            SearchRange.CODEC.fieldOf("search_range"),
-            SearchRange.STREAM_CODEC.cast()
+    public static final Supplier<ClaySoldierChip.Type> BREAK_CROPS_TYPE = ClaySoldiersCommon.PLATFORM.registerClaySoldierModule("break_crops_module", () -> new ClaySoldierChip.Type(
+            BreakCropsChip::create,
+            BreakCropsChip.ADDON_INFO
     ));
-    public static final Supplier<ClaySoldierChip.Type<SearchRange>> PLACE_SEEDS_TYPE = ClaySoldiersCommon.PLATFORM.registerClaySoldierModule("place_seed_module", () -> new ClaySoldierChip.Type<>(
-            PlaceSeedsChip::new,
-            PlaceSeedsChip.ADDON_INFO,
-            SearchRange.CODEC.fieldOf("search_range"),
-            SearchRange.STREAM_CODEC.cast()
+    public static final Supplier<ClaySoldierChip.Type> PLACE_SEEDS_TYPE = ClaySoldiersCommon.PLATFORM.registerClaySoldierModule("place_seed_module", () -> new ClaySoldierChip.Type(
+            PlaceSeedsChip::create,
+            PlaceSeedsChip.ADDON_INFO
     ));
-    public static final Supplier<ClaySoldierChip.Type<Unit>> DIG_TYPE = ClaySoldiersCommon.PLATFORM.registerClaySoldierModule("dig_module", () -> ClaySoldierChip.Type.empty(
+    public static final Supplier<ClaySoldierChip.Type> DIG_TYPE = ClaySoldiersCommon.PLATFORM.registerClaySoldierModule("dig_module", () -> ClaySoldierChip.Type.empty(
             DigChip::create
     ));
-    public static final Supplier<ClaySoldierChip.Type<SearchRange>> FISHING_TYPE = ClaySoldiersCommon.PLATFORM.registerClaySoldierModule("fishing_module", () -> new ClaySoldierChip.Type<>(
-            FishingChip::new,
-            FishingChip.ADDON_INFO,
-            SearchRange.CODEC.fieldOf("search_range"),
-            SearchRange.STREAM_CODEC.cast()
+    public static final Supplier<ClaySoldierChip.Type> FISHING_TYPE = ClaySoldiersCommon.PLATFORM.registerClaySoldierModule("fishing_module", () -> new ClaySoldierChip.Type(
+            FishingChip::create,
+            FishingChip.ADDON_INFO
     ));
 
-    public static final Supplier<ClaySoldierChip.Type<SearchRange>> BUILD_BLUEPRINT_TYPE = ClaySoldiersCommon.PLATFORM.registerClaySoldierModule("build_blueprint", () -> new ClaySoldierChip.Type<>(
-            BlueprintChip::new,
-            BlueprintChip.ADDON_INFO,
-            SearchRange.CODEC.fieldOf("search_range"),
-            SearchRange.STREAM_CODEC.cast()
+    public static final Supplier<ClaySoldierChip.Type> BUILD_BLUEPRINT_TYPE = ClaySoldiersCommon.PLATFORM.registerClaySoldierModule("build_blueprint", () -> new ClaySoldierChip.Type(
+            BlueprintChip::create,
+            BlueprintChip.ADDON_INFO
     ));
 
-    public static final Supplier<ClaySoldierChip.Type<SearchRange>> BEEKEEPING_TYPE = ClaySoldiersCommon.PLATFORM.registerClaySoldierModule("bee_keeping", () -> new ClaySoldierChip.Type<>(
-            BeeKeepingChip::new,
-            BeeKeepingChip.ADDON_INFO,
-            SearchRange.CODEC.fieldOf("search_range"),
-            SearchRange.STREAM_CODEC.cast()
+    public static final Supplier<ClaySoldierChip.Type> BEEKEEPING_TYPE = ClaySoldiersCommon.PLATFORM.registerClaySoldierModule("bee_keeping", () -> new ClaySoldierChip.Type(
+            BeeKeepingChip::create,
+            BeeKeepingChip.ADDON_INFO
+    ));
+
+    public static final Supplier<ClaySoldierChip.Type> ELECTRICIAN_TYPE = ClaySoldiersCommon.PLATFORM.registerClaySoldierModule("electrician", () -> new ClaySoldierChip.Type(
+            ElectricianChip::create,
+            ElectricianChip.ADDON_INFO
     ));
 
 

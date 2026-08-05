@@ -1,5 +1,6 @@
 package net.bumblebee.claysoldiers.integration.jade.providers;
 
+import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.block.hamsterwheel.HamsterWheelBlock;
 import net.bumblebee.claysoldiers.block.hamsterwheel.HamsterWheelBlockEntity;
 import net.bumblebee.claysoldiers.block.hamsterwheel.HamsterWheelEnergyStorage;
@@ -48,7 +49,7 @@ public enum HamsterWheelBlockProvider implements CommonBlockProvider {
                 generating = HamsterWheelEnergyStorage.energyGeneratedPerTick(soldierBlockData.getAdjustedSpeed());
             }
 
-            tooltip.add(Component.translatable(GENERATING, generating));
+            tooltip.add(Component.translatable(GENERATING, generating, ClaySoldiersCommon.ENERGY_HELPER.getEnergyUnitName()));
         }
     }
 

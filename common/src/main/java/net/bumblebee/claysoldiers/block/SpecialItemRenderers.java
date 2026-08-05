@@ -1,12 +1,21 @@
 package net.bumblebee.claysoldiers.block;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
 import com.mojang.serialization.MapCodec;
 import net.bumblebee.claysoldiers.block.blueprint.EaselBlockEntityRenderer;
 import net.bumblebee.claysoldiers.block.hamsterwheel.HamsterWheelBlockEntityRenderer;
+import net.bumblebee.claysoldiers.entity.client.programmable.BatteryContainerModel;
+import net.bumblebee.claysoldiers.entity.client.programmable.BatteryContainerRenderState;
+import net.bumblebee.claysoldiers.item.BatteryItem;
 import net.bumblebee.claysoldiers.item.claystaff.ClayStaffModel;
 import net.bumblebee.claysoldiers.item.claystaff.ClayStaffRenderState;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.special.NoDataSpecialModelRenderer;
 import net.minecraft.client.renderer.special.SpecialModelRenderer;
 import net.minecraft.world.item.ItemStack;
@@ -33,7 +42,7 @@ public class SpecialItemRenderers {
 
             @Override
             public SpecialModelRenderer<Void> bake(BakingContext bakingContext) {
-                return new EaselBlockSpecialRenderer(new EaselBlockEntityRenderer(bakingContext.entityModelSet(), bakingContext.sprites()));
+                return new EaselBlockSpecialRenderer(new EaselBlockEntityRenderer(bakingContext.entityModelSet()));
             }
 
             @Override
@@ -60,7 +69,7 @@ public class SpecialItemRenderers {
 
             @Override
             public SpecialModelRenderer<Void> bake(BakingContext bakingContext) {
-                return new HamsterWheelSpecialRenderer(new HamsterWheelBlockEntityRenderer(bakingContext.entityModelSet(), bakingContext.sprites()));
+                return new HamsterWheelSpecialRenderer(new HamsterWheelBlockEntityRenderer(bakingContext.entityModelSet()));
             }
         }
 
@@ -69,11 +78,15 @@ public class SpecialItemRenderers {
             renderer.getExtents(consumer);
         }
     }
+
     public record ClayStaffSpecialRenderer(ClayStaffModel model) implements SpecialModelRenderer<ClayStaffRenderState> {
 
         @Override
-        public void submit(@Nullable ClayStaffRenderState stack, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, int packedLight, int packedOverlay, boolean foil, int outlineColor) {
-            ClayStaffModel.submitAsItem(model, stack, poseStack, submitNodeCollector, packedLight, packedOverlay, foil, outlineColor);
+        public void submit(@Nullable ClayStaffRenderState state, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, int packedLight, int packedOverlay, boolean foil, int outlineColor) {
+            if (state == null) {
+                return;
+            }
+            model.submitAsItem(state, poseStack, submitNodeCollector, packedLight, packedOverlay, foil, outlineColor);
         }
 
         @Override
@@ -100,4 +113,46 @@ public class SpecialItemRenderers {
             }
         }
     }
+
+    public record BatteryContainerRenderer(BatteryContainerModel model) implements SpecialModelRenderer<BatteryContainerRenderState> {
+        @Override
+        public void submit(@Nullable BatteryContainerRenderState state, PoseStack poseStack, SubmitNodeCollector nodeCollector, int packedLight, int packedOverlay, boolean foil, int outlineColor) {
+            if (state == null) {
+                return;
+            }
+            model.submitAsItem(state, poseStack, nodeCollector, packedLight, packedOverlay, foil, outlineColor);
+        }
+
+        @Override
+        public void getExtents(Consumer<Vector3fc> consumer) {
+            model.getExtents(consumer);
+        }
+
+        @Override
+        public BatteryContainerRenderState extractArgument(ItemStack stack) {
+            return new BatteryContainerRenderState(BatteryItem.getFillPercent(stack));
+        }
+
+        public record Unbaked(int height) implements SpecialModelRenderer.Unbaked<BatteryContainerRenderState> {
+            public static final MapCodec<Unbaked> MAP_CODEC = Codec.INT.validate(i -> {
+                try {
+                    BatteryContainerModel.validateHeight(i, true);
+                    return DataResult.success(i);
+                } catch (Exception e) {
+                    return DataResult.error(e::getMessage);
+                }
+            }).xmap(Unbaked::new, Unbaked::height).fieldOf("size");
+
+            @Override
+            public MapCodec<Unbaked> type() {
+                return MAP_CODEC;
+            }
+
+            @Override
+            public SpecialModelRenderer<BatteryContainerRenderState> bake(BakingContext context) {
+                return new BatteryContainerRenderer(BatteryContainerModel.createItem(context.entityModelSet(), height));
+            }
+        }
+    }
+
 }

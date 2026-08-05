@@ -33,9 +33,7 @@ public class DataMapPayloadBuilder<H, T> {
     private static final List<DataMapPayloadBuilder<?, ?>> VALUES = new ArrayList<>();
 
     public static final DataMapPayloadBuilder<Item, SoldierHoldableEffect> HOLDABLE = register("fabric_holdable", Registries.ITEM, SoldierHoldableEffect.STREAM_CODEC, FabricDataMapLoader::updateSoldierHoldable);
-    public static final DataMapPayloadBuilder<Item, SoldierMultiWearable> WEARABLE = register("fabric_wearable", Registries.ITEM, SoldierMultiWearable.STREAM_CODEC, (map, level) -> {
-        FabricDataMapLoader.updateSoldierWearable(map, level.registryAccess());
-    });
+    public static final DataMapPayloadBuilder<Item, SoldierMultiWearable> WEARABLE = register("fabric_wearable", Registries.ITEM, SoldierMultiWearable.STREAM_CODEC, FabricDataMapLoader::updateSoldierWearable);
     public static final DataMapPayloadBuilder<Item, SoldierPoi> ITEM_POI = register("fabric_item_poi", Registries.ITEM, SoldierPoi.STREAM_CODEC, FabricDataMapLoader::updateSoldierItemPoi);
     public static final DataMapPayloadBuilder<Block, SoldierPoi> BLOCK_POI = register("fabric_block_poi", Registries.BLOCK, SoldierPoi.STREAM_CODEC, FabricDataMapLoader::updateSoldierBlockPoi);
     public static final DataMapPayloadBuilder<EntityType<?>, SoldierVehicleProperties> VEHICLE_PROPERTIES = register("fabric_vehicle_properties", Registries.ENTITY_TYPE, SoldierVehicleProperties.STREAM_CODEC, FabricDataMapLoader::updateVehicleProperties);
@@ -51,7 +49,7 @@ public class DataMapPayloadBuilder<H, T> {
     }
 
     private static <H, T> DataMapPayloadBuilder<H, T> register(String name, ResourceKey<Registry<H>> registry, StreamCodec<RegistryFriendlyByteBuf, T> valueCodec, Consumer<Map<Holder<H>, T>> clientEffect) {
-        return register(name, registry, valueCodec, (map, l) -> clientEffect.accept(map));
+        return register(name, registry, valueCodec, (map, _) -> clientEffect.accept(map));
     }
 
     private static <H, T> DataMapPayloadBuilder<H, T> register(String name, ResourceKey<Registry<H>> registry, StreamCodec<RegistryFriendlyByteBuf, T> valueCodec, BiConsumer<Map<Holder<H>, T>, Level> clientEffect) {
@@ -76,7 +74,7 @@ public class DataMapPayloadBuilder<H, T> {
         PayloadTypeRegistry.clientboundPlay().register(id, streamCodec);
     }
 
-    public void registerReceiver() {
+    private void registerReceiver() {
         ClientPlayNetworking.registerGlobalReceiver(id, Payload::handleClient);
     }
 

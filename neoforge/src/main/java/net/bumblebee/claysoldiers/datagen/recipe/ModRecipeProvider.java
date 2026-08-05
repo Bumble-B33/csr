@@ -5,10 +5,7 @@ import net.bumblebee.claysoldiers.entity.common.variant.ClayHorseVariants;
 import net.bumblebee.claysoldiers.init.ModBlocks;
 import net.bumblebee.claysoldiers.init.ModItems;
 import net.bumblebee.claysoldiers.init.ModTags;
-import net.bumblebee.claysoldiers.recipe.BrickedItemReviveRecipe;
-import net.bumblebee.claysoldiers.recipe.ClaySoldierCookingRecipe;
-import net.bumblebee.claysoldiers.recipe.ClaySoldierCraftingRecipe;
-import net.bumblebee.claysoldiers.recipe.ShearBladeRecipe;
+import net.bumblebee.claysoldiers.recipe.*;
 import net.bumblebee.claysoldiers.recipe.chip.AddonChipRecipe;
 import net.bumblebee.claysoldiers.recipe.chip.ChipAssemblyCategory;
 import net.minecraft.core.HolderLookup;
@@ -51,7 +48,7 @@ public class ModRecipeProvider extends RecipeProvider {
     }
 
     public static Runner create(PackOutput packOutput, CompletableFuture<HolderLookup.Provider> registries) {
-         return new Runner(packOutput, registries);
+        return new Runner(packOutput, registries);
     }
 
     @Override
@@ -63,6 +60,8 @@ public class ModRecipeProvider extends RecipeProvider {
         SpecialRecipeBuilder.special(ClaySoldierCookingRecipe::blasting).save(recipeOutput, createResourceKey("clay_soldier_blasting"));
         SpecialRecipeBuilder.special(ClaySoldierCookingRecipe::campfire).save(recipeOutput, createResourceKey("clay_soldier_campfire"));
         SpecialRecipeBuilder.special(ClaySoldierCookingRecipe::smoking).save(recipeOutput, createResourceKey("clay_soldier_smoking"));
+        SpecialRecipeBuilder.special(() -> BatteryCombiningRecipe.INSTANCE).save(recipeOutput, createResourceKey("battery_combining"));
+
 
         shaped(RecipeCategory.MISC, ModItems.CLAY_SOLDIER.get(), 4)
                 .define('E', Items.CLAY_BALL)
@@ -183,6 +182,19 @@ public class ModRecipeProvider extends RecipeProvider {
                 .unlockedBy("has_clay_ball", has(Items.CLAY_BALL))
                 .save(recipeOutput);
 
+        shaped(RecipeCategory.TOOLS, ModItems.SMALL_BATTERY)
+                .define('#', Items.IRON_INGOT)
+                .define('R', Items.REDSTONE)
+                .pattern(" # ")
+                .pattern("#R#")
+                .pattern("###")
+                .unlockedBy("has_hamaster_wheel", has(ModBlocks.HAMSTER_WHEEL_BLOCK.get()))
+                .unlockedBy("has_iron_ingot", has(Items.IRON_INGOT))
+                .unlockedBy("has_redstone", has(Items.REDSTONE))
+                .save(recipeOutput);
+
+
+
         clayHorseRecipe(ClayHorseVariants.CAKE, Items.CAKE);
         clayHorseRecipe(ClayHorseVariants.GRASS, Items.GRASS_BLOCK);
         clayHorseRecipe(ClayHorseVariants.SNOW, Items.SNOW_BLOCK);
@@ -190,15 +202,29 @@ public class ModRecipeProvider extends RecipeProvider {
 
         stonecutterResultFromBase(RecipeCategory.COMBAT, ModItems.SHARPENED_STICK.get(), Items.STICK);
 
+        shaped(RecipeCategory.DECORATIONS, ModBlocks.SOLDIER_CHARGING_PAD.get())
+                .define('C', Items.REDSTONE)
+                .define('S', Items.STONE)
+                .define('B', ModItems.LARGE_BATTERY)
+                .pattern(" CB")
+                .pattern("SSS")
+                .unlockedBy("has_hamaster_wheel", has(ModBlocks.HAMSTER_WHEEL_BLOCK.get()))
+                .unlockedBy("has_battery", has(ModTags.Items.BATTERY))
+                .unlockedBy("has_clay_ball", has(Items.CLAY_BALL))
+                .save(recipeOutput);
+
         shaped(RecipeCategory.DECORATIONS, ModBlocks.CHIP_ASSEMBLER.get())
                 .define('#', Items.IRON_INGOT)
                 .define('C', Items.REDSTONE)
                 .define('S', Items.STONE)
+                .define('B', ModItems.LARGE_BATTERY)
                 .pattern(" # ")
                 .pattern("#C#")
-                .pattern("S#S")
-                .unlockedBy("has_copper_ingot", has(Items.IRON_INGOT))
+                .pattern("S#B")
+                .unlockedBy("has_hamaster_wheel", has(ModBlocks.HAMSTER_WHEEL_BLOCK.get()))
+                .unlockedBy("has_iron_ingot", has(Items.IRON_INGOT))
                 .unlockedBy("has_clay_ball", has(Items.CLAY_BALL))
+                .unlockedBy("has_battery", has(ModTags.Items.BATTERY))
                 .save(recipeOutput);
 
         ChipAssemblyRecipeBuilder.of(ChipAssemblyCategory.CHIP, ModItems.BLANK_CHIP, 8)
@@ -288,6 +314,17 @@ public class ModRecipeProvider extends RecipeProvider {
                 .unlockedBy("has_chip", has(ModTags.Items.CHIP))
                 .save(recipeOutput);
 
+        ChipAssemblyRecipeBuilder.of(ChipAssemblyCategory.CHIP, ModItems.ELECTRICIAN_CHIP)
+                .addInput(Items.REDSTONE)
+                .addInput(Items.IRON_INGOT)
+                .addInput(Items.REDSTONE)
+                .addInput(Items.IRON_INGOT)
+                .chip(ModItems.BLANK_CHIP)
+                .setEnergyCost(8)
+                .setBuildTime(10)
+                .unlockedBy("has_chip", has(ModTags.Items.CHIP))
+                .save(recipeOutput);
+
         ChipAssemblyRecipeBuilder.of(ChipAssemblyCategory.ADDON, ModItems.BLANK_ADDON, 4)
                 .addInput(Items.IRON_INGOT)
                 .addInput(Items.RED_DYE)
@@ -361,6 +398,16 @@ public class ModRecipeProvider extends RecipeProvider {
                 .unlockedBy("has_chip", has(ModTags.Items.CHIP))
                 .save(recipeOutput);
 
+        ChipAssemblyRecipeBuilder.of(ChipAssemblyCategory.ADDON, ModItems.UPGRADED_ACCELERATION_ADDON)
+                .addInput(Items.SUGAR)
+                .addInput(Items.SUGAR)
+                .addInput(Items.GOLD_INGOT)
+                .chip(ModItems.ACCELERATION_ADDON)
+                .setEnergyCost(8)
+                .setBuildTime(10)
+                .unlockedBy("has_acceleration_addon", has(ModItems.ACCELERATION_ADDON))
+                .save(recipeOutput);
+
         SpecialRecipeBuilder.special(() -> AddonChipRecipe.INSTANCE).save(recipeOutput, CLAY_SOLDIER_CHIP_ADD_ADDON);
     }
 
@@ -397,6 +444,7 @@ public class ModRecipeProvider extends RecipeProvider {
     public static ResourceKey<Recipe<?>> getClayHorseKey(ClayHorseVariants variant) {
         return createResourceKey(variant.getVariantName() + "_horse");
     }
+
     public static ResourceKey<Recipe<?>> getClayPegasusKey(ClayHorseVariants variant, boolean fromHorse) {
         return createResourceKey(variant.getVariantName() + "_pegasus" + (fromHorse ? "_feather" : ""));
     }

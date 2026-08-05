@@ -53,9 +53,9 @@ public final class ModRegistries {
     public static final ResourceKey<Registry<ClayMobTeam>> CLAY_MOB_TEAMS =
             ResourceKey.createRegistryKey(Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_teams"));
 
-    public static final ResourceKey<Registry<ClaySoldierChip.Type<?>>> CLAY_SOLDIER_MODULES =
+    public static final ResourceKey<Registry<ClaySoldierChip.Type>> CLAY_SOLDIER_MODULES =
             ResourceKey.createRegistryKey(Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_soldier_modules"));
-    public static final Registry<ClaySoldierChip.Type<?>> CLAY_SOLDIER_MODULES_REGISTRY = ClaySoldiersCommon.PLATFORM.createRegistry(CLAY_SOLDIER_MODULES, true);
+    public static final Registry<ClaySoldierChip.Type> CLAY_SOLDIER_MODULES_REGISTRY = ClaySoldiersCommon.PLATFORM.createRegistry(CLAY_SOLDIER_MODULES, true);
 
     public static final ResourceKey<Registry<ClaySoldierChipAddon>> CLAY_SOLDIER_CHIP_ADDONS =
             ResourceKey.createRegistryKey(Identifier.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_soldier_chip_addons"));

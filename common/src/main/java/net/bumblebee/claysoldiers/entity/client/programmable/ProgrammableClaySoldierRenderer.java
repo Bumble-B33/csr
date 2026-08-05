@@ -4,7 +4,6 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import net.bumblebee.claysoldiers.ClaySoldiersCommon;
 import net.bumblebee.claysoldiers.entity.client.ClaySoldierRenderer;
 import net.bumblebee.claysoldiers.entity.client.renderstates.AbstractClaySoldierRenderState;
-import net.bumblebee.claysoldiers.entity.common.programmable.ProgrammableClayMobAccess;
 import net.bumblebee.claysoldiers.entity.common.programmable.ProgrammableClaySoldierEntity;
 import net.bumblebee.claysoldiers.entity.common.soldier.AbstractClaySoldierEntity;
 import net.minecraft.client.renderer.SubmitNodeCollector;
@@ -33,17 +32,13 @@ public class ProgrammableClaySoldierRenderer extends ClaySoldierRenderer {
         this.fishingRodItemCast = new ItemStackRenderState();
         this.fishingRodItemCastWithClint = new ItemStackRenderState();
         this.addLayer(new ClaySoldierFishingRenderLayer(this, this::getFishingRodModel));
+        this.addLayer(new BatteryRenderLayer(this));
     }
 
     @Override
     public void extractRenderState(AbstractClaySoldierEntity claySoldierEntity, AbstractClaySoldierRenderState claySoldierRenderState, float partialTick) {
         super.extractRenderState(claySoldierEntity, claySoldierRenderState, partialTick);
-        if (claySoldierEntity instanceof ProgrammableClayMobAccess programmable) {
-            var chip = programmable.getInstalledChip();
-            if (chip != null) {
-                claySoldierRenderState.moduleTexture = chip.assetId();
-            }
-        }
+
         if (claySoldierEntity instanceof ProgrammableClaySoldierEntity soldier) {
             if (soldier.isFishingAnker()) {
                 claySoldierRenderState.renderCarried = false;
@@ -55,6 +50,13 @@ public class ProgrammableClaySoldierRenderer extends ClaySoldierRenderer {
                 claySoldierRenderState.isFishing = true;
                 claySoldierRenderState.fishingHookDis = soldier.getRelativeClientBobberPos();
                 claySoldierRenderState.fishingHookRenderState.lineOriginOffset = claySoldierRenderState.fishingHookDis.multiply(-1, -1, -1).add(0, 0.3, 0);
+            }
+
+            if (soldier.holdsBattery()) {
+                claySoldierRenderState.renderCarried = false;
+                claySoldierRenderState.holdsBattery = true;
+            } else {
+                claySoldierRenderState.holdsBattery = false;
             }
         }
 

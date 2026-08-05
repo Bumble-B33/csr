@@ -56,7 +56,7 @@ public class SoldierHoldablePropertiesCombiner implements SoldierPropertyMapRead
     }
 
     public void addVehicle(@NotNull SoldierVehicleProperties soldierProperties) {
-        addSpecialProperty(VEHICLES_SLOT_NAME, soldierProperties.properties(), soldierProperties.predicate());
+        addSpecialProperty(VEHICLES_SLOT_NAME, soldierProperties.getProperties(), soldierProperties.predicate());
     }
 
     public void addBaseProperties(@NotNull SoldierPropertyMapReader properties) {
@@ -173,5 +173,10 @@ public class SoldierHoldablePropertiesCombiner implements SoldierPropertyMapRead
     @Override
     public boolean isEmpty() {
         return combinedPropertiesMap.isEmpty();
+    }
+
+    @Override
+    public int size() {
+        return combinedPropertiesMap.size();
     }
 }
