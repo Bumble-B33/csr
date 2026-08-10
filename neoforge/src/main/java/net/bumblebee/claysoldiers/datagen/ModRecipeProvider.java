@@ -14,7 +14,9 @@ import net.minecraft.data.recipes.*;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.ItemLike;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -24,13 +26,12 @@ public class ModRecipeProvider extends RecipeProvider {
     private static final String CLAY_DISRUPTOR_GROUP_NAME = ClaySoldiersCommon.MOD_ID + ":clay_pegasus";
 
 
-
     public ModRecipeProvider(PackOutput pOutput, CompletableFuture<HolderLookup.Provider> pRegistries) {
         super(pOutput, pRegistries);
     }
 
     @Override
-    protected void buildRecipes(RecipeOutput recipeOutput) {
+    protected void buildRecipes(@NotNull RecipeOutput recipeOutput) {
         SpecialRecipeBuilder.special(ClaySoldierCraftingRecipe::new).save(recipeOutput, ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_soldier_crafting"));
         SpecialRecipeBuilder.special(BrickedItemReviveRecipe::new).save(recipeOutput, ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "clay_soldier_reviving"));
         SpecialRecipeBuilder.special(ShearBladeRecipe::new).save(recipeOutput, ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "shear_blade"));
@@ -46,12 +47,6 @@ public class ModRecipeProvider extends RecipeProvider {
                 .pattern("S")
                 .unlockedBy("has_clay", has(Items.CLAY))
                 .unlockedBy("has_clay_ball", has(Items.CLAY_BALL))
-                .save(recipeOutput);
-        ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, Items.SHEARS)
-                .define('E', ModItems.SHEAR_BLADE.get())
-                .pattern("E ")
-                .pattern(" E")
-                .unlockedBy("has_shear_blade", has(ModItems.SHEAR_BLADE.get()))
                 .save(recipeOutput);
 
         ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, ModItems.CLAY_DISRUPTOR.get())
@@ -145,7 +140,10 @@ public class ModRecipeProvider extends RecipeProvider {
         clayHorseRecipe(recipeOutput, ClayHorseVariants.SNOW, Items.SNOW_BLOCK);
         clayHorseRecipe(recipeOutput, ClayHorseVariants.MYCELIUM, Items.MYCELIUM);
 
-        stonecutterResultFromBase(recipeOutput, RecipeCategory.COMBAT, ModItems.SHARPENED_STICK.get(), Items.STICK);
+        SingleItemRecipeBuilder.stonecutting(Ingredient.of(Items.STICK), RecipeCategory.COMBAT,  ModItems.SHARPENED_STICK, 1)
+                .unlockedBy("has_stick", has(Items.STICK))
+                .save(recipeOutput, ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "sharpened_stick_from_stick_stonecutting"));
+
     }
 
     private static void clayHorseRecipe(RecipeOutput recipeOutput, ClayHorseVariants variant, ItemLike material) {
