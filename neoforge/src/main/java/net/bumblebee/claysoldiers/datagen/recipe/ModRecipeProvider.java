@@ -11,10 +11,7 @@ import net.bumblebee.claysoldiers.recipe.chip.ChipAssemblyCategory;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.PackOutput;
-import net.minecraft.data.recipes.RecipeCategory;
-import net.minecraft.data.recipes.RecipeOutput;
-import net.minecraft.data.recipes.RecipeProvider;
-import net.minecraft.data.recipes.SpecialRecipeBuilder;
+import net.minecraft.data.recipes.*;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.ItemTags;
@@ -38,6 +35,8 @@ public class ModRecipeProvider extends RecipeProvider {
 
     public static final ResourceKey<Recipe<?>> CLAY_SOLDIER_CHIP_ADD_ADDON = createResourceKey("clay_soldier_chip_add_addon");
     public static final ResourceKey<Recipe<?>> CLAY_SOLDIER_BLUEPRINT_CHIP = createResourceKey("blueprint_clay_soldier_chip");
+    public static final ResourceKey<Recipe<?>> SHARPED_STICK_STONE_CUTTING = createResourceKey("sharpened_stick_from_stick_stonecutting");
+
 
     private final RecipeOutput recipeOutput;
 
@@ -71,11 +70,6 @@ public class ModRecipeProvider extends RecipeProvider {
                 .unlockedBy("has_clay", has(Items.CLAY))
                 .unlockedBy("has_clay_ball", has(Items.CLAY_BALL))
                 .save(recipeOutput, CLAY_SOLDIER_CRAFTING);
-        shapeless(RecipeCategory.TOOLS, Items.SHEARS)
-                .requires(ModItems.SHEAR_BLADE.get())
-                .requires(ModItems.SHEAR_BLADE.get())
-                .unlockedBy("has_shear_blade", has(ModItems.SHEAR_BLADE.get()))
-                .save(recipeOutput);
 
         shaped(RecipeCategory.TOOLS, ModItems.CLAY_DISRUPTOR.get())
                 .define('C', Items.CLAY)
@@ -200,7 +194,10 @@ public class ModRecipeProvider extends RecipeProvider {
         clayHorseRecipe(ClayHorseVariants.SNOW, Items.SNOW_BLOCK);
         clayHorseRecipe(ClayHorseVariants.MYCELIUM, Items.MYCELIUM);
 
-        stonecutterResultFromBase(RecipeCategory.COMBAT, ModItems.SHARPENED_STICK.get(), Items.STICK);
+        SingleItemRecipeBuilder.stonecutting(Ingredient.of(Items.STICK), RecipeCategory.COMBAT, ModItems.SHARPENED_STICK, 1)
+                .unlockedBy("has_stick", this.has(Items.STICK))
+                .save(this.output, SHARPED_STICK_STONE_CUTTING);
+
 
         shaped(RecipeCategory.DECORATIONS, ModBlocks.SOLDIER_CHARGING_PAD.get())
                 .define('C', Items.REDSTONE)

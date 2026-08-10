@@ -91,7 +91,7 @@ public class BatteryContainerModel extends Model.Simple {
 
         poseStack.scale(1f, -1f, -1f);
 
-        batteryContentRenderer.submitBatteryContent(fillPercent.fillPercent, nodeCollector, poseStack, packedLight);
+        batteryContentRenderer.submitBatteryContent(fillPercent.fillPercent(), nodeCollector, poseStack, packedLight);
         poseStack.popPose();
 
         poseStack.popPose();

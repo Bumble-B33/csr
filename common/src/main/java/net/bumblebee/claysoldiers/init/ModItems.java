@@ -43,7 +43,7 @@ import java.util.function.Supplier;
 public class ModItems {
     public static final Supplier<Item> SHEAR_BLADE = ClaySoldiersCommon.PLATFORM.registerItem("shear_blade",
             p -> new Item(p.sword(ToolMaterial.STONE, 3f, -2.4f)));
-    public static final Supplier<Item> SHARPENED_STICK = ClaySoldiersCommon.PLATFORM.registerItem("sharpened_stick",
+    public static final ItemLikeSupplier<Item> SHARPENED_STICK = ClaySoldiersCommon.PLATFORM.registerItem("sharpened_stick",
             p -> new Item(p.sword(ToolMaterial.WOOD, 3f, -2.4f)));
 
     public static final ItemLikeSupplier<BrickedClaySoldierItem> BRICKED_CLAY_SOLDIER = ClaySoldiersCommon.PLATFORM.registerItem("bricked_clay_soldier",

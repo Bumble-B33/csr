@@ -28,12 +28,6 @@ public interface TeamHolder extends OwnableEntity {
         return getClayTeamHolder().value();
     }
 
-    default void setClayTeamType(ResourceKey<ClayMobTeam> type) {
-    }
-
-    default void setClayTeamType(Holder.Reference<ClayMobTeam> type) {
-    }
-
     /**
      * @return whether this {@code TeamHolder} belongs to any team that cooperates.
      */
@@ -128,7 +122,7 @@ public interface TeamHolder extends OwnableEntity {
     /**
      * Sets this {@code TeamHolder} in sitting pose.
      */
-    void setInSittingPose(boolean pSitting);
+    void setInSittingPose(boolean sitting);
 
     @Override
     default @Nullable EntityReference<LivingEntity> getOwnerReference() {
@@ -140,8 +134,7 @@ public interface TeamHolder extends OwnableEntity {
     Level level();
 
     @Override
-    @Nullable
-    default LivingEntity getOwner() {
+    default @Nullable LivingEntity getOwner() {
         return getClayTeamOwner();
     }
 }

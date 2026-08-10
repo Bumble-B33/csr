@@ -9,6 +9,8 @@ import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.util.RandomSource;
+import net.minecraft.util.Util;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
@@ -56,6 +58,15 @@ public class ClayMobTeamManger {
             return getDefault(registryAccess);
         }
         return registryAccess.lookupOrThrow(ModRegistries.CLAY_MOB_TEAMS).get(key).orElse(getDefault(registryAccess));
+    }
+
+
+    public static Holder.Reference<ClayMobTeam> getRandomTeam(RegistryAccess registryAccess, RandomSource random) {
+        ResourceKey<ClayMobTeam> team = Util.getRandomSafe(
+                registryAccess.lookupOrThrow(ModRegistries.CLAY_MOB_TEAMS).entrySet().stream().map(Map.Entry::getKey).filter(t -> !t.equals(ClayMobTeamManger.NO_TEAM_KEY)).toList(), random
+        ).orElse(null);
+
+        return getOrDefault(team, registryAccess);
     }
 
     /**

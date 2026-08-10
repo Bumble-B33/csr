@@ -58,12 +58,7 @@ public abstract class ClayMobTeamOwnerEntity extends ClayMobEntity {
         return this.entityData.get(CLAY_MOB_TEAM);
     }
 
-    @Override
-    public void setClayTeamType(ResourceKey<ClayMobTeam> type) {
-        level().registryAccess().get(type).ifPresent(this::setClayTeamType);
-    }
-
-    @Override
+    //@Override
     public void setClayTeamType(Holder.Reference<ClayMobTeam> team) {
         if (team.is(getClayTeamHolder())) {
             return;
@@ -71,7 +66,6 @@ public abstract class ClayMobTeamOwnerEntity extends ClayMobEntity {
         this.entityData.set(CLAY_MOB_TEAM, team);
         level().broadcastEntityEvent(this, TEAM_CHANGE_EVENT);
         handleTeamChange(team);
-
     }
 
     @Override

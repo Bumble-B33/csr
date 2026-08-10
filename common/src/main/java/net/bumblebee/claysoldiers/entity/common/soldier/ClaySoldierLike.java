@@ -2,6 +2,8 @@ package net.bumblebee.claysoldiers.entity.common.soldier;
 
 import net.bumblebee.claysoldiers.entity.common.ClayMobEntity;
 import net.bumblebee.claysoldiers.entity.common.inventory.ClaySoldierInventoryHandler;
+import net.bumblebee.claysoldiers.team.ClayMobTeam;
+import net.minecraft.core.Holder;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
@@ -101,4 +103,6 @@ public interface ClaySoldierLike {
      */
     default void onConversion(ClayMobEntity oldSoldier, ValueInput tag, @Nullable Player cause) {
     }
+
+    void setClayTeamType(Holder.Reference<ClayMobTeam> type);
 }

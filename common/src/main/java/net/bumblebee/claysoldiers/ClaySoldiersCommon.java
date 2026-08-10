@@ -221,7 +221,6 @@ public class ClaySoldiersCommon {
 
     }
 
-
     public static void onTagLoad(HolderLookup.Provider registryAccess, boolean client) {
         if (!client) {
             SoldierItemType.onTagLoad(registryAccess);
@@ -274,7 +273,6 @@ public class ClaySoldiersCommon {
             resourceManager = null;
         }
     }
-
 
     public static Optional<InteractionResult> useItemOnBlockEvent(Player player, Level level, InteractionHand hand, BlockPos pos) {
         return SugarCaneHammockBlock.onSugarCaneUse(player, level, hand, pos);

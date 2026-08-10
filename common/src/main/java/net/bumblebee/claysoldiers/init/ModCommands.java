@@ -285,8 +285,7 @@ public final class ModCommands {
             return -1;
         }
         boss.snapTo(command.getSource().getPosition());
-        var teamId = team == null ? null : team.key();
-        equipment.setUp(boss, weight, teamId, waxed);
+        equipment.setUp(boss, weight, team, waxed);
         command.getSource().getLevel().addFreshEntity(boss);
         return 1;
     }

@@ -92,9 +92,11 @@ public class ClaySoldierSpawnItem extends MultiSpawnItem<ClaySoldierEntity> impl
     }
 
     @Override
-    public Consumer<ClaySoldierEntity> modifyBeforeSpawn(ItemStack stack, @Nullable Player player) {
+    public Consumer<ClaySoldierEntity> modifyBeforeSpawn(ItemStack stack, ServerLevel level, @Nullable Player player) {
         return claySoldier -> {
-            claySoldier.setClayTeamType(stack.get(ModDataComponents.CLAY_MOB_TEAM_COMPONENT.get()));
+            Holder.Reference<ClayMobTeam> team = ClayMobTeamManger.getOrDefault(stack.get(ModDataComponents.CLAY_MOB_TEAM_COMPONENT.get()), level.registryAccess());
+
+            claySoldier.setClayTeamType(team);
             claySoldier.setSpawnedFrom(stack, true);
             var additionalSoldierData = stack.get(ModDataComponents.CLAY_SOLDIER_ADDITIONAL_DATA.get());
             if (additionalSoldierData != null) {

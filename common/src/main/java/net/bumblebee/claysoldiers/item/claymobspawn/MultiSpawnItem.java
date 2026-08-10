@@ -64,7 +64,7 @@ public abstract class MultiSpawnItem<T extends Entity> extends Item {
             }
 
             @Override
-            public Consumer<T> modifyBeforeSpawn(ItemStack stack, @Nullable Player player) {
+            public Consumer<T> modifyBeforeSpawn(ItemStack stack, ServerLevel level, @Nullable Player player) {
                 return clayMob -> {
                     clayMob.setSpawnedFrom(stack, true);
                     clayMob.setVariant(variant);
@@ -135,7 +135,7 @@ public abstract class MultiSpawnItem<T extends Entity> extends Item {
                 for (int i = 0; i < count;i++) {
                     if (entitytype.spawn(
                             serverLevel,
-                            modifyBeforeSpawn(doll.copyWithCount(1), player),
+                            modifyBeforeSpawn(doll.copyWithCount(1), serverLevel, player),
                             updatedBlockPos,
                             EntitySpawnReason.SPAWN_ITEM_USE,
                             true,
@@ -171,7 +171,7 @@ public abstract class MultiSpawnItem<T extends Entity> extends Item {
      * @param stack the stack that is spawning the entity
      * @return the consumer to modify the entity with
      */
-    public abstract Consumer<T> modifyBeforeSpawn(ItemStack stack, Player player);
+    public abstract Consumer<T> modifyBeforeSpawn(ItemStack stack, ServerLevel level, Player player);
 
     /**
      * Retrieves the DataComponents needed for spawning this {@link T Entity}
