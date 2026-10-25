@@ -56,6 +56,16 @@ public class ClayBrushItem extends Item {
         return false;
     }
 
+    @Override
+    public boolean mineBlock(ItemStack itemStack, Level level, BlockState state, BlockPos pos, LivingEntity owner) {
+        return false;
+    }
+
+    @Override
+    public float getDestroySpeed(ItemStack itemStack, BlockState state) {
+        return Float.POSITIVE_INFINITY;
+    }
+
     public static void setPoiPosAfterClick(ServerPlayer serverPlayer, ItemStack stack, @Nullable BlockPos pos) {
         if (serverPlayer.isCrouching()) {
             message(serverPlayer, Component.translatable(ClayBrushItem.POI_CLEAR_LANG).withColor(ClayBrushItem.Mode.POI.color));

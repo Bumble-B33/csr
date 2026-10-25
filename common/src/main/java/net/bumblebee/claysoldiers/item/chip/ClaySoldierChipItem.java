@@ -87,6 +87,25 @@ public class ClaySoldierChipItem extends Item {
     }
 
     @Override
+    public boolean mineBlock(ItemStack stack, Level level, BlockState state, BlockPos pos, LivingEntity owner) {
+        var chip = getChipFromItem(stack);
+        if (chip == null || !chip.is(ModTags.ClaySoldierChips.REQUIRES_POI_POS)) {
+            return super.mineBlock(stack, level, state, pos, owner);
+        }
+        return false;
+    }
+
+    @Override
+    public float getDestroySpeed(ItemStack stack, BlockState state) {
+        var chip = getChipFromItem(stack);
+        if (chip == null || !chip.is(ModTags.ClaySoldierChips.REQUIRES_POI_POS)) {
+            return super.getDestroySpeed(stack, state);
+        }
+        return Float.POSITIVE_INFINITY;
+    }
+
+
+    @Override
     public InteractionResult useOn(UseOnContext context) {
         ItemStack itemInHand = context.getItemInHand();
         Player player = context.getPlayer();
