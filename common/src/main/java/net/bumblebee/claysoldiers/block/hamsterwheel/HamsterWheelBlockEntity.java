@@ -52,7 +52,7 @@ public class HamsterWheelBlockEntity extends BlockEntity implements ClayMobConta
     @Nullable
     private HamsterWheelSoldierData soldierData = null;
     private long lastEnergySend = 0;
-    private int rotationTick = 0;
+    private float rotationTick = 0;
 
     public HamsterWheelBlockEntity(BlockPos pPos, BlockState pBlockState) {
         super(ModBlockEntities.HAMSTER_WHEEL_BLOCK_ENTITY.get(), pPos, pBlockState);
@@ -62,7 +62,7 @@ public class HamsterWheelBlockEntity extends BlockEntity implements ClayMobConta
 
     public void clientTick(float partialTick) {
         if (hasSoldier()) {
-            rotationTick += (int) Math.clamp(soldierData.getSpeed(), 1, 3);
+            rotationTick += (Math.clamp(soldierData.getSpeed(), 1, 3) * 0.35f);
 
             soldierData.getClientSoldier().tickCount++;
 

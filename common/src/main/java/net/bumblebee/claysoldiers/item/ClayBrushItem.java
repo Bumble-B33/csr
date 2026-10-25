@@ -22,6 +22,7 @@ import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -61,6 +62,16 @@ public class ClayBrushItem extends Item {
         }
 
         return false;
+    }
+
+    @Override
+    public boolean mineBlock(ItemStack stack, Level level, BlockState state, BlockPos pos, LivingEntity miningEntity) {
+        return false;
+    }
+
+    @Override
+    public float getDestroySpeed(ItemStack stack, BlockState state) {
+        return Float.POSITIVE_INFINITY;
     }
 
     private static void setPoiPos(ItemStack stack, @Nullable BlockPos pos) {
