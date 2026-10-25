@@ -368,7 +368,11 @@ public abstract class ClayMobEntity extends PathfinderMob implements TeamHolder,
      * @return whether this ClayMob can be killed by a Clay Mob Kill Item
      */
     public final boolean canBeKilledByDisruptor(ServerPlayer player) {
-        return player.getUUID().equals(getClayTeamOwnerUUID());
+        var owner = getClayTeamOwnerUUID();
+        if (owner == null) {
+            return true;
+        }
+        return player.getUUID().equals(owner);
     }
 
     public OwnerQuery createOwnerQuery() {
