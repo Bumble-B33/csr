@@ -33,6 +33,8 @@ import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 import org.jspecify.annotations.NonNull;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -40,6 +42,7 @@ public class ClaySoldierSpawnItem extends MultiSpawnItem<ClaySoldierEntity> impl
     public static String DESCRIPTION_LANG = "item.csr.tooltip.curios.clay_soldier";
     public static final String DESCRIPTION_ID_PREFIX = ".with_prefix";
     public static final String PLAYER_LANG = "item." + ClaySoldiersCommon.MOD_ID + ".clay_soldier.player";
+    private static final Map<ResourceKey<ClayMobTeam>, DataComponentMap> REQUIRED_COMPONENTS_FOR_POUCH = new HashMap<>();
 
     public ClaySoldierSpawnItem(Properties props) {
         super(props);
@@ -171,9 +174,9 @@ public class ClaySoldierSpawnItem extends MultiSpawnItem<ClaySoldierEntity> impl
     @Override
     public DataComponentMap requiredForPouch(ItemStack stack) {
         var team = stack.get(ModDataComponents.CLAY_MOB_TEAM_COMPONENT.get());
-        var builder = DataComponentMap.builder()
-                .set(ModDataComponents.CLAY_MOB_TEAM_COMPONENT.get(), team);
-        return builder.build();
+
+        return REQUIRED_COMPONENTS_FOR_POUCH.computeIfAbsent(team, _ -> DataComponentMap.builder()
+                .set(ModDataComponents.CLAY_MOB_TEAM_COMPONENT.get(), team).build());
     }
 
     @Override
