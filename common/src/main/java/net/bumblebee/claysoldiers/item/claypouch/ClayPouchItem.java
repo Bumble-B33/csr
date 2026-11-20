@@ -172,8 +172,9 @@ public class ClayPouchItem extends Item {
             return InteractionResult.FAIL;
         }
 
-        itemInHand.set(ModDataComponents.CLAY_POUCH_CONTENT.get(), content.shrink(res));
-
+        if (context.getPlayer() != null && !context.getPlayer().hasInfiniteMaterials()) {
+            itemInHand.set(ModDataComponents.CLAY_POUCH_CONTENT.get(), content.shrink(res));
+        }
 
         return InteractionResult.sidedSuccess(context.getLevel().isClientSide());
     }

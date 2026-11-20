@@ -15,6 +15,7 @@ import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FastColor;
 import net.minecraft.world.entity.EntityType;
@@ -24,13 +25,16 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 
 public class ClaySoldierSpawnItem extends MultiSpawnItem<ClaySoldierEntity> implements BrickedItemHolder {
     public static final ResourceLocation TEXTURE_LOCATION = ResourceLocation.fromNamespaceAndPath(ClaySoldiersCommon.MOD_ID, "item/clay_soldier");
     public static final String DESCRIPTION_ID_PREFIX = ".with_prefix";
     public static final String PLAYER_LANG = "item." + ClaySoldiersCommon.MOD_ID + ".clay_soldier.player";
+    private static final Map<ResourceLocation, DataComponentMap> REQUIRED_COMPONENTS_FOR_POUCH = new HashMap<>();
 
     public ClaySoldierSpawnItem(Properties props) {
         super(props.component(ModDataComponents.CLAY_MOB_TEAM_COMPONENT.get(), ClayMobTeamManger.DEFAULT_TYPE));
@@ -120,9 +124,9 @@ public class ClaySoldierSpawnItem extends MultiSpawnItem<ClaySoldierEntity> impl
     @Override
     public DataComponentMap requiredForPouch(ItemStack stack) {
         var team = stack.get(ModDataComponents.CLAY_MOB_TEAM_COMPONENT.get());
-        var builder = DataComponentMap.builder()
-                .set(ModDataComponents.CLAY_MOB_TEAM_COMPONENT.get(), team);
-        return builder.build();
+
+        return REQUIRED_COMPONENTS_FOR_POUCH.computeIfAbsent(team, key -> DataComponentMap.builder()
+                .set(ModDataComponents.CLAY_MOB_TEAM_COMPONENT.get(), team).build());
     }
 
     @Override
