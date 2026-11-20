@@ -218,7 +218,7 @@ public class AbstractClaySoldierEntity extends ClayMobTeamOwnerEntity implements
         this.goalSelector.addGoal(9, new RandomStrollGoal(this, 1f));
         this.goalSelector.addGoal(10, new RandomLookAroundGoal(this));
 
-        this.targetSelector.addGoal(0, new ClaySoldierHurtByTargetGoal(this));
+        this.targetSelector.addGoal(0, new ClaySoldierHurtByTargetGoal(this, this::targetPredicate));
         this.targetSelector.addGoal(1, new NearestRideableTargetGoal(this));
         this.targetSelector.addGoal(2, new ClayMobOwnerHurtByTarget(this));
         this.targetSelector.addGoal(3, new ClayMobOwnerTarget(this));
@@ -824,6 +824,11 @@ public class AbstractClaySoldierEntity extends ClayMobTeamOwnerEntity implements
 
     public boolean canSeeInvis() {
         return allProperties().canSeeInvis();
+    }
+
+    @Override
+    public boolean isInvisible() {
+        return super.isInvisible() || allProperties().isInvisible();
     }
 
     @Override
