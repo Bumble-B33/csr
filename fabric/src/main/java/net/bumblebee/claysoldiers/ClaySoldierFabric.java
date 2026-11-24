@@ -188,6 +188,8 @@ public class ClaySoldierFabric implements ModInitializer {
                         %s=true
                         # Chance for Clay Soldiers to drop them self
                         %s=0.5f
+                        # Chance for Clay Soldiers to drop them self when killed by a player
+                        %s=1f
                         # When true Chips can only be installed into Clay Soldiers loyal to the player
                         %s=true
                         # Energy Transfer Rate for Clay Soldiers with batteries
@@ -200,6 +202,7 @@ public class ClaySoldierFabric implements ModInitializer {
                         IConfig.SHEAR_BLADE_RECIPE_KEY,
                         IConfig.SOLDIER_DROP_INVENTORY_KEY,
                         IConfig.SOLDIER_DROP_SELF_KEY,
+                        IConfig.SOLDIER_PLAYER_DROP_SELF_KEY,
                         IConfig.CHIP_REQUIRES_LOYALTY_KEY,
                         IConfig.BASE_SOLDIER_ENERGY_TRANSFER_RATE_KEY,
                         IConfig.CHARGING_PAD_PLAYER_RATE_KEY
@@ -215,8 +218,9 @@ public class ClaySoldierFabric implements ModInitializer {
                 config.getPositiveInt(IConfig.HAMSTER_WHEEL_SPEED_KEY, 3, Integer.MAX_VALUE),
                 config.getBoolean(IConfig.SOLDIER_MODIFY_MENU_KEY, false),
                 config.getBoolean(IConfig.SHEAR_BLADE_RECIPE_KEY, true),
-                config.getFloatPercent(IConfig.SOLDIER_DROP_INVENTORY_KEY, 0.5f),
-                config.getBoolean(IConfig.SOLDIER_DROP_SELF_KEY, true),
+                config.getFloatPercent(IConfig.SOLDIER_DROP_SELF_KEY, 0.5f),
+                config.getFloatPercent(IConfig.SOLDIER_PLAYER_DROP_SELF_KEY, 1f),
+                config.getBoolean(IConfig.SOLDIER_DROP_INVENTORY_KEY, true),
                 config.getBoolean(IConfig.CHIP_REQUIRES_LOYALTY_KEY, true),
                 config.getPositiveInt(IConfig.BASE_SOLDIER_ENERGY_TRANSFER_RATE_KEY, 15, Integer.MAX_VALUE),
                 config.getNonNegativeInt(IConfig.CHARGING_PAD_PLAYER_RATE_KEY, 15, Integer.MAX_VALUE)

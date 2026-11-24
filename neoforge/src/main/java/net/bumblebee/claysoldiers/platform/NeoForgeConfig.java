@@ -31,6 +31,10 @@ public class NeoForgeConfig implements IConfig, ServerConfig, ClientConfig, Comm
             .comment("Chance for Clay Soldiers to drop them self")
             .defineInRange(SOLDIER_DROP_SELF_KEY, 0.5, 0, 1);
 
+    private static final ModConfigSpec.DoubleValue SOLDIER_PLAYER_DROP_SELF = SERVER_BUILDER
+            .comment("Chance for Clay Soldiers to drop them self when killed by a player")
+            .defineInRange(SOLDIER_PLAYER_DROP_SELF_KEY, 1d, 0, 1);
+
     private static final ModConfigSpec.BooleanValue CHIP_REQUIRES_LOYALTY = SERVER_BUILDER
             .comment("When true Chips can only be installed into Clay Soldiers loyal to the player")
             .define(CHIP_REQUIRES_LOYALTY_KEY, true);
@@ -73,6 +77,11 @@ public class NeoForgeConfig implements IConfig, ServerConfig, ClientConfig, Comm
     @Override
     public float soldierDropSelf() {
         return (float) SOLDIER_DROP_SELF.getAsDouble();
+    }
+
+    @Override
+    public float soldierPlayerDropSelf() {
+        return (float) SOLDIER_PLAYER_DROP_SELF.getAsDouble();
     }
 
     @Override

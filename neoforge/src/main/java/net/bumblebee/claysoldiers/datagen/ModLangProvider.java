@@ -84,6 +84,8 @@ public class ModLangProvider extends LanguageProvider {
         addConfig(IConfig.SOLDIER_DROP_INVENTORY_KEY, "Clay Soldiers drop Inventory");
         addConfig(IConfig.SOLDIER_DROP_SELF_KEY, "Clay Soldier drop themselves on death");
         addConfig(IConfig.CHIP_REQUIRES_LOYALTY_KEY, "Chip requires Loyalty of the Soldier to be inserted");
+        addConfig(IConfig.SOLDIER_PLAYER_DROP_SELF_KEY, "Chance Soldier drop themselves when killed by a player");
+
 
         addConfig(IConfig.STATO_METER_SHOW_INFO_KEY, "Stat Item: Show Clay Soldier Info");
         addConfig(IConfig.STATO_METER_SHOW_COUNT_KEY, "Stat Item: Show Clay Soldier Count");

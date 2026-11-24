@@ -20,13 +20,16 @@ public class FabricConfig implements IConfig, CommonConfig, ServerConfig {
     // Server
     public static boolean soldierDropInventory = true;
     public static float soldierDropSelf = 0.5f;
+    public static float soldierPlayerDropSelf = 1f;
+
     public static boolean chipRequiresLoyalty = true;
 
-    public static void init(int hamsterWheelSpeed, boolean canModifyMenu, boolean shearBladeRecipeEnabled, float soldierDropSelf, boolean soldierDropInventory, boolean chipRequiresLoyalty, int soldierTransferRate, int chargingPadPlayerRate) {
+    public static void init(int hamsterWheelSpeed, boolean canModifyMenu, boolean shearBladeRecipeEnabled, float soldierDropSelf, float soldierPlayerDropSelf, boolean soldierDropInventory, boolean chipRequiresLoyalty, int soldierTransferRate, int chargingPadPlayerRate) {
         FabricConfig.hamsterWheelSpeed = hamsterWheelSpeed;
         FabricConfig.canModifyMenu = canModifyMenu;
         FabricConfig.shearBladeRecipeEnabled = shearBladeRecipeEnabled;
         FabricConfig.soldierDropSelf = soldierDropSelf;
+        FabricConfig.soldierPlayerDropSelf = soldierPlayerDropSelf;
         FabricConfig.soldierDropInventory = soldierDropInventory;
         FabricConfig.chipRequiresLoyalty = chipRequiresLoyalty;
         FabricConfig.soldierTransferRate = soldierTransferRate;
@@ -57,6 +60,11 @@ public class FabricConfig implements IConfig, CommonConfig, ServerConfig {
     @Override
     public float soldierDropSelf() {
         return soldierDropSelf;
+    }
+
+    @Override
+    public float soldierPlayerDropSelf() {
+        return soldierPlayerDropSelf;
     }
 
     @Override

@@ -338,7 +338,7 @@ public abstract class ClayMobEntity extends PathfinderMob implements TeamHolder,
     }
 
     public static void dropSpawnedFrom(ServerLevel level, ItemStack spawnedFrom, Consumer<ItemStack> spawnInWorld, boolean alwaysDrop, boolean onFire) {
-        float chance = alwaysDrop ? 1f : ClaySoldiersCommon.CONFIG.getServerConfig().soldierDropSelf();
+        float chance = alwaysDrop ? ClaySoldiersCommon.CONFIG.getServerConfig().soldierPlayerDropSelf() : ClaySoldiersCommon.CONFIG.getServerConfig().soldierDropSelf();
 
         if (chance >= level.getRandom().nextFloat()) {
             if (onFire && spawnedFrom.getItem() instanceof BrickedItemHolder brickedItemHolder) {

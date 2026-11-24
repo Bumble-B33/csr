@@ -15,6 +15,8 @@ public interface IConfig {
 
     String SOLDIER_DROP_INVENTORY_KEY = "soldierDropInventory";
     String SOLDIER_DROP_SELF_KEY = "soldierDropSelf";
+    String SOLDIER_PLAYER_DROP_SELF_KEY = "soldierPlayerDropSelf";
+
     String CHIP_REQUIRES_LOYALTY_KEY = "chipRequiresLoyalty";
     String BASE_SOLDIER_ENERGY_TRANSFER_RATE_KEY = "baseSoldierEnergyTransferRate";
     String CHARGING_PAD_PLAYER_RATE_KEY = "chargingPadPlayerRate";

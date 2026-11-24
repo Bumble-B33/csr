@@ -5,5 +5,7 @@ public interface ServerConfig {
 
     float soldierDropSelf();
 
+    float soldierPlayerDropSelf();
+
     boolean chipRequiresLoyalty();
 }
