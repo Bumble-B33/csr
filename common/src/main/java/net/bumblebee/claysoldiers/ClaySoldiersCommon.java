@@ -60,6 +60,8 @@ public class ClaySoldiersCommon {
     public static final AbstractCapabilityManger CAPABILITY_MANGER = load(AbstractCapabilityManger.class);
 
     public static final GameRules.Key<GameRules.IntegerValue> CLAY_SOLDIER_DROP_RULE = PLATFORM.createIntRule("soldierDropThemSelf", GameRules.Category.DROPS, 50);
+    public static final GameRules.Key<GameRules.IntegerValue> CLAY_SOLDIER_PLAYER_DROP_RULE = PLATFORM.createIntRule("soldierPlayerDropThemSelf", GameRules.Category.DROPS, 100);
+
     public static final GameRules.Key<GameRules.BooleanValue> CLAY_SOLDIER_INVENTORY_DROP_RULE = PLATFORM.createBoolRule("soldierDropInventory", GameRules.Category.DROPS, true);
 
     public static final String CSR_DEFAULT_PACK_LOCATION = "data/datapacks";

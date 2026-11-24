@@ -1223,7 +1223,7 @@ public class AbstractClaySoldierEntity extends ClayMobTeamOwnerEntity implements
         if (allProperties() == null) {
             return 1f;
         }
-        return Math.clamp(0.2f, allProperties().getSoldierSize(), 3f);
+        return Math.clamp(allProperties().getSoldierSize(), 0.2f, 3f);
     }
 
     /**

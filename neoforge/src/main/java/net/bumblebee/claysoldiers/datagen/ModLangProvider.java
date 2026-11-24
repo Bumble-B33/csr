@@ -70,6 +70,8 @@ public class ModLangProvider extends LanguageProvider {
 
         add(ClaySoldiersCommon.CLAY_SOLDIER_DROP_RULE.getDescriptionId(), "Chance (in %) for a Clay Soldier to drop itself when killed");
         add(ClaySoldiersCommon.CLAY_SOLDIER_INVENTORY_DROP_RULE.getDescriptionId(), "Clay Soldier drop their inventory on Death");
+        add(ClaySoldiersCommon.CLAY_SOLDIER_PLAYER_DROP_RULE.getDescriptionId(), "Chance (in %) for a Clay Soldier to drop itself when killed by a Player");
+
 
         add(ModCreativeTab.CLAY_SOLDIERS_TAB_TITLE, "Clay Soldiers");
         add(ModCreativeTab.CLAY_SOLDIER_ITEMS_TAB_TITLE, "Clay Soldier Items");
